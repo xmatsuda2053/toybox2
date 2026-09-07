@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    /* 1. 出力 JavaScript のバージョン・モジュール規格 */
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    /* 2. Lit / Decorators（デコレータ）設定 */
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+
+    /* 3. ライブラリ型定義の解決設定 */
+    "allowSyntheticDefaultImports": true,
+    "customConditions": ["development"],
+
+    /* 4. 厳格な型チェックと保守性 */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    /* 5. モジュール連携・コンパイル挙動 */
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true
+  }
+}
