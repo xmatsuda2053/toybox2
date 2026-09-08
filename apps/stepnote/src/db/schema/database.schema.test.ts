@@ -13,7 +13,7 @@ import {
  * - [x] 仕様1 Tasksテーブルにデータを追加・取得が可能であること
  * - [x] 仕様2 Logsテーブルにデータを追加・取得が可能であること
  * - [x] 仕様3 Notesテーブルにデータを追加・取得が可能であること
- * - [x] 仕様4 QuickAccessテーブルに初期値が登録され、取得が可能であること
+ * - [x] 仕様4 QuickAccessテーブルにデータを追加・取得が可能であること
  * - [x] 仕様5 Labelsテーブルにデータを追加・取得が可能であること
  *  */
 describe("StepNote Database Schema Tests", () => {
@@ -77,16 +77,27 @@ describe("StepNote Database Schema Tests", () => {
     expect(note?.value).toBe(note_origin.value);
   });
 
-  it("QuickAccessテーブルに初期値が登録され、取得が可能であること", async () => {
+  it("QuickAccessテーブルにデータを追加・取得が可能であること", async () => {
     // populate イベントで id=1 のレコードが登録されている
-    const quickAccess: QuickAccessRecord | undefined =
-      await db.quickAccesses.get(1);
+    const quickAccess_origin: QuickAccessRecord = {
+      isBookmarkSelected: false,
+      isDoneSelected: false,
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: true,
+      isProgressSelected: true,
+      isPendingSelected: true,
+      isUncategorizedSelected: false,
+    };
+
+    const id = await db.quickAccess.add(quickAccess_origin);
+    const quickAccess = await db.quickAccess.get(id);
 
     expect(quickAccess).toBeDefined();
     expect(quickAccess?.id).toBe(1);
     // デフォルト値の確認
     expect(quickAccess?.isBookmarkSelected).toBe(false);
-    expect(quickAccess?.isDoneSelected).toBe(true);
+    expect(quickAccess?.isDoneSelected).toBe(false);
     expect(quickAccess?.isOverdueSelected).toBe(false);
     expect(quickAccess?.isAsapSelected).toBe(false);
     expect(quickAccess?.isUpcomingSelected).toBe(true);

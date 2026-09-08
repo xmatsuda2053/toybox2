@@ -11,7 +11,7 @@
     "build:all": "npm run build --workspaces",
     "type-check": "npm exec --workspaces -- tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest --ui"
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@lit-labs/virtualizer": "^2.1.1",
