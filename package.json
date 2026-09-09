@@ -11,10 +11,11 @@
     "build:all": "npm run build --workspaces",
     "type-check": "npm exec --workspaces -- tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest --ui"
   },
   "devDependencies": {
     "@lit-labs/virtualizer": "^2.1.1",
+    "@lit/context": "^1.1.6",
     "@types/papaparse": "^5.5.2",
     "@vitest/ui": "^4.1.11",
     "dexie": "^4.4.5",

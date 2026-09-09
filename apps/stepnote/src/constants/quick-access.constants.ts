@@ -11,11 +11,11 @@ export const QUICK_ACCESS_STATIC_ID = 1 as const;
  */
 export const DEFAULT_QUICK_ACCESS = {
   isBookmarkSelected: false,
-  isDoneSelected: false,
+  isUncategorizedSelected: false,
   isOverdueSelected: false,
   isAsapSelected: false,
-  isUpcomingSelected: true,
+  isUpcomingSelected: false,
+  isDoneSelected: true,
   isProgressSelected: true,
   isPendingSelected: true,
-  isUncategorizedSelected: false,
 } as const satisfies Omit<QuickAccessRecord, "id">;

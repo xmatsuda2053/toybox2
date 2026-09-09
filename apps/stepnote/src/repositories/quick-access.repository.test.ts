@@ -3,7 +3,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { db } from "@/db/schema/database.schema";
 import { QuickAccessRecord } from "@/db/models/navigation.model";
 import { QuickAccessRepository } from "./quick-access.repository";
-import { QUICK_ACCESS_STATIC_ID } from "@/constants/quick-access.constants";
+import {
+  QUICK_ACCESS_STATIC_ID,
+  DEFAULT_QUICK_ACCESS,
+} from "@/constants/quick-access.constants";
 
 /**
  * - [x] 仕様1 getQuickAccess() 呼び出し時、DB が空であれば初期レコード（id: 1）を自動作成して返す
@@ -25,14 +28,7 @@ describe("Quick Access Repository Tests", () => {
     const result: QuickAccessRecord = await repository.getQuickAccess();
     expect(result).toMatchObject({
       id: QUICK_ACCESS_STATIC_ID,
-      isBookmarkSelected: false,
-      isUncategorizedSelected: false,
-      isDoneSelected: false,
-      isOverdueSelected: false,
-      isAsapSelected: false,
-      isUpcomingSelected: true,
-      isProgressSelected: true,
-      isPendingSelected: true,
+      ...DEFAULT_QUICK_ACCESS,
     });
   });
 
@@ -51,17 +47,7 @@ describe("Quick Access Repository Tests", () => {
     await db.quickAccess.add(initialRecord);
 
     const result: QuickAccessRecord = await repository.getQuickAccess();
-    expect(result).toMatchObject({
-      id: QUICK_ACCESS_STATIC_ID,
-      isBookmarkSelected: true,
-      isUncategorizedSelected: true,
-      isDoneSelected: true,
-      isOverdueSelected: true,
-      isAsapSelected: true,
-      isUpcomingSelected: false,
-      isProgressSelected: false,
-      isPendingSelected: false,
-    });
+    expect(result).toMatchObject(initialRecord);
 
     // 新しくレコードが追加されて件数が増えていないこと（1件のまま）
     const count = await db.quickAccess.count();
