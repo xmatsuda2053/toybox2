@@ -3,13 +3,13 @@
  */
 export interface QuickAccess {
   isBookmarkSelected: boolean;
-  isDoneSelected: boolean;
+  isUncategorizedSelected: boolean;
   isOverdueSelected: boolean;
   isAsapSelected: boolean;
   isUpcomingSelected: boolean;
+  isDoneSelected: boolean;
   isProgressSelected: boolean;
   isPendingSelected: boolean;
-  isUncategorizedSelected: boolean;
 }
 
 /**
