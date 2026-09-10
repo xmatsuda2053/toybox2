@@ -109,6 +109,7 @@ describe("StepNote Database Schema Tests", () => {
   it("Labelsテーブルにデータを追加・取得が可能であること", async () => {
     const label_origin: LabelRecord = {
       name: "テストラベル",
+      description: "説明",
       isSelected: false,
     };
 

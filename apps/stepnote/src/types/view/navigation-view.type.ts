@@ -18,5 +18,6 @@ export interface QuickAccess {
 export interface Label {
   id?: number;
   name: string;
+  description: string;
   isSelected: boolean;
 }

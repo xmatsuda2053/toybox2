@@ -19,7 +19,6 @@ export interface QuickAccessRecord {
 export interface LabelRecord {
   id?: number;
   name: string;
+  description: string;
   isSelected: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
