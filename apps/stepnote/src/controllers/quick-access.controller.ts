@@ -7,7 +7,7 @@ import {
 } from "@/constants/quick-access.constants.js";
 
 /**
- *
+ * クイックアクセスフィルター状態を管理する Reactive Controller
  *
  * @export
  * @class QuickAccessController
@@ -17,11 +17,22 @@ export class QuickAccessController implements ReactiveController {
   private host: ReactiveControllerHost;
   private repository: QuickAccessRepository;
 
-  /** QuickAccessの初期値 */
-  public state: QuickAccessRecord = {
+  /** QuickAccessの内部状態 */
+  private _state: QuickAccessRecord = {
     id: QUICK_ACCESS_STATIC_ID,
     ...DEFAULT_QUICK_ACCESS,
   };
+
+  /**
+   * 現在のクイックアクセス状態（読み取り専用）
+   *
+   * @readonly
+   * @type {Readonly<QuickAccessRecord>}
+   * @memberof QuickAccessController
+   */
+  public get state(): Readonly<QuickAccessRecord> {
+    return this._state;
+  }
 
   /**
    * Controllerの非同期初期化状態。
@@ -42,6 +53,7 @@ export class QuickAccessController implements ReactiveController {
    */
   constructor(host: ReactiveControllerHost, repository: QuickAccessRepository) {
     this.host = host;
+    this.host.addController(this);
     this.repository = repository;
     this.initialized = this.loadState();
   }
@@ -53,11 +65,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  private async loadState(): Promise<void> {
+  private loadState = async (): Promise<void> => {
     const record = await this.repository.getQuickAccess();
-    this.state = { ...record };
+    this._state = { ...record };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * DBを更新し、stateを更新する
@@ -67,13 +79,13 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  private async updateState(
+  private updateState = async (
     partial: Partial<QuickAccessRecord>,
-  ): Promise<void> {
+  ): Promise<void> => {
     const updated = await this.repository.updateQuickAccess(partial);
-    this.state = { ...updated };
+    this._state = { ...updated };
     this.host.requestUpdate();
-  }
+  };
 
   // --- 単独・分類・ステータスフィルター（独立トグル） ---
 
@@ -83,11 +95,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleBookmarkSelected(): Promise<void> {
+  public toggleBookmarkSelected = async (): Promise<void> => {
     await this.updateState({
-      isBookmarkSelected: !this.state.isBookmarkSelected,
+      isBookmarkSelected: !this._state.isBookmarkSelected,
     });
-  }
+  };
 
   /**
    * 未分類の状態をトグルする
@@ -95,11 +107,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleUncategorizedSelected(): Promise<void> {
+  public toggleUncategorizedSelected = async (): Promise<void> => {
     await this.updateState({
-      isUncategorizedSelected: !this.state.isUncategorizedSelected,
+      isUncategorizedSelected: !this._state.isUncategorizedSelected,
     });
-  }
+  };
 
   /**
    * 完了の状態をトグルする
@@ -107,11 +119,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleDoneSelected(): Promise<void> {
+  public toggleDoneSelected = async (): Promise<void> => {
     await this.updateState({
-      isDoneSelected: !this.state.isDoneSelected,
+      isDoneSelected: !this._state.isDoneSelected,
     });
-  }
+  };
 
   /**
    * 対応中の状態をトグルする
@@ -119,11 +131,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleProgressSelected(): Promise<void> {
+  public toggleProgressSelected = async (): Promise<void> => {
     await this.updateState({
-      isProgressSelected: !this.state.isProgressSelected,
+      isProgressSelected: !this._state.isProgressSelected,
     });
-  }
+  };
 
   /**
    * 未着手の状態をトグルする
@@ -131,11 +143,11 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async togglePendingSelected(): Promise<void> {
+  public togglePendingSelected = async (): Promise<void> => {
     await this.updateState({
-      isPendingSelected: !this.state.isPendingSelected,
+      isPendingSelected: !this._state.isPendingSelected,
     });
-  }
+  };
 
   // --- 期限フィルター（排他制御トグル）
 
@@ -146,13 +158,13 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleOverdueSelected(): Promise<void> {
+  public toggleOverdueSelected = async (): Promise<void> => {
     await this.updateState({
-      isOverdueSelected: !this.state.isOverdueSelected,
+      isOverdueSelected: !this._state.isOverdueSelected,
       isAsapSelected: false,
       isUpcomingSelected: false,
     });
-  }
+  };
 
   /**
    * 当日の選択状態をトグルする。
@@ -161,13 +173,13 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleAsapSelected(): Promise<void> {
+  public toggleAsapSelected = async (): Promise<void> => {
     await this.updateState({
-      isAsapSelected: !this.state.isAsapSelected,
+      isAsapSelected: !this._state.isAsapSelected,
       isOverdueSelected: false,
       isUpcomingSelected: false,
     });
-  }
+  };
 
   /**
    * 期限間近の選択状態をトグルする。
@@ -176,13 +188,13 @@ export class QuickAccessController implements ReactiveController {
    * @return {*}  {Promise<void>}
    * @memberof QuickAccessController
    */
-  public async toggleUpcomingSelected(): Promise<void> {
+  public toggleUpcomingSelected = async (): Promise<void> => {
     await this.updateState({
-      isUpcomingSelected: !this.state.isUpcomingSelected,
+      isUpcomingSelected: !this._state.isUpcomingSelected,
       isOverdueSelected: false,
       isAsapSelected: false,
     });
-  }
+  };
 
   /**
    * hostConnected

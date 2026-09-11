@@ -19,16 +19,27 @@ export class LayoutUIController implements ReactiveController {
   private host: ReactiveControllerHost;
 
   /**
-   * 画面開閉の状態を保持するステートオブジェクト
+   * 画面開閉の状態を保持するステートオブジェクト（内部状態）
    *
    * @type {LayoutState}
    * @memberof LayoutUIController
    */
-  public state: LayoutState = {
+  private _state: LayoutState = {
     isQuickAccessOpen: true,
     isArea1Open: true,
     isArea2Open: true,
   };
+
+  /**
+   * 画面開閉の状態（読み取り専用）
+   *
+   * @readonly
+   * @type {Readonly<LayoutState>}
+   * @memberof LayoutUIController
+   */
+  public get state(): Readonly<LayoutState> {
+    return this._state;
+  }
 
   /**
    * Creates an instance of LayoutUIController.
@@ -45,30 +56,39 @@ export class LayoutUIController implements ReactiveController {
    *
    * @memberof LayoutUIController
    */
-  public toggleQuickAccess(): void {
-    this.state.isQuickAccessOpen = !this.state.isQuickAccessOpen;
+  public toggleQuickAccess = (): void => {
+    this._state = {
+      ...this._state,
+      isQuickAccessOpen: !this._state.isQuickAccessOpen,
+    };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * エリア1の開閉状態を反転させ、ホストへ再描画を要求する。
    *
    * @memberof LayoutUIController
    */
-  public toggleArea1(): void {
-    this.state.isArea1Open = !this.state.isArea1Open;
+  public toggleArea1 = (): void => {
+    this._state = {
+      ...this._state,
+      isArea1Open: !this._state.isArea1Open,
+    };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * エリア2の開閉状態を反転させ、ホストへ再描画を要求する。
    *
    * @memberof LayoutUIController
    */
-  public toggleArea2(): void {
-    this.state.isArea2Open = !this.state.isArea2Open;
+  public toggleArea2 = (): void => {
+    this._state = {
+      ...this._state,
+      isArea2Open: !this._state.isArea2Open,
+    };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * QUICK ACCESS の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
@@ -76,11 +96,14 @@ export class LayoutUIController implements ReactiveController {
    * @param {boolean} isOpen
    * @memberof LayoutUIController
    */
-  public setQuickAccessOpen(isOpen: boolean): void {
-    if (this.state.isQuickAccessOpen === isOpen) return;
-    this.state.isQuickAccessOpen = isOpen;
+  public setQuickAccessOpen = (isOpen: boolean): void => {
+    if (this._state.isQuickAccessOpen === isOpen) return;
+    this._state = {
+      ...this._state,
+      isQuickAccessOpen: isOpen,
+    };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * エリア1 の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
@@ -88,11 +111,14 @@ export class LayoutUIController implements ReactiveController {
    * @param {boolean} isOpen
    * @memberof LayoutUIController
    */
-  public setArea1Open(isOpen: boolean): void {
-    if (this.state.isArea1Open === isOpen) return;
-    this.state.isArea1Open = isOpen;
+  public setArea1Open = (isOpen: boolean): void => {
+    if (this._state.isArea1Open === isOpen) return;
+    this._state = {
+      ...this._state,
+      isArea1Open: isOpen,
+    };
     this.host.requestUpdate();
-  }
+  };
 
   /**
    * エリア2 の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
@@ -100,12 +126,26 @@ export class LayoutUIController implements ReactiveController {
    * @param {boolean} isOpen
    * @memberof LayoutUIController
    */
-  public setArea2Open(isOpen: boolean): void {
-    if (this.state.isArea2Open === isOpen) return;
-    this.state.isArea2Open = isOpen;
+  public setArea2Open = (isOpen: boolean): void => {
+    if (this._state.isArea2Open === isOpen) return;
+    this._state = {
+      ...this._state,
+      isArea2Open: isOpen,
+    };
     this.host.requestUpdate();
-  }
+  };
 
+  /**
+   * hostConnected
+   *
+   * @memberof LayoutUIController
+   */
   hostConnected(): void {}
+
+  /**
+   * hostDisconnected
+   *
+   * @memberof LayoutUIController
+   */
   hostDisconnected(): void {}
 }
