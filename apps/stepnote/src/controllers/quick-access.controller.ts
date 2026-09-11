@@ -1,10 +1,10 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import type { QuickAccessRepository } from "@/repositories/quick-access.repository.js";
+import type { QuickAccessRepository } from "@/repositories/quick-access.repository";
 import type { QuickAccessRecord } from "@/db/models";
 import {
   QUICK_ACCESS_STATIC_ID,
   DEFAULT_QUICK_ACCESS,
-} from "@/constants/quick-access.constants.js";
+} from "@/constants/quick-access.constants";
 
 /**
  * クイックアクセスフィルター状態を管理する Reactive Controller

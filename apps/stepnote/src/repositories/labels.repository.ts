@@ -5,14 +5,14 @@ import { LabelRecord } from "@/db/models/navigation.model";
  * Labelに対するCRUDを制御する
  *
  * @export
- * @class LabelRepository
+ * @class LabelsRepository
  */
 export class LabelsRepository {
   /**
    * DBからすべてのラベルを取得する
    *
    * @return {*}
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public getAll = async (): Promise<LabelRecord[]> => {
     return await db.labels.toArray();
@@ -23,7 +23,7 @@ export class LabelsRepository {
    *
    * @param {number} id
    * @return {*}  {Promise<LabelRecord | undefined>}
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public getById = async (id: number): Promise<LabelRecord | undefined> => {
     return await db.labels.get(id);
@@ -33,7 +33,7 @@ export class LabelsRepository {
    * 新規ラベルを追加する
    *
    * @param {Omit<LabelRecord, "id">} label
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public add = async (label: Omit<LabelRecord, "id">): Promise<number> => {
     return await db.labels.add({ ...label });
@@ -44,7 +44,7 @@ export class LabelsRepository {
    *
    * @param {number} id
    * @param {Partial<Omit<LabelRecord, "id">>} partial
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public update = async (
     id: number,
@@ -57,7 +57,7 @@ export class LabelsRepository {
    * 指定したIDのラベルを削除する
    *
    * @param {number} id
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public delete = async (id: number): Promise<void> => {
     await db.labels.delete(id);
@@ -67,7 +67,7 @@ export class LabelsRepository {
    * 指定したIDのラベルの選択状態を反転させる。
    *
    * @param {number} id
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public toggleLabel = async (id: number): Promise<void> => {
     const label: LabelRecord | undefined = await this.getById(id);
@@ -80,7 +80,7 @@ export class LabelsRepository {
   /**
    * すべてのラベルの選択状態を解除する。
    *
-   * @memberof LabelRepository
+   * @memberof LabelsRepository
    */
   public clearAllSelected = async (): Promise<void> => {
     await db.labels.toCollection().modify({ isSelected: false });
