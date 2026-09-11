@@ -57,13 +57,23 @@ describe("Quick Access Repository Tests", () => {
   it("updateQuickAccess(partial) 呼び出し時、指定したフラグのみを更新し、id: 1 のまま永続化する。", async () => {
     await repository.getQuickAccess();
     const updated = {
-      isDoneSelected: true,
+      isDoneSelected: false,
+      isBookmarkSelected: true,
     };
 
-    await repository.updateQuickAccess(updated);
+    const updateResult = await repository.updateQuickAccess(updated);
+    expect(updateResult.isDoneSelected).toBe(false);
+    expect(updateResult.isBookmarkSelected).toBe(true);
+    expect(updateResult.isProgressSelected).toBe(DEFAULT_QUICK_ACCESS.isProgressSelected);
+    expect(updateResult.id).toBe(QUICK_ACCESS_STATIC_ID);
 
     const result: QuickAccessRecord = await repository.getQuickAccess();
-    expect(result).toMatchObject(updated);
+    expect(result).toMatchObject({
+      id: QUICK_ACCESS_STATIC_ID,
+      isDoneSelected: false,
+      isBookmarkSelected: true,
+      isProgressSelected: DEFAULT_QUICK_ACCESS.isProgressSelected,
+    });
 
     // 新しくレコードが追加されて件数が増えていないこと（1件のまま）
     const count = await db.quickAccess.count();

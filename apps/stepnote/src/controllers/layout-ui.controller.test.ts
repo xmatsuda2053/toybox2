@@ -20,8 +20,8 @@ const createMockHost = () => {
 /**
  * 仕様 1:初期状態として、すべてのパネル・ドロワーが期待通りのデフォルト値で初期化されること。
  * 仕様 2:QUICK ACCESS の開閉状態の反転およびホストへの再描画通知が正しく行われること。
- * 仕様 3:エリア1の開閉状態の反転およびホストへの再描画通知が正しく行われること。
- * 仕様 4:エリア2の開閉状態の反転およびホストへの再描画通知が正しく行われること。
+ * 仕様 3:ナビゲーションエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
+ * 仕様 4:ナビゲーションリストエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
  * 仕様 5:各セッターメソッドで明示的に値を設定した場合、正しく反映されること。
  * 仕様 6:すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。
  *  */
@@ -32,8 +32,8 @@ describe("layout-ui.controller", () => {
       const controller = new LayoutUIController(host);
       expect(controller.state).toEqual({
         isQuickAccessOpen: true,
-        isArea1Open: true,
-        isArea2Open: true,
+        isNavigationAreaOpen: true,
+        isNavigationListAreaOpen: true,
       });
     });
   });
@@ -54,33 +54,33 @@ describe("layout-ui.controller", () => {
       expect(requestUpdateMock).toHaveBeenCalledTimes(2);
     });
 
-    it("エリア1の開閉状態の反転およびホストへの再描画通知が正しく行われること。", () => {
+    it("ナビゲーションエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。", () => {
       const { host, requestUpdateMock } = createMockHost();
       const controller = new LayoutUIController(host);
 
       // 初期値 true -> false に反転
-      controller.toggleArea1();
-      expect(controller.state.isArea1Open).toBe(false);
+      controller.toggleNavigationArea();
+      expect(controller.state.isNavigationAreaOpen).toBe(false);
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
 
       // false -> true に反転
-      controller.toggleArea1();
-      expect(controller.state.isArea1Open).toBe(true);
+      controller.toggleNavigationArea();
+      expect(controller.state.isNavigationAreaOpen).toBe(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(2);
     });
 
-    it("エリア2の開閉状態の反転およびホストへの再描画通知が正しく行われること。", () => {
+    it("ナビゲーションリストエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。", () => {
       const { host, requestUpdateMock } = createMockHost();
       const controller = new LayoutUIController(host);
 
       // 初期値 true -> false に反転
-      controller.toggleArea2();
-      expect(controller.state.isArea2Open).toBe(false);
+      controller.toggleNavigationListArea();
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
 
       // false -> true に反転
-      controller.toggleArea2();
-      expect(controller.state.isArea2Open).toBe(true);
+      controller.toggleNavigationListArea();
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(2);
     });
   });
@@ -93,11 +93,11 @@ describe("layout-ui.controller", () => {
       controller.setQuickAccessOpen(false);
       expect(controller.state.isQuickAccessOpen).toBe(false);
 
-      controller.setArea1Open(false);
-      expect(controller.state.isArea1Open).toBe(false);
+      controller.setNavigationAreaOpen(false);
+      expect(controller.state.isNavigationAreaOpen).toBe(false);
 
-      controller.setArea2Open(false);
-      expect(controller.state.isArea2Open).toBe(false);
+      controller.setNavigationListAreaOpen(false);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
 
       expect(requestUpdateMock).toHaveBeenCalledTimes(3);
     });
@@ -109,10 +109,10 @@ describe("layout-ui.controller", () => {
       controller.setQuickAccessOpen(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
 
-      controller.setArea1Open(true);
+      controller.setNavigationAreaOpen(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
 
-      controller.setArea2Open(true);
+      controller.setNavigationListAreaOpen(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
     });
   });
