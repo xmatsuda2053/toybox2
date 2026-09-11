@@ -26,8 +26,8 @@ export class LayoutUIController implements ReactiveController {
    */
   private _state: LayoutState = {
     isQuickAccessOpen: true,
-    isArea1Open: true,
-    isArea2Open: true,
+    isNavigationAreaOpen: true,
+    isNavigationListAreaOpen: true,
   };
 
   /**
@@ -65,27 +65,27 @@ export class LayoutUIController implements ReactiveController {
   };
 
   /**
-   * エリア1の開閉状態を反転させ、ホストへ再描画を要求する。
+   * ナビゲーションエリアの開閉状態を反転させ、ホストへ再描画を要求する。
    *
    * @memberof LayoutUIController
    */
-  public toggleArea1 = (): void => {
+  public toggleNavigationArea = (): void => {
     this._state = {
       ...this._state,
-      isArea1Open: !this._state.isArea1Open,
+      isNavigationAreaOpen: !this._state.isNavigationAreaOpen,
     };
     this.host.requestUpdate();
   };
 
   /**
-   * エリア2の開閉状態を反転させ、ホストへ再描画を要求する。
+   * ナビゲーションリストエリアの開閉状態を反転させ、ホストへ再描画を要求する。
    *
    * @memberof LayoutUIController
    */
-  public toggleArea2 = (): void => {
+  public toggleNavigationListArea = (): void => {
     this._state = {
       ...this._state,
-      isArea2Open: !this._state.isArea2Open,
+      isNavigationListAreaOpen: !this._state.isNavigationListAreaOpen,
     };
     this.host.requestUpdate();
   };
@@ -106,31 +106,31 @@ export class LayoutUIController implements ReactiveController {
   };
 
   /**
-   * エリア1 の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
+   * ナビゲーションエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
    *
    * @param {boolean} isOpen
    * @memberof LayoutUIController
    */
-  public setArea1Open = (isOpen: boolean): void => {
-    if (this._state.isArea1Open === isOpen) return;
+  public setNavigationAreaOpen = (isOpen: boolean): void => {
+    if (this._state.isNavigationAreaOpen === isOpen) return;
     this._state = {
       ...this._state,
-      isArea1Open: isOpen,
+      isNavigationAreaOpen: isOpen,
     };
     this.host.requestUpdate();
   };
 
   /**
-   * エリア2 の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
+   * ナビゲーションリストエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
    *
    * @param {boolean} isOpen
    * @memberof LayoutUIController
    */
-  public setArea2Open = (isOpen: boolean): void => {
-    if (this._state.isArea2Open === isOpen) return;
+  public setNavigationListAreaOpen = (isOpen: boolean): void => {
+    if (this._state.isNavigationListAreaOpen === isOpen) return;
     this._state = {
       ...this._state,
-      isArea2Open: isOpen,
+      isNavigationListAreaOpen: isOpen,
     };
     this.host.requestUpdate();
   };
