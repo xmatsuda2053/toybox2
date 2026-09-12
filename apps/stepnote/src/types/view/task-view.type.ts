@@ -30,6 +30,7 @@ export type Property = {
 export type Issue = {
   id?: number;
   taskId: number;
+  statusCode: TaskStatusCode;
   title: string;
   value: string;
   dueDate: Date;

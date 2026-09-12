@@ -26,6 +26,7 @@ export type TaskRecord = {
 export type IssueRecord = {
   id?: number;
   taskId: number;
+  statusCode: TaskStatusCode;
   title: string;
   value: string;
   dueDate: Date;
