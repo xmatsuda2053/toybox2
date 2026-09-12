@@ -128,6 +128,33 @@ export class LabelsController implements ReactiveController {
   };
 
   /**
+   * 現在選択中のラベルIDの配列を取得する
+   *
+   * @returns {number[]}
+   * @readonly
+   * @memberof LabelsController
+   */
+  public get selectedLabelIds(): number[] {
+    return this._state
+      .filter(
+        (label): label is LabelRecord & { id: number } =>
+          label.isSelected && label.id !== undefined,
+      )
+      .map((label) => label.id);
+  }
+
+  /**
+   * 選択中のラベルが存在するか判定する
+   *
+   * @returns {boolean}
+   * @readonly
+   * @memberof LabelsController
+   */
+  public get hasSelectedLabels(): boolean {
+    return this.selectedLabelIds.length > 0;
+  }
+
+  /**
    * hostConnected
    *
    * @memberof LabelsController
