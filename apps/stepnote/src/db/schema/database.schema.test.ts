@@ -37,10 +37,6 @@ describe("StepNote Database Schema Tests", () => {
           tel: "03-1234-5678",
         },
       ],
-      currentStatus: {
-        text: "blank",
-        type: "default",
-      },
       description: "説明",
       fiscalYear: 2026,
       labelId: 1,
