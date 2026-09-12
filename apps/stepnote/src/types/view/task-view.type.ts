@@ -23,3 +23,16 @@ export type Property = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+/**
+ * 課題（サブタスク）の定義
+ */
+export type Issue = {
+  id?: number;
+  taskId: number;
+  title: string;
+  value: string;
+  dueDate: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
