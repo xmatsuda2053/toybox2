@@ -1,5 +1,5 @@
 import type { TaskStatusCode } from "@/types/domain/task-status.type";
-import type { Contact, CurrentStatus } from "@/types/domain/task-detail.type";
+import type { Contact } from "@/types/domain/task-detail.type";
 
 /**
  * タスクのサマリー定義
@@ -10,7 +10,6 @@ export type Summary = {
   name: string;
   dueDate: Date;
   contacts: Contact[];
-  currentStatus: CurrentStatus;
   description: string;
 };
 
