@@ -1,5 +1,6 @@
 import {
   TaskRecord,
+  IssueRecord,
   LogRecord,
   NoteRecord,
   QuickAccessRecord,
@@ -9,6 +10,7 @@ import Dexie, { Table } from "dexie";
 
 export class Database extends Dexie {
   tasks!: Table<TaskRecord, number>;
+  issues!: Table<IssueRecord, number>;
   logs!: Table<LogRecord, number>;
   notes!: Table<NoteRecord, number>;
   quickAccess!: Table<QuickAccessRecord, number>;
@@ -18,6 +20,7 @@ export class Database extends Dexie {
     super("StepNote");
     this.version(1).stores({
       tasks: "++id, statusCode, name, dueDate, fiscalYear, selected",
+      issues: "++id, taskId, [taskId+id]",
       logs: "++id, taskId, [taskId+id]",
       notes: "++id, taskId, [taskId+id]",
       quickAccess: "++id",

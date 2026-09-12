@@ -19,3 +19,17 @@ export type TaskRecord = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+/**
+ * 課題（サブタスク）の型定義
+ */
+export type IssueRecord = {
+  id?: number;
+  taskId: number;
+  statusCode: TaskStatusCode;
+  title: string;
+  value: string;
+  dueDate: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
