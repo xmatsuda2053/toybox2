@@ -1,8 +1,8 @@
 import { db } from "@/db/schema/database.schema";
-import { LabelRecord } from "@/db/models/navigation.model";
+import type { LabelRecord } from "@/db/models/navigation.model";
 
 /**
- * Labelに対するCRUDを制御する
+ * Labelに対するCRUDおよび状態を制御するリポジトリ
  *
  * @export
  * @class LabelsRepository
@@ -11,7 +11,7 @@ export class LabelsRepository {
   /**
    * DBからすべてのラベルを取得する
    *
-   * @return {*}
+   * @return {*} {Promise<LabelRecord[]>}
    * @memberof LabelsRepository
    */
   public getAll = async (): Promise<LabelRecord[]> => {
@@ -22,7 +22,7 @@ export class LabelsRepository {
    * 指定したIDのラベルを取得する
    *
    * @param {number} id
-   * @return {*}  {Promise<LabelRecord | undefined>}
+   * @return {*} {Promise<LabelRecord | undefined>}
    * @memberof LabelsRepository
    */
   public getById = async (id: number): Promise<LabelRecord | undefined> => {
@@ -33,6 +33,7 @@ export class LabelsRepository {
    * 新規ラベルを追加する
    *
    * @param {Omit<LabelRecord, "id">} label
+   * @return {*} {Promise<number>}
    * @memberof LabelsRepository
    */
   public add = async (label: Omit<LabelRecord, "id">): Promise<number> => {
@@ -44,6 +45,7 @@ export class LabelsRepository {
    *
    * @param {number} id
    * @param {Partial<Omit<LabelRecord, "id">>} partial
+   * @return {*} {Promise<void>}
    * @memberof LabelsRepository
    */
   public update = async (
@@ -57,6 +59,7 @@ export class LabelsRepository {
    * 指定したIDのラベルを削除する
    *
    * @param {number} id
+   * @return {*} {Promise<void>}
    * @memberof LabelsRepository
    */
   public delete = async (id: number): Promise<void> => {
@@ -67,6 +70,7 @@ export class LabelsRepository {
    * 指定したIDのラベルの選択状態を反転させる。
    *
    * @param {number} id
+   * @return {*} {Promise<void>}
    * @memberof LabelsRepository
    */
   public toggleLabel = async (id: number): Promise<void> => {
@@ -80,6 +84,7 @@ export class LabelsRepository {
   /**
    * すべてのラベルの選択状態を解除する。
    *
+   * @return {*} {Promise<void>}
    * @memberof LabelsRepository
    */
   public clearAllSelected = async (): Promise<void> => {
