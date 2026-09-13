@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { debounce } from "./debounce-utils";
+import { debounce } from "./debounce.utils";
 
 /**
  * - [x] 仕様 1: 呼び出された直後には実行されず、指定した wait（ms）経過後に実行されること。
@@ -9,7 +9,7 @@ import { debounce } from "./debounce-utils";
  * - [x] 仕様 5: flush メソッドを呼び出すと、待機中のタイマーが解除され即時に関数が実行されること。
  * - [x] 仕様 6: 待機中の関数がない状態で flush メソッドを呼び出しても、関数は実行されないこと。
  */
-describe("debounce-utils", () => {
+describe("debounce.utils", () => {
   beforeEach(() => {
     // 擬似タイマーを有効化（時間を手動操作できるようにする）
     vi.useFakeTimers();
