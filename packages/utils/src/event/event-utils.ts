@@ -41,11 +41,11 @@ export function createCustomEvent<T = undefined>(
 }
 
 /**
- * 指定した HTMLElement / LitElement からカスタムイベントを発火（dispatch）するユーティリティ
+ * 指定した EventTarget（HTMLElement, Window, Document など）からカスタムイベントを発火（dispatch）するユーティリティ
  *
  * @export
  * @template T
- * @param {HTMLElement} target イベントの発火元となる要素（this / HTMLElement）
+ * @param {EventTarget} target イベントの発火元となるターゲット（this, HTMLElement, Window など）
  * @param {string} eventName イベント名
  * @param {CustomEventOptions<T>} [options={}] イベントオプション
  * @return {*}  {boolean} dispatchEvent の戻り値。イベントがキャンセルされた場合は false、それ以外は true
@@ -59,7 +59,7 @@ export function createCustomEvent<T = undefined>(
  * });
  */
 export function dispatchCustomEvent<T = undefined>(
-  target: HTMLElement,
+  target: EventTarget,
   eventName: string,
   options: CustomEventOptions<T> = {},
 ): boolean {

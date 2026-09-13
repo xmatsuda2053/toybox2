@@ -6,6 +6,8 @@ import { debounce } from "./debounce-utils";
  * - [x] 仕様 2: wait 時間内に連続して呼び出された場合、タイマーがリセットされ、最後の呼び出しから wait 時間後に1度だけ実行されること。
  * - [x] 仕様 3: 呼び出し時の引数が、実行される関数へ正しく渡されること。
  * - [x] 仕様 4: cancel メソッドを呼び出すことで、待機中の実行をキャンセルできること。
+ * - [x] 仕様 5: flush メソッドを呼び出すと、待機中のタイマーが解除され即時に関数が実行されること。
+ * - [x] 仕様 6: 待機中の関数がない状態で flush メソッドを呼び出しても、関数は実行されないこと。
  */
 describe("debounce-utils", () => {
   beforeEach(() => {
@@ -78,5 +80,30 @@ describe("debounce-utils", () => {
 
     vi.advanceTimersByTime(200); // 十分な時間が経過しても…
     expect(callback).not.toHaveBeenCalled(); // 実行されていないこと
+  });
+
+  it("flush メソッドを呼び出すと、待機中の関数が即座に実行されること", () => {
+    const callback = vi.fn();
+    const debouncedFn = debounce(callback, 200);
+
+    debouncedFn("urgent");
+    expect(callback).not.toHaveBeenCalled();
+
+    // 200ms 経過を待たずに flush
+    debouncedFn.flush();
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith("urgent");
+
+    // flush 済みなので、その後 200ms 経過しても二重実行されないこと
+    vi.advanceTimersByTime(200);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("待機中の呼び出しがない状態で flush を呼び出しても実行されないこと", () => {
+    const callback = vi.fn();
+    const debouncedFn = debounce(callback, 200);
+
+    debouncedFn.flush();
+    expect(callback).not.toHaveBeenCalled();
   });
 });
