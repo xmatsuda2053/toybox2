@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
       "@shared/utils": ["../../packages/utils/src/index.ts"]
