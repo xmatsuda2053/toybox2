@@ -99,6 +99,9 @@ export class AppRoot extends LitElement {
   override render() {
     return html`
       <div class="app-shell">
+        <!-- Header (上部固定) -->
+        <header class="app-header">header</header>
+
         <div class="panes-container">
           <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
           <nav class="pane-menu"></nav>
@@ -118,6 +121,9 @@ export class AppRoot extends LitElement {
           <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
           <aside class="pane-journal">journal</aside>
         </div>
+
+        <!-- Footer (下部固定) -->
+        <footer class="app-footer">footer</footer>
       </div>
     `;
   }

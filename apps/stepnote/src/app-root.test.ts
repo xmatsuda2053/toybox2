@@ -38,6 +38,7 @@ import { AppRoot } from "./app-root.js";
  * 【AppRoot Layout 仕様 (Phase 2)】
  * 3. 基本レイアウト構造の提供
  *    - [x] 3-1. 5ペインの基本骨格要素（Menu, Navigation, TaskList, Task, Journal）がレンダリングされること
+ *    - [x] 3-2. 画面の上下に header および footer 要素がレンダリングされること
  */
 
 /**
@@ -153,6 +154,16 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
       // Navigation 内部の上下分割領域の存在確認
       expect(strings).toContain("navigation-quick-access");
       expect(strings).toContain("navigation-labels");
+    });
+
+    it("3-2. 画面の上下に header および footer 要素がレンダリングされること", async () => {
+      const template = appRoot.render() as unknown as {
+        strings: readonly string[];
+      };
+      const strings = template.strings.join("");
+
+      expect(strings).toContain("app-header");
+      expect(strings).toContain("app-footer");
     });
   });
 });
