@@ -6,6 +6,12 @@ import {
   DEFAULT_QUICK_ACCESS,
 } from "@/constants/quick-access.constants";
 
+/** 期限フィルターのキー型 */
+type DueDateFilterKey =
+  | "isOverdueSelected"
+  | "isAsapSelected"
+  | "isUpcomingSelected";
+
 /**
  * クイックアクセスフィルター状態を管理する Reactive Controller
  *
@@ -69,6 +75,16 @@ export class QuickAccessController implements ReactiveController {
     const record = await this.repository.getQuickAccess();
     this._state = { ...record };
     this.host.requestUpdate();
+  };
+
+  /**
+   * データベースから最新の状態を再読み込みする。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof QuickAccessController
+   */
+  public refresh = async (): Promise<void> => {
+    await this.loadState();
   };
 
   /**
@@ -149,7 +165,28 @@ export class QuickAccessController implements ReactiveController {
     });
   };
 
-  // --- 期限フィルター（排他制御トグル）
+  // --- 期限フィルター（排他制御トグル） ---
+
+  /**
+   * 期限フィルターを排他的にトグルする共通内部ヘルパー。
+   * 指定したキーのフラグを反転させ、他の期限フィルターはすべて false にリセットする。
+   *
+   * @private
+   * @param {DueDateFilterKey} targetKey
+   * @return {*}  {Promise<void>}
+   * @memberof QuickAccessController
+   */
+  private toggleExclusiveDueDateFilter = async (
+    targetKey: DueDateFilterKey,
+  ): Promise<void> => {
+    const nextValue = !this._state[targetKey];
+    await this.updateState({
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: false,
+      [targetKey]: nextValue,
+    });
+  };
 
   /**
    * 期限切れの選択状態をトグルする。
@@ -159,11 +196,7 @@ export class QuickAccessController implements ReactiveController {
    * @memberof QuickAccessController
    */
   public toggleOverdueSelected = async (): Promise<void> => {
-    await this.updateState({
-      isOverdueSelected: !this._state.isOverdueSelected,
-      isAsapSelected: false,
-      isUpcomingSelected: false,
-    });
+    await this.toggleExclusiveDueDateFilter("isOverdueSelected");
   };
 
   /**
@@ -174,11 +207,7 @@ export class QuickAccessController implements ReactiveController {
    * @memberof QuickAccessController
    */
   public toggleAsapSelected = async (): Promise<void> => {
-    await this.updateState({
-      isAsapSelected: !this._state.isAsapSelected,
-      isOverdueSelected: false,
-      isUpcomingSelected: false,
-    });
+    await this.toggleExclusiveDueDateFilter("isAsapSelected");
   };
 
   /**
@@ -189,11 +218,7 @@ export class QuickAccessController implements ReactiveController {
    * @memberof QuickAccessController
    */
   public toggleUpcomingSelected = async (): Promise<void> => {
-    await this.updateState({
-      isUpcomingSelected: !this._state.isUpcomingSelected,
-      isOverdueSelected: false,
-      isAsapSelected: false,
-    });
+    await this.toggleExclusiveDueDateFilter("isUpcomingSelected");
   };
 
   /**

@@ -3,7 +3,7 @@ import type { NotesRepository } from "@/repositories/notes.repository";
 import type { NoteRecord } from "@/db/models/journal.model";
 
 /**
- * Note関連イベントを管理する Reactive Controller
+ * Note関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class NotesController
@@ -12,7 +12,7 @@ import type { NoteRecord } from "@/db/models/journal.model";
 export class NotesController implements ReactiveController {
   private host: ReactiveControllerHost;
   private repository: NotesRepository;
-  private taskId: number;
+  private _taskId: number | undefined;
 
   /** Notesの内部状態 */
   private _state: NoteRecord[] = [];
@@ -26,6 +26,17 @@ export class NotesController implements ReactiveController {
    */
   public get state(): readonly NoteRecord[] {
     return this._state;
+  }
+
+  /**
+   * 現在対象のタスクID
+   *
+   * @readonly
+   * @type {(number | undefined)}
+   * @memberof NotesController
+   */
+  public get taskId(): number | undefined {
+    return this._taskId;
   }
 
   /**
@@ -43,18 +54,18 @@ export class NotesController implements ReactiveController {
    * Creates an instance of NotesController.
    * @param {ReactiveControllerHost} host
    * @param {NotesRepository} repository
-   * @param {number} taskId
+   * @param {number} [taskId]
    * @memberof NotesController
    */
   constructor(
     host: ReactiveControllerHost,
     repository: NotesRepository,
-    taskId: number,
+    taskId?: number,
   ) {
     this.host = host;
     this.host.addController(this);
     this.repository = repository;
-    this.taskId = taskId;
+    this._taskId = taskId;
     this.initialized = this.loadState();
   }
 
@@ -66,26 +77,57 @@ export class NotesController implements ReactiveController {
    * @memberof NotesController
    */
   private loadState = async (): Promise<void> => {
-    const records = await this.repository.getByTaskId(this.taskId);
-    this._state = [...records];
+    if (this._taskId !== undefined) {
+      const records = await this.repository.getByTaskId(this._taskId);
+      this._state = [...records];
+    } else {
+      this._state = [];
+    }
     this.host.requestUpdate();
   };
 
   /**
-   * 新規Noteを作成する
+   * 対象とするタスクIDを変更し、データを再ロードする。
    *
-   * @param {Omit<NoteRecord, "id" | "taskId"> & { taskId?: number }} data
+   * @param {(number | undefined)} id
    * @return {*}  {Promise<void>}
    * @memberof NotesController
    */
+  public setTaskId = async (id: number | undefined): Promise<void> => {
+    this._taskId = id;
+    await this.loadState();
+  };
+
+  /**
+   * データベースから最新の状態を再読み込みする。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof NotesController
+   */
+  public refresh = async (): Promise<void> => {
+    await this.loadState();
+  };
+
+  /**
+   * 新規Noteを作成する。
+   * taskIdが未設定の場合は作成せず undefined を返す。
+   *
+   * @param {Omit<NoteRecord, "id" | "taskId">} data
+   * @return {*}  {Promise<number | undefined>} 採番されたID、または未設定時はundefined
+   * @memberof NotesController
+   */
   public createNote = async (
-    data: Omit<NoteRecord, "id" | "taskId"> & { taskId?: number },
-  ): Promise<void> => {
-    await this.repository.add({
-      taskId: this.taskId,
+    data: Omit<NoteRecord, "id" | "taskId">,
+  ): Promise<number | undefined> => {
+    if (this._taskId === undefined) {
+      return undefined;
+    }
+    const newId = await this.repository.add({
+      taskId: this._taskId,
       ...data,
     });
     await this.loadState();
+    return newId;
   };
 
   /**
