@@ -1,6 +1,7 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, unsafeCSS } from "lit";
 import { customElement } from "lit/decorators.js";
 import { ContextProvider } from "@lit/context";
+import appRootStyles from "./app-root.scss?inline";
 import {
   layoutUIContext,
   quickAccessContext,
@@ -93,8 +94,32 @@ export class AppRoot extends LitElement {
     });
   }
 
+  public static override styles = unsafeCSS(appRootStyles);
+
   override render() {
-    return html` <div class="app-root">in progress</div> `;
+    return html`
+      <div class="app-shell">
+        <div class="panes-container">
+          <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
+          <nav class="pane-menu"></nav>
+
+          <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
+          <aside class="pane-navigation">
+            <div class="navigation-quick-access">quick-access</div>
+            <div class="navigation-labels"></div>
+          </aside>
+
+          <!-- 3. Task List ペイン (第3ペイン) -->
+          <section class="pane-task-list">task-list</section>
+
+          <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
+          <main class="pane-task">task</main>
+
+          <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
+          <aside class="pane-journal">journal</aside>
+        </div>
+      </div>
+    `;
   }
 }
 

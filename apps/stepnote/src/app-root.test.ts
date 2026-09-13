@@ -34,6 +34,10 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 2-5. logsContext が配下コンポーネントへ正しく配給されること
  *    - [x] 2-6. notesContext が配下コンポーネントへ正しく配給されること
  *    - [x] 2-7. issuesContext が配下コンポーネントへ正しく配給されること
+ *
+ * 【AppRoot Layout 仕様 (Phase 2)】
+ * 3. 基本レイアウト構造の提供
+ *    - [x] 3-1. 5ペインの基本骨格要素（Menu, Navigation, TaskList, Task, Journal）がレンダリングされること
  */
 
 /**
@@ -67,7 +71,9 @@ describe("AppRoot Provider (Phase 1)", () => {
   describe("1. Controller インスタンスの生成と初期化 (Instantiation)", () => {
     it("1-1. AppRoot インスタンス生成時、7つの各 Controller (LayoutUI, QuickAccess, Labels, Task, Logs, Notes, Issues) がインスタンス化されていること", () => {
       expect(appRoot.layoutUIController).toBeInstanceOf(LayoutUIController);
-      expect(appRoot.quickAccessController).toBeInstanceOf(QuickAccessController);
+      expect(appRoot.quickAccessController).toBeInstanceOf(
+        QuickAccessController,
+      );
       expect(appRoot.labelsController).toBeInstanceOf(LabelsController);
       expect(appRoot.taskController).toBeInstanceOf(TaskController);
       expect(appRoot.logsController).toBeInstanceOf(LogsController);
@@ -117,6 +123,36 @@ describe("AppRoot Provider (Phase 1)", () => {
       const consumed = consumeContext(appRoot, issuesContext);
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.issuesController);
+    });
+  });
+});
+
+describe("AppRoot Layout 仕様 (Phase 2)", () => {
+  let appRoot: AppRoot;
+
+  beforeEach(() => {
+    appRoot = new AppRoot();
+  });
+
+  describe("3. 基本レイアウト構造の提供", () => {
+    it("3-1. 5ペインの基本骨格要素がレンダリングされること", async () => {
+      const template = appRoot.render() as unknown as {
+        strings: readonly string[];
+      };
+      const strings = template.strings.join("");
+
+      // 5ペインのコンテナおよび各ペイン要素の存在確認
+      expect(strings).toContain("app-shell");
+      expect(strings).toContain("panes-container");
+      expect(strings).toContain("pane-menu");
+      expect(strings).toContain("pane-navigation");
+      expect(strings).toContain("pane-task-list");
+      expect(strings).toContain("pane-task");
+      expect(strings).toContain("pane-journal");
+
+      // Navigation 内部の上下分割領域の存在確認
+      expect(strings).toContain("navigation-quick-access");
+      expect(strings).toContain("navigation-labels");
     });
   });
 });

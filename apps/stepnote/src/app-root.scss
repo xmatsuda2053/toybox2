@@ -1,0 +1,85 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  overflow: hidden;
+  font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
+  color: #1f2328;
+  background-color: #ffffff;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.panes-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 1. Menu (最左ペイン): 固定サイズ 50px */
+.pane-menu {
+  width: 50px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid #d0d7de;
+}
+
+/* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
+.pane-navigation {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid #d0d7de;
+
+  .navigation-quick-access {
+    flex-shrink: 0;
+  }
+
+  .navigation-labels {
+    flex: 1;
+    overflow-y: auto;
+  }
+}
+
+/* 3. Task List (第3ペイン): 固定サイズ 310px・垂直スクロール */
+.pane-task-list {
+  width: 310px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid #d0d7de;
+}
+
+/* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */
+.pane-task {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow-y: auto;
+  border-right: 1px solid #d0d7de;
+}
+
+/* 5. Journal (第5ペイン): Task と均等分割 (1:1) */
+.pane-journal {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow-y: auto;
+}
