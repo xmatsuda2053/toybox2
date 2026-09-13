@@ -1,4 +1,4 @@
-import type { LabelsController } from "@/controllers/labels.controller.js";
+import type { LabelsController } from "@/controllers/labels.controller";
 import { createContext } from "@lit/context";
 
 /**
