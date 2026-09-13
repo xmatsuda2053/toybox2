@@ -1,4 +1,4 @@
-import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
+import type { QuickAccessController } from "@/controllers/quick-access.controller";
 import { createContext } from "@lit/context";
 
 /**
