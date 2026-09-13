@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { padZero, clamp } from "./number-utils";
+import { padZero, clamp } from "./number.utils";
 
 /** *
  * - [x] 仕様 1: 指定した桁数のゼロパディングが正しく行われること。
@@ -10,7 +10,7 @@ import { padZero, clamp } from "./number-utils";
  * - [x] 仕様 6: 最大値を超える値は最大値に丸められること。
  * - [x] 仕様 7: 最小値が最大値より大きく指定された場合は RangeError をスローすること。
  */
-describe("number-utils.padZero", () => {
+describe("number.utils.padZero", () => {
   it("指定した桁数のゼロパディングが正しく行われること", () => {
     expect(padZero(5, 3)).toBe("005");
     expect(padZero(123, 5)).toBe("00123");
@@ -27,7 +27,7 @@ describe("number-utils.padZero", () => {
   });
 });
 
-describe("number-utils.clamp", () => {
+describe("number.utils.clamp", () => {
   it("最小値と最大値の間の値はそのまま返されること", () => {
     expect(clamp(5, 0, 10)).toBe(5);
     expect(clamp(0, 0, 10)).toBe(0);

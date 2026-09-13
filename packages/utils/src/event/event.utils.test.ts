@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createCustomEvent, dispatchCustomEvent } from "./event-utils";
+import { createCustomEvent, dispatchCustomEvent } from "./event.utils";
 
 /**
  * - [x] 仕様 1: オプション未設定の場合、デフォルト値が正しく設定されること。
@@ -8,7 +8,7 @@ import { createCustomEvent, dispatchCustomEvent } from "./event-utils";
  * - [x] 仕様 4: dispatchCustomEvent関数が正しくイベントを発火すること。
  * - [x] 仕様 5: dispatchCustomEventがEventTarget（HTMLElement以外）に対しても型キャストなしで直接イベントを発火できること。
  */
-describe("event-utils", () => {
+describe("event.utils", () => {
   it("オプション設定のでデフォルト値が正しく設定されること", () => {
     const event = createCustomEvent("test-event");
     expect(event).toBeInstanceOf(CustomEvent);
