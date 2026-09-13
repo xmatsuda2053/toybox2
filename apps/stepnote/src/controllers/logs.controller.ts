@@ -3,7 +3,7 @@ import type { LogsRepository } from "@/repositories/logs.repository";
 import type { LogRecord } from "@/db/models/journal.model";
 
 /**
- * Log関連イベントを管理する Reactive Controller
+ * Log関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class LogsController
@@ -12,7 +12,7 @@ import type { LogRecord } from "@/db/models/journal.model";
 export class LogsController implements ReactiveController {
   private host: ReactiveControllerHost;
   private repository: LogsRepository;
-  private taskId: number;
+  private _taskId: number | undefined;
 
   /** Logsの内部状態 */
   private _state: LogRecord[] = [];
@@ -26,6 +26,17 @@ export class LogsController implements ReactiveController {
    */
   public get state(): readonly LogRecord[] {
     return this._state;
+  }
+
+  /**
+   * 現在対象のタスクID
+   *
+   * @readonly
+   * @type {(number | undefined)}
+   * @memberof LogsController
+   */
+  public get taskId(): number | undefined {
+    return this._taskId;
   }
 
   /**
@@ -43,18 +54,18 @@ export class LogsController implements ReactiveController {
    * Creates an instance of LogsController.
    * @param {ReactiveControllerHost} host
    * @param {LogsRepository} repository
-   * @param {number} taskId
+   * @param {number} [taskId]
    * @memberof LogsController
    */
   constructor(
     host: ReactiveControllerHost,
     repository: LogsRepository,
-    taskId: number,
+    taskId?: number,
   ) {
     this.host = host;
     this.host.addController(this);
     this.repository = repository;
-    this.taskId = taskId;
+    this._taskId = taskId;
     this.initialized = this.loadState();
   }
 
@@ -66,26 +77,57 @@ export class LogsController implements ReactiveController {
    * @memberof LogsController
    */
   private loadState = async (): Promise<void> => {
-    const records = await this.repository.getByTaskId(this.taskId);
-    this._state = [...records];
+    if (this._taskId !== undefined) {
+      const records = await this.repository.getByTaskId(this._taskId);
+      this._state = [...records];
+    } else {
+      this._state = [];
+    }
     this.host.requestUpdate();
   };
 
   /**
-   * 新規Logを作成する
+   * 対象とするタスクIDを変更し、データを再ロードする。
    *
-   * @param {Omit<LogRecord, "id" | "taskId"> & { taskId?: number }} data
+   * @param {(number | undefined)} id
    * @return {*}  {Promise<void>}
    * @memberof LogsController
    */
+  public setTaskId = async (id: number | undefined): Promise<void> => {
+    this._taskId = id;
+    await this.loadState();
+  };
+
+  /**
+   * データベースから最新の状態を再読み込みする。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof LogsController
+   */
+  public refresh = async (): Promise<void> => {
+    await this.loadState();
+  };
+
+  /**
+   * 新規Logを作成する。
+   * taskIdが未設定の場合は作成せず undefined を返す。
+   *
+   * @param {Omit<LogRecord, "id" | "taskId">} data
+   * @return {*}  {Promise<number | undefined>} 採番されたID、または未設定時はundefined
+   * @memberof LogsController
+   */
   public createLog = async (
-    data: Omit<LogRecord, "id" | "taskId"> & { taskId?: number },
-  ): Promise<void> => {
-    await this.repository.add({
-      taskId: this.taskId,
+    data: Omit<LogRecord, "id" | "taskId">,
+  ): Promise<number | undefined> => {
+    if (this._taskId === undefined) {
+      return undefined;
+    }
+    const newId = await this.repository.add({
+      taskId: this._taskId,
       ...data,
     });
     await this.loadState();
+    return newId;
   };
 
   /**

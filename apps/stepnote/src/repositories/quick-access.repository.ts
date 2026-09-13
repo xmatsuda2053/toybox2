@@ -1,12 +1,12 @@
 import { db } from "@/db/schema/database.schema";
-import { QuickAccessRecord } from "@/db/models/navigation.model";
+import type { QuickAccessRecord } from "@/db/models/navigation.model";
 import {
   QUICK_ACCESS_STATIC_ID,
   DEFAULT_QUICK_ACCESS,
 } from "@/constants/quick-access.constants";
 
 /**
- * QuickAccessに対するCRUDを制御する
+ * QuickAccessに対するCRUDおよび状態を制御するリポジトリ
  *
  * @export
  * @class QuickAccessRepository
@@ -16,7 +16,7 @@ export class QuickAccessRepository {
    * QuickAccessからレコードを取得する。
    * データが存在しない場合は、初期データを登録する。
    *
-   * @return {*}  {Promise<QuickAccessRecord>}
+   * @return {*} {Promise<QuickAccessRecord>}
    * @memberof QuickAccessRepository
    */
   public getQuickAccess = async (): Promise<QuickAccessRecord> => {
@@ -40,6 +40,7 @@ export class QuickAccessRepository {
    * 指定したプロパティのみをマージし、id: 1 を維持して上書き保存（put）する。
    *
    * @param {Partial<Omit<QuickAccessRecord, "id">>} partial
+   * @return {*} {Promise<QuickAccessRecord>}
    * @memberof QuickAccessRepository
    */
   public updateQuickAccess = async (

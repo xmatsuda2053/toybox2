@@ -6,6 +6,7 @@ import { createCustomEvent, dispatchCustomEvent } from "./event-utils";
  * - [x] 仕様 2: detailに値を設定した場合、正しく設定されること。
  * - [x] 仕様 3: オプションの上書きが正しく反映されること。
  * - [x] 仕様 4: dispatchCustomEvent関数が正しくイベントを発火すること。
+ * - [x] 仕様 5: dispatchCustomEventがEventTarget（HTMLElement以外）に対しても型キャストなしで直接イベントを発火できること。
  */
 describe("event-utils", () => {
   it("オプション設定のでデフォルト値が正しく設定されること", () => {
@@ -60,5 +61,19 @@ describe("event-utils", () => {
     expect(eventArg.type).toBe("my-event");
     expect(eventArg.detail).toEqual({ count: 42 }); // データが届いているか
     expect(result).toBe(true); // キャンセルされず正常に発火を終えたか
+  });
+
+  it("dispatchCustomEventがEventTarget（HTMLElement以外）に対しても型キャストなしで直接イベントを発火できること", () => {
+    const target = new EventTarget();
+    const listenerMock = vi.fn();
+    target.addEventListener("custom-trigger", listenerMock as EventListener);
+
+    // HTMLElement へのキャスト（as unknown as HTMLElement）を行わずに EventTarget を直接渡す
+    const result = dispatchCustomEvent(target, "custom-trigger", {
+      detail: { status: "ok" },
+    });
+
+    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(result).toBe(true);
   });
 });

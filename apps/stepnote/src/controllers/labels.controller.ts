@@ -3,7 +3,7 @@ import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { LabelRecord } from "@/db/models/navigation.model";
 
 /**
- * Label関連イベントを管理する Reactive Controller
+ * Label関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class LabelsController
@@ -65,19 +65,31 @@ export class LabelsController implements ReactiveController {
   };
 
   /**
+   * データベースから最新の状態を再読み込みする。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof LabelsController
+   */
+  public refresh = async (): Promise<void> => {
+    await this.loadState();
+  };
+
+  /**
    * 新規ラベルを作成する
    *
    * @param {Omit<LabelRecord, "id" | "isSelected">} data
+   * @return {*}  {Promise<number>} 採番されたラベルID
    * @memberof LabelsController
    */
   public createLabel = async (
     data: Omit<LabelRecord, "id" | "isSelected">,
-  ): Promise<void> => {
-    await this.repository.add({
+  ): Promise<number> => {
+    const newId = await this.repository.add({
       ...data,
       isSelected: false,
     });
     await this.loadState();
+    return newId;
   };
 
   /**
@@ -85,6 +97,7 @@ export class LabelsController implements ReactiveController {
    *
    * @param {number} id
    * @param {Partial<Omit<LabelRecord, "id">>} data
+   * @return {*}  {Promise<void>}
    * @memberof LabelsController
    */
   public updateLabel = async (
@@ -99,6 +112,7 @@ export class LabelsController implements ReactiveController {
    * 指定したIDのラベルを削除する
    *
    * @param {number} id
+   * @return {*}  {Promise<void>}
    * @memberof LabelsController
    */
   public deleteLabel = async (id: number): Promise<void> => {
@@ -110,6 +124,7 @@ export class LabelsController implements ReactiveController {
    * 指定したIDの選択状態をON/OFFする
    *
    * @param {number} id
+   * @return {*}  {Promise<void>}
    * @memberof LabelsController
    */
   public toggleLabel = async (id: number): Promise<void> => {
@@ -120,6 +135,7 @@ export class LabelsController implements ReactiveController {
   /**
    * 全ての選択状態を解除する
    *
+   * @return {*}  {Promise<void>}
    * @memberof LabelsController
    */
   public clearAllSelected = async (): Promise<void> => {
@@ -151,7 +167,7 @@ export class LabelsController implements ReactiveController {
    * @memberof LabelsController
    */
   public get hasSelectedLabels(): boolean {
-    return this.selectedLabelIds.length > 0;
+    return this._state.some((label) => label.isSelected);
   }
 
   /**

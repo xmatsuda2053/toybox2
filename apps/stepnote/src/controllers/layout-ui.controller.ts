@@ -54,6 +54,7 @@ export class LayoutUIController implements ReactiveController {
   /**
    * QUICK ACCESS の 開閉状態を反転させ、ホストへ再描画を要求する。
    *
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public toggleQuickAccess = (): void => {
@@ -67,6 +68,7 @@ export class LayoutUIController implements ReactiveController {
   /**
    * ナビゲーションエリアの開閉状態を反転させ、ホストへ再描画を要求する。
    *
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public toggleNavigationArea = (): void => {
@@ -80,6 +82,7 @@ export class LayoutUIController implements ReactiveController {
   /**
    * ナビゲーションリストエリアの開閉状態を反転させ、ホストへ再描画を要求する。
    *
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public toggleNavigationListArea = (): void => {
@@ -94,6 +97,7 @@ export class LayoutUIController implements ReactiveController {
    * QUICK ACCESS の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
    *
    * @param {boolean} isOpen
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public setQuickAccessOpen = (isOpen: boolean): void => {
@@ -109,6 +113,7 @@ export class LayoutUIController implements ReactiveController {
    * ナビゲーションエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
    *
    * @param {boolean} isOpen
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public setNavigationAreaOpen = (isOpen: boolean): void => {
@@ -124,6 +129,7 @@ export class LayoutUIController implements ReactiveController {
    * ナビゲーションリストエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
    *
    * @param {boolean} isOpen
+   * @return {*} {void}
    * @memberof LayoutUIController
    */
   public setNavigationListAreaOpen = (isOpen: boolean): void => {

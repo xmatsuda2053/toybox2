@@ -6,6 +6,8 @@ import type {
 
 /**
  * タスク状態コードのマスタマップ
+ *
+ * @constant
  */
 export const TASK_STATUS_CODE = {
   PENDING: 0,
@@ -15,6 +17,9 @@ export const TASK_STATUS_CODE = {
 
 /**
  * タスク状態のマスタマップ
+ *
+ * @constant
+ * @type {TaskStatusMap}
  */
 export const TASK_STATUS_MAP: TaskStatusMap = {
   [TASK_STATUS_CODE.PENDING]: {
@@ -36,6 +41,9 @@ export const TASK_STATUS_MAP: TaskStatusMap = {
 
 /**
  * タスク状態の定義リスト
+ *
+ * @constant
+ * @type {readonly TaskStatusDefinition[]}
  */
 export const TASK_STATUS_LIST: readonly TaskStatusDefinition[] = [
   TASK_STATUS_MAP[TASK_STATUS_CODE.PENDING],

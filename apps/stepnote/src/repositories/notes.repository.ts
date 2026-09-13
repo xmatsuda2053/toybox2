@@ -2,16 +2,38 @@ import { db } from "@/db/schema/database.schema";
 import type { NoteRecord } from "@/db/models/journal.model";
 
 /**
- * Noteに対するCRUDを制御する
+ * Noteに対するCRUDおよび状態を制御するリポジトリ
  *
+ * @export
  * @class NotesRepository
  */
 export class NotesRepository {
   /**
+   * DBからすべてのNoteを取得する
+   *
+   * @return {*} {Promise<NoteRecord[]>}
+   * @memberof NotesRepository
+   */
+  public getAll = async (): Promise<NoteRecord[]> => {
+    return await db.notes.toArray();
+  };
+
+  /**
+   * 指定したIDのNoteを取得する
+   *
+   * @param {number} id
+   * @return {*} {Promise<NoteRecord | undefined>}
+   * @memberof NotesRepository
+   */
+  public getById = async (id: number): Promise<NoteRecord | undefined> => {
+    return await db.notes.get(id);
+  };
+
+  /**
    * 指定したtaskIdのNoteリストを取得する。存在しない場合は空配列を返す。
    *
    * @param {number} taskId
-   * @return {*}  {Promise<NoteRecord[]>}
+   * @return {*} {Promise<NoteRecord[]>}
    * @memberof NotesRepository
    */
   public getByTaskId = async (taskId: number): Promise<NoteRecord[]> => {
@@ -22,7 +44,7 @@ export class NotesRepository {
    * 新規Noteを追加する
    *
    * @param {Omit<NoteRecord, "id">} note
-   * @return {*}  {Promise<number>}
+   * @return {*} {Promise<number>}
    * @memberof NotesRepository
    */
   public add = async (note: Omit<NoteRecord, "id">): Promise<number> => {
@@ -34,6 +56,7 @@ export class NotesRepository {
    *
    * @param {number} id
    * @param {Partial<Omit<NoteRecord, "id">>} partial
+   * @return {*} {Promise<void>}
    * @memberof NotesRepository
    */
   public update = async (
@@ -47,10 +70,21 @@ export class NotesRepository {
    * 指定したIDのNoteを削除する
    *
    * @param {number} id
-   * @return {*}  {Promise<void>}
+   * @return {*} {Promise<void>}
    * @memberof NotesRepository
    */
   public delete = async (id: number): Promise<void> => {
     await db.notes.delete(id);
+  };
+
+  /**
+   * 指定したtaskIdに紐づくすべてのNoteを削除する
+   *
+   * @param {number} taskId
+   * @return {*} {Promise<void>}
+   * @memberof NotesRepository
+   */
+  public deleteByTaskId = async (taskId: number): Promise<void> => {
+    await db.notes.where("taskId").equals(taskId).delete();
   };
 }
