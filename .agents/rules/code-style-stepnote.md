@@ -21,22 +21,29 @@ trigger: always_on
   - 推奨指定: `font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;`
 
 ## 2. 画面レイアウト・ペイン構成方針（4ペイン）
-画面全体は左から **「Navigation」「Task List」「Task」「Journal」** の4ペインで構成する。
+画面全体は左から **「Navigation」「Task List」「Task」「Journal」** の4ペインで構成する[cite: 1, 4]。
 
 - **1. Navigation（最左ペイン）**:
-  - `width` は固定サイズとする。
-  - 内部を上下2分割で構成する。
-    - **上部（Quick Access）**: 制御ボタンによる開閉（トグル折りたたみ）が可能。
-    - **下部（Labels）**: `overflow` 発生時は垂直スクロール。
-  - 制御ボタンにより、Navigation エリア全体の表示・非表示を切り替え可能とする。
+  - `width` は固定サイズとする[cite: 1, 4]。
+  - 内部を上下2分割で構成する[cite: 1, 4]。
+    - **上部（Quick Access）**: 制御ボタンによる開閉（トグル折りたたみ）が可能[cite: 1, 4]。
+    - **下部（Labels）**: `overflow` 発生時は垂直スクロール[cite: 1, 4]。
+  - 制御ボタンにより、Navigation エリア全体の表示・非表示を切り替え可能とする[cite: 1, 4]。
 - **2. Task List（第2ペイン）**:
-  - `width` は固定サイズとする。
-  - `overflow` 発生時は垂直スクロール。
-  - 制御ボタンにより、Task List エリアの表示・非表示を切り替え可能とする。
-- **3. Task ＆ 4. Journal（第3・第4ペイン）**:
-  - Navigation および Task List を配置した**残りの横幅を均等（1:1）に分割**して表示する（例: `flex: 1` 同士、または `grid-template-columns: 1fr 1fr`）。
-  - 各エリア内部は独立して `overflow` 時にスクロール可能とする。
-  - Task, Journal エリアは常時表示とする（ドロワー開閉等の非表示化は行わない）。
+  - `width` は固定サイズとする[cite: 1, 4]。
+  - `overflow` 発生時は垂直スクロール[cite: 1, 4]。
+  - 制御ボタンにより、Task List エリアの表示・非表示を切り替え可能とする[cite: 1, 4]。
+- **3. Task（第3ペイン: タスク管理）**:
+  - Navigation および Task List を配置した**残りの横幅を Journal ペインと均等（1:1）に分割**して常時表示する[cite: 1, 4]。
+  - 内部は **3つのタブ** による画面切り替え構成とし、タブ下のコンテンツ領域で垂直スクロール可能とする。
+    - **Summary タブ**: タスク名、期日、関係者、詳細説明等の主たる情報の表示・編集[cite: 3, 4]。
+    - **Property タブ**: 年度、ラベル、ブックマーク等のメタ属性情報の表示・編集[cite: 3, 4]。
+    - **Issues タブ**: タスクに紐づくサブタスク（課題）の一覧表示・追加・ステータス管理（※Issues はサブタスクとして扱うため、Journal ではなく Task ペイン内に配置する）[cite: 2, 4]。
+- **4. Journal（第4ペイン: 作業記録・履歴）**:
+  - Task ペインと**横幅を均等（1:1）に分割**して常時表示する（ドロワー開閉等の非表示化は行わない）[cite: 1, 4]。
+  - 内部は **2つのタブ** による画面切り替え構成とし、タブ下のコンテンツ領域で垂直スクロール可能とする。
+    - **Logs タブ**: 作業実績・行動履歴ログの一覧表示および追加[cite: 2, 3]。
+    - **Notes タブ**: メモ・備忘録ノートの一覧表示および追加[cite: 2, 3]。
 
 ## 3. 開閉状態管理（LayoutUIController）
 - Navigation Area および Task List Area の表示・非表示、ならびに Quick Access の上下開閉状態は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
