@@ -1,0 +1,49 @@
+/* ==========================================================================
+   StepNote Design Tokens & Theming (tokens.scss)
+   ========================================================================== */
+
+:host,
+:root {
+  /* ------------------------------------------------------------------------
+   * 1. Web Awesome 標準デザイントークン (Light モード デフォルト値)
+   * ------------------------------------------------------------------------ */
+  --wa-font-family-body: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
+  --wa-color-surface-default: #ffffff;
+  --wa-color-surface-border: #d0d7de;
+  --wa-color-text-normal: #1f2328;
+  --wa-border-width-s: 1px;
+  --wa-border-style: solid;
+
+  /* ------------------------------------------------------------------------
+   * 2. StepNote アプリケーション固有レイアウトトークン
+   *    (code-style-stepnote.md の 5ペイン・Header/Footer レイアウト規約準拠)
+   * ------------------------------------------------------------------------ */
+  --stepnote-header-height: 30px;
+  --stepnote-footer-height: 30px;
+  --stepnote-pane-menu-width: 50px;
+  --stepnote-pane-navigation-width: 260px;
+  --stepnote-pane-task-list-width: 310px;
+}
+
+/* --------------------------------------------------------------------------
+ * 3. ダークモード対応 (Dark Mode)
+ *    Web Awesome の .wa-dark クラス、data-theme="dark" 属性、
+ *    および OS の prefers-color-scheme (メディアクエリ) に連動
+ * -------------------------------------------------------------------------- */
+:host(.wa-dark),
+:host([data-theme="dark"]),
+.wa-dark,
+[data-theme="dark"] {
+  --wa-color-surface-default: #0d1117;
+  --wa-color-surface-border: #30363d;
+  --wa-color-text-normal: #e6edf3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not(.wa-light):not([data-theme="light"])),
+  :root:not(.wa-light):not([data-theme="light"]) {
+    --wa-color-surface-default: #0d1117;
+    --wa-color-surface-border: #30363d;
+    --wa-color-text-normal: #e6edf3;
+  }
+}

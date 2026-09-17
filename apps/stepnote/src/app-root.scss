@@ -1,3 +1,5 @@
+@use "./styles/tokens.scss";
+
 *,
 *::before,
 *::after {
@@ -11,13 +13,10 @@
   height: 100dvh;
   box-sizing: border-box;
   overflow: hidden;
-  font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
-  color: #1f2328;
-  background-color: #ffffff;
+  font-family: var(--wa-font-family-body);
+  color: var(--wa-color-text-normal);
+  background-color: var(--wa-color-surface-default);
 }
-
-$height-header: 30px;
-$height-footer: 30px;
 
 .app-shell {
   display: flex;
@@ -28,13 +27,13 @@ $height-footer: 30px;
 }
 
 .app-header {
-  height: $height-header;
+  height: var(--stepnote-header-height);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   overflow: hidden;
-  border-bottom: 1px solid #d0d7de;
-  background-color: #ffffff;
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
+  background-color: var(--wa-color-surface-default);
 }
 
 .panes-container {
@@ -47,50 +46,51 @@ $height-footer: 30px;
 }
 
 .app-footer {
-  height: $height-footer;
+  height: var(--stepnote-footer-height);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   overflow: hidden;
-  border-top: 1px solid #d0d7de;
-  background-color: #ffffff;
+  border-top: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
+  background-color: var(--wa-color-surface-default);
 }
 
 /* 1. Menu (最左ペイン): 固定サイズ 50px */
 .pane-menu {
-  width: 50px;
+  width: var(--stepnote-pane-menu-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid #d0d7de;
+  border-right: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
 }
 
 /* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
 .pane-navigation {
-  width: 260px;
+  width: var(--stepnote-pane-navigation-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid #d0d7de;
+  border-right: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
+}
 
-  .navigation-quick-access {
-    flex-shrink: 0;
-  }
+/* フラットなセレクタ（ルール7準拠） */
+.navigation-quick-access {
+  flex-shrink: 0;
+}
 
-  .navigation-labels {
-    flex: 1;
-    overflow-y: auto;
-  }
+.navigation-labels {
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* 3. Task List (第3ペイン): 固定サイズ 310px・垂直スクロール */
 .pane-task-list {
-  width: 310px;
+  width: var(--stepnote-pane-task-list-width);
   flex-shrink: 0;
   overflow-y: auto;
-  border-right: 1px solid #d0d7de;
+  border-right: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
 }
 
 /* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */
@@ -98,7 +98,7 @@ $height-footer: 30px;
   flex: 1 1 0%;
   min-width: 0;
   overflow-y: auto;
-  border-right: 1px solid #d0d7de;
+  border-right: var(--wa-border-width-s) var(--wa-border-style) var(--wa-color-surface-border);
 }
 
 /* 5. Journal (第5ペイン): Task と均等分割 (1:1) */
