@@ -66,19 +66,41 @@
     var(--wa-color-surface-border);
 }
 
-/* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
-.pane-navigation {
-  width: var(--stepnote-pane-navigation-width);
+/* 共通コラプシブル（開閉ペイン）スタイル */
+.pane-collapsible {
+  width: var(--pane-target-width);
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
-  border-right: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
+  visibility: visible;
+  opacity: 1;
+  transition:
+    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s ease,
+    opacity 0.4s ease,
+    visibility 0.5s;
+
+  /* 縮小中の内部テキスト折り返し崩れを防止 */
+  > * {
+    min-width: var(--pane-target-width);
+  }
+
+  &[hidden] {
+    display: flex !important;
+    width: 0 !important;
+    opacity: 0;
+    border-right-color: transparent !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
-.pane-navigation[hidden] {
-  display: none;
+/* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
+.pane-navigation {
+  --pane-target-width: var(--stepnote-pane-navigation-width);
+  display: flex;
+  flex-direction: column;
+  border-right: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
 }
 
 /* フラットなセレクタ（ルール7準拠） */
@@ -93,15 +115,10 @@
 
 /* 3. Task List (第3ペイン): 固定サイズ 310px・垂直スクロール */
 .pane-task-list {
-  width: var(--stepnote-pane-task-list-width);
-  flex-shrink: 0;
+  --pane-target-width: var(--stepnote-pane-task-list-width);
   overflow-y: auto;
   border-right: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
-}
-
-.pane-task-list[hidden] {
-  display: none;
 }
 
 /* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */

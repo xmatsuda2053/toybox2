@@ -130,13 +130,15 @@ export class AppRoot extends LitElement {
           ></pane-menu>
 
           <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
-          <aside class="pane-navigation" ?hidden=${!isOpen}>
+          <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
             <div class="navigation-quick-access">quick-access</div>
             <div class="navigation-labels"></div>
           </aside>
 
           <!-- 3. Task List ペイン (第3ペイン) -->
-          <section class="pane-task-list" ?hidden=${!isOpen}>task-list</section>
+          <section class="pane-task-list pane-collapsible" ?hidden=${!isOpen}>
+            task-list
+          </section>
 
           <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
           <main class="pane-task">task</main>
