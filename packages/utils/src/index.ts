@@ -3,3 +3,4 @@ export * from "./date/date.utils";
 export * from "./event/event.utils";
 export * from "./number/number.utils";
 export * from "./string/string.utils";
+export * from "./testing/template.utils";

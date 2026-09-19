@@ -18,6 +18,7 @@ import { TaskController } from "@/controllers/task.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
+import "@/components/panes/pane-menu/pane-menu.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -94,9 +95,25 @@ export class AppRoot extends LitElement {
     });
   }
 
+  /**
+   * サイドパネル（ナビゲーションおよびタスク一覧）の開閉状態を切り替える。
+   *
+   * @memberof AppRoot
+   */
+  public handleToggleNavigationList = (): void => {
+    this.layoutUIController.toggleNavigationListArea();
+  };
+
   public static override styles = unsafeCSS(appRootStyles);
 
+  /**
+   * メインコンテンツのペインを構成する。
+   *
+   * @memberof AppRoot
+   */
   override render() {
+    const isOpen = this.layoutUIController.state.isNavigationListAreaOpen;
+
     return html`
       <div class="app-shell">
         <!-- Header (上部固定) -->
@@ -107,18 +124,19 @@ export class AppRoot extends LitElement {
 
         <div class="panes-container">
           <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
-          <nav class="pane-menu">
-            <wa-icon library="my-icons" name="check-solid-full"></wa-icon>
-          </nav>
+          <pane-menu
+            class="pane-menu"
+            .isNavigationListAreaOpen=${isOpen}
+          ></pane-menu>
 
           <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
-          <aside class="pane-navigation">
+          <aside class="pane-navigation" ?hidden=${!isOpen}>
             <div class="navigation-quick-access">quick-access</div>
             <div class="navigation-labels"></div>
           </aside>
 
           <!-- 3. Task List ペイン (第3ペイン) -->
-          <section class="pane-task-list">task-list</section>
+          <section class="pane-task-list" ?hidden=${!isOpen}>task-list</section>
 
           <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
           <main class="pane-task">task</main>

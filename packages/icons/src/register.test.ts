@@ -54,6 +54,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
     it("登録済みのアイコン名に対して hasIcon が true を返すこと", () => {
       expect(hasIcon("check-solid-full")).toBe(true);
       expect(hasIcon("cubes-stacked-solid-full")).toBe(true);
+      expect(hasIcon("chevron-right")).toBe(true);
     });
 
     it("未登録のアイコン名に対して hasIcon が false を返すこと", () => {
@@ -65,6 +66,10 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const svg = getIconSvg("check-solid-full");
       expect(svg).toBeDefined();
       expect(svg).toContain("<svg");
+
+      const chevronSvg = getIconSvg("chevron-right");
+      expect(chevronSvg).toBeDefined();
+      expect(chevronSvg).toContain("<svg");
     });
 
     it("未登録のアイコン名に対して getIconSvg が undefined を返すこと", () => {
