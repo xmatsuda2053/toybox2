@@ -1,11 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/icons": ["../../packages/icons/src/index.ts"],
-      "@shared/utils": ["../../packages/utils/src/index.ts"]
+      "@shared/icons": ["./src/index.ts"]
     }
   },
   "include": ["src/**/*"]
