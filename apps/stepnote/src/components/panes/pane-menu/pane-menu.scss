@@ -1,0 +1,46 @@
+@use "../../../styles/tokens.scss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: var(--wa-space-xs, 8px) 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.menu-primary,
+.menu-secondary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  width: 100%;
+}
+
+.btn-toggle-sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-toggle-sidebar {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.icon-toggle-sidebar.is-open {
+  transform: rotate(0deg);
+}
+
+.icon-toggle-sidebar.is-closed {
+  transform: rotate(90deg);
+}
