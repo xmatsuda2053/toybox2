@@ -100,11 +100,16 @@ export class AppRoot extends LitElement {
     return html`
       <div class="app-shell">
         <!-- Header (上部固定) -->
-        <header class="app-header">header</header>
+        <header class="app-header">
+          <wa-icon library="my-icons" name="cubes-stacked-solid-full"></wa-icon>
+          StepNote
+        </header>
 
         <div class="panes-container">
           <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
-          <nav class="pane-menu"></nav>
+          <nav class="pane-menu">
+            <wa-icon library="my-icons" name="check-solid-full"></wa-icon>
+          </nav>
 
           <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
           <aside class="pane-navigation">
