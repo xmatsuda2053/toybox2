@@ -89,6 +89,9 @@ const createMockHost = () => {
  * 5. タスク削除 (Task Deletion)
  *    - [x] 5-1. deleteTask 実行時に Repository から対象タスクが削除され、state および taskId が undefined にクリアされて requestUpdate() が呼ばれること
  *    - [x] 5-2. taskId が undefined の状態で deleteTask を呼んでもエラーにならず何もしないこと
+ *
+ * 6. 状態購読（subscribe）の検証
+ *    - [x] 6-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  */
 describe("TaskController (Single Task TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -383,6 +386,30 @@ describe("TaskController (Single Task TDD)", () => {
       await emptyController.initialized;
 
       await expect(emptyController.deleteTask()).resolves.not.toThrow();
+    });
+  });
+
+  describe("6. 状態購読（subscribe）の検証", () => {
+    it("6-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(testTasks);
+      controller = new TaskController(mockHost.host, fakeRepository as any, 1);
+      await controller.initialized;
+
+      const listenerMock = vi.fn();
+      const unsubscribe = controller.subscribe(listenerMock);
+      expect(typeof unsubscribe).toBe("function");
+
+      // 状態更新（updateSummary）でリスナーが発火すること
+      await controller.updateSummary({ name: "購読テスト更新" });
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+
+      // 解除関数を実行
+      unsubscribe();
+
+      // 解除後は状態変更があってもリスナーが発火しないこと
+      await controller.updateSummary({ name: "購読解除後更新" });
+      expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -92,6 +92,9 @@ const createMockHost = () => {
  *    - [x] 4-3. ラベルが選択されている場合、selectedLabelIds は選択中のラベルID配列を返すこと
  *    - [x] 4-4. ラベルが選択されている場合、hasSelectedLabels は true を返すこと
  *    - [x] 4-5. toggleLabel や clearAllSelected で選択状態が変わった際、ゲッターの戻り値も正しく連動すること
+ *
+ * 5. 状態購読（subscribe）の検証
+ *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  */
 describe("LabelsController (TDD)", () => {
   let fakeRepository: FakeLabelsRepository;
@@ -279,6 +282,32 @@ describe("LabelsController (TDD)", () => {
         expect(controller.selectedLabelIds).toEqual([]);
         expect(controller.hasSelectedLabels).toBe(false);
       });
+    });
+  });
+
+  describe("5. 状態購読（subscribe）の検証", () => {
+    it("5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeLabelsRepository([
+        { id: 1, name: "ラベル1", description: "説明1", isSelected: false },
+      ]);
+      controller = new LabelsController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      const listenerMock = vi.fn();
+      const unsubscribe = controller.subscribe(listenerMock);
+      expect(typeof unsubscribe).toBe("function");
+
+      // 状態更新（toggleLabel）でリスナーが発火すること
+      await controller.toggleLabel(1);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+
+      // 解除関数を実行
+      unsubscribe();
+
+      // 解除後は状態変更があってもリスナーが発火しないこと
+      await controller.toggleLabel(1);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
 });
