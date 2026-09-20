@@ -41,6 +41,10 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 5-1. コントローラー設定時に controller.subscribe が呼び出され、リスナーが登録されること
  *    - [x] 5-2. 登録されたリスナーが発火した際に requestUpdate が呼び出されること
  *    - [x] 5-3. disconnectedCallback 呼び出し時に購読解除関数が実行されること
+ * 6. タスク件数の描画（Props連携）
+ *    - [x] 6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot="end" の span.quick-access-counter）が正しくレンダリングされること
+ *    - [x] 6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access-counter）がレンダリングされないこと
+ *    - [x] 6-3. 完了、対応中、開始待ちには taskCounts の有無に関わらず件数要素ではなく目のアイコン（eye-solid-full / eye-slash-solid-full）が表示されること
  */
 
 describe("NavigationQuickAccess Component", () => {
@@ -261,7 +265,8 @@ describe("NavigationQuickAccess Component", () => {
       const requestUpdateSpy = vi.spyOn(element, "requestUpdate");
 
       // layoutUIController の subscribe に渡されたリスナーを実行
-      const layoutUIListener = mockLayoutUIController.subscribe.mock.calls[0][0];
+      const layoutUIListener =
+        mockLayoutUIController.subscribe.mock.calls[0][0];
       layoutUIListener();
       expect(requestUpdateSpy).toHaveBeenCalled();
 
@@ -275,6 +280,54 @@ describe("NavigationQuickAccess Component", () => {
       element.disconnectedCallback();
       expect(layoutUIUnsubMock).toHaveBeenCalledTimes(1);
       expect(quickAccessUnsubMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("6. タスク件数の描画（Props連携）", () => {
+    it("6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot='end' の span.quick-access-counter）が正しくレンダリングされること", () => {
+      element.taskCounts = {
+        bookmark: 3,
+        uncategorized: 5,
+        overdue: 2,
+        asap: 1,
+        upcoming: 4,
+      };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('slot="end"');
+      expect(htmlStr).toContain("quick-access-counter");
+      expect(htmlStr).toContain("3");
+      expect(htmlStr).toContain("5");
+      expect(htmlStr).toContain("2");
+      expect(htmlStr).toContain("1");
+      expect(htmlStr).toContain("4");
+      expect(htmlStr).not.toContain("wa-badge");
+    });
+
+    it("6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access-counter）がレンダリングされないこと", () => {
+      element.taskCounts = {
+        bookmark: 0,
+        uncategorized: undefined,
+      };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("quick-access-counter");
+      expect(htmlStr).not.toContain("wa-badge");
+    });
+
+    it("6-3. 完了、対応中、開始待ちには taskCounts の有無に関わらず件数要素ではなく目のアイコン（eye-solid-full / eye-slash-solid-full）が表示されること", () => {
+      mockQuickAccessController.state.isDoneSelected = true;
+      mockQuickAccessController.state.isProgressSelected = false;
+      element.taskCounts = {
+        bookmark: 3,
+      };
+      const htmlStr = flattenTemplate(element.render());
+      // 目のアイコン（ON: eye-solid-full, OFF: eye-slash-solid-full）が含まれること
+      expect(htmlStr).toContain("eye-solid-full");
+      expect(htmlStr).toContain("eye-slash-solid-full");
+      // 完了・対応中・開始待ちのボタンには件数要素が含まれないこと
+      const doneIndex = htmlStr.indexOf("完了");
+      const subStrAfterDone = htmlStr.slice(doneIndex);
+      expect(subStrAfterDone).not.toContain("quick-access-counter");
+      expect(subStrAfterDone).not.toContain("wa-badge");
     });
   });
 });

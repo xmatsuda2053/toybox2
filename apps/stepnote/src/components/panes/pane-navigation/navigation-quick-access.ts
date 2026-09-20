@@ -1,10 +1,119 @@
-import { LitElement, html, unsafeCSS, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import {
+  LitElement,
+  html,
+  unsafeCSS,
+  type HTMLTemplateResult,
+  nothing,
+} from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import { layoutUIContext, quickAccessContext } from "@/contexts/index.js";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
+import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
+import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
 import quickAccessStyles from "./navigation-quick-access.scss?inline";
+
+/**
+ * クイックアクセスボタンの構成項目定義
+ *
+ * @interface QuickAccessButtonItem
+ */
+interface QuickAccessButtonItem {
+  /** 一意識別子 */
+  readonly id: string;
+  /** 表示ラベルテキスト */
+  readonly label: string;
+  /** 先頭アイコン名 */
+  readonly icon: string;
+  /** QuickAccessRecord のステータスプロパティ名 */
+  readonly stateKey: keyof QuickAccessRecord;
+  /** ボタン押下時のハンドラー取得関数 */
+  readonly getHandler: (cmp: NavigationQuickAccess) => () => void;
+  /** 件数バッジを連携表示するキー（未指定時はバッジなし） */
+  readonly countKey?: keyof QuickAccessTaskCounts;
+  /** 目のトグルアイコン（表示/非表示）を表示するか */
+  readonly hasEyeToggle?: boolean;
+}
+
+/**
+ * クイックアクセスのボタングループ定義（グループ間に wa-divider を配置）
+ */
+const QUICK_ACCESS_BUTTON_GROUPS: readonly QuickAccessButtonItem[][] = [
+  // グループ1: 基本属性（タスク件数バッジ対応）
+  [
+    {
+      id: "bookmark",
+      label: "ブックマーク",
+      icon: "bookmark-solid-full",
+      stateKey: "isBookmarkSelected",
+      getHandler: (cmp) => cmp.handleToggleBookmark,
+      countKey: "bookmark",
+    },
+    {
+      id: "uncategorized",
+      label: "未分類",
+      icon: "question-solid-full",
+      stateKey: "isUncategorizedSelected",
+      getHandler: (cmp) => cmp.handleToggleUncategorized,
+      countKey: "uncategorized",
+    },
+  ],
+  // グループ2: 期限属性（タスク件数バッジ対応）
+  [
+    {
+      id: "overdue",
+      label: "期限切れ",
+      icon: "fire-solid-full",
+      stateKey: "isOverdueSelected",
+      getHandler: (cmp) => cmp.handleToggleOverdue,
+      countKey: "overdue",
+    },
+    {
+      id: "asap",
+      label: "期限当日",
+      icon: "triangle-exclamation-solid-full",
+      stateKey: "isAsapSelected",
+      getHandler: (cmp) => cmp.handleToggleAsap,
+      countKey: "asap",
+    },
+    {
+      id: "upcoming",
+      label: "期限間近",
+      icon: "calendar-solid-full",
+      stateKey: "isUpcomingSelected",
+      getHandler: (cmp) => cmp.handleToggleUpcoming,
+      countKey: "upcoming",
+    },
+  ],
+  // グループ3: ステータス属性（目のトグルアイコン対応）
+  [
+    {
+      id: "done",
+      label: "完了",
+      icon: "circle-check-solid-full",
+      stateKey: "isDoneSelected",
+      getHandler: (cmp) => cmp.handleToggleDone,
+      hasEyeToggle: true,
+    },
+    {
+      id: "progress",
+      label: "対応中",
+      icon: "circle-play-solid-full",
+      stateKey: "isProgressSelected",
+      getHandler: (cmp) => cmp.handleToggleProgress,
+      hasEyeToggle: true,
+    },
+    {
+      id: "pending",
+      label: "開始待ち",
+      icon: "circle-stop-solid-full",
+      stateKey: "isPendingSelected",
+      getHandler: (cmp) => cmp.handleTogglePending,
+      hasEyeToggle: true,
+    },
+  ],
+] as const;
 
 /**
  * Quick Access コンポーネント (NavigationQuickAccess)
@@ -20,6 +129,21 @@ import quickAccessStyles from "./navigation-quick-access.scss?inline";
 @customElement("navigation-quick-access")
 export class NavigationQuickAccess extends LitElement {
   public static override styles = unsafeCSS(quickAccessStyles);
+
+  /**
+   * 外部から注入されるタスク件数（View Props）
+   *
+   * @type {QuickAccessTaskCounts}
+   * @memberof NavigationQuickAccess
+   */
+  @property({ attribute: false })
+  public taskCounts: QuickAccessTaskCounts = {
+    bookmark: 5,
+    uncategorized: 2,
+    overdue: 3,
+    asap: 4,
+    upcoming: 6,
+  };
 
   /**
    * LayoutUIController の購読解除関数
@@ -240,24 +364,94 @@ export class NavigationQuickAccess extends LitElement {
   };
 
   /**
+   * ボタン末尾スロット（slot="end"）の要素をレンダリングする。
+   * ステータス系は目のトグルアイコン、基本・期限系はタスク件数バッジを出力。
+   *
+   * @private
+   * @param {QuickAccessButtonItem} item
+   * @param {boolean} isActive
+   * @return {*}
+   * @memberof NavigationQuickAccess
+   */
+  private renderEndSlot(
+    item: QuickAccessButtonItem,
+    isActive: boolean,
+  ): HTMLTemplateResult | typeof nothing {
+    if (item.hasEyeToggle) {
+      return html`
+        <wa-icon
+          slot="end"
+          library="my-icons"
+          name=${isActive ? "eye-solid-full" : "eye-slash-solid-full"}
+          class="quick-access-button-icon"
+        ></wa-icon>
+      `;
+    }
+
+    if (item.countKey !== undefined) {
+      const count = this.taskCounts[item.countKey];
+      if (typeof count === "number" && count > 0) {
+        return html`
+          <span slot="end" class="quick-access-counter">${count}</span>
+        `;
+      }
+    }
+
+    return nothing;
+  }
+
+  /**
+   * フィルターボタン1つを共通構造でレンダリングする。
+   *
+   * @private
+   * @param {QuickAccessButtonItem} item
+   * @param {boolean} isActive
+   * @return {*}
+   * @memberof NavigationQuickAccess
+   */
+  private renderFilterButton(
+    item: QuickAccessButtonItem,
+    isActive: boolean,
+  ): HTMLTemplateResult | typeof nothing {
+    return html`
+      <wa-button
+        class="quick-access-btn ${isActive ? "is-active" : ""}"
+        variant="neutral"
+        appearance=${isActive ? "filled" : "plain"}
+        size="s"
+        @click=${item.getHandler(this)}
+      >
+        <wa-icon
+          slot="start"
+          library="my-icons"
+          name=${item.icon}
+          class="quick-access-button-icon"
+        ></wa-icon>
+        ${isActive
+          ? html`
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="caret-right-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+            `
+          : nothing}
+        ${item.label} ${this.renderEndSlot(item, isActive)}
+      </wa-button>
+    `;
+  }
+
+  /**
    * コンポーネントの HTML テンプレートを生成・レンダリングする。
    *
    * @override
    * @return {import("lit").TemplateResult}
    * @memberof NavigationQuickAccess
    */
-  override render() {
+  override render(): HTMLTemplateResult | typeof nothing {
     const isOpen = this.layoutUIController?.state.isQuickAccessOpen ?? true;
     const qaState = this.quickAccessController?.state;
-
-    const isBookmark = qaState?.isBookmarkSelected ?? false;
-    const isUncategorized = qaState?.isUncategorizedSelected ?? false;
-    const isOverdue = qaState?.isOverdueSelected ?? false;
-    const isAsap = qaState?.isAsapSelected ?? false;
-    const isUpcoming = qaState?.isUpcomingSelected ?? false;
-    const isDone = qaState?.isDoneSelected ?? false;
-    const isProgress = qaState?.isProgressSelected ?? false;
-    const isPending = qaState?.isPendingSelected ?? false;
 
     const toggleLabel = isOpen
       ? "QUICK ACCESSを折りたたむ"
@@ -294,227 +488,19 @@ export class NavigationQuickAccess extends LitElement {
             : "is-closed"}"
         >
           <div class="quick-access-content">
-            <!-- 1. ブックマーク -->
-            <wa-button
-              class="quick-access-btn ${isBookmark ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isBookmark ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleBookmark}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="bookmark-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isBookmark
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              ブックマーク
-            </wa-button>
-
-            <!-- 2. 未分類 -->
-            <wa-button
-              class="quick-access-btn ${isUncategorized ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isUncategorized ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleUncategorized}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="question-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isUncategorized
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              未分類
-            </wa-button>
-
-            <wa-divider class="quick-access-divider"></wa-divider>
-
-            <!-- 3. 期限切れ -->
-            <wa-button
-              class="quick-access-btn ${isOverdue ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isOverdue ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleOverdue}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="fire-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isOverdue
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              期限切れ
-            </wa-button>
-
-            <!-- 4. 期限当日 -->
-            <wa-button
-              class="quick-access-btn ${isAsap ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isAsap ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleAsap}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="triangle-exclamation-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isAsap
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              期限当日
-            </wa-button>
-
-            <!-- 5. 期限間近 -->
-            <wa-button
-              class="quick-access-btn ${isUpcoming ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isUpcoming ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleUpcoming}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="calendar-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isUpcoming
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              期限間近
-            </wa-button>
-
-            <wa-divider class="quick-access-divider"></wa-divider>
-
-            <!-- 6. 完了 -->
-            <wa-button
-              class="quick-access-btn ${isDone ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isDone ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleDone}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="circle-check-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isDone
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              完了
-              <wa-icon
-                slot="end"
-                library="my-icons"
-                name=${isDone ? "eye-solid-full" : "eye-slash-solid-full"}
-                class="quick-access-button-icon"
-              ></wa-icon>
-            </wa-button>
-
-            <!-- 7. 対応中 -->
-            <wa-button
-              class="quick-access-btn ${isProgress ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isProgress ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleToggleProgress}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="circle-play-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isProgress
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              対応中
-              <wa-icon
-                slot="end"
-                library="my-icons"
-                name=${isProgress ? "eye-solid-full" : "eye-slash-solid-full"}
-                class="quick-access-button-icon"
-              ></wa-icon>
-            </wa-button>
-
-            <!-- 8. 開始待ち -->
-            <wa-button
-              class="quick-access-btn ${isPending ? "is-active" : ""}"
-              variant="neutral"
-              appearance=${isPending ? "filled" : "plain"}
-              size="s"
-              @click=${this.handleTogglePending}
-            >
-              <wa-icon
-                slot="start"
-                library="my-icons"
-                name="circle-stop-solid-full"
-                class="quick-access-button-icon"
-              ></wa-icon>
-              ${isPending
-                ? html` <wa-icon
-                    slot="start"
-                    library="my-icons"
-                    name="caret-right-solid-full"
-                    class="quick-access-button-icon"
-                  ></wa-icon>`
-                : nothing}
-              開始待ち
-              <wa-icon
-                slot="end"
-                library="my-icons"
-                name=${isPending ? "eye-solid-full" : "eye-slash-solid-full"}
-                class="quick-access-button-icon"
-              ></wa-icon>
-            </wa-button>
+            ${QUICK_ACCESS_BUTTON_GROUPS.map(
+              (group, groupIndex) => html`
+                ${groupIndex > 0
+                  ? html`<wa-divider class="quick-access-divider"></wa-divider>`
+                  : nothing}
+                ${group.map((item) =>
+                  this.renderFilterButton(
+                    item,
+                    Boolean(qaState?.[item.stateKey]),
+                  ),
+                )}
+              `,
+            )}
           </div>
         </div>
       </div>

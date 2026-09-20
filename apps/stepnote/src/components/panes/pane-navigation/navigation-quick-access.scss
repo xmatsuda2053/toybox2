@@ -77,7 +77,7 @@
     width: 100%;
     padding-block: var(--wa-space-3xs);
     padding-inline: var(--wa-space-xs);
-    font-size: var(--wa-font-size-s);
+    font-size: var(--wa-font-size-sm);
   }
 
   &::part(label) {
@@ -87,6 +87,29 @@
 
   .quick-access-button-icon {
     font-size: var(--wa-font-size-m);
+  }
+
+  .quick-access-counter {
+    font-size: var(--wa-font-size-xs, 11px);
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 5px;
+    border-radius: 9999px;
+    background-color: var(--wa-color-brand-50, #0969da);
+    color: #ffffff;
+    box-sizing: border-box;
+  }
+
+  &.is-active {
+    .quick-access-counter {
+      background-color: var(--wa-color-brand-60, #218bff);
+      color: #ffffff;
+    }
   }
 }
 

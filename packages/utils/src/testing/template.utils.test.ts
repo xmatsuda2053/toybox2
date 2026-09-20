@@ -57,6 +57,12 @@ describe("flattenTemplate", () => {
         '<div class="parent"><span>child content</span></div>',
       );
     });
+
+    it("3-2. 配列形式のテンプレート（TemplateResult[]）がすべて展開・連結されること", () => {
+      const items = ["A", "B", "C"];
+      const tpl = html`<ul>${items.map((item) => html`<li>${item}</li>`)}</ul>`;
+      expect(flattenTemplate(tpl)).toBe("<ul><li>A</li><li>B</li><li>C</li></ul>");
+    });
   });
 
   describe("4. Lit ブール属性（?attribute=${bool}）の評価再現", () => {
