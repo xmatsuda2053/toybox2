@@ -79,6 +79,9 @@ const createMockHost = () => {
  * 4. Issue 更新・削除 (Issue Update & Deletion)
  *    - [x] 4-1. updateIssue 実行時に対象Issueが更新され、state が更新されて requestUpdate() が呼ばれること
  *    - [x] 4-2. deleteIssue 実行時に対象Issueが削除され、state が更新されて requestUpdate() が呼ばれること
+ *
+ * 5. 状態購読（subscribe）の検証
+ *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  */
 describe("IssuesController (TDD)", () => {
   let fakeRepository: FakeIssuesRepository;
@@ -284,6 +287,34 @@ describe("IssuesController (TDD)", () => {
       expect(controller.state).toHaveLength(1);
       expect(controller.state[0].id).toBe(2);
       expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("5. 状態購読（subscribe）の検証", () => {
+    it("5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeIssuesRepository(testIssues);
+      controller = new IssuesController(
+        mockHost.host,
+        fakeRepository as any,
+        1,
+      );
+      await controller.initialized;
+
+      const listenerMock = vi.fn();
+      const unsubscribe = controller.subscribe(listenerMock);
+      expect(typeof unsubscribe).toBe("function");
+
+      // 状態更新（updateIssue）でリスナーが発火すること
+      await controller.updateIssue(1, { title: "購読テスト更新" });
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+
+      // 解除関数を実行
+      unsubscribe();
+
+      // 解除後は状態変更があってもリスナーが発火しないこと
+      await controller.updateIssue(1, { title: "購読解除後更新" });
+      expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
 });
