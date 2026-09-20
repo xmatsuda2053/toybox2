@@ -1,0 +1,39 @@
+@use "../../styles/tokens.scss";
+
+/* ==========================================================================
+   StepNote Panes 共通セクションスタイル (pane-common.scss)
+   components/panes 配下の各ペイン・セクションで再利用する共通デザイン定義
+   ========================================================================== */
+
+/* ペイン内セクション共通ヘッダー */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding-inline: var(--wa-space-s, 12px);
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  user-select: none;
+}
+
+/* ペイン内セクション共通タイトル */
+.section-title {
+  font-size: var(--wa-font-size-s);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--wa-color-text-normal);
+  text-transform: uppercase;
+}
+
+/* ペイン内セクション共通開閉トグルボタン */
+.btn-toggle-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ペイン内セクション共通開閉アイコン (回転アニメーションは各コンポーネント固有) */
+.icon-toggle-section {
+  display: inline-block;
+}

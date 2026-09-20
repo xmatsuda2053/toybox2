@@ -24,6 +24,7 @@ const createMockHost = () => {
  * 仕様 4:ナビゲーションリストエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
  * 仕様 5:各セッターメソッドで明示的に値を設定した場合、正しく反映されること。
  * 仕様 6:すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。
+ * 仕様 7:subscribe で登録されたリスナー関数が状態変更時に呼び出され、解除関数で購読解除できること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -114,6 +115,32 @@ describe("layout-ui.controller", () => {
 
       controller.setNavigationListAreaOpen(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe("状態購読（subscribe）の検証", () => {
+    it("subscribe で登録されたリスナー関数が状態変更時に呼び出され、解除関数で購読解除できること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+      const listenerMock = vi.fn();
+
+      const unsubscribe = controller.subscribe(listenerMock);
+      expect(typeof unsubscribe).toBe("function");
+
+      // 状態変更（toggleQuickAccess）でリスナーが発火すること
+      controller.toggleQuickAccess();
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+
+      // setNavigationAreaOpen でリスナーが発火すること
+      controller.setNavigationAreaOpen(false);
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+
+      // 解除関数を実行
+      unsubscribe();
+
+      // 解除後は状態変更があってもリスナーが発火しないこと
+      controller.toggleQuickAccess();
+      expect(listenerMock).toHaveBeenCalledTimes(2);
     });
   });
 });

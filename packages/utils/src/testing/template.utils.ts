@@ -66,7 +66,10 @@ export const flattenTemplate = (template: unknown): string => {
     if (t.values && i < t.values.length) {
       const val = t.values[i];
 
-      if (typeof val === "object" && val !== null && "strings" in val) {
+      if (Array.isArray(val)) {
+        // 配列（TemplateResult[] など）の再帰展開
+        result += val.map((v) => flattenTemplate(v)).join("");
+      } else if (typeof val === "object" && val !== null && "strings" in val) {
         // ネストされた TemplateResult の再帰展開
         result += flattenTemplate(val);
       } else if (typeof val === "boolean") {

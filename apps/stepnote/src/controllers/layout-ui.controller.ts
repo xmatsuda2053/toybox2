@@ -31,6 +31,15 @@ export class LayoutUIController implements ReactiveController {
   };
 
   /**
+   * 状態変更を購読するリスナー関数のセット
+   *
+   * @private
+   * @type {Set<() => void>}
+   * @memberof LayoutUIController
+   */
+  private listeners: Set<() => void> = new Set();
+
+  /**
    * 画面開閉の状態（読み取り専用）
    *
    * @readonly
@@ -52,7 +61,36 @@ export class LayoutUIController implements ReactiveController {
   }
 
   /**
-   * QUICK ACCESS の 開閉状態を反転させ、ホストへ再描画を要求する。
+   * 状態変更リスナーを登録する（Observer / Subscribe パターン）。
+   *
+   * 状態が変更された際に呼び出されるコールバック関数を登録します。
+   * 戻り値として、登録したリスナーを安全に解除するための購読解除関数（Unsubscribe）を返却します。
+   *
+   * @param {() => void} listener 状態変更時に実行するコールバック関数
+   * @return {() => void} 購読を解除するための関数
+   * @memberof LayoutUIController
+   */
+  public subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  };
+
+  /**
+   * ホストコンポーネントおよびすべての購読リスナーへ状態変更を通知する内部ヘルパー。
+   *
+   * @private
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  private notify = (): void => {
+    this.host.requestUpdate();
+    this.listeners.forEach((listener) => listener());
+  };
+
+  /**
+   * QUICK ACCESS の 開閉状態を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @return {*} {void}
    * @memberof LayoutUIController
@@ -62,11 +100,11 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isQuickAccessOpen: !this._state.isQuickAccessOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
-   * ナビゲーションエリアの開閉状態を反転させ、ホストへ再描画を要求する。
+   * ナビゲーションエリアの開閉状態を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @return {*} {void}
    * @memberof LayoutUIController
@@ -76,11 +114,11 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isNavigationAreaOpen: !this._state.isNavigationAreaOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
-   * ナビゲーションリストエリアの開閉状態を反転させ、ホストへ再描画を要求する。
+   * ナビゲーションリストエリアの開閉状態を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @return {*} {void}
    * @memberof LayoutUIController
@@ -90,11 +128,11 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isNavigationListAreaOpen: !this._state.isNavigationListAreaOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
-   * QUICK ACCESS の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
+   * QUICK ACCESS の 開閉状態を明示的に設定し、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @param {boolean} isOpen
    * @return {*} {void}
@@ -106,11 +144,11 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isQuickAccessOpen: isOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
-   * ナビゲーションエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
+   * ナビゲーションエリア の 開閉状態を明示的に設定し、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @param {boolean} isOpen
    * @return {*} {void}
@@ -122,11 +160,11 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isNavigationAreaOpen: isOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
-   * ナビゲーションリストエリア の 開閉状態を明示的に設定し、ホストへ再描画を要求する。
+   * ナビゲーションリストエリア の 開閉状態を明示的に設定し、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @param {boolean} isOpen
    * @return {*} {void}
@@ -138,7 +176,7 @@ export class LayoutUIController implements ReactiveController {
       ...this._state,
       isNavigationListAreaOpen: isOpen,
     };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**

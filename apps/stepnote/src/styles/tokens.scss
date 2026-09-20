@@ -11,6 +11,7 @@
   --wa-color-surface-default: #ffffff;
   --wa-color-surface-border: #d0d7de;
   --wa-color-text-normal: #1f2328;
+  --wa-color-text-quiet: #57606a;
   --wa-border-width-s: 1px;
   --wa-border-style: solid;
 
@@ -37,6 +38,7 @@
   --wa-color-surface-default: #0d1117;
   --wa-color-surface-border: #30363d;
   --wa-color-text-normal: #e6edf3;
+  --wa-color-text-quiet: #8b949e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,5 +47,6 @@
     --wa-color-surface-default: #0d1117;
     --wa-color-surface-border: #30363d;
     --wa-color-text-normal: #e6edf3;
+    --wa-color-text-quiet: #8b949e;
   }
 }

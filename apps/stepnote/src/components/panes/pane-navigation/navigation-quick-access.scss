@@ -1,0 +1,172 @@
+@use "../../../styles/tokens.scss";
+@use "../pane-common.scss" as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+
+  /* アイコンカラー（Light モード: 60系 / 黒） */
+  --quick-access-icon-bookmark: var(--wa-color-indigo-60);
+  --quick-access-icon-uncategorized: #000000;
+  --quick-access-icon-overdue: var(--wa-color-danger-60);
+  --quick-access-icon-asap: var(--wa-color-yellow-60);
+  --quick-access-icon-upcoming: var(--wa-color-cyan-60);
+  --quick-access-icon-done: var(--wa-color-brand-60);
+  --quick-access-icon-progress: var(--wa-color-success-60);
+  --quick-access-icon-pending: #000000;
+}
+
+/* アイコンカラー（Dark モード: 70系 / 白） */
+:host(.wa-dark),
+:host([data-theme="dark"]),
+.wa-dark,
+[data-theme="dark"] {
+  --quick-access-icon-bookmark: var(--wa-color-indigo-70);
+  --quick-access-icon-uncategorized: #ffffff;
+  --quick-access-icon-overdue: var(--wa-color-danger-70);
+  --quick-access-icon-asap: var(--wa-color-yellow-70);
+  --quick-access-icon-upcoming: var(--wa-color-cyan-70);
+  --quick-access-icon-done: var(--wa-color-brand-70);
+  --quick-access-icon-progress: var(--wa-color-success-70);
+  --quick-access-icon-pending: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not(.wa-light):not([data-theme="light"])) {
+    --quick-access-icon-bookmark: var(--wa-color-indigo-70);
+    --quick-access-icon-uncategorized: #ffffff;
+    --quick-access-icon-overdue: var(--wa-color-danger-70);
+    --quick-access-icon-asap: var(--wa-color-yellow-70);
+    --quick-access-icon-upcoming: var(--wa-color-cyan-70);
+    --quick-access-icon-done: var(--wa-color-brand-70);
+    --quick-access-icon-progress: var(--wa-color-success-70);
+    --quick-access-icon-pending: #ffffff;
+  }
+}
+
+.quick-access {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 開閉アイコン回転アニメーション（コンポーネント固有） */
+.icon-toggle-quick-access {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.is-open {
+    transform: rotate(90deg);
+  }
+
+  &.is-closed {
+    transform: rotate(0deg);
+  }
+}
+
+/* コンテンツ部ラッパー (アコーディオン開閉トランジション) */
+.quick-access-content-wrapper {
+  display: grid;
+  transition:
+    grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+}
+
+.quick-access-content-wrapper.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.quick-access-content-wrapper.is-closed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quick-access-content {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--wa-space-s, 12px);
+}
+
+/* フィルターボタン共通スタイル */
+.quick-access-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  font-size: var(--wa-font-size-s);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &::part(base) {
+    justify-content: flex-start;
+    width: 100%;
+    padding-block: var(--wa-space-3xs);
+    padding-inline: var(--wa-space-xs);
+    font-size: var(--wa-font-size-sm);
+  }
+
+  &::part(label) {
+    width: 100%;
+    text-align: left;
+  }
+
+  .quick-access-button-icon {
+    font-size: var(--wa-font-size-m);
+  }
+
+  $types: (
+    "bookmark": var(--quick-access-icon-bookmark),
+    "uncategorized": var(--quick-access-icon-uncategorized),
+    "overdue": var(--quick-access-icon-overdue),
+    "asap": var(--quick-access-icon-asap),
+    "upcoming": var(--quick-access-icon-upcoming),
+    "done": var(--quick-access-icon-done),
+    "progress": var(--quick-access-icon-progress),
+    "pending": var(--quick-access-icon-pending),
+  );
+  @each $status, $color in $types {
+    .type-#{$status} {
+      color: $color;
+    }
+  }
+
+  .quick-access-counter {
+    font-size: var(--wa-font-size-xs, 11px);
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 5px;
+    border-radius: 9999px;
+    background-color: var(--wa-color-brand-50, #0969da);
+    color: #ffffff;
+    box-sizing: border-box;
+  }
+
+  &.is-active {
+    .quick-access-counter {
+      background-color: var(--wa-color-brand-60, #218bff);
+      color: #ffffff;
+    }
+  }
+}
+
+.quick-access-divider {
+  --spacing: var(--wa-space-2xs);
+}

@@ -19,6 +19,7 @@ import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
 import "@/components/panes/pane-menu/pane-menu.js";
+import "@/components/panes/pane-navigation/navigation-quick-access.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -131,7 +132,7 @@ export class AppRoot extends LitElement {
 
           <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
           <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
-            <div class="navigation-quick-access">quick-access</div>
+            <navigation-quick-access class="navigation-quick-access"></navigation-quick-access>
             <div class="navigation-labels"></div>
           </aside>
 
