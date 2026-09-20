@@ -137,13 +137,7 @@ export class NavigationQuickAccess extends LitElement {
    * @memberof NavigationQuickAccess
    */
   @property({ attribute: false })
-  public taskCounts: QuickAccessTaskCounts = {
-    bookmark: 5,
-    uncategorized: 2,
-    overdue: 3,
-    asap: 4,
-    upcoming: 6,
-  };
+  public taskCounts: QuickAccessTaskCounts = {};
 
   /**
    * LayoutUIController の購読解除関数
@@ -415,6 +409,7 @@ export class NavigationQuickAccess extends LitElement {
   ): HTMLTemplateResult | typeof nothing {
     return html`
       <wa-button
+        id=${item.id}
         class="quick-access-btn ${isActive ? "is-active" : ""}"
         variant="neutral"
         appearance=${isActive ? "filled" : "plain"}
@@ -425,7 +420,7 @@ export class NavigationQuickAccess extends LitElement {
           slot="start"
           library="my-icons"
           name=${item.icon}
-          class="quick-access-button-icon"
+          class="quick-access-button-icon type-${item.id}"
         ></wa-icon>
         ${isActive
           ? html`
@@ -433,7 +428,7 @@ export class NavigationQuickAccess extends LitElement {
                 slot="start"
                 library="my-icons"
                 name="caret-right-solid-full"
-                class="quick-access-button-icon"
+                class="quick-access-button-icon type-caret"
               ></wa-icon>
             `
           : nothing}
@@ -453,15 +448,16 @@ export class NavigationQuickAccess extends LitElement {
     const isOpen = this.layoutUIController?.state.isQuickAccessOpen ?? true;
     const qaState = this.quickAccessController?.state;
 
-    const toggleLabel = isOpen
-      ? "QUICK ACCESSを折りたたむ"
-      : "QUICK ACCESSを展開する";
+    const toggleLabel = isOpen ? "Close" : "Expand";
 
     return html`
       <div class="quick-access">
         <!-- タイトル部 (Header) -->
         <header class="section-header quick-access-header">
           <span class="section-title quick-access-title">QUICK ACCESS</span>
+          <wa-tooltip for="btn-toggle-quick-access" placement="bottom">
+            ${toggleLabel}
+          </wa-tooltip>
           <wa-button
             id="btn-toggle-quick-access"
             class="btn-toggle-section btn-toggle-quick-access"
@@ -476,7 +472,6 @@ export class NavigationQuickAccess extends LitElement {
               class="icon-toggle-section icon-toggle-quick-access ${isOpen
                 ? "is-open"
                 : "is-closed"}"
-              label=${toggleLabel}
             ></wa-icon>
           </wa-button>
         </header>

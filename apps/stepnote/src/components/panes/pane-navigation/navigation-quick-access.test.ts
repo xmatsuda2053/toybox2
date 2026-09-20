@@ -15,8 +15,8 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *
  * 1. タイトル部（Header）の描画と開閉動作
  *    - [x] 1-1. タイトル部に「QUICK ACCESS」ラベルおよび開閉トグルボタン（wa-button、wa-icon[name='chevron-right']）がレンダリングされること
- *    - [x] 1-2. layoutUIController.state.isQuickAccessOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ラベルが「QUICK ACCESSを折りたたむ」となること
- *    - [x] 1-3. layoutUIController.state.isQuickAccessOpen が false（閉状態）の際、アイコンに is-closed クラスが付与され、ラベルが「QUICK ACCESSを展開する」となること
+ *    - [x] 1-2. layoutUIController.state.isQuickAccessOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ラベルが「Close」となること
+ *    - [x] 1-3. layoutUIController.state.isQuickAccessOpen が false（閉状態）の際、アイコンに is-closed クラスが付与され、ラベルが「Expand」となること
  *    - [x] 1-4. handleToggleQuickAccess の実行により layoutUIController.toggleQuickAccess が呼び出されること
  *
  * 2. コンテンツ部（Content）のアコーディオン構造と8つのフィルターボタンの描画
@@ -120,18 +120,18 @@ describe("NavigationQuickAccess Component", () => {
       expect(htmlStr).toContain("chevron-right");
     });
 
-    it("1-2. layoutUIController.state.isQuickAccessOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ラベルが「QUICK ACCESSを折りたたむ」となること", () => {
+    it("1-2. layoutUIController.state.isQuickAccessOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ラベルが「Close」となること", () => {
       mockLayoutUIController.state.isQuickAccessOpen = true;
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("is-open");
-      expect(htmlStr).toContain("QUICK ACCESSを折りたたむ");
+      expect(htmlStr).toContain("Close");
     });
 
-    it("1-3. layoutUIController.state.isQuickAccessOpen が false（閉状態）の際、アイコンに is-closed クラスが付与され、ラベルが「QUICK ACCESSを展開する」となること", () => {
+    it("1-3. layoutUIController.state.isQuickAccessOpen が false（閉状態）の際、アイコンに is-closed クラスが付与され、ラベルが「Expand」となること", () => {
       mockLayoutUIController.state.isQuickAccessOpen = false;
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("is-closed");
-      expect(htmlStr).toContain("QUICK ACCESSを展開する");
+      expect(htmlStr).toContain("Expand");
     });
 
     it("1-4. handleToggleQuickAccess の実行により layoutUIController.toggleQuickAccess が呼び出されること", () => {
