@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS } from "lit";
+import { LitElement, html, unsafeCSS, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import { layoutUIContext, quickAccessContext } from "@/contexts/index.js";
@@ -266,11 +266,11 @@ export class NavigationQuickAccess extends LitElement {
     return html`
       <div class="quick-access">
         <!-- タイトル部 (Header) -->
-        <header class="quick-access-header">
-          <span class="quick-access-title">QUICK ACCESS</span>
+        <header class="section-header quick-access-header">
+          <span class="section-title quick-access-title">QUICK ACCESS</span>
           <wa-button
             id="btn-toggle-quick-access"
-            class="btn-toggle-quick-access"
+            class="btn-toggle-section btn-toggle-quick-access"
             variant="neutral"
             appearance="plain"
             size="s"
@@ -279,7 +279,7 @@ export class NavigationQuickAccess extends LitElement {
             <wa-icon
               library="my-icons"
               name="chevron-right"
-              class="icon-toggle-quick-access ${isOpen
+              class="icon-toggle-section icon-toggle-quick-access ${isOpen
                 ? "is-open"
                 : "is-closed"}"
               label=${toggleLabel}
@@ -302,6 +302,20 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleBookmark}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="bookmark-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isBookmark
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               ブックマーク
             </wa-button>
 
@@ -313,8 +327,24 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleUncategorized}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="question-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isUncategorized
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               未分類
             </wa-button>
+
+            <wa-divider class="quick-access-divider"></wa-divider>
 
             <!-- 3. 期限切れ -->
             <wa-button
@@ -324,6 +354,20 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleOverdue}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="fire-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isOverdue
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               期限切れ
             </wa-button>
 
@@ -335,6 +379,20 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleAsap}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="triangle-exclamation-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isAsap
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               期限当日
             </wa-button>
 
@@ -346,8 +404,24 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleUpcoming}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="calendar-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isUpcoming
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               期限間近
             </wa-button>
+
+            <wa-divider class="quick-access-divider"></wa-divider>
 
             <!-- 6. 完了 -->
             <wa-button
@@ -357,7 +431,27 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleDone}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="circle-check-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isDone
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               完了
+              <wa-icon
+                slot="end"
+                library="my-icons"
+                name=${isDone ? "eye-solid-full" : "eye-slash-solid-full"}
+                class="quick-access-button-icon"
+              ></wa-icon>
             </wa-button>
 
             <!-- 7. 対応中 -->
@@ -368,7 +462,27 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleToggleProgress}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="circle-play-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isProgress
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               対応中
+              <wa-icon
+                slot="end"
+                library="my-icons"
+                name=${isProgress ? "eye-solid-full" : "eye-slash-solid-full"}
+                class="quick-access-button-icon"
+              ></wa-icon>
             </wa-button>
 
             <!-- 8. 開始待ち -->
@@ -379,7 +493,27 @@ export class NavigationQuickAccess extends LitElement {
               size="s"
               @click=${this.handleTogglePending}
             >
+              <wa-icon
+                slot="start"
+                library="my-icons"
+                name="circle-stop-solid-full"
+                class="quick-access-button-icon"
+              ></wa-icon>
+              ${isPending
+                ? html` <wa-icon
+                    slot="start"
+                    library="my-icons"
+                    name="caret-right-solid-full"
+                    class="quick-access-button-icon"
+                  ></wa-icon>`
+                : nothing}
               開始待ち
+              <wa-icon
+                slot="end"
+                library="my-icons"
+                name=${isPending ? "eye-solid-full" : "eye-slash-solid-full"}
+                class="quick-access-button-icon"
+              ></wa-icon>
             </wa-button>
           </div>
         </div>

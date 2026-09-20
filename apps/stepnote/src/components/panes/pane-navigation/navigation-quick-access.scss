@@ -1,4 +1,5 @@
 @use "../../../styles/tokens.scss";
+@use "../pane-common.scss" as *;
 
 *,
 *::before,
@@ -18,43 +19,17 @@
   width: 100%;
 }
 
-/* タイトル部 (Header) */
-.quick-access-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 36px;
-  padding: 0 var(--wa-space-s, 12px);
-  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
-  user-select: none;
-}
-
-.quick-access-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--wa-color-text-quiet, #656d76);
-  text-transform: uppercase;
-}
-
-.btn-toggle-quick-access {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+/* 開閉アイコン回転アニメーション（コンポーネント固有） */
 .icon-toggle-quick-access {
-  display: inline-block;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
-.icon-toggle-quick-access.is-open {
-  transform: rotate(90deg);
-}
+  &.is-open {
+    transform: rotate(90deg);
+  }
 
-.icon-toggle-quick-access.is-closed {
-  transform: rotate(0deg);
+  &.is-closed {
+    transform: rotate(0deg);
+  }
 }
 
 /* コンテンツ部ラッパー (アコーディオン開閉トランジション) */
@@ -91,8 +66,7 @@
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  border-radius: 4px;
-  font-size: 13px;
+  font-size: var(--wa-font-size-s);
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -101,12 +75,21 @@
   &::part(base) {
     justify-content: flex-start;
     width: 100%;
-    padding: 4px 8px;
-    font-size: 13px;
+    padding-block: var(--wa-space-3xs);
+    padding-inline: var(--wa-space-xs);
+    font-size: var(--wa-font-size-s);
   }
 
   &::part(label) {
     width: 100%;
     text-align: left;
   }
+
+  .quick-access-button-icon {
+    font-size: var(--wa-font-size-m);
+  }
+}
+
+.quick-access-divider {
+  --spacing: var(--wa-space-2xs);
 }
