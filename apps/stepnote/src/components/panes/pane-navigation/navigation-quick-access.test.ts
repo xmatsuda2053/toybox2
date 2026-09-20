@@ -1,4 +1,6 @@
 import "fake-indexeddb/auto";
+// @ts-ignore
+import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
@@ -36,7 +38,8 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  * 4. 各ボタンの選択状態（ON/OFF）に応じたスタイルの反映
  *    - [x] 4-1. 状態が true（ON）の項目にはアクティブ状態を示すクラスまたは属性（is-active）が付与されること
  *    - [x] 4-2. 状態が false（OFF）の項目にはアクティブクラスが付与されないこと
- *
+ *    - [x] 4-3. Darkモード用のアクティブ時アイコンカラー変数（--quick-access-icon-active-*）がスタイルに定義されていること
+ *    - [x] 4-4. ボタンのアクティブ状態（.is-active）において、各アイコンにアクティブ時カラー変数（--quick-access-icon-active-*）が適用されること
  * 5. コントローラー状態購読（Observer / Subscribe）とライフサイクルの連動
  *    - [x] 5-1. コントローラー設定時に controller.subscribe が呼び出され、リスナーが登録されること
  *    - [x] 5-2. 登録されたリスナーが発火した際に requestUpdate が呼び出されること
@@ -251,6 +254,39 @@ describe("NavigationQuickAccess Component", () => {
       // ブックマーク部分で is-active が適用されていないこと
       expect(htmlStr).not.toMatch(
         /class="[^"]*is-active[^"]*"[^>]*>[\s\S]*?ブックマーク/,
+      );
+    });
+
+    it("4-3. Darkモード用のアクティブ時アイコンカラー変数（--quick-access-icon-active-*）がスタイルに定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      const expectedVariables = [
+        "--quick-access-icon-active-bookmark",
+        "--quick-access-icon-active-uncategorized",
+        "--quick-access-icon-active-overdue",
+        "--quick-access-icon-active-asap",
+        "--quick-access-icon-active-upcoming",
+        "--quick-access-icon-active-done",
+        "--quick-access-icon-active-progress",
+        "--quick-access-icon-active-pending",
+      ];
+      for (const variable of expectedVariables) {
+        expect(scssContent).toContain(variable);
+      }
+    });
+
+    it("4-4. ボタンのアクティブ状態（.is-active）において、各アイコンにアクティブ時カラー変数（--quick-access-icon-active-*）が適用されること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toMatch(
+        /&?\.is-active[\s\S]*?--quick-access-icon-active-uncategorized/,
+      );
+      expect(scssContent).toMatch(
+        /&?\.is-active[\s\S]*?--quick-access-icon-active-pending/,
       );
     });
   });
