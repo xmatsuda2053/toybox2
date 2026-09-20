@@ -1,0 +1,112 @@
+@use "../../../styles/tokens.scss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quick-access {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* タイトル部 (Header) */
+.quick-access-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 var(--wa-space-s, 12px);
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  user-select: none;
+}
+
+.quick-access-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--wa-color-text-quiet, #656d76);
+  text-transform: uppercase;
+}
+
+.btn-toggle-quick-access {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-toggle-quick-access {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-toggle-quick-access.is-open {
+  transform: rotate(90deg);
+}
+
+.icon-toggle-quick-access.is-closed {
+  transform: rotate(0deg);
+}
+
+/* コンテンツ部ラッパー (アコーディオン開閉トランジション) */
+.quick-access-content-wrapper {
+  display: grid;
+  transition:
+    grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+}
+
+.quick-access-content-wrapper.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.quick-access-content-wrapper.is-closed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.quick-access-content {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--wa-space-s, 12px);
+}
+
+/* フィルターボタン共通スタイル */
+.quick-access-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  border-radius: 4px;
+  font-size: 13px;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &::part(base) {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  &::part(label) {
+    width: 100%;
+    text-align: left;
+  }
+}

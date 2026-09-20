@@ -30,6 +30,15 @@ export class QuickAccessController implements ReactiveController {
   };
 
   /**
+   * 状態変更を購読するリスナー関数のセット
+   *
+   * @private
+   * @type {Set<() => void>}
+   * @memberof QuickAccessController
+   */
+  private listeners: Set<() => void> = new Set();
+
+  /**
    * 現在のクイックアクセス状態（読み取り専用）
    *
    * @readonly
@@ -39,6 +48,35 @@ export class QuickAccessController implements ReactiveController {
   public get state(): Readonly<QuickAccessRecord> {
     return this._state;
   }
+
+  /**
+   * 状態変更リスナーを登録する（Observer / Subscribe パターン）。
+   *
+   * 状態が変更（DB更新完了）された際に呼び出されるコールバック関数を登録します。
+   * 戻り値として、登録したリスナーを安全に解除するための購読解除関数（Unsubscribe）を返却します。
+   *
+   * @param {() => void} listener 状態変更時に実行するコールバック関数
+   * @return {() => void} 購読を解除するための関数
+   * @memberof QuickAccessController
+   */
+  public subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  };
+
+  /**
+   * ホストコンポーネントおよびすべての購読リスナーへ状態変更を通知する内部ヘルパー。
+   *
+   * @private
+   * @return {*} {void}
+   * @memberof QuickAccessController
+   */
+  private notify = (): void => {
+    this.host.requestUpdate();
+    this.listeners.forEach((listener) => listener());
+  };
 
   /**
    * Controllerの非同期初期化状態。
@@ -65,7 +103,7 @@ export class QuickAccessController implements ReactiveController {
   }
 
   /**
-   * データベースから状態を再読み込みし、コンポーネントを再描画する。
+   * データベースから状態を再読み込みし、コンポーネントおよび全購読者へ通知する。
    *
    * @private
    * @return {*}  {Promise<void>}
@@ -74,7 +112,7 @@ export class QuickAccessController implements ReactiveController {
   private loadState = async (): Promise<void> => {
     const record = await this.repository.getQuickAccess();
     this._state = { ...record };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   /**
@@ -88,7 +126,7 @@ export class QuickAccessController implements ReactiveController {
   };
 
   /**
-   * DBを更新し、stateを更新する
+   * DBを更新し、stateを更新して全購読者へ通知する。
    *
    * @private
    * @param {Partial<QuickAccessRecord>} partial
@@ -100,7 +138,7 @@ export class QuickAccessController implements ReactiveController {
   ): Promise<void> => {
     const updated = await this.repository.updateQuickAccess(partial);
     this._state = { ...updated };
-    this.host.requestUpdate();
+    this.notify();
   };
 
   // --- 単独・分類・ステータスフィルター（独立トグル） ---

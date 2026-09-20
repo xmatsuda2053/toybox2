@@ -64,6 +64,9 @@ const createMockHost = () => {
  *    - [x] 3-3. toggleUpcomingSelected 実行時、間近のみが true となり他の期限フィルターは false となること
  *    - [x] 3-4. いずれかの期限フィルターが true の状態で別の期限フィルターを toggle した場合、旧フィルターが解除されて新フィルターのみが true となること
  *    - [x] 3-5. 選択中の期限フィルターを再度 toggle した場合、そのフィルターも false となり全て false となること
+ *
+ * 4. 状態購読（subscribe）の検証
+ *    - [x] 4-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  */
 describe("QuickAccessController (TDD)", () => {
   let fakeRepository: FakeQuickAccessRepository;
@@ -182,6 +185,29 @@ describe("QuickAccessController (TDD)", () => {
       expect(controller.state.isOverdueSelected).toBe(false);
       expect(controller.state.isAsapSelected).toBe(false);
       expect(controller.state.isUpcomingSelected).toBe(false);
+    });
+  });
+
+  describe("4. 状態購読（subscribe）の検証", () => {
+    it("4-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること", async () => {
+      const listenerMock = vi.fn();
+      const unsubscribe = controller.subscribe(listenerMock);
+      expect(typeof unsubscribe).toBe("function");
+
+      // 状態更新（toggleBookmarkSelected）でリスナーが発火すること
+      await controller.toggleBookmarkSelected();
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+
+      // 排他トグル（toggleOverdueSelected）でリスナーが発火すること
+      await controller.toggleOverdueSelected();
+      expect(listenerMock).toHaveBeenCalledTimes(2);
+
+      // 解除関数を実行
+      unsubscribe();
+
+      // 解除後は状態変更があってもリスナーが発火しないこと
+      await controller.toggleBookmarkSelected();
+      expect(listenerMock).toHaveBeenCalledTimes(2);
     });
   });
 });
