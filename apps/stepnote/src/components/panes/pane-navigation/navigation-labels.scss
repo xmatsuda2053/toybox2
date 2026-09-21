@@ -77,10 +77,30 @@
   flex-shrink: 0;
 }
 
+.labels-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+}
+
+.btn-clear-labels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  wa-icon {
+    font-size: 0.9em;
+  }
+}
+
 .btn-add-label {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  wa-icon {
+    font-size: 1.15em;
+  }
 }
 
 .labels-content {

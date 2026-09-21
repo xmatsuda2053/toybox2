@@ -50,12 +50,18 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 7-1. .labels-content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること
  *    - 7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義されていること
  *    - 7-3. .labels-content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること
+ *
+ * 8. 選択中ラベルの一括解除（Clear All Selected）
+ *    - 8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（#btn-clear-labels）が表示されないこと
+ *    - 8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（#btn-clear-labels）が表示されること
+ *    - 8-3. 一括解除ボタン押下（handleClearAllSelected）時に labelsController.clearAllSelected が呼び出されること
  */
 
 describe("NavigationLabels Component", () => {
   let element: NavigationLabels;
   let mockLabelsController: {
     state: LabelRecord[];
+    readonly hasSelectedLabels: boolean;
     createLabel: ReturnType<typeof vi.fn>;
     updateLabel: ReturnType<typeof vi.fn>;
     deleteLabel: ReturnType<typeof vi.fn>;
@@ -87,6 +93,9 @@ describe("NavigationLabels Component", () => {
 
     mockLabelsController = {
       state: [...initialLabels],
+      get hasSelectedLabels(): boolean {
+        return this.state.some((l) => l.isSelected);
+      },
       createLabel: vi.fn().mockResolvedValue(3),
       updateLabel: vi.fn().mockResolvedValue(undefined),
       deleteLabel: vi.fn().mockResolvedValue(undefined),
@@ -354,6 +363,33 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("border-radius: 2px");
       expect(scssContent).toContain("scrollbar-width: thin");
       expect(scssContent).toContain("scrollbar-color");
+    });
+  });
+
+  describe("8. 選択中ラベルの一括解除（Clear All Selected）", () => {
+    it("8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（#btn-clear-labels）が表示されないこと", () => {
+      mockLabelsController.state = [
+        { id: 1, name: "ラベル1", description: "", isSelected: false },
+        { id: 2, name: "ラベル2", description: "", isSelected: false },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("btn-clear-labels");
+    });
+
+    it("8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（#btn-clear-labels、xmark-solid-full アイコン）が表示されること", () => {
+      mockLabelsController.state = [
+        { id: 1, name: "ラベル1", description: "", isSelected: false },
+        { id: 2, name: "ラベル2", description: "", isSelected: true },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("btn-clear-labels");
+      expect(htmlStr).toContain("xmark-solid-full");
+    });
+
+    it("8-3. 一括解除ボタン押下（handleClearAllSelected）時に labelsController.clearAllSelected が呼び出されること", async () => {
+      expect(typeof element.handleClearAllSelected).toBe("function");
+      await element.handleClearAllSelected();
+      expect(mockLabelsController.clearAllSelected).toHaveBeenCalledTimes(1);
     });
   });
 });

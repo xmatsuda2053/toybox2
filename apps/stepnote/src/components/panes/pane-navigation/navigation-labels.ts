@@ -180,6 +180,13 @@ export class NavigationLabels extends LitElement {
   };
 
   /**
+   * 選択中のすべてのラベルの選択状態を一括解除するハンドラー
+   */
+  public handleClearAllSelected = async (): Promise<void> => {
+    await this.labelsController?.clearAllSelected();
+  };
+
+  /**
    * ラベル作成または更新の保存ハンドラー
    */
   public handleSaveLabel = async (): Promise<void> => {
@@ -378,19 +385,43 @@ export class NavigationLabels extends LitElement {
         <!-- 1. ヘッダー部 -->
         <header class="section-header labels-header">
           <span class="section-title labels-title">LABELS</span>
-          <wa-tooltip for="btn-add-label" placement="bottom">
-            Add Label
-          </wa-tooltip>
-          <wa-button
-            id="btn-add-label"
-            class="btn-add-label"
-            variant="neutral"
-            appearance="plain"
-            size="s"
-            @click=${this.handleOpenAddDialog}
-          >
-            <wa-icon library="my-icons" name="plus-solid-full"></wa-icon>
-          </wa-button>
+          <div class="labels-header-actions">
+            ${this.labelsController?.hasSelectedLabels
+              ? html`
+                  <wa-tooltip for="btn-clear-labels" placement="bottom">
+                    Clear Selection
+                  </wa-tooltip>
+                  <wa-button
+                    id="btn-clear-labels"
+                    class="btn-clear-labels"
+                    variant="neutral"
+                    appearance="plain"
+                    size="s"
+                    aria-label="Clear Selection"
+                    @click=${this.handleClearAllSelected}
+                  >
+                    <wa-icon
+                      library="my-icons"
+                      name="xmark-solid-full"
+                    ></wa-icon>
+                  </wa-button>
+                `
+              : nothing}
+            <wa-tooltip for="btn-add-label" placement="bottom">
+              Add Label
+            </wa-tooltip>
+            <wa-button
+              id="btn-add-label"
+              class="btn-add-label"
+              variant="neutral"
+              appearance="plain"
+              size="s"
+              aria-label="Add Label"
+              @click=${this.handleOpenAddDialog}
+            >
+              <wa-icon library="my-icons" name="plus-solid-full"></wa-icon>
+            </wa-button>
+          </div>
         </header>
 
         <!-- 2. コンテンツ部 (スクロール可能) -->
