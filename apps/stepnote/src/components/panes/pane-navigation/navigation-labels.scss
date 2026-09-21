@@ -1,0 +1,551 @@
+@use "../../../styles/tokens.scss";
+@use "../pane-common.scss" as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  /* ラベルアイコンカラー（Light モード） */
+  --label-icon-color: var(--wa-color-brand-60);
+  --label-icon-active-color: var(--wa-color-brand-70);
+
+  /* メニュートリガーアイコンカラー（Light モード） */
+  --label-menu-trigger-color: #57606a;
+  --label-menu-trigger-hover-color: #1f2328;
+  --label-menu-trigger-active-color: #1f2328;
+
+  /* スクロールバーカラー（Light モード） */
+  --scrollbar-thumb-color: #d0d7de;
+  --scrollbar-thumb-hover-color: #8c959f;
+  --scrollbar-track-color: transparent;
+}
+
+:host(.wa-dark),
+:host([data-theme="dark"]),
+.wa-dark,
+[data-theme="dark"] {
+  --label-icon-color: var(--wa-color-brand-70);
+  --label-icon-active-color: var(--wa-color-brand-40);
+
+  /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
+  --label-menu-trigger-color: #c9d1d9;
+  --label-menu-trigger-hover-color: #ffffff;
+  --label-menu-trigger-active-color: #ffffff;
+
+  /* スクロールバーカラー（Dark モード） */
+  --scrollbar-thumb-color: #30363d;
+  --scrollbar-thumb-hover-color: #6e7681;
+  --scrollbar-track-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not(.wa-light):not([data-theme="light"])) {
+    --label-icon-color: var(--wa-color-brand-70);
+    --label-icon-active-color: var(--wa-color-brand-40);
+
+    /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
+    --label-menu-trigger-color: #c9d1d9;
+    --label-menu-trigger-hover-color: #ffffff;
+    --label-menu-trigger-active-color: #ffffff;
+
+    /* スクロールバーカラー（Dark モード） */
+    --scrollbar-thumb-color: #30363d;
+    --scrollbar-thumb-hover-color: #6e7681;
+    --scrollbar-track-color: transparent;
+  }
+}
+
+.labels-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.labels-header {
+  flex-shrink: 0;
+}
+
+.labels-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+}
+
+.btn-clear-labels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  wa-icon {
+    font-size: 0.9em;
+  }
+}
+
+.btn-add-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  wa-icon {
+    font-size: 1.15em;
+  }
+}
+
+.labels-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-block: 6px;
+  padding-inline-start: var(--wa-space-s, 12px);
+  padding-inline-end: var(--wa-space-2xs, 6px);
+
+  /* モダンブラウザ標準プロパティ */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+
+  /* WebKit系（Chrome, Edge, Safari）詳細スタイリング */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track-color);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb-color);
+    border-radius: 2px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--scrollbar-thumb-hover-color);
+    }
+  }
+}
+
+/* ラベルボタン共通スタイル（Quick Access ボタン同等のスタイル再現） */
+.label-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding-block: var(--wa-space-3xs);
+  padding-inline: var(--wa-space-xs);
+  border-radius: var(--wa-border-radius-m, 4px);
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--wa-color-neutral-on-quiet, inherit);
+  font-family: inherit;
+  font-size: var(--wa-font-size-m);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+
+  &:focus-visible {
+    outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
+    outline-offset: 1px;
+  }
+
+  &.is-active {
+    font-weight: 600;
+    color: var(--wa-color-neutral-on-normal);
+    background-color: var(--wa-color-neutral-fill-normal);
+
+    &:hover {
+      background-color: color-mix(
+        in oklab,
+        var(--wa-color-neutral-fill-normal),
+        var(--wa-color-mix-hover)
+      );
+    }
+
+    .label-button-icon {
+      color: var(--label-icon-active-color);
+
+      &.type-caret {
+        color: inherit;
+      }
+    }
+
+    .btn-label-menu {
+      opacity: 0.9;
+      color: var(--label-menu-trigger-active-color);
+    }
+  }
+}
+
+.label-btn-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.label-icons {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--wa-space-3xs, 2px);
+}
+
+.label-button-icon {
+  font-size: var(--wa-font-size-m);
+  color: var(--label-icon-color);
+
+  &.type-caret {
+    font-size: var(--wa-font-size-xs, 11px);
+    color: inherit;
+  }
+}
+
+.label-button-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.label-menu-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--wa-space-3xs, 2px);
+}
+
+.btn-label-menu {
+  opacity: 0.8;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  color: var(--label-menu-trigger-color);
+  border-radius: var(--wa-border-radius-s, 4px);
+
+  &::part(base) {
+    padding: 0;
+    min-height: auto;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+  }
+
+  wa-icon {
+    font-size: var(--wa-font-size-xs, 12px);
+    color: inherit;
+  }
+
+  &:hover {
+    opacity: 1;
+    color: var(--label-menu-trigger-hover-color);
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+.empty-labels-message {
+  padding: var(--wa-space-m, 16px) var(--wa-space-s, 12px);
+  font-size: var(--wa-font-size-xs, 12px);
+  color: var(--wa-color-text-subtle);
+  text-align: center;
+  user-select: none;
+}
+
+/* ==========================================================================
+   ドロップダウンメニューのスタイリング（Dark/Light コントラスト最適化）
+   ========================================================================== */
+wa-dropdown {
+  --wa-color-text-normal: #1f2328;
+  --wa-color-neutral-fill-normal: #f6f8fa;
+  --wa-color-danger-on-quiet: #cf222e;
+
+  &::part(menu) {
+    background-color: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: var(--wa-border-radius-m, 6px);
+    box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+    color: #1f2328;
+  }
+}
+
+wa-dropdown-item {
+  color: #1f2328;
+  font-size: var(--wa-font-size-sm);
+
+  wa-icon {
+    color: #57606a;
+  }
+
+  &[variant="danger"] {
+    color: #cf222e;
+
+    wa-icon {
+      color: #cf222e;
+    }
+  }
+}
+
+/* ==========================================================================
+   ダイアログスタイル（アプリ本体との分離・Dark/Lightコントラスト最適化）
+   ========================================================================== */
+wa-dialog {
+  color: var(--wa-color-text-normal);
+  --wa-form-control-label-color: var(--wa-color-text-normal);
+  --wa-form-control-value-color: var(--wa-color-text-normal);
+
+  &::part(dialog) {
+    background-color: #ffffff;
+    color: #1f2328;
+    border: 1px solid #d0d7de;
+    box-shadow: 0 12px 28px rgba(140, 149, 159, 0.3);
+  }
+
+  &::part(title) {
+    color: #1f2328;
+    font-weight: 700;
+  }
+
+  &::part(body) {
+    color: #1f2328;
+  }
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-m, 16px);
+  padding-block: var(--wa-space-s, 12px);
+}
+
+.dialog-field {
+  width: 100%;
+  --wa-form-control-background-color: #f6f8fa;
+  --wa-form-control-border-color: #d0d7de;
+  --wa-form-control-label-color: #1f2328;
+  --wa-form-control-value-color: #1f2328;
+  --wa-form-control-placeholder-color: #8c959f;
+
+  &::part(form-control-label),
+  &::part(label) {
+    color: #1f2328;
+    font-weight: 600;
+    margin-bottom: var(--wa-space-3xs, 4px);
+  }
+
+  &::part(input),
+  &::part(textarea) {
+    color: #1f2328;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.delete-dialog-message {
+  font-size: var(--wa-font-size-m);
+  color: #1f2328;
+  line-height: 1.6;
+  padding-block: var(--wa-space-s, 12px);
+
+  strong {
+    color: #1f2328;
+    font-weight: 700;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Dark モード時のダイアログ・ドロップダウン・入力文字色・背景色調整
+ * アプリ本体（#0d1117）と同化しない独立したサーフェス（#1c2128）を適用
+ * -------------------------------------------------------------------------- */
+:host(.wa-dark),
+:host([data-theme="dark"]) {
+  /* ドロップダウンメニュー（Dark モード: 高コントラスト文字・独立サーフェス背景） */
+  wa-dropdown {
+    --wa-color-text-normal: #ffffff;
+    --wa-color-neutral-fill-normal: #30363d;
+    --wa-color-danger-on-quiet: #ff7b72;
+
+    &::part(menu) {
+      background-color: #1c2128;
+      border: 1px solid #444c56;
+      box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+  }
+
+  wa-dropdown-item {
+    color: #ffffff !important;
+
+    wa-icon {
+      color: #e6edf3 !important;
+    }
+
+    &[variant="danger"] {
+      color: #ff7b72 !important;
+
+      wa-icon {
+        color: #ff7b72 !important;
+      }
+    }
+  }
+
+  wa-dialog {
+    &::part(dialog) {
+      background-color: #1c2128;
+      border: 1px solid #444c56;
+      box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+      color: #f0f6fc;
+    }
+
+    &::part(title) {
+      color: #ffffff;
+    }
+
+    &::part(body) {
+      color: #f0f6fc;
+    }
+  }
+
+  .dialog-field {
+    --wa-form-control-background-color: #0d1117;
+    --wa-form-control-border-color: #444c56;
+    --wa-form-control-label-color: #e6edf3;
+    --wa-form-control-value-color: #ffffff;
+    --wa-form-control-placeholder-color: #768390;
+
+    &::part(form-control-label),
+    &::part(label) {
+      color: #ffffff;
+    }
+
+    &::part(input),
+    &::part(textarea) {
+      color: #ffffff;
+    }
+  }
+
+  .delete-dialog-message {
+    color: #e6edf3;
+
+    strong {
+      color: #ffffff;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not(.wa-light):not([data-theme="light"])) {
+    /* ドロップダウンメニュー（Dark モード: 高コントラスト文字・独立サーフェス背景） */
+    wa-dropdown {
+      --wa-color-text-normal: #ffffff;
+      --wa-color-neutral-fill-normal: #30363d;
+      --wa-color-danger-on-quiet: #ff7b72;
+
+      &::part(menu) {
+        background-color: #1c2128;
+        border: 1px solid #444c56;
+        box-shadow:
+          0 12px 28px rgba(0, 0, 0, 0.8),
+          0 0 0 1px rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+      }
+    }
+
+    wa-dropdown-item {
+      color: #ffffff !important;
+
+      wa-icon {
+        color: #e6edf3 !important;
+      }
+
+      &[variant="danger"] {
+        color: #ff7b72 !important;
+
+        wa-icon {
+          color: #ff7b72 !important;
+        }
+      }
+    }
+
+    wa-dialog {
+      &::part(dialog) {
+        background-color: #1c2128;
+        border: 1px solid #444c56;
+        box-shadow:
+          0 16px 36px rgba(0, 0, 0, 0.8),
+          0 0 0 1px rgba(255, 255, 255, 0.08);
+        color: #f0f6fc;
+      }
+
+      &::part(title) {
+        color: #ffffff;
+      }
+
+      &::part(body) {
+        color: #f0f6fc;
+      }
+    }
+
+    .dialog-field {
+      --wa-form-control-background-color: #0d1117;
+      --wa-form-control-border-color: #444c56;
+      --wa-form-control-label-color: #e6edf3;
+      --wa-form-control-value-color: #ffffff;
+      --wa-form-control-placeholder-color: #768390;
+
+      &::part(form-control-label),
+      &::part(label) {
+        color: #ffffff;
+      }
+
+      &::part(input),
+      &::part(textarea) {
+        color: #ffffff;
+      }
+    }
+
+    .delete-dialog-message {
+      color: #e6edf3;
+
+      strong {
+        color: #ffffff;
+      }
+    }
+  }
+}
