@@ -21,6 +21,25 @@
         overflow: hidden;
       }
     </style>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('stepnote_theme') || 'system';
+          var isDark =
+            theme === 'dark' ||
+            (theme === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('wa-dark');
+            root.setAttribute('data-theme', 'dark');
+          } else {
+            root.classList.add('wa-light');
+            root.setAttribute('data-theme', 'light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

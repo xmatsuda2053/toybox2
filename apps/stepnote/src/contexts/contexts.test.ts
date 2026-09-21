@@ -4,6 +4,7 @@ import { taskContext, issuesContext } from "./task.context";
 import { logsContext, notesContext } from "./journal.context";
 import { labelsContext } from "./labels.context";
 import { quickAccessContext } from "./quick-access.context";
+import { themeContext } from "./theme.context";
 import * as allContexts from "./index";
 
 /** ContextKey の実体である Symbol を取得するヘルパー関数 */
@@ -18,8 +19,9 @@ const asSymbol = (context: unknown): symbol => context as symbol;
  * 5. notesContext が正しく定義され、固有の Symbol キーを持つこと
  * 6. labelsContext が正しく定義され、固有の Symbol キーを持つこと
  * 7. quickAccessContext が正しく定義され、固有の Symbol キーを持つこと
- * 8. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
- * 9. index.ts からすべての Context が正しく再エクスポートされていること
+ * 8. themeContext が正しく定義され、固有の Symbol キーを持つこと
+ * 9. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
+ * 10. index.ts からすべての Context が正しく再エクスポートされていること
  */
 describe("contexts の定義とエクスポート", () => {
   describe("個別の Context 定義", () => {
@@ -66,6 +68,12 @@ describe("contexts の定義とエクスポート", () => {
         "quick-access-context",
       );
     });
+
+    it("themeContext が正しく定義され、固有の Symbol キーを持つこと", () => {
+      expect(themeContext).toBeDefined();
+      expect(typeof themeContext).toBe("symbol");
+      expect(asSymbol(themeContext).description).toBe("theme-context");
+    });
   });
 
   describe("ContextKey の一意性検証", () => {
@@ -78,6 +86,7 @@ describe("contexts の定義とエクスポート", () => {
         notesContext,
         labelsContext,
         quickAccessContext,
+        themeContext,
       ];
       const descriptions = contexts.map((ctx) => asSymbol(ctx).description);
       const uniqueDescriptions = new Set(descriptions);
@@ -97,6 +106,7 @@ describe("contexts の定義とエクスポート", () => {
       expect(allContexts.notesContext).toBe(notesContext);
       expect(allContexts.labelsContext).toBe(labelsContext);
       expect(allContexts.quickAccessContext).toBe(quickAccessContext);
+      expect(allContexts.themeContext).toBe(themeContext);
     });
   });
 });

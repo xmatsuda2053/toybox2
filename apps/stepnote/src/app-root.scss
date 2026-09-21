@@ -31,11 +31,28 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--wa-space-xs, 8px);
   overflow: hidden;
   border-bottom: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
   background-color: var(--wa-color-surface-default);
 }
+
+.header-branding {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
 
 .panes-container {
   flex: 1;
