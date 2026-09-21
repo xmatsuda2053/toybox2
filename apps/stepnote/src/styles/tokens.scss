@@ -2,12 +2,15 @@
    StepNote Design Tokens & Theming (tokens.scss)
    ========================================================================== */
 
-:host,
-:root {
-  /* ------------------------------------------------------------------------
-   * 1. Web Awesome 標準デザイントークン (Light モード デフォルト値)
-   * ------------------------------------------------------------------------ */
-  --wa-font-family-body: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
+/* --------------------------------------------------------------------------
+ * 1. 基本トークン & Light モード トークン (:root / .wa-light)
+ * -------------------------------------------------------------------------- */
+:root,
+:root.wa-light,
+:root[data-theme="light"] {
+  /* Web Awesome 標準デザイントークン */
+  --wa-font-family-body:
+    "Segoe UI", "BIZ UD Gothic", "Yu Gothic UI", Meiryo, sans-serif;
   --wa-color-surface-default: #ffffff;
   --wa-color-surface-border: #d0d7de;
   --wa-color-text-normal: #1f2328;
@@ -15,38 +18,123 @@
   --wa-border-width-s: 1px;
   --wa-border-style: solid;
 
-  /* ------------------------------------------------------------------------
-   * 2. StepNote アプリケーション固有レイアウトトークン
-   *    (code-style-stepnote.md の 5ペイン・Header/Footer レイアウト規約準拠)
-   * ------------------------------------------------------------------------ */
+  /* StepNote アプリケーション固有レイアウトトークン */
   --stepnote-header-height: 30px;
   --stepnote-footer-height: 30px;
   --stepnote-pane-menu-width: 50px;
   --stepnote-pane-navigation-width: 260px;
   --stepnote-pane-task-list-width: 310px;
+
+  /* Quick Access アイコンカラー（Light モード: 60系 / 黒） */
+  --quick-access-icon-bookmark: var(--wa-color-indigo-60, #4f46e5);
+  --quick-access-icon-uncategorized: #000000;
+  --quick-access-icon-overdue: var(--wa-color-danger-60, #cf222e);
+  --quick-access-icon-asap: var(--wa-color-yellow-60, #9a6700);
+  --quick-access-icon-upcoming: var(--wa-color-cyan-60, #1b7c83);
+  --quick-access-icon-done: var(--wa-color-brand-60, #0969da);
+  --quick-access-icon-progress: var(--wa-color-success-60, #1a7f37);
+  --quick-access-icon-pending: #000000;
+
+  /* Quick Access アイコンカラー（Light モード・アクティブ時: 通常時と同一色を維持） */
+  --quick-access-icon-active-bookmark: var(--wa-color-indigo-60, #4f46e5);
+  --quick-access-icon-active-uncategorized: #000000;
+  --quick-access-icon-active-overdue: var(--wa-color-danger-60, #cf222e);
+  --quick-access-icon-active-asap: var(--wa-color-yellow-60, #9a6700);
+  --quick-access-icon-active-upcoming: var(--wa-color-cyan-60, #1b7c83);
+  --quick-access-icon-active-done: var(--wa-color-brand-60, #0969da);
+  --quick-access-icon-active-progress: var(--wa-color-success-60, #1a7f37);
+  --quick-access-icon-active-pending: #000000;
+
+  /* Labels アイコンカラー・メニュートリガー・スクロールバー（Light モード） */
+  --label-icon-color: var(--wa-color-brand-60, #0969da);
+  --label-icon-active-color: var(--wa-color-brand-60, #0969da);
+  --label-menu-trigger-color: #57606a;
+  --label-menu-trigger-hover-color: #1f2328;
+  --label-menu-trigger-active-color: #1f2328;
+  --scrollbar-thumb-color: #d0d7de;
+  --scrollbar-thumb-hover-color: #8c959f;
+  --scrollbar-track-color: transparent;
 }
 
 /* --------------------------------------------------------------------------
- * 3. ダークモード対応 (Dark Mode)
- *    Web Awesome の .wa-dark クラス、data-theme="dark" 属性、
- *    および OS の prefers-color-scheme (メディアクエリ) に連動
+ * 2. Dark モード トークン (:root.wa-dark / [data-theme="dark"])
  * -------------------------------------------------------------------------- */
-:host(.wa-dark),
-:host([data-theme="dark"]),
+:root.wa-dark,
+:root[data-theme="dark"],
 .wa-dark,
 [data-theme="dark"] {
+  /* Web Awesome 標準デザイントークン */
   --wa-color-surface-default: #0d1117;
   --wa-color-surface-border: #30363d;
   --wa-color-text-normal: #e6edf3;
   --wa-color-text-quiet: #8b949e;
+
+  /* Quick Access アイコンカラー（Dark モード: 70系 / 白） */
+  --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
+  --quick-access-icon-uncategorized: #ffffff;
+  --quick-access-icon-overdue: var(--wa-color-danger-70, #e5534b);
+  --quick-access-icon-asap: var(--wa-color-yellow-70, #bf8700);
+  --quick-access-icon-upcoming: var(--wa-color-cyan-70, #3192aa);
+  --quick-access-icon-done: var(--wa-color-brand-70, #218bff);
+  --quick-access-icon-progress: var(--wa-color-success-70, #2da44e);
+  --quick-access-icon-pending: #ffffff;
+
+  /* Quick Access アイコンカラー（Dark モード・アクティブ時: 通常時と同一色を維持） */
+  --quick-access-icon-active-bookmark: var(--wa-color-indigo-70, #6366f1);
+  --quick-access-icon-active-uncategorized: #ffffff;
+  --quick-access-icon-active-overdue: var(--wa-color-danger-70, #e5534b);
+  --quick-access-icon-active-asap: var(--wa-color-yellow-70, #bf8700);
+  --quick-access-icon-active-upcoming: var(--wa-color-cyan-70, #3192aa);
+  --quick-access-icon-active-done: var(--wa-color-brand-70, #218bff);
+  --quick-access-icon-active-progress: var(--wa-color-success-70, #2da44e);
+  --quick-access-icon-active-pending: #ffffff;
+
+  /* Labels アイコンカラー・メニュートリガー・スクロールバー（Dark モード） */
+  --label-icon-color: var(--wa-color-brand-70, #218bff);
+  --label-icon-active-color: var(--wa-color-brand-70, #218bff);
+  --label-menu-trigger-color: #c9d1d9;
+  --label-menu-trigger-hover-color: #ffffff;
+  --label-menu-trigger-active-color: #ffffff;
+  --scrollbar-thumb-color: #30363d;
+  --scrollbar-thumb-hover-color: #6e7681;
+  --scrollbar-track-color: transparent;
 }
 
+/* --------------------------------------------------------------------------
+ * 3. OS ダークモード初期連動 (:root に明示的な light 指定がない場合のみ)
+ * -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
-  :host(:not(.wa-light):not([data-theme="light"])),
   :root:not(.wa-light):not([data-theme="light"]) {
     --wa-color-surface-default: #0d1117;
     --wa-color-surface-border: #30363d;
     --wa-color-text-normal: #e6edf3;
     --wa-color-text-quiet: #8b949e;
+
+    --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
+    --quick-access-icon-uncategorized: #ffffff;
+    --quick-access-icon-overdue: var(--wa-color-danger-70, #e5534b);
+    --quick-access-icon-asap: var(--wa-color-yellow-70, #bf8700);
+    --quick-access-icon-upcoming: var(--wa-color-cyan-70, #3192aa);
+    --quick-access-icon-done: var(--wa-color-brand-70, #218bff);
+    --quick-access-icon-progress: var(--wa-color-success-70, #2da44e);
+    --quick-access-icon-pending: #ffffff;
+
+    --quick-access-icon-active-bookmark: var(--wa-color-indigo-70, #6366f1);
+    --quick-access-icon-active-uncategorized: #ffffff;
+    --quick-access-icon-active-overdue: var(--wa-color-danger-70, #e5534b);
+    --quick-access-icon-active-asap: var(--wa-color-yellow-70, #bf8700);
+    --quick-access-icon-active-upcoming: var(--wa-color-cyan-70, #3192aa);
+    --quick-access-icon-active-done: var(--wa-color-brand-70, #218bff);
+    --quick-access-icon-active-progress: var(--wa-color-success-70, #2da44e);
+    --quick-access-icon-active-pending: #ffffff;
+
+    --label-icon-color: var(--wa-color-brand-70, #218bff);
+    --label-icon-active-color: var(--wa-color-brand-70, #218bff);
+    --label-menu-trigger-color: #c9d1d9;
+    --label-menu-trigger-hover-color: #ffffff;
+    --label-menu-trigger-active-color: #ffffff;
+    --scrollbar-thumb-color: #30363d;
+    --scrollbar-thumb-hover-color: #6e7681;
+    --scrollbar-track-color: transparent;
   }
 }

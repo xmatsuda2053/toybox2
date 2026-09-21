@@ -15,9 +15,9 @@
   box-sizing: border-box;
   overflow: hidden;
 
-  /* ラベルアイコンカラー（Light モード） */
+  /* ラベルアイコンカラー（Light モード: 通常時・アクティブ時ともに 60系 を維持） */
   --label-icon-color: var(--wa-color-brand-60);
-  --label-icon-active-color: var(--wa-color-brand-70);
+  --label-icon-active-color: var(--wa-color-brand-60);
 
   /* メニュートリガーアイコンカラー（Light モード） */
   --label-menu-trigger-color: #57606a;
@@ -35,7 +35,7 @@
 .wa-dark,
 [data-theme="dark"] {
   --label-icon-color: var(--wa-color-brand-70);
-  --label-icon-active-color: var(--wa-color-brand-40);
+  --label-icon-active-color: var(--wa-color-brand-70);
 
   /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
   --label-menu-trigger-color: #c9d1d9;
@@ -51,7 +51,7 @@
 @media (prefers-color-scheme: dark) {
   :host(:not(.wa-light):not([data-theme="light"])) {
     --label-icon-color: var(--wa-color-brand-70);
-    --label-icon-active-color: var(--wa-color-brand-40);
+    --label-icon-active-color: var(--wa-color-brand-70);
 
     /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
     --label-menu-trigger-color: #c9d1d9;
@@ -64,6 +64,8 @@
     --scrollbar-track-color: transparent;
   }
 }
+
+
 
 .labels-container {
   display: flex;
