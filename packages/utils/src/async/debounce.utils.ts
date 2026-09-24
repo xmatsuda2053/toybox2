@@ -5,7 +5,7 @@
  * @property {() => void} cancel - 待機中の実行をキャンセルするメソッド
  * @property {() => void} flush - 待機中の実行があれば直ちに実行するメソッド
  */
-export interface DebouncedFunction<T extends (...args: any[]) => any> {
+export interface DebouncedFunction<T extends (...args: never[]) => unknown> {
   (...args: Parameters<T>): void;
   cancel: () => void;
   flush: () => void;
@@ -20,7 +20,7 @@ export interface DebouncedFunction<T extends (...args: any[]) => any> {
  * @example
  * const debouncedFn = debounce((msg: string) => console.log(msg), 200);
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   wait: number,
 ): DebouncedFunction<T> {
