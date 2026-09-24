@@ -46,48 +46,78 @@
  * @param {unknown} template 展開対象の Lit TemplateResult または値
  * @returns {string} 展開・統合された完全な HTML 文字列
  */
+interface LitTemplateObject {
+  strings: readonly string[];
+  values?: readonly unknown[];
+}
+
+function isTemplateObject(val: unknown): val is LitTemplateObject {
+  return (
+    typeof val === "object" &&
+    val !== null &&
+    "strings" in val &&
+    Array.isArray((val as LitTemplateObject).strings)
+  );
+}
+
+/**
+ * Lit のブール属性（?attr=${bool}）の直前文字列を評価・置換する
+ */
+function resolveBooleanAttribute(
+  prevResult: string,
+  precedingString: string,
+  val: boolean,
+): string {
+  const boolAttrMatch = precedingString.match(/\?([a-zA-Z0-9_-]+)=$/);
+  if (!boolAttrMatch) {
+    return prevResult + String(val);
+  }
+
+  const attrName = boolAttrMatch[1];
+  const replaceTarget = `?${attrName}=`;
+  const replaceWith = val ? attrName : "";
+  return prevResult.slice(0, -replaceTarget.length) + replaceWith;
+}
+
+/**
+ * テンプレート内に埋め込まれた動的値を再帰的またはプリミティブ値として文字列展開する
+ */
+function stringifyValue(val: unknown): string {
+  if (val === null || val === undefined) {
+    return "";
+  }
+  if (Array.isArray(val)) {
+    return val.map((v) => flattenTemplate(v)).join("");
+  }
+  if (isTemplateObject(val)) {
+    return flattenTemplate(val);
+  }
+  return String(val);
+}
+
 export const flattenTemplate = (template: unknown): string => {
   if (template === null || template === undefined) {
     return "";
   }
 
-  if (typeof template !== "object") {
+  if (!isTemplateObject(template)) {
     return String(template);
   }
 
-  const t = template as { strings?: readonly string[]; values?: unknown[] };
-  if (!t.strings || !Array.isArray(t.strings)) {
-    return String(template);
-  }
-
+  const { strings, values } = template;
   let result = "";
-  for (let i = 0; i < t.strings.length; i++) {
-    result += t.strings[i];
-    if (t.values && i < t.values.length) {
-      const val = t.values[i];
 
-      if (Array.isArray(val)) {
-        // 配列（TemplateResult[] など）の再帰展開
-        result += val.map((v) => flattenTemplate(v)).join("");
-      } else if (typeof val === "object" && val !== null && "strings" in val) {
-        // ネストされた TemplateResult の再帰展開
-        result += flattenTemplate(val);
-      } else if (typeof val === "boolean") {
-        // Lit のブール属性 (?attr=${bool}) の評価再現
-        // 例: 直前が ?hidden= の場合
-        const boolAttrMatch = t.strings[i].match(/\?([a-zA-Z0-9_\-]+)=$/);
-        if (boolAttrMatch) {
-          const attrName = boolAttrMatch[1];
-          const replaceTarget = `?${attrName}=`;
-          const replaceWith = val ? attrName : "";
-          // 直前に付加した ?attr= を置換
-          result = result.slice(0, -replaceTarget.length) + replaceWith;
-        } else {
-          result += String(val);
-        }
-      } else {
-        result += val === null || val === undefined ? "" : String(val);
-      }
+  for (let i = 0; i < strings.length; i++) {
+    result += strings[i];
+    if (!values || i >= values.length) {
+      continue;
+    }
+
+    const val = values[i];
+    if (typeof val === "boolean") {
+      result = resolveBooleanAttribute(result, strings[i], val);
+    } else {
+      result += stringifyValue(val);
     }
   }
 
