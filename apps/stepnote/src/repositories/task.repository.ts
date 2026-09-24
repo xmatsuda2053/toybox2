@@ -1,70 +1,18 @@
 import { db } from "@/db/schema/database.schema";
 import type { TaskRecord } from "@/db/models/task.model";
+import { BaseRepository } from "./base.repository";
 
 /**
  * Taskに対するCRUDおよび状態を制御するリポジトリ
  *
  * @export
  * @class TaskRepository
+ * @extends {BaseRepository<TaskRecord>}
  */
-export class TaskRepository {
-  /**
-   * DBからすべてのタスクを取得する
-   *
-   * @return {*} {Promise<TaskRecord[]>}
-   * @memberof TaskRepository
-   */
-  public getAll = async (): Promise<TaskRecord[]> => {
-    return await db.tasks.toArray();
-  };
-
-  /**
-   * 指定したIDのタスクを取得する
-   *
-   * @param {number} id
-   * @return {*} {Promise<TaskRecord | undefined>}
-   * @memberof TaskRepository
-   */
-  public getById = async (id: number): Promise<TaskRecord | undefined> => {
-    return await db.tasks.get(id);
-  };
-
-  /**
-   * 新規タスクを追加する
-   *
-   * @param {Omit<TaskRecord, "id">} task
-   * @return {*} {Promise<number>}
-   * @memberof TaskRepository
-   */
-  public add = async (task: Omit<TaskRecord, "id">): Promise<number> => {
-    return await db.tasks.add({ ...task });
-  };
-
-  /**
-   * 指定したIDのタスクを更新する
-   *
-   * @param {number} id
-   * @param {Partial<Omit<TaskRecord, "id">>} partial
-   * @return {*} {Promise<void>}
-   * @memberof TaskRepository
-   */
-  public update = async (
-    id: number,
-    partial: Partial<Omit<TaskRecord, "id">>,
-  ): Promise<void> => {
-    await db.tasks.update(id, partial);
-  };
-
-  /**
-   * 指定したIDのタスクを削除する
-   *
-   * @param {number} id
-   * @return {*} {Promise<void>}
-   * @memberof TaskRepository
-   */
-  public delete = async (id: number): Promise<void> => {
-    await db.tasks.delete(id);
-  };
+export class TaskRepository extends BaseRepository<TaskRecord> {
+  constructor() {
+    super(db.tasks);
+  }
 
   /**
    * すべてのタスクの選択状態を解除する。
@@ -73,7 +21,7 @@ export class TaskRepository {
    * @memberof TaskRepository
    */
   public clearSelection = async (): Promise<void> => {
-    await db.tasks.toCollection().modify({ selected: false });
+    await this.table.toCollection().modify({ selected: false });
   };
 
   /**
@@ -85,9 +33,9 @@ export class TaskRepository {
    * @memberof TaskRepository
    */
   public select = async (id: number): Promise<void> => {
-    await db.transaction("rw", db.tasks, async () => {
+    await db.transaction("rw", this.table, async () => {
       await this.clearSelection();
-      await db.tasks.update(id, { selected: true });
+      await this.table.update(id, { selected: true });
     });
   };
 }
