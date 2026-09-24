@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   format,
   addDays,
+  startOfDay,
   isOverdue,
   isAsap,
   isWithinAnyDaysBefore,
@@ -331,5 +332,50 @@ describe("date.utils.getJapaneseWeekday", () => {
   it("format に short を指定した場合、省略表記（「日」「月」…）を返すこと", () => {
     expect(getJapaneseWeekday(sunday, "short")).toBe("日");
     expect(getJapaneseWeekday(monday, "short")).toBe("月");
+  });
+});
+
+/**
+ * startOfDay テスト仕様:
+ * - 仕様: 指定された Date の時刻部分（時・分・秒・ミリ秒）を 00:00:00.000 に正規化した新しい Date を返すこと。
+ * - 仕様: 引数を省略した場合、現在時刻（システム時刻）の 00:00:00.000 を持つ Date を返すこと。
+ * - 仕様: 引数として渡された元の Date オブジェクトを変更しないこと（イミュータブルであること）。
+ */
+describe("date.utils.startOfDay", () => {
+  it("指定された Date の時刻部分を 00:00:00.000 にリセットした新しい Date を返すこと", () => {
+    const original = new Date(2026, 8, 15, 14, 30, 45, 500);
+    const result = startOfDay(original);
+
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(8);
+    expect(result.getDate()).toBe(15);
+    expect(result.getHours()).toBe(0);
+    expect(result.getMinutes()).toBe(0);
+    expect(result.getSeconds()).toBe(0);
+    expect(result.getMilliseconds()).toBe(0);
+  });
+
+  it("引数を省略した場合、システム時刻当日の 00:00:00.000 を持つ Date を返すこと", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 20, 18, 45, 30, 123));
+
+    const result = startOfDay();
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(8);
+    expect(result.getDate()).toBe(20);
+    expect(result.getHours()).toBe(0);
+    expect(result.getMinutes()).toBe(0);
+    expect(result.getSeconds()).toBe(0);
+    expect(result.getMilliseconds()).toBe(0);
+
+    vi.useRealTimers();
+  });
+
+  it("引数として渡された元の Date オブジェクトを変更しないこと", () => {
+    const original = new Date(2026, 8, 15, 14, 30, 45, 500);
+    const timeBefore = original.getTime();
+    startOfDay(original);
+
+    expect(original.getTime()).toBe(timeBefore);
   });
 });

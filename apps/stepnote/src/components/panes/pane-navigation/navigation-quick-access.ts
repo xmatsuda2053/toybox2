@@ -438,6 +438,80 @@ export class NavigationQuickAccess extends LitElement {
   }
 
   /**
+   * ヘッダー部（タイトルおよび開閉トグルボタン）を描画する。
+   *
+   * @private
+   * @param {boolean} isOpen 開閉状態
+   * @param {string} toggleLabel アクセシビリティ用ラベル
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationQuickAccess
+   */
+  private renderHeader(isOpen: boolean, toggleLabel: string): HTMLTemplateResult {
+    return html`
+      <header class="section-header quick-access-header">
+        <span class="section-title quick-access-title">QUICK ACCESS</span>
+        <wa-tooltip for="btn-toggle-quick-access" placement="bottom">
+          ${toggleLabel}
+        </wa-tooltip>
+        <wa-button
+          id="btn-toggle-quick-access"
+          class="btn-toggle-section btn-toggle-quick-access"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          @click=${this.handleToggleQuickAccess}
+        >
+          <wa-icon
+            library="my-icons"
+            name="chevron-right"
+            class="icon-toggle-section icon-toggle-quick-access ${isOpen
+              ? "is-open"
+              : "is-closed"}"
+          ></wa-icon>
+        </wa-button>
+      </header>
+    `;
+  }
+
+  /**
+   * コンテンツ部（アコーディオン内のフィルターボタングループ）を描画する。
+   *
+   * @private
+   * @param {boolean} isOpen 開閉状態
+   * @param {QuickAccessRecord | undefined} qaState クイックアクセス状態
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationQuickAccess
+   */
+  private renderContent(
+    isOpen: boolean,
+    qaState: QuickAccessRecord | undefined,
+  ): HTMLTemplateResult {
+    return html`
+      <div
+        class="quick-access-content-wrapper ${isOpen
+          ? "is-open"
+          : "is-closed"}"
+      >
+        <div class="quick-access-content">
+          ${QUICK_ACCESS_BUTTON_GROUPS.map(
+            (group, groupIndex) => html`
+              ${groupIndex > 0
+                ? html`<wa-divider class="quick-access-divider"></wa-divider>`
+                : nothing}
+              ${group.map((item) =>
+                this.renderFilterButton(
+                  item,
+                  Boolean(qaState?.[item.stateKey]),
+                ),
+              )}
+            `,
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * コンポーネントの HTML テンプレートを生成・レンダリングする。
    *
    * @override
@@ -447,57 +521,12 @@ export class NavigationQuickAccess extends LitElement {
   override render(): HTMLTemplateResult | typeof nothing {
     const isOpen = this.layoutUIController?.state.isQuickAccessOpen ?? true;
     const qaState = this.quickAccessController?.state;
-
     const toggleLabel = isOpen ? "Close" : "Expand";
 
     return html`
       <div class="quick-access">
-        <!-- タイトル部 (Header) -->
-        <header class="section-header quick-access-header">
-          <span class="section-title quick-access-title">QUICK ACCESS</span>
-          <wa-tooltip for="btn-toggle-quick-access" placement="bottom">
-            ${toggleLabel}
-          </wa-tooltip>
-          <wa-button
-            id="btn-toggle-quick-access"
-            class="btn-toggle-section btn-toggle-quick-access"
-            variant="neutral"
-            appearance="plain"
-            size="s"
-            @click=${this.handleToggleQuickAccess}
-          >
-            <wa-icon
-              library="my-icons"
-              name="chevron-right"
-              class="icon-toggle-section icon-toggle-quick-access ${isOpen
-                ? "is-open"
-                : "is-closed"}"
-            ></wa-icon>
-          </wa-button>
-        </header>
-
-        <!-- コンテンツ部 (Content: アコーディオンアニメーション) -->
-        <div
-          class="quick-access-content-wrapper ${isOpen
-            ? "is-open"
-            : "is-closed"}"
-        >
-          <div class="quick-access-content">
-            ${QUICK_ACCESS_BUTTON_GROUPS.map(
-              (group, groupIndex) => html`
-                ${groupIndex > 0
-                  ? html`<wa-divider class="quick-access-divider"></wa-divider>`
-                  : nothing}
-                ${group.map((item) =>
-                  this.renderFilterButton(
-                    item,
-                    Boolean(qaState?.[item.stateKey]),
-                  ),
-                )}
-              `,
-            )}
-          </div>
-        </div>
+        ${this.renderHeader(isOpen, toggleLabel)}
+        ${this.renderContent(isOpen, qaState)}
       </div>
     `;
   }

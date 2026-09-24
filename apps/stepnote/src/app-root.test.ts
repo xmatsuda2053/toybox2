@@ -160,33 +160,27 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
 
   describe("3. 基本レイアウト構造の提供", () => {
     it("3-1. 5ペインの基本骨格要素がレンダリングされること", async () => {
-      const template = appRoot.render() as unknown as {
-        strings: readonly string[];
-      };
-      const strings = template.strings.join("");
+      const htmlStr = flattenTemplate(appRoot.render());
 
       // 5ペインのコンテナおよび各ペイン要素の存在確認
-      expect(strings).toContain("app-shell");
-      expect(strings).toContain("panes-container");
-      expect(strings).toContain("pane-menu");
-      expect(strings).toContain("pane-navigation");
-      expect(strings).toContain("pane-task-list");
-      expect(strings).toContain("pane-task");
-      expect(strings).toContain("pane-journal");
+      expect(htmlStr).toContain("app-shell");
+      expect(htmlStr).toContain("panes-container");
+      expect(htmlStr).toContain("pane-menu");
+      expect(htmlStr).toContain("pane-navigation");
+      expect(htmlStr).toContain("pane-task-list");
+      expect(htmlStr).toContain("pane-task");
+      expect(htmlStr).toContain("pane-journal");
 
       // Navigation 内部の上下分割領域の存在確認
-      expect(strings).toContain("navigation-quick-access");
-      expect(strings).toContain("navigation-labels");
+      expect(htmlStr).toContain("navigation-quick-access");
+      expect(htmlStr).toContain("navigation-labels");
     });
 
     it("3-2. 画面の上下に header および footer 要素がレンダリングされること", async () => {
-      const template = appRoot.render() as unknown as {
-        strings: readonly string[];
-      };
-      const strings = template.strings.join("");
+      const htmlStr = flattenTemplate(appRoot.render());
 
-      expect(strings).toContain("app-header");
-      expect(strings).toContain("app-footer");
+      expect(htmlStr).toContain("app-header");
+      expect(htmlStr).toContain("app-footer");
     });
   });
 });
