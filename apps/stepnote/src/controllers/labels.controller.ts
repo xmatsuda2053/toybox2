@@ -1,116 +1,30 @@
-import type { ReactiveController, ReactiveControllerHost } from "lit";
+import type { ReactiveControllerHost } from "lit";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { LabelRecord } from "@/db/models/navigation.model";
+import { BaseDataController } from "./base-reactive.controller";
 
 /**
  * Label関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class LabelsController
- * @implements {ReactiveController}
+ * @extends {BaseDataController}
  */
-export class LabelsController implements ReactiveController {
-  private host: ReactiveControllerHost;
-  private repository: LabelsRepository;
-
-  /** Labelsの内部状態 */
-  private _state: LabelRecord[] = [];
-
-  /**
-   * 現在のラベル一覧（読み取り専用）
-   *
-   * @readonly
-   * @type {readonly LabelRecord[]}
-   * @memberof LabelsController
-   */
-  public get state(): readonly LabelRecord[] {
-    return this._state;
-  }
-
-  /**
-   * Controllerの非同期初期化状態。
-   *
-   * このプロパティの解決（then）されたタイミングで、本コントローラーの内部状態が完全に
-   * 初期化されたことを保証する。
-   *
-   * @type {Promise<void>}
-   * @memberof LabelsController
-   */
-  public readonly initialized: Promise<void>;
-
-  /**
-   * Creates an instance of LabelsController.
-   * @param {ReactiveControllerHost} host
-   * @param {LabelsRepository} repository
-   * @memberof LabelsController
-   */
+export class LabelsController extends BaseDataController<
+  LabelsRepository,
+  readonly LabelRecord[]
+> {
   constructor(host: ReactiveControllerHost, repository: LabelsRepository) {
-    this.host = host;
-    this.host.addController(this);
-    this.repository = repository;
-    this.initialized = this.loadState();
+    super(host, repository, []);
   }
 
   /**
-   * 状態変更を購読するリスナー関数のセット
-   *
-   * @private
-   * @type {Set<() => void>}
-   * @memberof LabelsController
+   * 登録済みラベル全件をDBから再取得し、変更を全購読者へ通知する。
    */
-  private listeners: Set<() => void> = new Set();
-
-  /**
-   * 状態変更リスナーを登録する（Observer / Subscribe パターン）。
-   *
-   * 状態が変更（DB更新完了）された際に呼び出されるコールバック関数を登録します。
-   * 戻り値として、登録したリスナーを安全に解除するための購読解除関数（Unsubscribe）を返却します。
-   *
-   * @param {() => void} listener 状態変更時に実行するコールバック関数
-   * @return {() => void} 購読を解除するための関数
-   * @memberof LabelsController
-   */
-  public subscribe = (listener: () => void): (() => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
-
-  /**
-   * ホストコンポーネントおよびすべての購読リスナーへ状態変更を通知する内部ヘルパー。
-   *
-   * @private
-   * @return {*} {void}
-   * @memberof LabelsController
-   */
-  private notify = (): void => {
-    this.host.requestUpdate();
-    this.listeners.forEach((listener) => listener());
-  };
-
-  /**
-   * データベースから状態を再読み込みし、コンポーネントおよび全購読者へ通知する。
-   *
-   * @private
-   * @return {*}  {Promise<void>}
-   * @memberof LabelsController
-   */
-  private loadState = async (): Promise<void> => {
-    const record = await this.repository.getAll();
-    this._state = [...record];
+  protected async loadState(): Promise<void> {
+    this._state = [...(await this.repository.getAll())];
     this.notify();
-  };
-
-  /**
-   * データベースから最新の状態を再読み込みする。
-   *
-   * @return {*}  {Promise<void>}
-   * @memberof LabelsController
-   */
-  public refresh = async (): Promise<void> => {
-    await this.loadState();
-  };
+  }
 
   /**
    * 新規ラベルを作成する

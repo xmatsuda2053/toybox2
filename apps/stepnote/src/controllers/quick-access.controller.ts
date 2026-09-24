@@ -1,10 +1,11 @@
-import type { ReactiveController, ReactiveControllerHost } from "lit";
+import type { ReactiveControllerHost } from "lit";
 import type { QuickAccessRepository } from "@/repositories/quick-access.repository";
 import type { QuickAccessRecord } from "@/db/models";
 import {
   QUICK_ACCESS_STATIC_ID,
   DEFAULT_QUICK_ACCESS,
 } from "@/constants/quick-access.constants";
+import { BaseDataController } from "./base-reactive.controller";
 
 /** 期限フィルターのキー型 */
 type DueDateFilterKey =
@@ -17,113 +18,26 @@ type DueDateFilterKey =
  *
  * @export
  * @class QuickAccessController
- * @implements {ReactiveController}
+ * @extends {BaseDataController}
  */
-export class QuickAccessController implements ReactiveController {
-  private host: ReactiveControllerHost;
-  private repository: QuickAccessRepository;
-
-  /** QuickAccessの内部状態 */
-  private _state: QuickAccessRecord = {
-    id: QUICK_ACCESS_STATIC_ID,
-    ...DEFAULT_QUICK_ACCESS,
-  };
-
-  /**
-   * 状態変更を購読するリスナー関数のセット
-   *
-   * @private
-   * @type {Set<() => void>}
-   * @memberof QuickAccessController
-   */
-  private listeners: Set<() => void> = new Set();
-
-  /**
-   * 現在のクイックアクセス状態（読み取り専用）
-   *
-   * @readonly
-   * @type {Readonly<QuickAccessRecord>}
-   * @memberof QuickAccessController
-   */
-  public get state(): Readonly<QuickAccessRecord> {
-    return this._state;
-  }
-
-  /**
-   * 状態変更リスナーを登録する（Observer / Subscribe パターン）。
-   *
-   * 状態が変更（DB更新完了）された際に呼び出されるコールバック関数を登録します。
-   * 戻り値として、登録したリスナーを安全に解除するための購読解除関数（Unsubscribe）を返却します。
-   *
-   * @param {() => void} listener 状態変更時に実行するコールバック関数
-   * @return {() => void} 購読を解除するための関数
-   * @memberof QuickAccessController
-   */
-  public subscribe = (listener: () => void): (() => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
-
-  /**
-   * ホストコンポーネントおよびすべての購読リスナーへ状態変更を通知する内部ヘルパー。
-   *
-   * @private
-   * @return {*} {void}
-   * @memberof QuickAccessController
-   */
-  private notify = (): void => {
-    this.host.requestUpdate();
-    this.listeners.forEach((listener) => listener());
-  };
-
-  /**
-   * Controllerの非同期初期化状態。
-   *
-   * このプロパティの解決（then）されたタイミングで、本コントローラーの内部状態が完全に
-   * 初期化されたことを保証する。
-   *
-   * @type {Promise<void>}
-   * @memberof QuickAccessController
-   */
-  public readonly initialized: Promise<void>;
-
-  /**
-   * Creates an instance of QuickAccessController.
-   * @param {ReactiveControllerHost} host
-   * @param {QuickAccessRepository} repository
-   * @memberof QuickAccessController
-   */
+export class QuickAccessController extends BaseDataController<
+  QuickAccessRepository,
+  Readonly<QuickAccessRecord>
+> {
   constructor(host: ReactiveControllerHost, repository: QuickAccessRepository) {
-    this.host = host;
-    this.host.addController(this);
-    this.repository = repository;
-    this.initialized = this.loadState();
+    super(host, repository, {
+      id: QUICK_ACCESS_STATIC_ID,
+      ...DEFAULT_QUICK_ACCESS,
+    });
   }
 
   /**
-   * データベースから状態を再読み込みし、コンポーネントおよび全購読者へ通知する。
-   *
-   * @private
-   * @return {*}  {Promise<void>}
-   * @memberof QuickAccessController
+   * フィルター設定をリポジトリから再取得し、変更を全購読者へ通知する。
    */
-  private loadState = async (): Promise<void> => {
-    const record = await this.repository.getQuickAccess();
-    this._state = { ...record };
+  protected async loadState(): Promise<void> {
+    this._state = { ...(await this.repository.getQuickAccess()) };
     this.notify();
-  };
-
-  /**
-   * データベースから最新の状態を再読み込みする。
-   *
-   * @return {*}  {Promise<void>}
-   * @memberof QuickAccessController
-   */
-  public refresh = async (): Promise<void> => {
-    await this.loadState();
-  };
+  }
 
   /**
    * DBを更新し、stateを更新して全購読者へ通知する。
