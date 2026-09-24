@@ -1,52 +1,26 @@
-import type { ReactiveController, ReactiveControllerHost } from "lit";
+import type { ReactiveControllerHost } from "lit";
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { CreateTaskInput, Summary, Property, TaskStatusCode } from "@/types";
+import { BaseTaskScopeController } from "./base-reactive.controller";
 
 /**
  * 単一タスク関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class TaskController
- * @implements {ReactiveController}
+ * @extends {BaseTaskScopeController}
  */
-export class TaskController implements ReactiveController {
-  private host: ReactiveControllerHost;
-  private repository: TaskRepository;
-  private _state: TaskRecord | undefined = undefined;
-  private _taskId: number | undefined = undefined;
-
-  /**
-   * Controllerの非同期初期化状態。
-   *
-   * このプロパティが解決（then）されたタイミングで、本コントローラーの内部状態が完全に
-   * 初期化されたことを保証する。
-   *
-   * @type {Promise<void>}
-   * @memberof TaskController
-   */
-  public readonly initialized: Promise<void>;
-
-  /**
-   * 現在対象のタスク（読み取り専用）
-   *
-   * @readonly
-   * @type {(TaskRecord | undefined)}
-   * @memberof TaskController
-   */
-  public get state(): TaskRecord | undefined {
-    return this._state;
-  }
-
-  /**
-   * 現在対象のタスクID
-   *
-   * @readonly
-   * @type {(number | undefined)}
-   * @memberof TaskController
-   */
-  public get taskId(): number | undefined {
-    return this._taskId;
+export class TaskController extends BaseTaskScopeController<
+  TaskRepository,
+  TaskRecord | undefined
+> {
+  constructor(
+    host: ReactiveControllerHost,
+    repository: TaskRepository,
+    taskId?: number,
+  ) {
+    super(host, repository, undefined, taskId);
   }
 
   /**
@@ -61,105 +35,24 @@ export class TaskController implements ReactiveController {
   }
 
   /**
-   * Creates an instance of TaskController.
-   * @param {ReactiveControllerHost} host
-   * @param {TaskRepository} repository
-   * @param {number} [taskId]
-   * @memberof TaskController
+   * 選択中タスクの単一レコードをDBから取得し、変更を全購読者へ通知する。
    */
-  constructor(
-    host: ReactiveControllerHost,
-    repository: TaskRepository,
-    taskId?: number,
-  ) {
-    this.host = host;
-    this.host.addController(this);
-    this.repository = repository;
-    this._taskId = taskId;
-    this.initialized = this.loadState();
-  }
+  protected async loadState(): Promise<void> {
+    if (this._taskId === undefined) {
+      this._state = undefined;
+      this.notify();
+      return;
+    }
 
-  /**
-   * 状態変更を購読するリスナー関数のセット
-   *
-   * @private
-   * @type {Set<() => void>}
-   * @memberof TaskController
-   */
-  private listeners: Set<() => void> = new Set();
-
-  /**
-   * 状態変更リスナーを登録する（Observer / Subscribe パターン）。
-   *
-   * 状態が変更（DB更新完了）された際に呼び出されるコールバック関数を登録します。
-   * 戻り値として、登録したリスナーを安全に解除するための購読解除関数（Unsubscribe）を返却します。
-   *
-   * @param {() => void} listener 状態変更時に実行するコールバック関数
-   * @return {() => void} 購読を解除するための関数
-   * @memberof TaskController
-   */
-  public subscribe = (listener: () => void): (() => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
-
-  /**
-   * ホストコンポーネントおよびすべての購読リスナーへ状態変更を通知する内部ヘルパー。
-   *
-   * @private
-   * @return {*} {void}
-   * @memberof TaskController
-   */
-  private notify = (): void => {
-    this.host.requestUpdate();
-    this.listeners.forEach((listener) => listener());
-  };
-
-  /**
-   * データベースから状態を再読み込みし、コンポーネントおよび全購読者へ通知する。
-   *
-   * @private
-   * @return {*}  {Promise<void>}
-   * @memberof TaskController
-   */
-  private loadState = async (): Promise<void> => {
-    if (this._taskId !== undefined) {
-      const record = await this.repository.getById(this._taskId);
-      if (record) {
-        this._state = { ...record };
-      } else {
-        this._state = undefined;
-        this._taskId = undefined;
-      }
+    const task = await this.repository.getById(this._taskId);
+    if (task) {
+      this._state = { ...task };
     } else {
       this._state = undefined;
+      this._taskId = undefined;
     }
 
     this.notify();
-  };
-
-  /**
-   * 対象とするタスクIDを変更し、データを再ロードする。
-   *
-   * @param {(number | undefined)} id
-   * @return {*}  {Promise<void>}
-   * @memberof TaskController
-   */
-  public setTaskId = async (id: number | undefined): Promise<void> => {
-    this._taskId = id;
-    await this.loadState();
-  };
-
-  /**
-   * データベースから最新の状態を再読み込みする。
-   *
-   * @return {*}  {Promise<void>}
-   * @memberof TaskController
-   */
-  public refresh = async (): Promise<void> => {
-    await this.loadState();
   };
 
   /**

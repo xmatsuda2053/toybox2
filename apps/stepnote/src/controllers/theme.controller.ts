@@ -1,4 +1,5 @@
-import type { ReactiveController, ReactiveControllerHost } from "lit";
+import type { ReactiveControllerHost } from "lit";
+import { BaseReactiveController } from "./base-reactive.controller";
 
 /**
  * テーマ選択モード（システム連動 / ライト / ダーク）
@@ -58,10 +59,9 @@ export interface ThemeControllerOptions {
  *
  * @export
  * @class ThemeController
- * @implements {ReactiveController}
+ * @extends {BaseReactiveController<ThemeState>}
  */
-export class ThemeController implements ReactiveController {
-  private host: ReactiveControllerHost;
+export class ThemeController extends BaseReactiveController<ThemeState> {
   private storageKey: string;
   private storage?: ThemeControllerOptions["storage"];
   private matchMediaFn?: ThemeControllerOptions["matchMedia"];
@@ -71,7 +71,6 @@ export class ThemeController implements ReactiveController {
   >;
 
   private _state: ThemeState;
-  private listeners: Set<(state: ThemeState) => void> = new Set();
 
   /**
    * 現在のテーマ状態（読み取り専用）
@@ -95,8 +94,7 @@ export class ThemeController implements ReactiveController {
   }
 
   constructor(host: ReactiveControllerHost, options?: ThemeControllerOptions) {
-    this.host = host;
-    this.host.addController(this);
+    super(host);
 
     this.storageKey = options?.storageKey ?? "stepnote_theme";
     this.storage =
@@ -157,19 +155,6 @@ export class ThemeController implements ReactiveController {
       );
     }
   }
-
-  /**
-   * 状態変更を購読するリスナー関数を登録する。
-   *
-   * @param listener 状態変更時に呼び出されるコールバック
-   * @returns 購読解除関数
-   */
-  public subscribe = (listener: (state: ThemeState) => void): (() => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
 
   /**
    * テーマを切り替える。
@@ -273,8 +258,7 @@ export class ThemeController implements ReactiveController {
   /**
    * ホストへの再描画通知および全リスナーへの通知
    */
-  private notify(): void {
-    this.host.requestUpdate();
-    this.listeners.forEach((listener) => listener(this._state));
+  protected override notify(): void {
+    super.notify(this._state);
   }
 }
