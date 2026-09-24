@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS } from "lit";
+import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 import { ContextProvider } from "@lit/context";
 import appRootStyles from "./app-root.scss?inline";
@@ -142,6 +142,77 @@ export class AppRoot extends LitElement {
   }
 
   /**
+   * ヘッダー領域の HTML テンプレートを描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderHeader(): HTMLTemplateResult {
+    return html`
+      <header class="app-header">
+        <div class="header-branding">
+          <wa-icon library="my-icons" name="cubes-stacked-solid-full"></wa-icon>
+          StepNote
+        </div>
+        <div class="header-actions">
+          <theme-switcher></theme-switcher>
+        </div>
+      </header>
+    `;
+  }
+
+  /**
+   * 5ペイン（中央コンテンツ領域）の HTML テンプレートを描画する。
+   *
+   * @private
+   * @param {boolean} isOpen ナビゲーションリストエリアが開いているかどうか
+   * @param {string} resolvedTheme 適用中の解決済みテーマ名
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderPanes(
+    isOpen: boolean,
+    resolvedTheme: string,
+  ): HTMLTemplateResult {
+    return html`
+      <div class="panes-container">
+        <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
+        <pane-menu
+          class="pane-menu"
+          data-theme=${resolvedTheme}
+          .isNavigationListAreaOpen=${isOpen}
+        ></pane-menu>
+
+        <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
+        <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
+          <navigation-quick-access
+            class="navigation-quick-access"
+            data-theme=${resolvedTheme}
+          ></navigation-quick-access>
+          <navigation-labels
+            class="navigation-labels"
+            data-theme=${resolvedTheme}
+          ></navigation-labels>
+        </aside>
+
+        <!-- 3. Task List ペイン (第3ペイン) -->
+        <section class="pane-task-list pane-collapsible" ?hidden=${!isOpen}>
+          task-list
+        </section>
+
+        <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
+        <main class="pane-task">task</main>
+
+        <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
+        <aside class="pane-journal">journal</aside>
+      </div>
+    `;
+  }
+
+  /**
+   * コンポーネント描画
+   *
    * メインコンテンツのペインを構成する。
    *
    * @memberof AppRoot
@@ -154,50 +225,10 @@ export class AppRoot extends LitElement {
     return html`
       <div class="app-shell ${themeClass}" data-theme=${resolvedTheme}>
         <!-- Header (上部固定) -->
-        <header class="app-header">
-          <div class="header-branding">
-            <wa-icon
-              library="my-icons"
-              name="cubes-stacked-solid-full"
-            ></wa-icon>
-            StepNote
-          </div>
-          <div class="header-actions">
-            <theme-switcher></theme-switcher>
-          </div>
-        </header>
+        ${this.renderHeader()}
 
-        <div class="panes-container">
-          <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
-          <pane-menu
-            class="pane-menu"
-            data-theme=${resolvedTheme}
-            .isNavigationListAreaOpen=${isOpen}
-          ></pane-menu>
-
-          <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
-          <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
-            <navigation-quick-access
-              class="navigation-quick-access"
-              data-theme=${resolvedTheme}
-            ></navigation-quick-access>
-            <navigation-labels
-              class="navigation-labels"
-              data-theme=${resolvedTheme}
-            ></navigation-labels>
-          </aside>
-
-          <!-- 3. Task List ペイン (第3ペイン) -->
-          <section class="pane-task-list pane-collapsible" ?hidden=${!isOpen}>
-            task-list
-          </section>
-
-          <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
-          <main class="pane-task">task</main>
-
-          <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-          <aside class="pane-journal">journal</aside>
-        </div>
+        <!-- Panes (中央5ペイン領域) -->
+        ${this.renderPanes(isOpen, resolvedTheme)}
 
         <!-- Footer (下部固定) -->
         <footer class="app-footer">footer</footer>

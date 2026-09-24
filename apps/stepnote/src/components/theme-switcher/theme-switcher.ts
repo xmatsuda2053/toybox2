@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS } from "lit";
+import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import { themeContext } from "@/contexts/index.js";
@@ -103,6 +103,37 @@ export class ThemeSwitcher extends LitElement {
     }
   }
 
+  /**
+   * テーマ選択ドロップダウンの各アイテムを描画する。
+   *
+   * @private
+   * @param {ThemeMode} value テーマ値
+   * @param {string} label 表示ラベル
+   * @param {string} iconName アイコン名
+   * @param {ThemeMode} currentTheme 現在選択中のテーマ
+   * @return {HTMLTemplateResult}
+   * @memberof ThemeSwitcher
+   */
+  private renderThemeItem(
+    value: ThemeMode,
+    label: string,
+    iconName: string,
+    currentTheme: ThemeMode,
+  ): HTMLTemplateResult {
+    const isChecked = currentTheme === value;
+    return html`
+      <wa-dropdown-item
+        value="${value}"
+        type="checkbox"
+        .checked=${isChecked}
+        ?checked=${isChecked}
+      >
+        <wa-icon slot="icon" library="my-icons" name=${iconName}></wa-icon>
+        ${label}
+      </wa-dropdown-item>
+    `;
+  }
+
   override render() {
     const currentTheme = this.themeController?.theme ?? "system";
 
@@ -122,46 +153,10 @@ export class ThemeSwitcher extends LitElement {
             label=${this.currentThemeLabel}
           ></wa-icon>
         </wa-button>
-        <wa-dropdown-item
-          value="light"
-          type="checkbox"
-          .checked=${currentTheme === "light"}
-          ?checked=${currentTheme === "light"}
-        >
-          <wa-icon
-            slot="icon"
-            library="my-icons"
-            name="sun-solid-full"
-          ></wa-icon>
-          ライト
-        </wa-dropdown-item>
-        <wa-dropdown-item
-          value="dark"
-          type="checkbox"
-          .checked=${currentTheme === "dark"}
-          ?checked=${currentTheme === "dark"}
-        >
-          <wa-icon
-            slot="icon"
-            library="my-icons"
-            name="moon-solid-full"
-          ></wa-icon>
-          ダーク
-        </wa-dropdown-item>
+        ${this.renderThemeItem("light", "ライト", "sun-solid-full", currentTheme)}
+        ${this.renderThemeItem("dark", "ダーク", "moon-solid-full", currentTheme)}
         <wa-divider></wa-divider>
-        <wa-dropdown-item
-          value="system"
-          type="checkbox"
-          .checked=${currentTheme === "system"}
-          ?checked=${currentTheme === "system"}
-        >
-          <wa-icon
-            slot="icon"
-            library="my-icons"
-            name="display-solid-full"
-          ></wa-icon>
-          システム
-        </wa-dropdown-item>
+        ${this.renderThemeItem("system", "システム", "display-solid-full", currentTheme)}
       </wa-dropdown>
     `;
   }

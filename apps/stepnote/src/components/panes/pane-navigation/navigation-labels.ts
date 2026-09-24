@@ -293,11 +293,98 @@ export class NavigationLabels extends LitElement {
   };
 
   /**
-   * 個別ラベルボタンとメニューのレンダリング
+   * ラベルアイテムのメイン表示領域（アイコン・ラベル名）を描画する。
+   *
+   * @private
+   * @param {LabelRecord} label ラベルレコード
+   * @param {boolean} isActive 選択中かどうか
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderLabelItemMain(
+    label: LabelRecord,
+    isActive: boolean,
+  ): HTMLTemplateResult {
+    return html`
+      <div class="label-btn-main">
+        <div class="label-icons">
+          <wa-icon
+            library="my-icons"
+            name="tag-solid-full"
+            class="label-button-icon"
+          ></wa-icon>
+          ${isActive
+            ? html`
+                <wa-icon
+                  library="my-icons"
+                  name="caret-right-solid-full"
+                  class="label-button-icon type-caret"
+                ></wa-icon>
+              `
+            : nothing}
+        </div>
+        <span class="label-button-text">${label.name}</span>
+      </div>
+    `;
+  }
+
+  /**
+   * ラベルアイテムの操作メニュー（三点ドロップダウン）を描画する。
+   *
+   * @private
+   * @param {LabelRecord} label ラベルレコード
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderLabelItemDropdown(label: LabelRecord): HTMLTemplateResult {
+    return html`
+      <wa-dropdown
+        class="label-menu-dropdown"
+        placement="bottom-end"
+        @click=${(e: Event) => e.stopPropagation()}
+        @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
+          this.handleMenuSelect(label, e)}
+      >
+        <wa-button
+          slot="trigger"
+          class="btn-label-menu"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          aria-label="Label options"
+        >
+          <wa-icon
+            library="my-icons"
+            name="ellipsis-vertical-solid-full"
+          ></wa-icon>
+        </wa-button>
+        <wa-dropdown-item value="edit">
+          <wa-icon
+            slot="icon"
+            library="my-icons"
+            name="pen-to-square-solid-full"
+          ></wa-icon>
+          編集
+        </wa-dropdown-item>
+        <wa-dropdown-item value="delete" variant="danger">
+          <wa-icon
+            slot="icon"
+            library="my-icons"
+            name="trash-solid-full"
+          ></wa-icon>
+          削除
+        </wa-dropdown-item>
+      </wa-dropdown>
+    `;
+  }
+
+  /**
+   * ラベルアイテム描画
    *
    * @private
    * @param {LabelRecord} label
    * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
    */
   private renderLabelItem(label: LabelRecord): HTMLTemplateResult {
     const isActive = label.isSelected;
@@ -310,64 +397,188 @@ export class NavigationLabels extends LitElement {
         @click=${() => this.handleToggleLabel(label.id)}
         @keydown=${(e: KeyboardEvent) => this.handleLabelKeyDown(e, label.id)}
       >
-        <div class="label-btn-main">
-          <div class="label-icons">
-            <wa-icon
-              library="my-icons"
-              name="tag-solid-full"
-              class="label-button-icon"
-            ></wa-icon>
-            ${isActive
-              ? html`
+        ${this.renderLabelItemMain(label, isActive)}
+        ${this.renderLabelItemDropdown(label)}
+      </div>
+    `;
+  }
+
+  /**
+   * ヘッダー部（タイトルおよび追加/一括解除アクション）を描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderHeader(): HTMLTemplateResult {
+    return html`
+      <header class="section-header labels-header">
+        <span class="section-title labels-title">LABELS</span>
+        <div class="labels-header-actions">
+          ${this.labelsController?.hasSelectedLabels
+            ? html`
+                <wa-tooltip for="btn-clear-labels" placement="bottom">
+                  Clear Selection
+                </wa-tooltip>
+                <wa-button
+                  id="btn-clear-labels"
+                  class="btn-clear-labels"
+                  variant="neutral"
+                  appearance="plain"
+                  size="s"
+                  aria-label="Clear Selection"
+                  @click=${this.handleClearAllSelected}
+                >
                   <wa-icon
                     library="my-icons"
-                    name="caret-right-solid-full"
-                    class="label-button-icon type-caret"
+                    name="xmark-solid-full"
                   ></wa-icon>
-                `
-              : nothing}
-          </div>
-          <span class="label-button-text">${label.name}</span>
-        </div>
-
-        <wa-dropdown
-          class="label-menu-dropdown"
-          placement="bottom-end"
-          @click=${(e: Event) => e.stopPropagation()}
-          @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
-            this.handleMenuSelect(label, e)}
-        >
+                </wa-button>
+              `
+            : nothing}
+          <wa-tooltip for="btn-add-label" placement="bottom">
+            Add Label
+          </wa-tooltip>
           <wa-button
-            slot="trigger"
-            class="btn-label-menu"
+            id="btn-add-label"
+            class="btn-add-label"
             variant="neutral"
             appearance="plain"
             size="s"
-            aria-label="Label options"
+            aria-label="Add Label"
+            @click=${this.handleOpenAddDialog}
           >
-            <wa-icon
-              library="my-icons"
-              name="ellipsis-vertical-solid-full"
-            ></wa-icon>
+            <wa-icon library="my-icons" name="plus-solid-full"></wa-icon>
           </wa-button>
-          <wa-dropdown-item value="edit">
-            <wa-icon
-              slot="icon"
-              library="my-icons"
-              name="pen-to-square-solid-full"
-            ></wa-icon>
-            編集
-          </wa-dropdown-item>
-          <wa-dropdown-item value="delete" variant="danger">
-            <wa-icon
-              slot="icon"
-              library="my-icons"
-              name="trash-solid-full"
-            ></wa-icon>
-            削除
-          </wa-dropdown-item>
-        </wa-dropdown>
+        </div>
+      </header>
+    `;
+  }
+
+  /**
+   * ラベル一覧コンテンツ部を描画する。
+   *
+   * @private
+   * @param {readonly LabelRecord[]} labels
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderContent(labels: readonly LabelRecord[]): HTMLTemplateResult {
+    return html`
+      <div class="labels-content">
+        ${labels.length === 0
+          ? html`<div class="empty-labels-message">ラベルがありません</div>`
+          : labels.map((label) => this.renderLabelItem(label))}
       </div>
+    `;
+  }
+
+  /**
+   * 新規作成・編集ダイアログのフォームを描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderAddEditForm(): HTMLTemplateResult {
+    return html`
+      <form
+        class="dialog-form"
+        @submit=${(e: Event) => {
+          e.preventDefault();
+          this.handleSaveLabel();
+        }}
+      >
+        <wa-input
+          id="label-name"
+          class="dialog-field"
+          label="ラベル名"
+          placeholder="例: プロジェクト、重要など"
+          .value=${this.inputName}
+          required
+          @input=${this.handleInputName}
+        ></wa-input>
+        <wa-textarea
+          id="label-description"
+          class="dialog-field"
+          label="説明（任意）"
+          placeholder="ラベルの説明を入力"
+          .value=${this.inputDescription}
+          @input=${this.handleInputDescription}
+        ></wa-textarea>
+      </form>
+    `;
+  }
+
+  /**
+   * 新規作成・編集ダイアログを描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderAddEditDialog(): HTMLTemplateResult {
+    return html`
+      <wa-dialog
+        id="label-dialog"
+        .label=${this.editingLabel ? "ラベルの編集" : "ラベルの新規作成"}
+        ?open=${this.isAddDialogOpen}
+        @wa-after-hide=${this.handleCloseAddDialog}
+      >
+        ${this.renderAddEditForm()}
+        <div slot="footer" class="dialog-footer">
+          <wa-button
+            variant="neutral"
+            appearance="plain"
+            @click=${this.handleCloseAddDialog}
+          >
+            キャンセル
+          </wa-button>
+          <wa-button
+            variant="brand"
+            ?disabled=${!this.inputName.trim()}
+            @click=${this.handleSaveLabel}
+          >
+            保存
+          </wa-button>
+        </div>
+      </wa-dialog>
+    `;
+  }
+
+  /**
+   * 削除確認ダイアログを描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
+   */
+  private renderDeleteDialog(): HTMLTemplateResult {
+    return html`
+      <wa-dialog
+        id="delete-dialog"
+        label="ラベルの削除"
+        ?open=${this.isDeleteDialogOpen}
+        @wa-after-hide=${this.handleCloseDeleteDialog}
+      >
+        <div class="delete-dialog-message">
+          ラベル「<strong>${this.deletingLabel?.name ??
+          ""}</strong>」を削除してもよろしいですか？<br />
+          ※この操作は取り消せません。
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <wa-button
+            variant="neutral"
+            appearance="plain"
+            @click=${this.handleCloseDeleteDialog}
+          >
+            キャンセル
+          </wa-button>
+          <wa-button variant="danger" @click=${this.handleConfirmDelete}>
+            削除
+          </wa-button>
+        </div>
+      </wa-dialog>
     `;
   }
 
@@ -376,6 +587,7 @@ export class NavigationLabels extends LitElement {
    *
    * @override
    * @return {HTMLTemplateResult}
+   * @memberof NavigationLabels
    */
   override render(): HTMLTemplateResult {
     const labels = this.labelsController?.state ?? [];
@@ -383,129 +595,16 @@ export class NavigationLabels extends LitElement {
     return html`
       <div class="labels-container">
         <!-- 1. ヘッダー部 -->
-        <header class="section-header labels-header">
-          <span class="section-title labels-title">LABELS</span>
-          <div class="labels-header-actions">
-            ${this.labelsController?.hasSelectedLabels
-              ? html`
-                  <wa-tooltip for="btn-clear-labels" placement="bottom">
-                    Clear Selection
-                  </wa-tooltip>
-                  <wa-button
-                    id="btn-clear-labels"
-                    class="btn-clear-labels"
-                    variant="neutral"
-                    appearance="plain"
-                    size="s"
-                    aria-label="Clear Selection"
-                    @click=${this.handleClearAllSelected}
-                  >
-                    <wa-icon
-                      library="my-icons"
-                      name="xmark-solid-full"
-                    ></wa-icon>
-                  </wa-button>
-                `
-              : nothing}
-            <wa-tooltip for="btn-add-label" placement="bottom">
-              Add Label
-            </wa-tooltip>
-            <wa-button
-              id="btn-add-label"
-              class="btn-add-label"
-              variant="neutral"
-              appearance="plain"
-              size="s"
-              aria-label="Add Label"
-              @click=${this.handleOpenAddDialog}
-            >
-              <wa-icon library="my-icons" name="plus-solid-full"></wa-icon>
-            </wa-button>
-          </div>
-        </header>
+        ${this.renderHeader()}
 
         <!-- 2. コンテンツ部 (スクロール可能) -->
-        <div class="labels-content">
-          ${labels.length === 0
-            ? html`<div class="empty-labels-message">ラベルがありません</div>`
-            : labels.map((label) => this.renderLabelItem(label))}
-        </div>
+        ${this.renderContent(labels)}
 
         <!-- 3. 新規登録・編集ダイアログ -->
-        <wa-dialog
-          id="label-dialog"
-          .label=${this.editingLabel ? "ラベルの編集" : "ラベルの新規作成"}
-          ?open=${this.isAddDialogOpen}
-          @wa-after-hide=${this.handleCloseAddDialog}
-        >
-          <form
-            class="dialog-form"
-            @submit=${(e: Event) => {
-              e.preventDefault();
-              this.handleSaveLabel();
-            }}
-          >
-            <wa-input
-              id="label-name"
-              class="dialog-field"
-              label="ラベル名"
-              placeholder="例: プロジェクト、重要など"
-              .value=${this.inputName}
-              required
-              @input=${this.handleInputName}
-            ></wa-input>
-            <wa-textarea
-              id="label-description"
-              class="dialog-field"
-              label="説明（任意）"
-              placeholder="ラベルの説明を入力"
-              .value=${this.inputDescription}
-              @input=${this.handleInputDescription}
-            ></wa-textarea>
-          </form>
-          <div slot="footer" class="dialog-footer">
-            <wa-button
-              variant="neutral"
-              appearance="plain"
-              @click=${this.handleCloseAddDialog}
-            >
-              キャンセル
-            </wa-button>
-            <wa-button
-              variant="brand"
-              ?disabled=${!this.inputName.trim()}
-              @click=${this.handleSaveLabel}
-            >
-              保存
-            </wa-button>
-          </div>
-        </wa-dialog>
+        ${this.renderAddEditDialog()}
 
         <!-- 4. 削除確認ダイアログ -->
-        <wa-dialog
-          id="delete-dialog"
-          label="ラベルの削除"
-          ?open=${this.isDeleteDialogOpen}
-          @wa-after-hide=${this.handleCloseDeleteDialog}
-        >
-          <div class="delete-dialog-message">
-            ラベル「<strong>${this.deletingLabel?.name ??
-            ""}</strong>」を削除してもよろしいですか？<br />
-            ※この操作は取り消せません。
-          </div>
-          <div slot="footer" class="dialog-footer">
-            <wa-button
-              variant="neutral"
-              appearance="plain"
-              @click=${this.handleCloseDeleteDialog}
-            >
-              キャンセル
-            </wa-button>
-            <wa-button variant="danger" @click=${this.handleConfirmDelete}>
-              削除
-            </wa-button>
-          </div>
-        </wa-dialog>
+        ${this.renderDeleteDialog()}
       </div>
     `;
   }

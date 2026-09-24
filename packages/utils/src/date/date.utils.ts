@@ -41,18 +41,24 @@ export function addDays(date: Date, days: number): Date {
 }
 
 /**
+ * 指定された日付の時刻部分（時・分・秒・ミリ秒）を 00:00:00.000 に正規化した新しい Date を返す。
+ * 引数を省略した場合はシステム時刻当日を基準とする。元の Date は変更しない。
+ * @param date - 基準日（省略時は現在日時）
+ * @returns 00:00:00.000 に設定された新しい Date オブジェクト
+ */
+export function startOfDay(date: Date = new Date()): Date {
+  const normalized = new Date(date.getTime());
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+/**
  * 指定された基準日がシステム日付から見て期限切れかどうかを判定する。
  * @param expiryDate - 期限日
  * @returns 期限切れであれば true、そうでなければ false
  */
 export function isOverdue(expiryDate: Date): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const target = new Date(expiryDate.getTime());
-  target.setHours(0, 0, 0, 0);
-
-  return target.getTime() < today.getTime();
+  return startOfDay(expiryDate).getTime() < startOfDay().getTime();
 }
 
 /**
@@ -61,13 +67,7 @@ export function isOverdue(expiryDate: Date): boolean {
  * @returns 期限当日であれば true、そうでなければ false
  */
 export function isAsap(expiryDate: Date): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const target = new Date(expiryDate.getTime());
-  target.setHours(0, 0, 0, 0);
-
-  return target.getTime() === today.getTime();
+  return startOfDay(expiryDate).getTime() === startOfDay().getTime();
 }
 
 /**
@@ -80,11 +80,8 @@ export function isWithinAnyDaysBefore(
   referenceDate: Date,
   days: number,
 ): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const target = new Date(referenceDate.getTime());
-  target.setHours(0, 0, 0, 0);
+  const today = startOfDay();
+  const target = startOfDay(referenceDate);
 
   const start = new Date(target.getTime());
   start.setDate(start.getDate() - days);
