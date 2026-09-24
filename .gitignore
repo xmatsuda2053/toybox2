@@ -25,3 +25,6 @@ dist-ssr
 
 _memo
 *.tsbuildinfo
+
+# Refactor audit intermediate reports
+.agents/*-report.json
