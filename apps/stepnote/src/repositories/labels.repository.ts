@@ -1,70 +1,18 @@
 import { db } from "@/db/schema/database.schema";
 import type { LabelRecord } from "@/db/models/navigation.model";
+import { BaseRepository } from "./base.repository";
 
 /**
  * Labelに対するCRUDおよび状態を制御するリポジトリ
  *
  * @export
  * @class LabelsRepository
+ * @extends {BaseRepository<LabelRecord>}
  */
-export class LabelsRepository {
-  /**
-   * DBからすべてのラベルを取得する
-   *
-   * @return {*} {Promise<LabelRecord[]>}
-   * @memberof LabelsRepository
-   */
-  public getAll = async (): Promise<LabelRecord[]> => {
-    return await db.labels.toArray();
-  };
-
-  /**
-   * 指定したIDのラベルを取得する
-   *
-   * @param {number} id
-   * @return {*} {Promise<LabelRecord | undefined>}
-   * @memberof LabelsRepository
-   */
-  public getById = async (id: number): Promise<LabelRecord | undefined> => {
-    return await db.labels.get(id);
-  };
-
-  /**
-   * 新規ラベルを追加する
-   *
-   * @param {Omit<LabelRecord, "id">} label
-   * @return {*} {Promise<number>}
-   * @memberof LabelsRepository
-   */
-  public add = async (label: Omit<LabelRecord, "id">): Promise<number> => {
-    return await db.labels.add({ ...label });
-  };
-
-  /**
-   * 指定したIDのラベルを更新する
-   *
-   * @param {number} id
-   * @param {Partial<Omit<LabelRecord, "id">>} partial
-   * @return {*} {Promise<void>}
-   * @memberof LabelsRepository
-   */
-  public update = async (
-    id: number,
-    partial: Partial<Omit<LabelRecord, "id">>,
-  ): Promise<void> => {
-    await db.labels.update(id, partial);
-  };
-
-  /**
-   * 指定したIDのラベルを削除する
-   *
-   * @param {number} id
-   * @return {*} {Promise<void>}
-   * @memberof LabelsRepository
-   */
-  public delete = async (id: number): Promise<void> => {
-    await db.labels.delete(id);
-  };
+export class LabelsRepository extends BaseRepository<LabelRecord> {
+  constructor() {
+    super(db.labels);
+  }
 
   /**
    * 指定したIDのラベルの選択状態を反転させる。
@@ -88,6 +36,6 @@ export class LabelsRepository {
    * @memberof LabelsRepository
    */
   public clearAllSelected = async (): Promise<void> => {
-    await db.labels.toCollection().modify({ isSelected: false });
+    await this.table.toCollection().modify({ isSelected: false });
   };
 }
