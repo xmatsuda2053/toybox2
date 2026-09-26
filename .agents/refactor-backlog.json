@@ -322,8 +322,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-012",
@@ -341,8 +354,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-013",
@@ -360,8 +386,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-014",
@@ -379,8 +418,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-015",
@@ -398,8 +450,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-016",
@@ -417,8 +482,21 @@
     "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-017",
@@ -436,8 +514,21 @@
     "test_file": "apps/stepnote/src/components/theme-switcher/theme-switcher.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 6,
+      "completed_at": "2026-09-26T13:37:36+09:00",
+      "issue_number": 63,
+      "pr_number": 64,
+      "commit_hash": "1a979a2",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 383,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-018",
@@ -458,7 +549,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -490,7 +581,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -522,7 +613,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -554,7 +645,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -586,7 +677,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -618,7 +709,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -650,7 +741,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -682,7 +773,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -714,7 +805,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -746,7 +837,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -778,7 +869,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -810,7 +901,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -842,7 +933,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -874,7 +965,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -906,7 +997,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -938,7 +1029,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -970,7 +1061,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1002,7 +1093,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1034,7 +1125,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1066,7 +1157,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1098,7 +1189,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1130,7 +1221,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1162,7 +1253,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1194,7 +1285,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1226,7 +1317,7 @@
     "status": "completed",
     "execution": {
       "completed_order": 5,
-      "completed_at": "2026-09-24T22:45:49+09:00",
+      "completed_at": "2026-09-24T22:42:00+09:00",
       "issue_number": 59,
       "pr_number": 60,
       "commit_hash": "d01563b",
@@ -1258,13 +1349,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1290,13 +1381,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1322,13 +1413,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1354,13 +1445,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1386,13 +1477,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1418,13 +1509,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 3,
-      "completed_at": "2026-09-24T21:23:18+09:00",
+      "completed_at": "2026-09-24T18:20:00+09:00",
       "issue_number": 55,
       "pr_number": 56,
-      "commit_hash": "94bf577",
+      "commit_hash": "d055ea0",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 350,
+      "tests_passed": 339,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1450,13 +1541,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1482,13 +1573,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1514,13 +1605,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1546,13 +1637,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1578,13 +1669,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1610,13 +1701,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1642,13 +1733,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1674,13 +1765,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1706,13 +1797,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1738,13 +1829,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1770,13 +1861,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1802,13 +1893,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1834,13 +1925,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
@@ -1866,13 +1957,13 @@
     "status": "completed",
     "execution": {
       "completed_order": 4,
-      "completed_at": "2026-09-24T22:04:37+09:00",
+      "completed_at": "2026-09-24T22:00:00+09:00",
       "issue_number": 57,
       "pr_number": 58,
       "commit_hash": "6cb2f24",
       "prompt_turns": 4,
       "regressions_detected": 0,
-      "tests_passed": 359,
+      "tests_passed": 348,
       "metrics_after": {
         "duplicated_lines": 0,
         "tokens": 0
