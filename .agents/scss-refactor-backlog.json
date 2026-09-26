@@ -153,8 +153,8 @@
       "completed_order": 5,
       "completed_at": "2026-09-26T21:22:00+09:00",
       "issue_number": 85,
-      "pr_number": null,
-      "commit_hash": null,
+      "pr_number": 86,
+      "commit_hash": "31df2a6",
       "regressions_detected": 0,
       "tests_passed": 387,
       "metrics_after": {
