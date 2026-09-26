@@ -1,4 +1,6 @@
 import "fake-indexeddb/auto";
+// @ts-ignore
+import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
@@ -8,10 +10,10 @@ import { PaneMenu } from "./pane-menu";
  * 【PaneMenu 仕様 (Phase 1: メニューペイン独立コンポーネント化)】
  *
  * 1. メニューペイン内部の上下分離構造
- *    - [x] 1-1. メニューペイン内部に上下分離コンテナ（menu-primary, menu-secondary）がレンダリングされること
+ *    - [x] 1-1. メニューペイン内部に上下分離コンテナ（pane-menu__primary, pane-menu__secondary）がレンダリングされること
  *
  * 2. サイドパネル開閉操作ボタンのレンダリングとアクセシビリティ
- *    - [x] 2-1. menu-primary 内に開閉ボタン（wa-button[appearance='plain']）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='chevron-right']）がレンダリングされること
+ *    - [x] 2-1. pane-menu__primary 内に開閉ボタン（wa-button[appearance='plain']）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='chevron-right']）がレンダリングされること
  *    - [x] 2-2. isNavigationListAreaOpen が true（開状態）の際、ツールチップ文言が「サイドパネルを閉じる」であり、アイコンに is-open クラスが付与されること
  *    - [x] 2-3. isNavigationListAreaOpen が false（閉状態）の際、ツールチップ文言が「サイドパネルを開く」であり、アイコンに is-closed クラスが付与されること
  *
@@ -20,6 +22,7 @@ import { PaneMenu } from "./pane-menu";
  *
  * 4. 簡易BEM設計とクラス付与
  *    - [x] 4-1. 各要素に簡易BEMクラス（pane-menu__*）が付与されていること
+ *    - [x] 4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること
  */
 
 describe("PaneMenu Component", () => {
@@ -35,15 +38,15 @@ describe("PaneMenu Component", () => {
   });
 
   describe("1. メニューペイン内部の上下分離構造", () => {
-    it("1-1. メニューペイン内部に上下分離コンテナ（menu-primary, menu-secondary）がレンダリングされること", () => {
+    it("1-1. メニューペイン内部に上下分離コンテナ（pane-menu__primary, pane-menu__secondary）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(paneMenu.render());
-      expect(htmlStr).toContain("menu-primary");
-      expect(htmlStr).toContain("menu-secondary");
+      expect(htmlStr).toContain("pane-menu__primary");
+      expect(htmlStr).toContain("pane-menu__secondary");
     });
   });
 
   describe("2. サイドパネル開閉操作ボタンのレンダリングとアクセシビリティ", () => {
-    it("2-1. menu-primary 内に開閉ボタン（wa-button[appearance='plain']）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='chevron-right']）がレンダリングされること", () => {
+    it("2-1. pane-menu__primary 内に開閉ボタン（wa-button[appearance='plain']）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='chevron-right']）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(paneMenu.render());
       expect(htmlStr).toContain("wa-tooltip");
       expect(htmlStr).toContain("wa-button");
@@ -84,6 +87,23 @@ describe("PaneMenu Component", () => {
       expect(htmlStr).toContain("pane-menu__secondary");
       expect(htmlStr).toContain("pane-menu__toggle-btn");
       expect(htmlStr).toContain("pane-menu__toggle-icon");
+    });
+
+    it("4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること", () => {
+      const htmlStr = flattenTemplate(paneMenu.render());
+      expect(htmlStr).not.toContain("menu-primary");
+      expect(htmlStr).not.toContain("menu-secondary");
+      expect(htmlStr).not.toContain("btn-toggle-sidebar");
+      expect(htmlStr).not.toContain("icon-toggle-sidebar");
+
+      const scssContent = fs.readFileSync(
+        new URL("./pane-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).not.toContain("menu-primary");
+      expect(scssContent).not.toContain("menu-secondary");
+      expect(scssContent).not.toContain("btn-toggle-sidebar");
+      expect(scssContent).not.toContain("icon-toggle-sidebar");
     });
   });
 });

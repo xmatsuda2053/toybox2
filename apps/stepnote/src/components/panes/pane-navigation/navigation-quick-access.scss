@@ -21,8 +21,7 @@
 }
 
 /* 開閉アイコン回転アニメーション（コンポーネント固有） */
-.quick-access__toggle-icon,
-.icon-toggle-quick-access {
+.quick-access__toggle-icon {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.is-open {
@@ -35,8 +34,7 @@
 }
 
 /* コンテンツ部ラッパー (アコーディオン開閉トランジション) */
-.quick-access__content-wrapper,
-.quick-access-content-wrapper {
+.quick-access__content-wrapper {
   display: grid;
   transition:
     grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -54,8 +52,7 @@
   }
 }
 
-.quick-access__content,
-.quick-access-content {
+.quick-access__content {
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -64,8 +61,7 @@
 }
 
 /* フィルターボタン共通スタイル */
-.quick-access__btn,
-.quick-access-btn {
+.quick-access__btn {
   width: 100%;
   display: flex;
   align-items: center;
@@ -92,8 +88,7 @@
 }
 
 /* フィルターボタンアイコン */
-.quick-access__btn-icon,
-.quick-access-button-icon {
+.quick-access__btn-icon {
   font-size: var(--wa-font-size-m);
 }
 
@@ -134,8 +129,7 @@ $types-active: (
 }
 
 /* タスク件数カウンターバッジ */
-.quick-access__counter,
-.quick-access-counter {
+.quick-access__counter {
   font-size: var(--wa-font-size-xs, 11px);
   font-weight: 600;
   line-height: 1;
@@ -156,7 +150,6 @@ $types-active: (
   }
 }
 
-.quick-access__divider,
-.quick-access-divider {
+.quick-access__divider {
   --spacing: var(--wa-space-2xs);
 }

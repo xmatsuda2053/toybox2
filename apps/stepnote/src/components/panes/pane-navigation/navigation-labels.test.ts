@@ -11,12 +11,12 @@ import { NavigationLabels } from "./navigation-labels";
  * 【NavigationLabels 仕様 (Navigation Labels コンポーネント実装)】
  *
  * 1. タイトル部（Header）の描画と追加ボタン
- *    - 1-1. タイトル部に「LABELS」ラベルおよびツールチップ付き「追加ボタン」（btn-add-label、plus-solid-full アイコン）がレンダリングされること
+ *    - 1-1. タイトル部に「LABELS」ラベルおよびツールチップ付き「追加ボタン」（labels__btn-add、plus-solid-full アイコン）がレンダリングされること
  *    - 1-2. 追加ボタン押下ハンドラー（handleOpenAddDialog）の実行により、新規登録ダイアログが開状態（isAddDialogOpen = true）になること
  *
  * 2. コンテンツ部（Content）の描画とラベルボタン一覧
- *    - 2-1. コンテンツ部ラッパー（.labels-content）が存在すること
- *    - 2-2. labelsController.state のラベルレコード一覧がボタン（wa-button.label-btn）としてレンダリングされること
+ *    - 2-1. コンテンツ部ラッパー（.labels__content）が存在すること
+ *    - 2-2. labelsController.state のラベルレコード一覧がボタン（wa-button.labels__btn）としてレンダリングされること
  *    - 2-3. 各ラベルボタン押下ハンドラー（handleToggleLabel(id)）の実行により、labelsController.toggleLabel が呼び出されること
  *    - 2-4. isSelected が true のラベルにはアクティブ状態を示すクラス（is-active）が付与されること
  *    - 2-5. 各ラベルボタンにメニュー（三点リーダー ellipsis-vertical-solid-full アイコン等）がレンダリングされること
@@ -44,16 +44,16 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 6-4. Dark モード時にダイアログ背景色がアプリ本体と同化しない独立サーフェス（#1c2128）および枠線（border）が定義されていること
  *    - 6-5. input および textarea の入力文字色（value-color / #ffffff）が定義されていること
  *    - 6-6. Dark モード時にドロップダウンメニューの文字色（#ffffff）および独立サーフェス背景色（#1c2128）が定義されていること
- *    - 6-7. メニュートリガーボタン（btn-label-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること
+ *    - 6-7. メニュートリガーボタン（labels__btn-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること
  *
  * 7. コンテンツ部スクロールバー仕様（Scrollbar & Gutter）
- *    - 7-1. .labels-content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること
+ *    - 7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること
  *    - 7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義されていること
- *    - 7-3. .labels-content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること
+ *    - 7-3. .labels__content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること
  *
  * 8. 選択中ラベルの一括解除（Clear All Selected）
- *    - 8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（#btn-clear-labels）が表示されないこと
- *    - 8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（#btn-clear-labels）が表示されること
+ *    - 8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（labels__btn-clear）が表示されないこと
+ *    - 8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（labels__btn-clear）が表示されること
  *    - 8-3. 一括解除ボタン押下（handleClearAllSelected）時に labelsController.clearAllSelected が呼び出されること
  *
  * 9. BEMクラス設計・!important完全排除・ネスト平坦化（SCSS-004）
@@ -61,6 +61,7 @@ import { NavigationLabels } from "./navigation-labels";
  *    - [x] 9-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.labels__*）が定義されていること
  *    - [x] 9-3. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）
  *    - [x] 9-4. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
+ *    - [x] 9-5. 廃止された旧クラス名（label-btn、labels-content等）がHTMLテンプレートおよびSCSSに一切残存していないこと
  */
 
 describe("NavigationLabels Component", () => {
@@ -115,10 +116,10 @@ describe("NavigationLabels Component", () => {
   });
 
   describe("1. タイトル部（Header）の描画と追加ボタン", () => {
-    it("1-1. タイトル部に「LABELS」ラベルおよびツールチップ付き「追加ボタン」（btn-add-label、plus-solid-full アイコン）がレンダリングされること", () => {
+    it("1-1. タイトル部に「LABELS」ラベルおよびツールチップ付き「追加ボタン」（labels__btn-add、plus-solid-full アイコン）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("LABELS");
-      expect(htmlStr).toContain("btn-add-label");
+      expect(htmlStr).toContain("labels__btn-add");
       expect(htmlStr).toContain("plus-solid-full");
     });
 
@@ -131,16 +132,16 @@ describe("NavigationLabels Component", () => {
   });
 
   describe("2. コンテンツ部（Content）の描画とラベルボタン一覧", () => {
-    it("2-1. コンテンツ部ラッパー（.labels-content）が存在すること", () => {
+    it("2-1. コンテンツ部ラッパー（.labels__content）が存在すること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("labels-content");
+      expect(htmlStr).toContain("labels__content");
     });
 
-    it("2-2. labelsController.state のラベルレコード一覧がボタン（wa-button.label-btn）としてレンダリングされること", () => {
+    it("2-2. labelsController.state のラベルレコード一覧がボタン（wa-button.labels__btn）としてレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("プロジェクトA");
       expect(htmlStr).toContain("プライベート");
-      expect(htmlStr).toContain("label-btn");
+      expect(htmlStr).toContain("labels__btn");
     });
 
     it("2-3. 各ラベルボタン押下ハンドラー（handleToggleLabel(id)）の実行により、labelsController.toggleLabel が呼び出されること", () => {
@@ -328,7 +329,7 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("#ff7b72");
     });
 
-    it("6-7. メニュートリガーボタン（btn-label-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること", () => {
+    it("6-7. メニュートリガーボタン（labels__btn-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
@@ -340,10 +341,10 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("--label-menu-trigger-color");
       expect(scssContent).toContain("--label-menu-trigger-active-color");
       expect(tokensContent).toContain("#c9d1d9");
-      expect(scssContent).toContain("btn-label-menu");
+      expect(scssContent).toContain("labels__btn-menu");
     });
 
-    it("7-1. .labels-content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること", () => {
+    it("7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
@@ -367,7 +368,7 @@ describe("NavigationLabels Component", () => {
       expect(tokensContent).toContain("#30363d");
     });
 
-    it("7-3. .labels-content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること", () => {
+    it("7-3. .labels__content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
@@ -381,22 +382,22 @@ describe("NavigationLabels Component", () => {
   });
 
   describe("8. 選択中ラベルの一括解除（Clear All Selected）", () => {
-    it("8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（#btn-clear-labels）が表示されないこと", () => {
+    it("8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（labels__btn-clear）が表示されないこと", () => {
       mockLabelsController.state = [
         { id: 1, name: "ラベル1", description: "", isSelected: false },
         { id: 2, name: "ラベル2", description: "", isSelected: false },
       ];
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("btn-clear-labels");
+      expect(htmlStr).not.toContain("labels__btn-clear");
     });
 
-    it("8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（#btn-clear-labels、xmark-solid-full アイコン）が表示されること", () => {
+    it("8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（labels__btn-clear、xmark-solid-full アイコン）が表示されること", () => {
       mockLabelsController.state = [
         { id: 1, name: "ラベル1", description: "", isSelected: false },
         { id: 2, name: "ラベル2", description: "", isSelected: true },
       ];
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("btn-clear-labels");
+      expect(htmlStr).toContain("labels__btn-clear");
       expect(htmlStr).toContain("xmark-solid-full");
     });
 
@@ -463,6 +464,40 @@ describe("NavigationLabels Component", () => {
         }
       }
       expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
+    });
+
+    it("9-5. 廃止された旧クラス名（label-btn、labels-content等）がHTMLテンプレートおよびSCSSに一切残存していないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const obsoleteClasses = [
+        "labels-container",
+        "labels-header",
+        "labels-title",
+        "labels-header-actions",
+        "btn-clear-labels",
+        "btn-add-label",
+        "labels-content",
+        "empty-labels-message",
+        "label-btn",
+        "label-btn-main",
+        "label-icons",
+        "label-button-icon",
+        "label-button-text",
+        "label-menu-dropdown",
+        "btn-label-menu",
+        "label-menu-item",
+        "label-menu-item-icon",
+      ];
+      for (const cls of obsoleteClasses) {
+        expect(htmlStr).not.toContain(cls);
+      }
+
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      for (const cls of obsoleteClasses) {
+        expect(scssContent).not.toContain(`.${cls}`);
+      }
     });
   });
 });
