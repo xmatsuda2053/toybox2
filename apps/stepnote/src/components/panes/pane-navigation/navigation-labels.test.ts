@@ -327,9 +327,13 @@ describe("NavigationLabels Component", () => {
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
+      const tokensContent = fs.readFileSync(
+        new URL("../../../styles/tokens.scss", import.meta.url),
+        "utf-8",
+      );
       expect(scssContent).toContain("--label-menu-trigger-color");
       expect(scssContent).toContain("--label-menu-trigger-active-color");
-      expect(scssContent).toContain("#c9d1d9");
+      expect(tokensContent).toContain("#c9d1d9");
       expect(scssContent).toContain("btn-label-menu");
     });
 
@@ -346,11 +350,15 @@ describe("NavigationLabels Component", () => {
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
+      const tokensContent = fs.readFileSync(
+        new URL("../../../styles/tokens.scss", import.meta.url),
+        "utf-8",
+      );
       expect(scssContent).toContain("--scrollbar-thumb-color");
       expect(scssContent).toContain("--scrollbar-thumb-hover-color");
       expect(scssContent).toContain("--scrollbar-track-color");
-      expect(scssContent).toContain("#d0d7de");
-      expect(scssContent).toContain("#30363d");
+      expect(tokensContent).toContain("#d0d7de");
+      expect(tokensContent).toContain("#30363d");
     });
 
     it("7-3. .labels-content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること", () => {
