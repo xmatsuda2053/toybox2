@@ -18,6 +18,8 @@
   overflow: hidden;
 }
 
+.pane-menu__primary,
+.pane-menu__secondary,
 .menu-primary,
 .menu-secondary {
   display: flex;
@@ -27,19 +29,21 @@
   width: 100%;
 }
 
+.pane-menu__toggle-btn,
 .btn-toggle-sidebar {
   @include flex-center;
 }
 
+.pane-menu__toggle-icon,
 .icon-toggle-sidebar {
   display: inline-block;
   transition: transform 0.2s ease;
-}
 
-.icon-toggle-sidebar.is-open {
-  transform: rotate(0deg);
-}
+  &.is-open {
+    transform: rotate(0deg);
+  }
 
-.icon-toggle-sidebar.is-closed {
-  transform: rotate(90deg);
+  &.is-closed {
+    transform: rotate(90deg);
+  }
 }

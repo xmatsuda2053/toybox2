@@ -55,13 +55,13 @@ export class PaneMenu extends LitElement {
 
     return html`
       <!-- 上部エリア (メイン機能群) -->
-      <div class="menu-primary">
+      <div class="pane-menu__primary menu-primary">
         <wa-tooltip for="btn-toggle-sidebar" placement="right">
           ${toggleTooltip}
         </wa-tooltip>
         <wa-button
           id="btn-toggle-sidebar"
-          class="btn-toggle-sidebar"
+          class="pane-menu__toggle-btn btn-toggle-sidebar"
           variant="neutral"
           appearance="plain"
           size="s"
@@ -70,14 +70,14 @@ export class PaneMenu extends LitElement {
           <wa-icon
             library="my-icons"
             name="chevron-right"
-            class="icon-toggle-sidebar ${isOpen ? "is-open" : "is-closed"}"
+            class="pane-menu__toggle-icon icon-toggle-sidebar ${isOpen ? "is-open" : "is-closed"}"
             label=${toggleTooltip}
           ></wa-icon>
         </wa-button>
       </div>
 
       <!-- 下部エリア (将来の補助機能群) -->
-      <div class="menu-secondary"></div>
+      <div class="pane-menu__secondary menu-secondary"></div>
     `;
   }
 }
