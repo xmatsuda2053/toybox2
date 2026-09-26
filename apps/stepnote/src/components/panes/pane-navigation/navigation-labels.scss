@@ -14,55 +14,6 @@
   height: 100%;
   box-sizing: border-box;
   overflow: hidden;
-
-  /* ラベルアイコンカラー（Light モード: 通常時・アクティブ時ともに 60系 を維持） */
-  --label-icon-color: var(--wa-color-brand-60);
-  --label-icon-active-color: var(--wa-color-brand-60);
-
-  /* メニュートリガーアイコンカラー（Light モード） */
-  --label-menu-trigger-color: #57606a;
-  --label-menu-trigger-hover-color: #1f2328;
-  --label-menu-trigger-active-color: #1f2328;
-
-  /* スクロールバーカラー（Light モード） */
-  --scrollbar-thumb-color: #d0d7de;
-  --scrollbar-thumb-hover-color: #8c959f;
-  --scrollbar-track-color: transparent;
-}
-
-:host(.wa-dark),
-:host([data-theme="dark"]),
-.wa-dark,
-[data-theme="dark"] {
-  --label-icon-color: var(--wa-color-brand-70);
-  --label-icon-active-color: var(--wa-color-brand-70);
-
-  /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
-  --label-menu-trigger-color: #c9d1d9;
-  --label-menu-trigger-hover-color: #ffffff;
-  --label-menu-trigger-active-color: #ffffff;
-
-  /* スクロールバーカラー（Dark モード） */
-  --scrollbar-thumb-color: #30363d;
-  --scrollbar-thumb-hover-color: #6e7681;
-  --scrollbar-track-color: transparent;
-}
-
-@media (prefers-color-scheme: dark) {
-  :host(:not(.wa-light):not([data-theme="light"])) {
-    --label-icon-color: var(--wa-color-brand-70);
-    --label-icon-active-color: var(--wa-color-brand-70);
-
-    /* メニュートリガーアイコンカラー（Dark モード: 高コントラスト） */
-    --label-menu-trigger-color: #c9d1d9;
-    --label-menu-trigger-hover-color: #ffffff;
-    --label-menu-trigger-active-color: #ffffff;
-
-    /* スクロールバーカラー（Dark モード） */
-    --scrollbar-thumb-color: #30363d;
-    --scrollbar-thumb-hover-color: #6e7681;
-    --scrollbar-track-color: transparent;
-  }
 }
 
 
