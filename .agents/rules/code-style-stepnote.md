@@ -94,6 +94,12 @@ trigger: always_on
 ## 7. スタイル・UI実装方針
 - **コンポーネントとSCSSのペア構成**:
   - コンポーネント固有のスタイルは `.ts` と同階層に `.scss` を配置し、`?inline` でインポートして `unsafeCSS` または `css` タグで組み込むこと。
+- **セレクタ命名規則（簡易BEM記法の採用）**:
+  - 各コンポーネントのSCSSセレクタ名には「簡易BEM（Block__Element--Modifier）記法」を採用する。
+  - **Block**: コンポーネントまたは独立した主要UIブロックのルート（例: `.pane-menu`, `.pane-navigation`, `.app-header`）。
+  - **Element**: Blockを構成する子要素（`__` で接続、例: `.pane-menu__button`, `.pane-navigation__header`）。過度なネスト構造（例: `.block__elem1__elem2`）は避け、すべて単一の Element としてフラットに命名すること。
+  - **Modifier**: 状態やバリエーション（`--` で接続、例: `.pane-menu__button--active`, `.pane-navigation__item--selected`）。
+  - タグ直接指定セレクタ（`div`, `button` 等）や曖昧な単一クラス（`.title`, `.item` 等）を排除し、HTML構造変更に強く、意図が明確なセレクタ設計を徹底すること。
 - **フラットなCSSセレクタ設計（詳細度の抑制）**:
   - Shadow DOM のカプセル化を活かし、SCSS内でHTMLツリーを過度に模倣した深いネスト（入れ子）は避けること。
   - 主要なブロック要素（`.app-header`, `.panes-container`, `.pane-*` 等）は単一クラスセレクタでフラットに記述し、詳細度を常に低く均一に保つこと（擬似クラス・擬似要素や状態クラス、密結合な専用子要素を除く）。
