@@ -188,23 +188,45 @@ if (fs.existsSync(circularReportPath)) {
   }
 }
 
-// 既存の backlog があれば status および execution を引き継ぐ
+// 既存のバックログが存在する場合は完全保持し、最大IDを特定して蓄積マージを行う
+let backlogItems = [];
+let maxId = 0;
+const existingKeys = new Set();
+
 if (fs.existsSync(backlogPath)) {
   try {
-    const existing = JSON.parse(fs.readFileSync(backlogPath, 'utf8'));
-    const existingMap = new Map(existing.map(item => [`${item.target_file}::${item.issue_summary}`, item]));
-    for (const item of items) {
-      const key = `${item.target_file}::${item.issue_summary}`;
-      if (existingMap.has(key)) {
-        const prev = existingMap.get(key);
-        item.status = prev.status;
-        item.execution = prev.execution ?? null;
+    const raw = fs.readFileSync(backlogPath, 'utf8').replace(/^\uFEFF/, '');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      backlogItems = parsed;
+      for (const item of backlogItems) {
+        const match = item.id?.match(/REF-(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxId) maxId = num;
+        }
+        existingKeys.add(`${item.target_file}::${item.category}::${item.issue_summary}`);
       }
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('Failed to parse existing refactor-backlog.json:', err.message);
   }
 }
 
-fs.writeFileSync(backlogPath, JSON.stringify(items, null, 2), 'utf8');
-console.log(`Generated ${items.length} backlog items at ${backlogPath}`);
+let nextId = maxId + 1;
+let addedCount = 0;
+
+// 新規に検出された問題のみを既存バックログの末尾に追記マージする
+for (const detected of items) {
+  const key = `${detected.target_file}::${detected.category}::${detected.issue_summary}`;
+  if (!existingKeys.has(key)) {
+    detected.id = `REF-${String(nextId++).padStart(3, '0')}`;
+    backlogItems.push(detected);
+    existingKeys.add(key);
+    addedCount++;
+  }
+}
+
+fs.writeFileSync(backlogPath, JSON.stringify(backlogItems, null, 2), 'utf8');
+console.log(`Backlog updated: ${backlogItems.length} total items (${addedCount} newly added, ${backlogItems.length - addedCount} preserved) at ${backlogPath}`);
+

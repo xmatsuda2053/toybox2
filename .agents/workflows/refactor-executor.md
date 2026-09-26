@@ -87,8 +87,26 @@ npm test -- <test_file>
 
 品質ゲートの全検証が Green で通過した場合に実行する。
 
-1. **バックログの更新**:
-   - `.agents/refactor-backlog.json` の該当タスクの `status` を `"completed"` に更新する。
+1. **バックログの安全な更新（台帳保全と実行メタデータの記録）**:
+   - **台帳保全原則**: バックログ全体の再生成や過去アイテムの削除は**厳禁**とし、該当タスクのみをインプレースで安全に更新する。
+   - 該当タスクの `status` を `"completed"` に更新する。
+   - 統計解析および効果測定のため、以下の `execution` メタデータを必ず記録する：
+     ```json
+     "execution": {
+       "completed_order": 3,
+       "completed_at": "2026-09-26T14:00:00+09:00",
+       "issue_number": 63,
+       "pr_number": 64,
+       "commit_hash": "1a979a2",
+       "prompt_turns": 4,
+       "regressions_detected": 0,
+       "tests_passed": 383,
+       "metrics_after": {
+         "duplicated_lines": 0,
+         "tokens": 0
+       }
+     }
+     ```
 2. **変更のステージング**:
    ```powershell
    git add <target_file> <test_file> .agents/refactor-backlog.json
@@ -103,3 +121,4 @@ npm test -- <test_file>
      ```
 4. **次タスクへの継続**:
    - 未着手の `pending` タスクが存在する場合、ユーザーへ継続するか確認の上、Step 1 へ戻る。
+
