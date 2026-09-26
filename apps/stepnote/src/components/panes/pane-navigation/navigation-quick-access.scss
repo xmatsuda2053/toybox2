@@ -1,4 +1,5 @@
 @use "../../../styles/tokens.scss";
+@use "../../../styles/mixins.scss" as *;
 @use "../pane-common.scss" as *;
 
 *,
@@ -13,7 +14,6 @@
   box-sizing: border-box;
 }
 
-
 .quick-access {
   display: flex;
   flex-direction: column;
@@ -21,6 +21,7 @@
 }
 
 /* 開閉アイコン回転アニメーション（コンポーネント固有） */
+.quick-access__toggle-icon,
 .icon-toggle-quick-access {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -34,24 +35,26 @@
 }
 
 /* コンテンツ部ラッパー (アコーディオン開閉トランジション) */
+.quick-access__content-wrapper,
 .quick-access-content-wrapper {
   display: grid;
   transition:
     grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.25s ease;
+
+  &.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  &.is-closed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
-.quick-access-content-wrapper.is-open {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-.quick-access-content-wrapper.is-closed {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  pointer-events: none;
-}
-
+.quick-access__content,
 .quick-access-content {
   overflow: hidden;
   display: flex;
@@ -61,6 +64,7 @@
 }
 
 /* フィルターボタン共通スタイル */
+.quick-access__btn,
 .quick-access-btn {
   width: 100%;
   display: flex;
@@ -85,67 +89,74 @@
     width: 100%;
     text-align: left;
   }
+}
 
-  .quick-access-button-icon {
-    font-size: var(--wa-font-size-m);
-  }
+/* フィルターボタンアイコン */
+.quick-access__btn-icon,
+.quick-access-button-icon {
+  font-size: var(--wa-font-size-m);
+}
 
-  $types: (
-    "bookmark": var(--quick-access-icon-bookmark),
-    "uncategorized": var(--quick-access-icon-uncategorized),
-    "overdue": var(--quick-access-icon-overdue),
-    "asap": var(--quick-access-icon-asap),
-    "upcoming": var(--quick-access-icon-upcoming),
-    "done": var(--quick-access-icon-done),
-    "progress": var(--quick-access-icon-progress),
-    "pending": var(--quick-access-icon-pending),
-  );
-  @each $status, $color in $types {
-    .type-#{$status} {
-      color: $color;
-    }
-  }
+/* 各ステータスのアイコン通常時カラーマップ */
+$types: (
+  "bookmark": var(--quick-access-icon-bookmark),
+  "uncategorized": var(--quick-access-icon-uncategorized),
+  "overdue": var(--quick-access-icon-overdue),
+  "asap": var(--quick-access-icon-asap),
+  "upcoming": var(--quick-access-icon-upcoming),
+  "done": var(--quick-access-icon-done),
+  "progress": var(--quick-access-icon-progress),
+  "pending": var(--quick-access-icon-pending),
+);
 
-  .quick-access-counter {
-    font-size: var(--wa-font-size-xs, 11px);
-    font-weight: 600;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding-inline: 5px;
-    border-radius: 9999px;
-    background-color: var(--wa-color-brand-50, #0969da);
-    color: #ffffff;
-    box-sizing: border-box;
-  }
-
-  &.is-active {
-    $types-active: (
-      "bookmark": var(--quick-access-icon-active-bookmark),
-      "uncategorized": var(--quick-access-icon-active-uncategorized),
-      "overdue": var(--quick-access-icon-active-overdue),
-      "asap": var(--quick-access-icon-active-asap),
-      "upcoming": var(--quick-access-icon-active-upcoming),
-      "done": var(--quick-access-icon-active-done),
-      "progress": var(--quick-access-icon-active-progress),
-      "pending": var(--quick-access-icon-active-pending),
-    );
-    @each $status, $color in $types-active {
-      .type-#{$status} {
-        color: $color;
-      }
-    }
-
-    .quick-access-counter {
-      background-color: var(--wa-color-brand-60, #218bff);
-      color: #ffffff;
-    }
+@each $status, $color in $types {
+  .type-#{$status} {
+    color: $color;
   }
 }
 
+/* 各ステータスのアクティブ時 (.is-active) アイコンカラーマップ */
+$types-active: (
+  "bookmark": var(--quick-access-icon-active-bookmark),
+  "uncategorized": var(--quick-access-icon-active-uncategorized),
+  "overdue": var(--quick-access-icon-active-overdue),
+  "asap": var(--quick-access-icon-active-asap),
+  "upcoming": var(--quick-access-icon-active-upcoming),
+  "done": var(--quick-access-icon-active-done),
+  "progress": var(--quick-access-icon-active-progress),
+  "pending": var(--quick-access-icon-active-pending),
+);
+
+@each $status, $color in $types-active {
+  .is-active .type-#{$status} {
+    color: $color;
+  }
+}
+
+/* タスク件数カウンターバッジ */
+.quick-access__counter,
+.quick-access-counter {
+  font-size: var(--wa-font-size-xs, 11px);
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  border-radius: 9999px;
+  background-color: var(--wa-color-brand-50, #0969da);
+  color: #ffffff;
+  box-sizing: border-box;
+
+  .is-active & {
+    background-color: var(--wa-color-brand-60, #218bff);
+    color: #ffffff;
+  }
+}
+
+.quick-access__divider,
 .quick-access-divider {
   --spacing: var(--wa-space-2xs);
 }
