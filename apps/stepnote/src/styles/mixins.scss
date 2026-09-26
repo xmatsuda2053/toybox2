@@ -1,0 +1,26 @@
+/* ==========================================================================
+   StepNote SCSS Mixins (mixins.scss)
+   3層判定基準 レベル2（パターンの重複）に基づく汎用レイアウト定義
+   ※ Shadow DOM互換性維持のため @extend は完全禁止とし、@mixin を使用
+   ========================================================================== */
+
+/* 上下左右の中央揃え Flexbox */
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 垂直方向中央揃え・両端配置 Flexbox */
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 1行テキストの末尾省略（...） */
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
