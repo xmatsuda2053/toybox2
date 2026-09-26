@@ -17,8 +17,7 @@
   overflow: hidden;
 }
 
-
-
+.labels__container,
 .labels-container {
   display: flex;
   flex-direction: column;
@@ -27,16 +26,19 @@
   overflow: hidden;
 }
 
+.labels__header,
 .labels-header {
   flex-shrink: 0;
 }
 
+.labels__header-actions,
 .labels-header-actions {
   display: flex;
   align-items: center;
   gap: var(--wa-space-3xs, 4px);
 }
 
+.labels__btn-clear,
 .btn-clear-labels {
   @include flex-center;
 
@@ -45,6 +47,7 @@
   }
 }
 
+.labels__btn-add,
 .btn-add-label {
   @include flex-center;
 
@@ -53,6 +56,7 @@
   }
 }
 
+.labels__content,
 .labels-content {
   flex: 1;
   min-height: 0;
@@ -82,14 +86,17 @@
     background-color: var(--scrollbar-thumb-color);
     border-radius: 2px;
     transition: background-color 0.15s ease;
-
-    &:hover {
-      background-color: var(--scrollbar-thumb-hover-color);
-    }
   }
 }
 
+/* スクロールバーホバー色 */
+.labels__content::-webkit-scrollbar-thumb:hover,
+.labels-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover-color);
+}
+
 /* ラベルボタン共通スタイル（Quick Access ボタン同等のスタイル再現） */
+.labels__btn,
 .label-btn {
   width: 100%;
   @include flex-between;
@@ -118,35 +125,40 @@
     outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
     outline-offset: 1px;
   }
+}
 
-  &.is-active {
-    font-weight: 600;
-    color: var(--wa-color-neutral-on-normal);
-    background-color: var(--wa-color-neutral-fill-normal);
+/* ラベルボタン・アクティブ状態 */
+.labels__btn.is-active,
+.label-btn.is-active {
+  font-weight: 600;
+  color: var(--wa-color-neutral-on-normal);
+  background-color: var(--wa-color-neutral-fill-normal);
 
-    &:hover {
-      background-color: color-mix(
-        in oklab,
-        var(--wa-color-neutral-fill-normal),
-        var(--wa-color-mix-hover)
-      );
-    }
-
-    .label-button-icon {
-      color: var(--label-icon-active-color);
-
-      &.type-caret {
-        color: inherit;
-      }
-    }
-
-    .btn-label-menu {
-      opacity: 0.9;
-      color: var(--label-menu-trigger-active-color);
-    }
+  &:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--wa-color-neutral-fill-normal),
+      var(--wa-color-mix-hover)
+    );
   }
 }
 
+.is-active .labels__icon,
+.is-active .label-button-icon {
+  color: var(--label-icon-active-color);
+
+  &.type-caret {
+    color: inherit;
+  }
+}
+
+.is-active .labels__btn-menu,
+.is-active .btn-label-menu {
+  opacity: 0.9;
+  color: var(--label-menu-trigger-active-color);
+}
+
+.labels__btn-main,
 .label-btn-main {
   display: flex;
   align-items: center;
@@ -155,6 +167,7 @@
   gap: var(--wa-space-xs, 8px);
 }
 
+.labels__icons,
 .label-icons {
   display: inline-flex;
   align-items: center;
@@ -162,6 +175,7 @@
   gap: var(--wa-space-3xs, 2px);
 }
 
+.labels__icon,
 .label-button-icon {
   font-size: var(--wa-font-size-m);
   color: var(--label-icon-color);
@@ -172,6 +186,7 @@
   }
 }
 
+.labels__text,
 .label-button-text {
   flex: 1;
   min-width: 0;
@@ -179,6 +194,7 @@
   text-align: left;
 }
 
+.labels__menu-dropdown,
 .label-menu-dropdown {
   display: inline-flex;
   align-items: center;
@@ -186,6 +202,7 @@
   margin-inline-start: var(--wa-space-3xs, 2px);
 }
 
+.labels__btn-menu,
 .btn-label-menu {
   opacity: 0.8;
   transition:
@@ -218,6 +235,7 @@
   }
 }
 
+.labels__empty-message,
 .empty-labels-message {
   padding: var(--wa-space-m, 16px) var(--wa-space-s, 12px);
   font-size: var(--wa-font-size-xs, 12px);
@@ -227,7 +245,7 @@
 }
 
 /* ==========================================================================
-   ドロップダウンメニューのスタイリング（Dark/Light コントラスト最適化）
+   ドロップダウンメニューのスタイリング（Light既定）
    ========================================================================== */
 wa-dropdown {
   --wa-color-text-normal: #1f2328;
@@ -250,18 +268,18 @@ wa-dropdown-item {
   wa-icon {
     color: #57606a;
   }
+}
 
-  &[variant="danger"] {
+wa-dropdown-item[variant="danger"] {
+  color: #cf222e;
+
+  wa-icon {
     color: #cf222e;
-
-    wa-icon {
-      color: #cf222e;
-    }
   }
 }
 
 /* ==========================================================================
-   ダイアログスタイル（アプリ本体との分離・Dark/Lightコントラスト最適化）
+   ダイアログスタイル（Light既定）
    ========================================================================== */
 wa-dialog {
   color: var(--wa-color-text-normal);
@@ -331,13 +349,10 @@ wa-dialog {
   }
 }
 
-/* --------------------------------------------------------------------------
- * Dark モード時のダイアログ・ドロップダウン・入力文字色・背景色調整
- * アプリ本体（#0d1117）と同化しない独立したサーフェス（#1c2128）を適用
- * -------------------------------------------------------------------------- */
-:host(.wa-dark),
-:host([data-theme="dark"]) {
-  /* ドロップダウンメニュー（Dark モード: 高コントラスト文字・独立サーフェス背景） */
+/* ==========================================================================
+   Dark モード時のダイアログ・ドロップダウン（独立サーフェス・高コントラスト）
+   ========================================================================== */
+@mixin dark-surface-theme {
   wa-dropdown {
     --wa-color-text-normal: #ffffff;
     --wa-color-neutral-fill-normal: #30363d;
@@ -354,38 +369,36 @@ wa-dialog {
   }
 
   wa-dropdown-item {
-    color: #ffffff !important;
+    color: #ffffff;
 
     wa-icon {
-      color: #e6edf3 !important;
-    }
-
-    &[variant="danger"] {
-      color: #ff7b72 !important;
-
-      wa-icon {
-        color: #ff7b72 !important;
-      }
+      color: #e6edf3;
     }
   }
 
-  wa-dialog {
-    &::part(dialog) {
-      background-color: #1c2128;
-      border: 1px solid #444c56;
-      box-shadow:
-        0 16px 36px rgba(0, 0, 0, 0.8),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
-      color: #f0f6fc;
-    }
+  wa-dropdown-item[variant="danger"] {
+    color: #ff7b72;
 
-    &::part(title) {
-      color: #ffffff;
+    wa-icon {
+      color: #ff7b72;
     }
+  }
 
-    &::part(body) {
-      color: #f0f6fc;
-    }
+  wa-dialog::part(dialog) {
+    background-color: #1c2128;
+    border: 1px solid #444c56;
+    box-shadow:
+      0 16px 36px rgba(0, 0, 0, 0.8),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+    color: #f0f6fc;
+  }
+
+  wa-dialog::part(title) {
+    color: #ffffff;
+  }
+
+  wa-dialog::part(body) {
+    color: #f0f6fc;
   }
 
   .dialog-field {
@@ -394,104 +407,34 @@ wa-dialog {
     --wa-form-control-label-color: #e6edf3;
     --wa-form-control-value-color: #ffffff;
     --wa-form-control-placeholder-color: #768390;
+  }
 
-    &::part(form-control-label),
-    &::part(label) {
-      color: #ffffff;
-    }
+  .dialog-field::part(form-control-label),
+  .dialog-field::part(label) {
+    color: #ffffff;
+  }
 
-    &::part(input),
-    &::part(textarea) {
-      color: #ffffff;
-    }
+  .dialog-field::part(input),
+  .dialog-field::part(textarea) {
+    color: #ffffff;
   }
 
   .delete-dialog-message {
     color: #e6edf3;
-
-    strong {
-      color: #ffffff;
-    }
   }
+
+  .delete-dialog-message strong {
+    color: #ffffff;
+  }
+}
+
+:host(.wa-dark),
+:host([data-theme="dark"]) {
+  @include dark-surface-theme;
 }
 
 @media (prefers-color-scheme: dark) {
   :host(:not(.wa-light):not([data-theme="light"])) {
-    /* ドロップダウンメニュー（Dark モード: 高コントラスト文字・独立サーフェス背景） */
-    wa-dropdown {
-      --wa-color-text-normal: #ffffff;
-      --wa-color-neutral-fill-normal: #30363d;
-      --wa-color-danger-on-quiet: #ff7b72;
-
-      &::part(menu) {
-        background-color: #1c2128;
-        border: 1px solid #444c56;
-        box-shadow:
-          0 12px 28px rgba(0, 0, 0, 0.8),
-          0 0 0 1px rgba(255, 255, 255, 0.08);
-        color: #ffffff;
-      }
-    }
-
-    wa-dropdown-item {
-      color: #ffffff !important;
-
-      wa-icon {
-        color: #e6edf3 !important;
-      }
-
-      &[variant="danger"] {
-        color: #ff7b72 !important;
-
-        wa-icon {
-          color: #ff7b72 !important;
-        }
-      }
-    }
-
-    wa-dialog {
-      &::part(dialog) {
-        background-color: #1c2128;
-        border: 1px solid #444c56;
-        box-shadow:
-          0 16px 36px rgba(0, 0, 0, 0.8),
-          0 0 0 1px rgba(255, 255, 255, 0.08);
-        color: #f0f6fc;
-      }
-
-      &::part(title) {
-        color: #ffffff;
-      }
-
-      &::part(body) {
-        color: #f0f6fc;
-      }
-    }
-
-    .dialog-field {
-      --wa-form-control-background-color: #0d1117;
-      --wa-form-control-border-color: #444c56;
-      --wa-form-control-label-color: #e6edf3;
-      --wa-form-control-value-color: #ffffff;
-      --wa-form-control-placeholder-color: #768390;
-
-      &::part(form-control-label),
-      &::part(label) {
-        color: #ffffff;
-      }
-
-      &::part(input),
-      &::part(textarea) {
-        color: #ffffff;
-      }
-    }
-
-    .delete-dialog-message {
-      color: #e6edf3;
-
-      strong {
-        color: #ffffff;
-      }
-    }
+    @include dark-surface-theme;
   }
 }
