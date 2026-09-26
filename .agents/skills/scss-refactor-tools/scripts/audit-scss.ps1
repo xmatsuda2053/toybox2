@@ -22,6 +22,9 @@
 
 .PARAMETER JsonOutput
     JSON 文字列のみを標準出力するフラグ
+
+.PARAMETER BacklogFile
+    SCSSリファクタリング台帳ファイルのパス（既定値: ".agents/scss-refactor-backlog.json"）
 #>
 
 [CmdletBinding()]
@@ -30,7 +33,8 @@ param(
     [string]$OutputDir = ".agents",
     [int]$MinLines = 5,
     [int]$MinTokens = 20,
-    [switch]$JsonOutput
+    [switch]$JsonOutput,
+    [string]$BacklogFile = ".agents/scss-refactor-backlog.json"
 )
 
 $ErrorActionPreference = "Continue"
@@ -208,21 +212,50 @@ try {
         dimensions = $hardcodedPxValues
     }
 
+    # バックログ情報の読み込み（存在する場合）
+    $backlogStats = $null
+    if ($BacklogFile -and (Test-Path $BacklogFile)) {
+        try {
+            $backlogRaw = [System.IO.File]::ReadAllText($BacklogFile, [System.Text.UTF8Encoding]::new($false))
+            $backlogJson = $backlogRaw | ConvertFrom-Json
+            if ($backlogJson -is [System.Collections.IEnumerable]) {
+                $totalBacklog = [int]@($backlogJson).Count
+                $completedBacklog = [int]@($backlogJson | Where-Object { $_.status -eq 'completed' }).Count
+                $pendingBacklog = [int]@($backlogJson | Where-Object { $_.status -eq 'pending' }).Count
+                $inProgressBacklog = [int]@($backlogJson | Where-Object { $_.status -eq 'in_progress' }).Count
+                $backlogStats = @{
+                    total = $totalBacklog
+                    completed = $completedBacklog
+                    pending = $pendingBacklog
+                    inProgress = $inProgressBacklog
+                    completionRate = if ($totalBacklog -gt 0) { [Math]::Round(($completedBacklog / $totalBacklog) * 100, 1) } else { 0 }
+                }
+            }
+        } catch {
+            # バックログ読み込み失敗時は null のまま
+        }
+    }
+
     $duration = [Math]::Round(([System.DateTime]::Now - $startTime).TotalSeconds, 2)
+
+    $summaryObj = @{
+        scannedFiles = $scssFiles.Count
+        jscpdClones = $jscpdClones
+        duplicatedLines = $jscpdDuplicatedLines
+        duplicatedTokens = $jscpdDuplicatedTokens
+        antiPatternErrors = ($antiPatternIssues | Where-Object { $_.severity -eq 'error' }).Count
+        antiPatternWarnings = ($antiPatternIssues | Where-Object { $_.severity -eq 'warning' }).Count
+        uniqueHardcodedColors = $hardcodedColors.Keys.Count
+    }
+    if ($backlogStats) {
+        $summaryObj.backlog = $backlogStats
+    }
 
     $auditReport = @{
         timestamp = [System.DateTime]::Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz")
         targetDir = $TargetDir
         durationSeconds = $duration
-        summary = @{
-            scannedFiles = $scssFiles.Count
-            jscpdClones = $jscpdClones
-            duplicatedLines = $jscpdDuplicatedLines
-            duplicatedTokens = $jscpdDuplicatedTokens
-            antiPatternErrors = ($antiPatternIssues | Where-Object { $_.severity -eq 'error' }).Count
-            antiPatternWarnings = ($antiPatternIssues | Where-Object { $_.severity -eq 'warning' }).Count
-            uniqueHardcodedColors = $hardcodedColors.Keys.Count
-        }
+        summary = $summaryObj
         duplicates = $jscpdDetails
         antiPatterns = $antiPatternIssues
         tokenCandidates = $tokenCandidates
@@ -244,6 +277,9 @@ try {
         Write-Host " Anti-pattern Errors : $(($antiPatternIssues | Where-Object { $_.severity -eq 'error' }).Count) (!important / @extend)" -ForegroundColor $(if (($antiPatternIssues | Where-Object { $_.severity -eq 'error' }).Count -eq 0) { "Green" } else { "Red" })
         Write-Host " Anti-pattern Warns  : $(($antiPatternIssues | Where-Object { $_.severity -eq 'warning' }).Count) (deep nesting / raw tag selectors)" -ForegroundColor $(if (($antiPatternIssues | Where-Object { $_.severity -eq 'warning' }).Count -eq 0) { "Green" } else { "Yellow" })
         Write-Host " Unique Raw Colors   : $($hardcodedColors.Keys.Count) distinct colors found"
+        if ($backlogStats) {
+            Write-Host " Backlog Progress    : $($backlogStats.completed)/$($backlogStats.total) completed ($($backlogStats.completionRate)%) [Pending: $($backlogStats.pending)]" -ForegroundColor $(if ($backlogStats.completed -eq $backlogStats.total) { "Green" } else { "Cyan" })
+        }
         Write-Host "------------------------------------------------------"
         Write-Host " Report File Saved   : $outJsonPath" -ForegroundColor Green
         Write-Host " Total Audit Time    : ${duration}s"

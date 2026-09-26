@@ -113,6 +113,17 @@ npx purgecss `
 
 ---
 
+### 2.3 効果測定台帳（`scss-refactor-backlog.json`）の整備と課題追跡
+
+検出された課題は、TypeScript 側の `refactor-backlog.json` と同一の思想に基づき、専用台帳（`.agents/scss-refactor-backlog.json`）へ構造化して登録・管理する。
+
+- **台帳の運用サイクル**:
+  1. **課題登録 (`status: "pending"`)**: 課題 ID（`SCSS-001` 等）、対象ファイル、事前メトリクス（重複行数、トークン数、`!important` 数等）を登録。
+  2. **Issue / ブランチ作成**: 台帳の課題単位で GitHub Issue およびブランチを作成。
+  3. **品質検証 & 実績記録 (`status: "completed"`)**: `verify-scss.ps1 -UpdateBacklog -BacklogId <ID>` を実行し、全ゲート合格時に事後メトリクス（`metrics_after`）、Issue / PR / コミットハッシュを記録。
+
+---
+
 ## 3. Phase 1: 土台（Tokens & Tools）の確立
 
 **【ゴール】既存画面のレンダリング結果（ピクセル単位）を1ミリも変更せず、共通トークンおよびMixin基盤を整備する。**

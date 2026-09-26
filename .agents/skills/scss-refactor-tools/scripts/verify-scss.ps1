@@ -27,6 +27,24 @@
 
 .PARAMETER JsonOutput
     コンソールに JSON 文字列のみを出力するスイッチフラグ（任意）
+
+.PARAMETER BacklogId
+    更新対象の SCSS バックログ項目 ID（例: "SCSS-001"）
+
+.PARAMETER BacklogFile
+    SCSSリファクタリング台帳ファイルのパス（既定値: ".agents/scss-refactor-backlog.json"）
+
+.PARAMETER IssueNumber
+    関連する GitHub Issue 番号（任意）
+
+.PARAMETER PrNumber
+    関連する GitHub PR 番号（任意）
+
+.PARAMETER CommitHash
+    関連するコミットハッシュ（任意。省略時は現在の HEAD 短縮ハッシュ）
+
+.PARAMETER UpdateBacklog
+    検証合格時に台帳（Backlog）を自動更新するスイッチフラグ
 #>
 
 [CmdletBinding()]
@@ -36,7 +54,13 @@ param(
     [int]$MinLines = 5,
     [int]$MinTokens = 20,
     [string]$OutputFile = "",
-    [switch]$JsonOutput
+    [switch]$JsonOutput,
+    [string]$BacklogId = "",
+    [string]$BacklogFile = ".agents/scss-refactor-backlog.json",
+    [int]$IssueNumber = 0,
+    [int]$PrNumber = 0,
+    [string]$CommitHash = "",
+    [switch]$UpdateBacklog
 )
 
 $ErrorActionPreference = "Continue"
@@ -231,6 +255,59 @@ try {
         [System.IO.File]::WriteAllText($OutputFile, $jsonResult, [System.Text.UTF8Encoding]::new($false))
     }
 
+    # ----------------------------------------------------
+    # バックログの自動更新（-UpdateBacklog 指定かつ合格時）
+    # ----------------------------------------------------
+    $backlogUpdated = $false
+    if ($allPassed -and $UpdateBacklog -and $BacklogId -and (Test-Path $BacklogFile)) {
+        try {
+            $backlogRaw = [System.IO.File]::ReadAllText($BacklogFile, [System.Text.UTF8Encoding]::new($false))
+            $backlogList = $backlogRaw | ConvertFrom-Json
+            
+            $effectiveCommit = $CommitHash
+            if (-not $effectiveCommit) {
+                try {
+                    $gitRev = (git rev-parse --short HEAD 2>$null)
+                    if ($gitRev) { $effectiveCommit = $gitRev.Trim() }
+                } catch {
+                    $effectiveCommit = ""
+                }
+            }
+
+            $matched = $false
+            foreach ($item in $backlogList) {
+                if ($item.id -eq $BacklogId) {
+                    $item.status = "completed"
+                    $item.execution = @{
+                        completed_at = [System.DateTime]::Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz")
+                        issue_number = $IssueNumber
+                        pr_number = $PrNumber
+                        commit_hash = $effectiveCommit
+                        tests_passed = $testsPassed
+                        regressions_detected = $testsFailed
+                        metrics_after = @{
+                            clones = $jscpdClones
+                            duplicated_lines = $jscpdDuplicatedLines
+                            duplicated_tokens = $jscpdDuplicatedTokens
+                            anti_pattern_errors = $antiPatternViolations
+                            build_size_kb = $distHtmlSizeKb
+                        }
+                    }
+                    $matched = $true
+                    break
+                }
+            }
+
+            if ($matched) {
+                $newBacklogJson = $backlogList | ConvertTo-Json -Depth 6
+                [System.IO.File]::WriteAllText($BacklogFile, $newBacklogJson, [System.Text.UTF8Encoding]::new($false))
+                $backlogUpdated = $true
+            }
+        } catch {
+            Write-Warning "Failed to update backlog: $($_.Exception.Message)"
+        }
+    }
+
     if ($JsonOutput) {
         Write-Output $jsonResult
     } else {
@@ -244,6 +321,9 @@ try {
         Write-Host " [$(if ($duplicationSuccess) { 'PASS' } else { 'FAIL' })] SCSS Clones      : $jscpdClones clones ($jscpdDuplicatedLines lines, $jscpdDuplicatedTokens tokens)" -ForegroundColor $(if ($duplicationSuccess) { "Green" } else { "Yellow" })
         Write-Host " [$(if ($antiPatternSuccess) { 'PASS' } else { 'FAIL' })] Anti-patterns    : $antiPatternViolations violations (!important / @extend)" -ForegroundColor $(if ($antiPatternSuccess) { "Green" } else { "Red" })
         Write-Host " [$(if ($buildSuccess) { 'PASS' } else { 'FAIL' })] Standalone Build : Success ($distHtmlPath, $distHtmlSizeKb kB)" -ForegroundColor $(if ($buildSuccess) { "Green" } else { "Red" })
+        if ($backlogUpdated) {
+            Write-Host " [PASS] Backlog Record   : $BacklogId marked as completed in $BacklogFile" -ForegroundColor Green
+        }
 
         Write-Host "------------------------------------------------------"
         if ($allPassed) {

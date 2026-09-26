@@ -265,3 +265,52 @@ Web Components / Shadow DOM 環境において、プレースホルダーおよ�
   }
 }
 ```
+
+---
+
+## 6. 効果測定台帳（`scss-refactor-backlog.json`）の管理基準
+
+リファクタリングの投資対効果（ROI）を定量的かつ客観的に追跡するため、TypeScript コードベースと同様に SCSS 専用の効果測定台帳（`.agents/scss-refactor-backlog.json`）を運用する。
+
+### 6.1 台帳の役割とライフサイクル
+1. **課題の同定・登録 (`status: "pending"`)**:
+   - `audit-scss.ps1` の実測データに基づき、課題 ID（`SCSS-001` 等）、対象ファイル、事前メトリクス（重複行数、トークン数、`!important` 数、最大ネスト階層）を記録する。
+2. **作業単位での着手 (`status: "in_progress"`)**:
+   - Issue 作成および作業ブランチ作成を行い、該当アイテムに着手する。
+3. **品質検証と実績記録 (`status: "completed"`)**:
+   - `verify-scss.ps1 -UpdateBacklog -BacklogId <ID>` を実行し、全ゲート合格時に事後メトリクス（`metrics_after`）、関連 Issue / PR / コミットハッシュを自動記録する。
+
+### 6.2 スキーマ構造
+```json
+{
+  "id": "SCSS-001",
+  "target_file": "apps/stepnote/src/styles/tokens.scss",
+  "target_selector": ":root / .wa-dark",
+  "category": "Tokenization",
+  "metrics": {
+    "duplicated_tokens_defined": 67,
+    "files_involved": 3
+  },
+  "issue_summary": "課題の概要",
+  "approach": "改善方針",
+  "scope": "shared | component | internal",
+  "risk_level": "Low | Medium | High",
+  "feasibility": "High | Medium | Low",
+  "status": "pending | in_progress | completed",
+  "execution": {
+    "completed_at": "ISO 8601 日時",
+    "issue_number": 75,
+    "pr_number": 76,
+    "commit_hash": "7桁コミットハッシュ",
+    "tests_passed": 383,
+    "regressions_detected": 0,
+    "metrics_after": {
+      "clones": 0,
+      "duplicated_lines": 0,
+      "duplicated_tokens": 0,
+      "anti_pattern_errors": 0,
+      "build_size_kb": 583.49
+    }
+  }
+}
+```
