@@ -6,6 +6,7 @@ import type {
   ThemeController,
   ThemeMode,
 } from "@/controllers/theme.controller.js";
+import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import themeSwitcherStyles from "./theme-switcher.scss?inline";
 
 /**
@@ -21,8 +22,8 @@ import themeSwitcherStyles from "./theme-switcher.scss?inline";
 export class ThemeSwitcher extends LitElement {
   public static override styles = unsafeCSS(themeSwitcherStyles);
 
+  private subscriber = new ControllerSubscriber(this);
   private _themeController?: ThemeController;
-  private unsubTheme?: () => void;
 
   /**
    * テーマ状態管理コントローラー
@@ -32,19 +33,8 @@ export class ThemeSwitcher extends LitElement {
   public set themeController(controller: ThemeController | undefined) {
     if (this._themeController === controller) return;
 
-    if (this.unsubTheme) {
-      this.unsubTheme();
-      this.unsubTheme = undefined;
-    }
-
     this._themeController = controller;
-
-    if (controller && typeof controller.subscribe === "function") {
-      this.unsubTheme = controller.subscribe(() => {
-        this.requestUpdate();
-      });
-    }
-
+    this.subscriber.subscribe("theme", controller);
     this.requestUpdate();
   }
 
@@ -54,10 +44,7 @@ export class ThemeSwitcher extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    if (this.unsubTheme) {
-      this.unsubTheme();
-      this.unsubTheme = undefined;
-    }
+    this.subscriber.unsubscribeAll();
   }
 
   /**
