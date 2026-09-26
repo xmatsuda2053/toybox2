@@ -17,6 +17,9 @@ import { PaneMenu } from "./pane-menu";
  *
  * 3. 開閉ボタンクリックによる LayoutUIController 連動
  *    - [x] 3-1. handleToggleNavigationList の呼び出しにより layoutUIController.toggleNavigationListArea が実行されること
+ *
+ * 4. 簡易BEM設計とクラス付与
+ *    - [x] 4-1. 各要素に簡易BEMクラス（pane-menu__*）が付与されていること
  */
 
 describe("PaneMenu Component", () => {
@@ -71,6 +74,16 @@ describe("PaneMenu Component", () => {
       expect(
         mockLayoutUIController.toggleNavigationListArea,
       ).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("4. 簡易BEM設計とクラス付与", () => {
+    it("4-1. 各要素に簡易BEMクラス（pane-menu__*）が付与されていること", () => {
+      const htmlStr = flattenTemplate(paneMenu.render());
+      expect(htmlStr).toContain("pane-menu__primary");
+      expect(htmlStr).toContain("pane-menu__secondary");
+      expect(htmlStr).toContain("pane-menu__toggle-btn");
+      expect(htmlStr).toContain("pane-menu__toggle-icon");
     });
   });
 });
