@@ -10,6 +10,7 @@ import { consume } from "@lit/context";
 import { labelsContext } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller.js";
 import type { LabelRecord } from "@/db/models/navigation.model.js";
+import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import labelsStyles from "./navigation-labels.scss?inline";
 
 /**
@@ -26,13 +27,7 @@ import labelsStyles from "./navigation-labels.scss?inline";
 export class NavigationLabels extends LitElement {
   public static override styles = unsafeCSS(labelsStyles);
 
-  /**
-   * LabelsController の購読解除関数
-   *
-   * @private
-   * @type {(() => void) | undefined}
-   */
-  private unsubLabels?: () => void;
+  private subscriber = new ControllerSubscriber(this);
 
   /**
    * 内部で保持する LabelsController インスタンス
@@ -61,19 +56,8 @@ export class NavigationLabels extends LitElement {
   public set labelsController(controller: LabelsController | undefined) {
     if (this._labelsController === controller) return;
 
-    if (this.unsubLabels) {
-      this.unsubLabels();
-      this.unsubLabels = undefined;
-    }
-
     this._labelsController = controller;
-
-    if (controller) {
-      this.unsubLabels = controller.subscribe(() => {
-        this.requestUpdate();
-      });
-    }
-
+    this.subscriber.subscribe("labels", controller);
     this.requestUpdate();
   }
 
@@ -125,15 +109,9 @@ export class NavigationLabels extends LitElement {
   @state()
   public inputDescription = "";
 
-  /**
-   * コンポーネントが DOM から切断された際のクリーンアップ処理
-   */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    if (this.unsubLabels) {
-      this.unsubLabels();
-      this.unsubLabels = undefined;
-    }
+    this.subscriber.unsubscribeAll();
   }
 
   /**
@@ -205,10 +183,7 @@ export class NavigationLabels extends LitElement {
       });
     }
 
-    this.isAddDialogOpen = false;
-    this.editingLabel = null;
-    this.inputName = "";
-    this.inputDescription = "";
+    this.handleCloseAddDialog();
   };
 
   /**
@@ -218,8 +193,7 @@ export class NavigationLabels extends LitElement {
     if (this.deletingLabel && this.deletingLabel.id !== undefined) {
       await this.labelsController?.deleteLabel(this.deletingLabel.id);
     }
-    this.isDeleteDialogOpen = false;
-    this.deletingLabel = null;
+    this.handleCloseDeleteDialog();
   };
 
   /**

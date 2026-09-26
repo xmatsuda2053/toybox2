@@ -12,6 +12,7 @@ import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
+import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import quickAccessStyles from "./navigation-quick-access.scss?inline";
 
 /**
@@ -139,23 +140,7 @@ export class NavigationQuickAccess extends LitElement {
   @property({ attribute: false })
   public taskCounts: QuickAccessTaskCounts = {};
 
-  /**
-   * LayoutUIController の購読解除関数
-   *
-   * @private
-   * @type {(() => void) | undefined}
-   * @memberof NavigationQuickAccess
-   */
-  private unsubLayoutUI?: () => void;
-
-  /**
-   * QuickAccessController の購読解除関数
-   *
-   * @private
-   * @type {(() => void) | undefined}
-   * @memberof NavigationQuickAccess
-   */
-  private unsubQuickAccess?: () => void;
+  private subscriber = new ControllerSubscriber(this);
 
   /**
    * 内部で保持する LayoutUIController インスタンス
@@ -193,16 +178,10 @@ export class NavigationQuickAccess extends LitElement {
    */
   @consume({ context: layoutUIContext, subscribe: true })
   public set layoutUIController(controller: LayoutUIController | undefined) {
-    if (this.unsubLayoutUI) {
-      this.unsubLayoutUI();
-      this.unsubLayoutUI = undefined;
-    }
+    if (this._layoutUIController === controller) return;
+
     this._layoutUIController = controller;
-    if (controller && typeof controller.subscribe === "function") {
-      this.unsubLayoutUI = controller.subscribe(() => {
-        this.requestUpdate();
-      });
-    }
+    this.subscriber.subscribe("layoutUI", controller);
     this.requestUpdate();
   }
 
@@ -226,16 +205,10 @@ export class NavigationQuickAccess extends LitElement {
   public set quickAccessController(
     controller: QuickAccessController | undefined,
   ) {
-    if (this.unsubQuickAccess) {
-      this.unsubQuickAccess();
-      this.unsubQuickAccess = undefined;
-    }
+    if (this._quickAccessController === controller) return;
+
     this._quickAccessController = controller;
-    if (controller && typeof controller.subscribe === "function") {
-      this.unsubQuickAccess = controller.subscribe(() => {
-        this.requestUpdate();
-      });
-    }
+    this.subscriber.subscribe("quickAccess", controller);
     this.requestUpdate();
   }
 
@@ -248,14 +221,7 @@ export class NavigationQuickAccess extends LitElement {
    */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    if (this.unsubLayoutUI) {
-      this.unsubLayoutUI();
-      this.unsubLayoutUI = undefined;
-    }
-    if (this.unsubQuickAccess) {
-      this.unsubQuickAccess();
-      this.unsubQuickAccess = undefined;
-    }
+    this.subscriber.unsubscribeAll();
   }
 
   /**
