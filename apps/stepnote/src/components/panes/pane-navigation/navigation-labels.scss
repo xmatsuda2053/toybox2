@@ -17,8 +17,7 @@
   overflow: hidden;
 }
 
-.labels__container,
-.labels-container {
+.labels__container {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -26,20 +25,17 @@
   overflow: hidden;
 }
 
-.labels__header,
-.labels-header {
+.labels__header {
   flex-shrink: 0;
 }
 
-.labels__header-actions,
-.labels-header-actions {
+.labels__header-actions {
   display: flex;
   align-items: center;
   gap: var(--wa-space-3xs, 4px);
 }
 
-.labels__btn-clear,
-.btn-clear-labels {
+.labels__btn-clear {
   @include flex-center;
 
   wa-icon {
@@ -47,8 +43,7 @@
   }
 }
 
-.labels__btn-add,
-.btn-add-label {
+.labels__btn-add {
   @include flex-center;
 
   wa-icon {
@@ -56,8 +51,7 @@
   }
 }
 
-.labels__content,
-.labels-content {
+.labels__content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -90,14 +84,12 @@
 }
 
 /* スクロールバーホバー色 */
-.labels__content::-webkit-scrollbar-thumb:hover,
-.labels-content::-webkit-scrollbar-thumb:hover {
+.labels__content::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover-color);
 }
 
 /* ラベルボタン共通スタイル（Quick Access ボタン同等のスタイル再現） */
-.labels__btn,
-.label-btn {
+.labels__btn {
   width: 100%;
   @include flex-between;
   box-sizing: border-box;
@@ -128,8 +120,7 @@
 }
 
 /* ラベルボタン・アクティブ状態 */
-.labels__btn.is-active,
-.label-btn.is-active {
+.labels__btn.is-active {
   font-weight: 600;
   color: var(--wa-color-neutral-on-normal);
   background-color: var(--wa-color-neutral-fill-normal);
@@ -143,8 +134,7 @@
   }
 }
 
-.is-active .labels__icon,
-.is-active .label-button-icon {
+.is-active .labels__icon {
   color: var(--label-icon-active-color);
 
   &.type-caret {
@@ -152,14 +142,12 @@
   }
 }
 
-.is-active .labels__btn-menu,
-.is-active .btn-label-menu {
+.is-active .labels__btn-menu {
   opacity: 0.9;
   color: var(--label-menu-trigger-active-color);
 }
 
-.labels__btn-main,
-.label-btn-main {
+.labels__btn-main {
   display: flex;
   align-items: center;
   flex: 1;
@@ -167,16 +155,14 @@
   gap: var(--wa-space-xs, 8px);
 }
 
-.labels__icons,
-.label-icons {
+.labels__icons {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   gap: var(--wa-space-3xs, 2px);
 }
 
-.labels__icon,
-.label-button-icon {
+.labels__icon {
   font-size: var(--wa-font-size-m);
   color: var(--label-icon-color);
 
@@ -186,24 +172,21 @@
   }
 }
 
-.labels__text,
-.label-button-text {
+.labels__text {
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
   text-align: left;
 }
 
-.labels__menu-dropdown,
-.label-menu-dropdown {
+.labels__menu-dropdown {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   margin-inline-start: var(--wa-space-3xs, 2px);
 }
 
-.labels__btn-menu,
-.btn-label-menu {
+.labels__btn-menu {
   opacity: 0.8;
   transition:
     opacity 0.15s ease,
@@ -235,8 +218,7 @@
   }
 }
 
-.labels__empty-message,
-.empty-labels-message {
+.labels__empty-message {
   padding: var(--wa-space-m, 16px) var(--wa-space-s, 12px);
   font-size: var(--wa-font-size-xs, 12px);
   color: var(--wa-color-text-subtle);

@@ -52,6 +52,7 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 7-1. ヘッダー部、コンテンツ部、ボタン部に簡易BEMクラス（quick-access__*）が付与されていること
  *    - [x] 7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること
  *    - [x] 7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
+ *    - [x] 7-4. 廃止された旧クラス名（quick-access-btn、quick-access-counter等）がHTMLテンプレートおよびSCSSに一切残存していないこと
  */
 
 describe("NavigationQuickAccess Component", () => {
@@ -123,7 +124,7 @@ describe("NavigationQuickAccess Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("QUICK ACCESS");
       expect(htmlStr).toContain("wa-button");
-      expect(htmlStr).toContain("btn-toggle-quick-access");
+      expect(htmlStr).toContain("quick-access__toggle-btn");
       expect(htmlStr).toContain("chevron-right");
     });
 
@@ -149,10 +150,10 @@ describe("NavigationQuickAccess Component", () => {
   });
 
   describe("2. コンテンツ部（Content）のアコーディオン構造と8つのフィルターボタンの描画", () => {
-    it("2-1. コンテンツ部ラッパーに quick-access-content-wrapper が存在し、開閉状態に応じたクラス（is-open / is-closed）が付与されること", () => {
+    it("2-1. コンテンツ部ラッパーに quick-access__content-wrapper が存在し、開閉状態に応じたクラス（is-open / is-closed）が付与されること", () => {
       mockLayoutUIController.state.isQuickAccessOpen = true;
       let htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("quick-access-content-wrapper");
+      expect(htmlStr).toContain("quick-access__content-wrapper");
       expect(htmlStr).toContain("is-open");
 
       mockLayoutUIController.state.isQuickAccessOpen = false;
@@ -324,7 +325,7 @@ describe("NavigationQuickAccess Component", () => {
   });
 
   describe("6. タスク件数の描画（Props連携）", () => {
-    it("6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot='end' の span.quick-access-counter）が正しくレンダリングされること", () => {
+    it("6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot='end' の span.quick-access__counter）が正しくレンダリングされること", () => {
       element.taskCounts = {
         bookmark: 3,
         uncategorized: 5,
@@ -334,7 +335,7 @@ describe("NavigationQuickAccess Component", () => {
       };
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain('slot="end"');
-      expect(htmlStr).toContain("quick-access-counter");
+      expect(htmlStr).toContain("quick-access__counter");
       expect(htmlStr).toContain("3");
       expect(htmlStr).toContain("5");
       expect(htmlStr).toContain("2");
@@ -343,13 +344,13 @@ describe("NavigationQuickAccess Component", () => {
       expect(htmlStr).not.toContain("wa-badge");
     });
 
-    it("6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access-counter）がレンダリングされないこと", () => {
+    it("6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access__counter）がレンダリングされないこと", () => {
       element.taskCounts = {
         bookmark: 0,
         uncategorized: undefined,
       };
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("quick-access-counter");
+      expect(htmlStr).not.toContain("quick-access__counter");
       expect(htmlStr).not.toContain("wa-badge");
     });
 
@@ -366,7 +367,7 @@ describe("NavigationQuickAccess Component", () => {
       // 完了・対応中・開始待ちのボタンには件数要素が含まれないこと
       const doneIndex = htmlStr.indexOf("完了");
       const subStrAfterDone = htmlStr.slice(doneIndex);
-      expect(subStrAfterDone).not.toContain("quick-access-counter");
+      expect(subStrAfterDone).not.toContain("quick-access__counter");
       expect(subStrAfterDone).not.toContain("wa-badge");
     });
   });
@@ -426,6 +427,34 @@ describe("NavigationQuickAccess Component", () => {
         }
       }
       expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
+    });
+
+    it("7-4. 廃止された旧クラス名（quick-access-btn、quick-access-counter等）がHTMLテンプレートおよびSCSSに一切残存していないこと", () => {
+      element.taskCounts = { bookmark: 3 };
+      const htmlStr = flattenTemplate(element.render());
+      const obsoleteClasses = [
+        "quick-access-header",
+        "quick-access-title",
+        "btn-toggle-quick-access",
+        "icon-toggle-quick-access",
+        "quick-access-content-wrapper",
+        "quick-access-content",
+        "quick-access-btn",
+        "quick-access-button-icon",
+        "quick-access-counter",
+        "quick-access-divider",
+      ];
+      for (const cls of obsoleteClasses) {
+        expect(htmlStr).not.toContain(cls);
+      }
+
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      for (const cls of obsoleteClasses) {
+        expect(scssContent).not.toContain(`.${cls}`);
+      }
     });
   });
 });

@@ -19,9 +19,7 @@
 }
 
 .pane-menu__primary,
-.pane-menu__secondary,
-.menu-primary,
-.menu-secondary {
+.pane-menu__secondary {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -29,13 +27,11 @@
   width: 100%;
 }
 
-.pane-menu__toggle-btn,
-.btn-toggle-sidebar {
+.pane-menu__toggle-btn {
   @include flex-center;
 }
 
-.pane-menu__toggle-icon,
-.icon-toggle-sidebar {
+.pane-menu__toggle-icon {
   display: inline-block;
   transition: transform 0.2s ease;
 
