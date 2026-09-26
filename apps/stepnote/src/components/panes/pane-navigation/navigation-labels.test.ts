@@ -55,6 +55,12 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（#btn-clear-labels）が表示されないこと
  *    - 8-2. ラベルが1件以上選択中（hasSelectedLabels === true）のとき、一括解除ボタン（#btn-clear-labels）が表示されること
  *    - 8-3. 一括解除ボタン押下（handleClearAllSelected）時に labelsController.clearAllSelected が呼び出されること
+ *
+ * 9. BEMクラス設計・!important完全排除・ネスト平坦化（SCSS-004）
+ *    - [x] 9-1. コンポーネントテンプレートにおいて簡易BEMクラス（labels__*）が付与されていること
+ *    - [x] 9-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.labels__*）が定義されていること
+ *    - [x] 9-3. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）
+ *    - [x] 9-4. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  */
 
 describe("NavigationLabels Component", () => {
@@ -398,6 +404,65 @@ describe("NavigationLabels Component", () => {
       expect(typeof element.handleClearAllSelected).toBe("function");
       await element.handleClearAllSelected();
       expect(mockLabelsController.clearAllSelected).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("9. BEMクラス設計・!important完全排除・ネスト平坦化（SCSS-004）", () => {
+    it("9-1. コンポーネントテンプレートにおいて簡易BEMクラス（labels__*）が付与されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("labels__header");
+      expect(htmlStr).toContain("labels__title");
+      expect(htmlStr).toContain("labels__content");
+      expect(htmlStr).toContain("labels__btn");
+      expect(htmlStr).toContain("labels__icon");
+      expect(htmlStr).toContain("labels__text");
+    });
+
+    it("9-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.labels__*）が定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toContain(".labels__btn");
+      expect(scssContent).toContain(".labels__content");
+      expect(scssContent).toContain(".labels__header");
+    });
+
+    it("9-3. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      const importantMatches = scssContent.match(/!important/g) || [];
+      expect(importantMatches.length).toBe(0);
+    });
+
+    it("9-4. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+
+      const lines = scssContent.split("\n");
+      let currentNesting = 0;
+      let maxNestingOnSelector = 0;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (
+          trimmed.startsWith("//") ||
+          trimmed.startsWith("/*") ||
+          trimmed.startsWith("*")
+        ) {
+          continue;
+        }
+        const openBraces = (line.match(/\{/g) || []).length;
+        const closeBraces = (line.match(/\}/g) || []).length;
+        currentNesting += openBraces - closeBraces;
+        if (openBraces > 0 && currentNesting > maxNestingOnSelector) {
+          maxNestingOnSelector = currentNesting;
+        }
+      }
+      expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
     });
   });
 });

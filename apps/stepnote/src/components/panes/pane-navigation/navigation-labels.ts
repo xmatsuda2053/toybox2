@@ -280,24 +280,24 @@ export class NavigationLabels extends LitElement {
     isActive: boolean,
   ): HTMLTemplateResult {
     return html`
-      <div class="label-btn-main">
-        <div class="label-icons">
+      <div class="labels__btn-main label-btn-main">
+        <div class="labels__icons label-icons">
           <wa-icon
             library="my-icons"
             name="tag-solid-full"
-            class="label-button-icon"
+            class="labels__icon label-button-icon"
           ></wa-icon>
           ${isActive
             ? html`
                 <wa-icon
                   library="my-icons"
                   name="caret-right-solid-full"
-                  class="label-button-icon type-caret"
+                  class="labels__icon label-button-icon type-caret"
                 ></wa-icon>
               `
             : nothing}
         </div>
-        <span class="label-button-text">${label.name}</span>
+        <span class="labels__text label-button-text">${label.name}</span>
       </div>
     `;
   }
@@ -313,7 +313,7 @@ export class NavigationLabels extends LitElement {
   private renderLabelItemDropdown(label: LabelRecord): HTMLTemplateResult {
     return html`
       <wa-dropdown
-        class="label-menu-dropdown"
+        class="labels__menu-dropdown label-menu-dropdown"
         placement="bottom-end"
         @click=${(e: Event) => e.stopPropagation()}
         @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
@@ -321,7 +321,7 @@ export class NavigationLabels extends LitElement {
       >
         <wa-button
           slot="trigger"
-          class="btn-label-menu"
+          class="btn-label-menu labels__btn-menu"
           variant="neutral"
           appearance="plain"
           size="s"
@@ -332,19 +332,21 @@ export class NavigationLabels extends LitElement {
             name="ellipsis-vertical-solid-full"
           ></wa-icon>
         </wa-button>
-        <wa-dropdown-item value="edit">
+        <wa-dropdown-item value="edit" class="labels__menu-item label-menu-item">
           <wa-icon
             slot="icon"
             library="my-icons"
             name="pen-to-square-solid-full"
+            class="labels__menu-icon label-menu-item-icon"
           ></wa-icon>
           編集
         </wa-dropdown-item>
-        <wa-dropdown-item value="delete" variant="danger">
+        <wa-dropdown-item value="delete" variant="danger" class="labels__menu-item label-menu-item">
           <wa-icon
             slot="icon"
             library="my-icons"
             name="trash-solid-full"
+            class="labels__menu-icon label-menu-item-icon"
           ></wa-icon>
           削除
         </wa-dropdown-item>
@@ -365,7 +367,7 @@ export class NavigationLabels extends LitElement {
 
     return html`
       <div
-        class="label-btn ${isActive ? "is-active" : ""}"
+        class="labels__btn label-btn ${isActive ? "is-active" : ""}"
         role="button"
         tabindex="0"
         @click=${() => this.handleToggleLabel(label.id)}
@@ -386,9 +388,9 @@ export class NavigationLabels extends LitElement {
    */
   private renderHeader(): HTMLTemplateResult {
     return html`
-      <header class="section-header labels-header">
-        <span class="section-title labels-title">LABELS</span>
-        <div class="labels-header-actions">
+      <header class="section-header labels__header labels-header">
+        <span class="section-title labels__title labels-title">LABELS</span>
+        <div class="labels__header-actions labels-header-actions">
           ${this.labelsController?.hasSelectedLabels
             ? html`
                 <wa-tooltip for="btn-clear-labels" placement="bottom">
@@ -396,7 +398,7 @@ export class NavigationLabels extends LitElement {
                 </wa-tooltip>
                 <wa-button
                   id="btn-clear-labels"
-                  class="btn-clear-labels"
+                  class="btn-clear-labels labels__btn-clear"
                   variant="neutral"
                   appearance="plain"
                   size="s"
@@ -415,7 +417,7 @@ export class NavigationLabels extends LitElement {
           </wa-tooltip>
           <wa-button
             id="btn-add-label"
-            class="btn-add-label"
+            class="btn-add-label labels__btn-add"
             variant="neutral"
             appearance="plain"
             size="s"
@@ -439,9 +441,9 @@ export class NavigationLabels extends LitElement {
    */
   private renderContent(labels: readonly LabelRecord[]): HTMLTemplateResult {
     return html`
-      <div class="labels-content">
+      <div class="labels__content labels-content">
         ${labels.length === 0
-          ? html`<div class="empty-labels-message">ラベルがありません</div>`
+          ? html`<div class="empty-labels-message labels__empty-message">ラベルがありません</div>`
           : labels.map((label) => this.renderLabelItem(label))}
       </div>
     `;
