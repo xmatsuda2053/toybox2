@@ -26,6 +26,5 @@ dist-ssr
 _memo
 *.tsbuildinfo
 
-# Refactor audit intermediate reports and backlog
+# Refactor audit intermediate reports
 .agents/*-report.json
-.agents/refactor-backlog.json

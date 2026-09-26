@@ -104,6 +104,7 @@ if (fs.existsSync(eslintReportPath)) {
             risk_level: riskLevel,
             feasibility,
             status: 'pending',
+            execution: null,
           });
         }
       }
@@ -145,6 +146,7 @@ if (fs.existsSync(jscpdReportPath)) {
         risk_level: 'Low',
         feasibility: 'High',
         status: 'pending',
+        execution: null,
       });
     }
   } catch (err) {
@@ -176,6 +178,7 @@ if (fs.existsSync(circularReportPath)) {
             risk_level: 'High',
             feasibility: 'Medium',
             status: 'pending',
+            execution: null,
           });
         }
       }
@@ -185,15 +188,17 @@ if (fs.existsSync(circularReportPath)) {
   }
 }
 
-// 既存の backlog があれば status などを引き継ぐ
+// 既存の backlog があれば status および execution を引き継ぐ
 if (fs.existsSync(backlogPath)) {
   try {
     const existing = JSON.parse(fs.readFileSync(backlogPath, 'utf8'));
-    const statusMap = new Map(existing.map(item => [`${item.target_file}::${item.issue_summary}`, item.status]));
+    const existingMap = new Map(existing.map(item => [`${item.target_file}::${item.issue_summary}`, item]));
     for (const item of items) {
       const key = `${item.target_file}::${item.issue_summary}`;
-      if (statusMap.has(key)) {
-        item.status = statusMap.get(key);
+      if (existingMap.has(key)) {
+        const prev = existingMap.get(key);
+        item.status = prev.status;
+        item.execution = prev.execution ?? null;
       }
     }
   } catch {

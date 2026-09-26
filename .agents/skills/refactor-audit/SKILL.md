@@ -101,7 +101,21 @@ node .agents/skills/refactor-audit/scripts/aggregate-reports.mjs
     "test_file": "packages/utils/src/testing/template.utils.test.ts",
     "risk_level": "Medium",
     "feasibility": "High",
-    "status": "pending"
+    "status": "completed",
+    "execution": {
+      "completed_order": 1,
+      "completed_at": "2026-09-24T16:26:11+09:00",
+      "issue_number": 51,
+      "pr_number": 52,
+      "commit_hash": "6d6f496",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 336,
+      "metrics_after": {
+        "cognitive_complexity": 14,
+        "function_lines": 42
+      }
+    }
   }
 ]
 ```
@@ -123,3 +137,28 @@ node .agents/skills/refactor-audit/scripts/aggregate-reports.mjs
 | `risk_level` | `string` | リスク度（`Low`, `Medium`, `High`） |
 | `feasibility` | `string` | 実現可能性・局所改修容易性（`High`, `Medium`, `Low`） |
 | `status` | `string` | 進捗ステータス（`pending`, `in-progress`, `completed`, `skipped`, `failed`） |
+| `execution` | `object \| null` | 完了時の実行プロセスおよび結果データ（未着手時は `null`） |
+
+#### `execution` オブジェクトの内部定義（統計解析・プロセス追跡用）
+
+| フィールド | 型 | 説明 |
+| :--- | :--- | :--- |
+| `completed_order` | `number` | タスクの消化・完了順序（時系列インデックス: 1, 2, 3...） |
+| `completed_at` | `string` | 完了日時（ISO 8601 形式: 例 `2026-09-24T16:26:11+09:00`） |
+| `issue_number` | `number` | 対応した GitHub Issue 番号 |
+| `pr_number` | `number` | マージされた GitHub Pull Request 番号 |
+| `commit_hash` | `string` | 該当のコミットハッシュ短縮形 |
+| `prompt_turns` | `number` | AIプロンプト修正ターン数（指示・修正往復回数） |
+| `regressions_detected` | `number` | リグレッション（既存機能・テスト破壊）検知件数（0件で大域破壊ゼロを証明） |
+| `tests_passed` | `number` | PR マージ時点でのユニットテスト通過総件数 |
+| `metrics_after` | `object` | リファクタリング適用後の実測メトリクス（複雑度、行数、重複トークン数等） |
+
+---
+
+## 統計解析・機械可読性の設計基準（Python / R 連携）
+
+蓄積されたバックログ（`.agents/refactor-backlog.json`）は、Python（`pandas`）や R 言語（`jsonlite`）で直接読み込み、統計的検定（相関分析、前後比較検定等）や可視化（散布図、推移グラフ）を行うデータセットとして設計されています。
+
+- **数値型の厳密化**: カウント値やメトリクスは文字列ではなく必ず `number` 型として保持する。
+- **欠損値の標準化**: 未完了状態や非該当メトリクスは空文字や独自文字列ではなく JSON 標準の `null` を使用する（Python の `NaN`、R の `NA` に自動適合）。
+- **ISO 8601 日時**: 時系列解析が容易に行えるよう、日時は常にタイムゾーンを含む ISO 8601 形式とする。
