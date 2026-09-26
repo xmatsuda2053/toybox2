@@ -8,7 +8,7 @@ description: SCSSコードの重複解消・無効コード排除・設計標準
 
 フロントエンド（Web Components / Lit アプリケーション）において、SCSSコードの重複解消、無効コードの排除、および設計標準化を**画面崩壊やリグレッションを起こさずに段階的に実行する**ための標準作業ワークフローです。
 
-本ワークフローは、専用スキル `scss-refactor-tools`（現状監査・品質実測）および設計標準（3層判定基準・簡易BEM規約・アンチパターン抑止）と連動し、**「現状監査 → 4大観点合意 → Issue作成 → ブランチ作成 → 段階的実装 → 品質ゲート実測 → コミット & PR作成」** の一連のサイクルを安全かつ均一に進行します。
+本ワークフローは、専用スキル `scss-refactor-tools`（現状監査・品質実測）および設計標準（3層判定基準・簡易BEM規約・アンチパターン抑止）と連動し、**「現状監査 & 台帳選定 → 4大観点合意 → Issue作成 → ブランチ作成 → 段階的実装 → 品質ゲート実測 & 台帳更新 → コミット & PR作成」** の一連のサイクルを安全かつ均一に進行します。
 
 ---
 
@@ -16,7 +16,7 @@ description: SCSSコードの重複解消・無効コード排除・設計標準
 
 1. **フェーズ着手前の事前合意（4大観点の必須提示）**:
    - いかなる場合も、ユーザーとの対話形式による事前検討および合意形成（Approve）を経る前に、コード変更（SCSS、TypeScript、テストコード問わず）を開始してはならない。
-   - 事前説明には、以下の **4つの観点** を必ず網羅して提示すること：
+   - 事前説明には、台帳（`.agents/scss-refactor-backlog.json`）の対象アイテム ID（例: `SCSS-001`）を明記し、以下の **4つの観点** を必ず網羅して提示すること：
      - ① **現状の問題点**: 具体的にどのような重複やアンチパターンが生じているか（`audit-scss.ps1` の実測データに基づく）
      - ② **なぜその方針としたのか（設計判断の理由・Why）**: トークン化、Mixin化、コンポーネント抽出などのアプローチを採用する根拠
      - ③ **修正の効果**: 重複行数・トークンの削減、詳細度の平坦化、画面表示への影響範囲（表示崩壊リスクの有無）
@@ -36,10 +36,13 @@ description: SCSSコードの重複解消・無効コード排除・設計標準
 4. **コンポーネント単位のボーイスカウト移行（ビッグバン移行の禁止）**:
    - アプリ全体の全SCSSを一括変更することは厳禁とする。改修対象コンポーネントから順に1つずつ確実に移行する。
 
-5. **自律フェーズ移行の制限（ユーザー確認の絶対遵守）**:
+5. **効果測定台帳の記録とトレーサビリティ担保**:
+   - リファクタリング完了時、`verify-scss.ps1 -UpdateBacklog` を通じて `.agents/scss-refactor-backlog.json` の該当レコードへ `execution`（完了日時、Issue番号、PR番号、コミットハッシュ、事後メトリクス `metrics_after`）を必ず記録すること。
+
+6. **自律フェーズ移行の制限（ユーザー確認の絶対遵守）**:
    - 「監査提案 → Issue作成」「実装完了 → コミット」「コミット → PR作成」の各境界線は、エージェント自身の判断で越えてはならない。ユーザーの明示的な指示（「OK」「進めてください」等）のみが次のステップへのトリガーとなる。
 
-6. **品質ゲート実測と検証結果の PR 明記**:
+7. **品質ゲート実測と検証結果の PR 明記**:
    - スキル `scss-refactor-tools` の `verify-scss.ps1` を実行し、単体テスト・型チェック・SCSS重複ゼロ・アンチパターンゼロ・単一HTMLビルドの全合格を実測数値で確認し、PR 本文の「検証結果」に明記すること。
 
 ---
@@ -48,25 +51,25 @@ description: SCSSコードの重複解消・無効コード排除・設計標準
 
 ```mermaid
 flowchart TD
-    S1["1. 現状監査とトリアージ<br/>（audit-scss.ps1 実行）"] --> S2["2. 詳細検討と合意形成<br/>（4大観点の提示・承認待機）"]
+    S1["1. 現状監査と台帳照合<br/>（audit-scss.ps1 実行）"] --> S2["2. 詳細検討と合意形成<br/>（対象ID・4大観点の提示・承認待機）"]
     S2 --> S3["3. Issue 作成<br/>（/create-structured-issue）"]
     S3 --> S4["4. 作業ブランチ作成<br/>（refactor/<issue-id>-<slug>）"]
     S4 --> S5["5. 段階的実装<br/>（Phase 1: 土台整備 / Phase 2: コンポーネント移行）"]
-    S5 --> S6["6. 品質ゲート実測<br/>（verify-scss.ps1 実行）"]
+    S5 --> S6["6. 品質ゲート実測 & 台帳更新<br/>（verify-scss.ps1 -UpdateBacklog）"]
     S6 --> S7["7. コミット & Push<br/>（/git-commit）"]
     S7 --> S8["8. PR 作成 & マージ<br/>（/create-structured-pr）"]
 ```
 
 ---
 
-### Step 1: 現状監査とトリアージ（Phase 0）
+### Step 1: 現状監査と台帳照合（Phase 0）
 
 1. `git status` を実行し、作業ツリーがクリーンであることを確認する。
 2. スキル `scss-refactor-tools` の監査スクリプトを実行する：
    ```powershell
    pwsh -File .agents/skills/scss-refactor-tools/scripts/audit-scss.ps1
    ```
-3. 生成されたレポート（`.agents/scss-audit-report.json`）を確認し、優先度マトリクスに基づき着手対象をトリアージする：
+3. 生成されたレポート（`.agents/scss-audit-report.json`）および台帳（`.agents/scss-refactor-backlog.json`）を確認し、優先度マトリクスに基づき着手対象をトリアージする：
    - **P1（最優先）**: ハードコード値のトークン化（`tokens.scss`）
    - **P2（高）**: 複数ファイル間のレイアウト重複（`mixins.scss`）
    - **P3（中）**: 特定コンポーネントの簡易BEM移行・ネスト平坦化
@@ -76,8 +79,8 @@ flowchart TD
 
 ### Step 2: フェーズ詳細検討と合意形成（4大観点の提示）
 
-1. トリアージ結果に基づき、今回の作業スコープ（例: 「共通トークン・Mixinの土台確立」または「`pane-menu` の簡易BEM移行」）を決定する。
-2. ユーザーへ以下の **4大観点** を提示し、対話形式で方針を合意する：
+1. 台帳（`.agents/scss-refactor-backlog.json`）から今回の作業スコープに対応する課題 ID（例: `SCSS-001`）を特定する。
+2. ユーザーへ **対象バックログ ID** と以下の **4大観点** を提示し、対話形式で方針を合意する：
    - ① **現状の問題点**
    - ② **なぜその方針としたのか（設計判断の理由・Why）**
    - ③ **修正の効果**
@@ -89,9 +92,9 @@ flowchart TD
 ### Step 3: Issue 作成（`/create-structured-issue`）
 
 1. ワークフロー `/create-structured-issue` に従い、Issue 本文ドラフトを作成する。
-2. **コンテキスト保護**: 本文の「補足情報」セクションに、`audit-scss.ps1` で検出された重複箇所（ファイル名、行番号、重複行数、トークン数）を必ず転記する。
+2. **コンテキスト保護**: 本文の「補足情報」セクションに、台帳の対象 ID（例: `SCSS-001`）および `audit-scss.ps1` で検出された重複箇所（ファイル名、行番号、重複行数、トークン数）を必ず転記する。
 3. ユーザーの承認を得た後、スキル `issue-create` で Issue を作成する。
-4. 発行された Issue 番号（例: `#70`）を控える。
+4. 発行された Issue 番号（例: `#75`）を控える。
 
 ---
 
@@ -123,12 +126,16 @@ flowchart TD
 
 ---
 
-### Step 6: 品質ゲート実測（`verify-scss.ps1`）
+### Step 6: 品質ゲート実測 & 台帳更新（`verify-scss.ps1`）
 
-スキル `scss-refactor-tools` の検証スクリプトを実行し、全ゲートの合格を実測する：
+スキル `scss-refactor-tools` の検証スクリプトを実行し、全ゲートの合格を実測するとともに台帳へ実績メトリクスを自動記録する：
 
 ```powershell
-pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 -OutputFile ".agents/scss-verify-report.json"
+pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 `
+  -BacklogId "<対象ID (例: SCSS-001)>" `
+  -IssueNumber <Issue番号> `
+  -UpdateBacklog `
+  -OutputFile ".agents/scss-verify-report.json"
 ```
 
 - **合格判定基準**:
@@ -137,6 +144,7 @@ pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 -OutputFil
   - `SCSS Clones`: 対象ブロックの重複が解消していること
   - `Anti-patterns`: `!important`, `@extend` が 0 件
   - `Standalone Build`: 単一 HTML の生成成功
+  - `Backlog Record`: 台帳（`.agents/scss-refactor-backlog.json`）の対象アイテムが `completed` に更新され、事後メトリクス（`execution`）が記録されること
 - 不合格項目がある場合は原因を修正し、再実行して All Pass を達成する。
 
 ---

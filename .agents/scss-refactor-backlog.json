@@ -1,0 +1,106 @@
+[
+  {
+    "id": "SCSS-001",
+    "target_file": "apps/stepnote/src/styles/tokens.scss",
+    "target_selector": ":root / .wa-dark",
+    "category": "Tokenization",
+    "metrics": {
+      "duplicated_tokens_defined": 67,
+      "files_involved": 3
+    },
+    "issue_summary": "navigation-quick-access.scss および navigation-labels.scss において tokens.scss と全く同一のアイコン・スクロールバー色トークンが重複定義されている",
+    "approach": "CSSカスタムプロパティの透過的継承（:rootからShadow DOMへ）を活用し、コンポーネント側の冗長な再定義を削除して tokens.scss へ一元集約",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-002",
+    "target_file": "apps/stepnote/src/styles/mixins.scss",
+    "target_selector": "New File",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_flex_centers": 10,
+      "files_involved": 4
+    },
+    "issue_summary": "複数コンポーネント（pane-menu, pane-common, navigation-labels, theme-switcher等）で display: flex; align-items: center; justify-content: center; やテキスト省略パターンが重複直書きされている",
+    "approach": "src/styles/mixins.scss を新設し、@mixin flex-center, @mixin flex-between, @mixin text-ellipsis 等の汎用レイアウトパターンを集約・@include 置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-003",
+    "target_file": "apps/stepnote/src/app-root.scss",
+    "target_selector": ".pane-collapsible[hidden] (L104-L111)",
+    "category": "AntiPattern",
+    "metrics": {
+      "important_count": 3,
+      "nesting_depth_max": 2
+    },
+    "issue_summary": "コラプシブル（開閉ペイン）の非表示制御スタイルに !important 宣言が3箇所使用されている",
+    "approach": "CSSセレクタの詳細度適正化および [hidden] 属性制御の見直しにより、!important を完全排除",
+    "scope": "internal",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-004",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.scss",
+    "target_selector": ":host([data-theme=\"dark\"]) (L395-L553)",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 78,
+      "duplicated_tokens": 470,
+      "important_count": 8,
+      "nesting_depth_max": 4
+    },
+    "issue_summary": "ダークモード時の wa-dropdown / wa-dialog オーバーライドスタイル（78行）が prefers-color-scheme と二重定義され、!important（8箇所）と過度なセレクタネスト（12箇所）を含んでいる",
+    "approach": "セレクタ統合とメディアクエリ重複解消、CSSカスタムプロパティによる高コントラストテーマ制御、タグ直指定排除とネスト平坦化による !important 排除",
+    "scope": "component",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-005",
+    "target_file": "apps/stepnote/src/components/panes/pane-menu/pane-menu.scss",
+    "target_selector": ":host, .menu-primary, .btn-toggle-sidebar",
+    "category": "Standardization",
+    "metrics": {
+      "lines": 47,
+      "nesting_depth_max": 2
+    },
+    "issue_summary": "小規模コンポーネントにおける簡易BEM命名規則および共通Mixinの適用モデルケース",
+    "approach": "簡易BEMセレクタの導入、mixins.scss の flex-center 適用、詳細度の平坦化",
+    "scope": "component",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-006",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.scss",
+    "target_selector": ".quick-access, .type-#{$status}",
+    "category": "Standardization",
+    "metrics": {
+      "lines": 219,
+      "nesting_depth_max": 3
+    },
+    "issue_summary": "ステータスループでの深すぎるネスト（3階層）および簡易BEM未適用クラスの存在",
+    "approach": "ネストの最大2階層平坦化、簡易BEMクラスの適用、共通 Mixin 適用",
+    "scope": "component",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  }
+]

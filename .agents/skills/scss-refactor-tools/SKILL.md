@@ -9,14 +9,14 @@ description: SCSSコードベースの監査・重複検出・アンチパター
 
 フロントエンド開発（Web Components / Lit アプリケーション）において、SCSSコードの重複、無効コード、アンチパターン（`!important`, `@extend`, 深すぎるネスト, タグ直指定）を客観的数値で診断し、リファクタリング後の品質ゲート（単体テスト、型安全性、SCSS重複ゼロ、単一HTMLビルド）を一括実測・検証するための統合ツールスキルです。
 
-本スキルは、**Phase 0 の「現状監査（Audit）」** と **Phase 1〜3 の「品質検証（Verify）」** の2つの独立した実行モードを提供します。
+本スキルは、**Phase 0 の「現状監査（Audit）」**、**台帳による「効果測定蓄積（Backlog: `scss-refactor-backlog.json`）」**、および **Phase 1〜3 の「品質検証（Verify）」** の統合されたリファクタリング実行サイクルを提供します。
 
 ---
 
-## 2大機能と品質ゲート基準
+## 3大機能と品質ゲート基準
 
 ### 1. 監査機能（Audit Mode: `audit-scss.ps1`）
-リファクタリング着手前の現状把握、重複コードの特定、およびデザイントークン候補の抽出を行います。
+リファクタリング着手前の現状把握、重複コードの特定、デザイントークン候補の抽出、および台帳（`scss-refactor-backlog.json`）の進捗状況を確認します。
 
 | 検査項目 | 検出ツール / 手法 | 抽出対象 | トリアージ分類 |
 | :--- | :--- | :--- | :--- |
@@ -25,9 +25,52 @@ description: SCSSコードベースの監査・重複検出・アンチパター
 | **詳細度インフレ** | ネスト深さ追跡 | 3階層以上のセレクタネスト | P3（簡易BEM移行） |
 | **タグ直指定** | 要素セレクタ走査 | BEMクラスのない `button`, `div` 等 | P3（簡易BEM移行） |
 | **トークン候補** | リテラル値集約 | ハードコードされたカラー、余白寸法 | P1（トークン化先行） |
+| **バックログ進捗** | 台帳同期照合 | 完了件数、未完了件数、進捗率 (%) | 台帳管理 |
 
-### 2. 品質検証機能（Verify Mode: `verify-scss.ps1`）
+### 2. 効果測定台帳（Backlog: `.agents/scss-refactor-backlog.json`）
+TypeScript 側の `refactor-backlog.json` と同一の思想で設計された SCSS 専用のリファクタリング台帳です。
+各課題に対して一意の ID（`SCSS-001` 等）を付与し、改修前メトリクス、改修方針、および改修完了時の実績メトリクス（`execution`）を永続的に記録・蓄積します。
+
+#### スキーマ仕様
+```json
+[
+  {
+    "id": "SCSS-001",
+    "target_file": "apps/stepnote/src/styles/tokens.scss",
+    "target_selector": ":root / .wa-dark",
+    "category": "Tokenization",
+    "metrics": {
+      "duplicated_tokens_defined": 67,
+      "files_involved": 3
+    },
+    "issue_summary": "トークン重複の概要",
+    "approach": "CSSカスタムプロパティの一元集約方針",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_at": "2026-09-26T17:00:00+09:00",
+      "issue_number": 75,
+      "pr_number": 76,
+      "commit_hash": "a1b2c3d",
+      "tests_passed": 383,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 0,
+        "duplicated_lines": 0,
+        "duplicated_tokens": 0,
+        "anti_pattern_errors": 0,
+        "build_size_kb": 583.49
+      }
+    }
+  }
+]
+```
+
+### 3. 品質検証・台帳記録機能（Verify Mode: `verify-scss.ps1`）
 リファクタリング適用後、画面崩壊やリグレッションが生じていないかを副作用ゼロで一括実測します。
+`-UpdateBacklog` スイッチを指定することで、全ゲート合格時に該当する台帳レコードのステータス更新と事後メトリクス記録（`execution`）を自動実行します。
 
 | 品質ゲート項目 | 実行コマンド | 合格基準 |
 | :--- | :--- | :--- |
@@ -70,6 +113,15 @@ pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 -OutputFil
 #### JSON 文字列のみを出力（パイプライン連携用）
 ```powershell
 pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 -JsonOutput
+```
+
+#### 検証合格時に台帳（Backlog）へ実績メトリクスを自動記録
+```powershell
+pwsh -File .agents/skills/scss-refactor-tools/scripts/verify-scss.ps1 `
+  -BacklogId "SCSS-001" `
+  -IssueNumber 75 `
+  -PrNumber 76 `
+  -UpdateBacklog
 ```
 
 ---
