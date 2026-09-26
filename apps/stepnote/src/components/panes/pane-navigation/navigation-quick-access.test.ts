@@ -48,6 +48,10 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot="end" の span.quick-access-counter）が正しくレンダリングされること
  *    - [x] 6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access-counter）がレンダリングされないこと
  *    - [x] 6-3. 完了、対応中、開始待ちには taskCounts の有無に関わらず件数要素ではなく目のアイコン（eye-solid-full / eye-slash-solid-full）が表示されること
+ * 7. BEMクラス設計およびSCSSネスト平坦化（SCSS-006: 簡易BEM標準化）
+ *    - [x] 7-1. ヘッダー部、コンテンツ部、ボタン部に簡易BEMクラス（quick-access__*）が付与されていること
+ *    - [x] 7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること
+ *    - [x] 7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  */
 
 describe("NavigationQuickAccess Component", () => {
@@ -366,4 +370,63 @@ describe("NavigationQuickAccess Component", () => {
       expect(subStrAfterDone).not.toContain("wa-badge");
     });
   });
+
+  describe("7. BEMクラス設計およびSCSSネスト平坦化（SCSS-006: 簡易BEM標準化）", () => {
+    it("7-1. ヘッダー部、コンテンツ部、ボタン部に簡易BEMクラス（quick-access__*）が付与されていること", () => {
+      element.taskCounts = { bookmark: 3 };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("quick-access__header");
+      expect(htmlStr).toContain("quick-access__title");
+      expect(htmlStr).toContain("quick-access__toggle-btn");
+      expect(htmlStr).toContain("quick-access__toggle-icon");
+      expect(htmlStr).toContain("quick-access__content-wrapper");
+      expect(htmlStr).toContain("quick-access__content");
+      expect(htmlStr).toContain("quick-access__btn");
+      expect(htmlStr).toContain("quick-access__btn-icon");
+      expect(htmlStr).toContain("quick-access__counter");
+      expect(htmlStr).toContain("quick-access__divider");
+    });
+
+    it("7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toContain(".quick-access__btn");
+      expect(scssContent).toContain(".quick-access__content-wrapper");
+      expect(scssContent).toContain(".quick-access__content");
+      expect(scssContent).toContain(".quick-access__counter");
+      expect(scssContent).toContain(".quick-access__divider");
+    });
+
+    it("7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+
+      // ネスト深度の追跡（最大2階層であることを検証）
+      const lines = scssContent.split("\n");
+      let currentNesting = 0;
+      let maxNestingOnSelector = 0;
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (
+          trimmed.startsWith("//") ||
+          trimmed.startsWith("/*") ||
+          trimmed.startsWith("*")
+        ) {
+          continue;
+        }
+        const openBraces = (line.match(/\{/g) || []).length;
+        const closeBraces = (line.match(/\}/g) || []).length;
+        currentNesting += openBraces - closeBraces;
+        if (openBraces > 0 && currentNesting > maxNestingOnSelector) {
+          maxNestingOnSelector = currentNesting;
+        }
+      }
+      expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
+    });
+  });
 });
+

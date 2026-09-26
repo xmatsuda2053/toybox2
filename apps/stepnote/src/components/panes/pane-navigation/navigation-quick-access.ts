@@ -343,7 +343,7 @@ export class NavigationQuickAccess extends LitElement {
           slot="end"
           library="my-icons"
           name=${isActive ? "eye-solid-full" : "eye-slash-solid-full"}
-          class="quick-access-button-icon"
+          class="quick-access__btn-icon quick-access-button-icon"
         ></wa-icon>
       `;
     }
@@ -352,7 +352,7 @@ export class NavigationQuickAccess extends LitElement {
       const count = this.taskCounts[item.countKey];
       if (typeof count === "number" && count > 0) {
         return html`
-          <span slot="end" class="quick-access-counter">${count}</span>
+          <span slot="end" class="quick-access__counter quick-access-counter">${count}</span>
         `;
       }
     }
@@ -376,7 +376,7 @@ export class NavigationQuickAccess extends LitElement {
     return html`
       <wa-button
         id=${item.id}
-        class="quick-access-btn ${isActive ? "is-active" : ""}"
+        class="quick-access__btn quick-access-btn ${isActive ? "is-active" : ""}"
         variant="neutral"
         appearance=${isActive ? "filled" : "plain"}
         size="s"
@@ -386,7 +386,7 @@ export class NavigationQuickAccess extends LitElement {
           slot="start"
           library="my-icons"
           name=${item.icon}
-          class="quick-access-button-icon type-${item.id}"
+          class="quick-access__btn-icon quick-access-button-icon type-${item.id}"
         ></wa-icon>
         ${isActive
           ? html`
@@ -394,7 +394,7 @@ export class NavigationQuickAccess extends LitElement {
                 slot="start"
                 library="my-icons"
                 name="caret-right-solid-full"
-                class="quick-access-button-icon type-caret"
+                class="quick-access__btn-icon quick-access-button-icon type-caret"
               ></wa-icon>
             `
           : nothing}
@@ -414,14 +414,14 @@ export class NavigationQuickAccess extends LitElement {
    */
   private renderHeader(isOpen: boolean, toggleLabel: string): HTMLTemplateResult {
     return html`
-      <header class="section-header quick-access-header">
-        <span class="section-title quick-access-title">QUICK ACCESS</span>
+      <header class="section-header quick-access__header quick-access-header">
+        <span class="section-title quick-access__title quick-access-title">QUICK ACCESS</span>
         <wa-tooltip for="btn-toggle-quick-access" placement="bottom">
           ${toggleLabel}
         </wa-tooltip>
         <wa-button
           id="btn-toggle-quick-access"
-          class="btn-toggle-section btn-toggle-quick-access"
+          class="btn-toggle-section quick-access__toggle-btn btn-toggle-quick-access"
           variant="neutral"
           appearance="plain"
           size="s"
@@ -430,7 +430,7 @@ export class NavigationQuickAccess extends LitElement {
           <wa-icon
             library="my-icons"
             name="chevron-right"
-            class="icon-toggle-section icon-toggle-quick-access ${isOpen
+            class="icon-toggle-section quick-access__toggle-icon icon-toggle-quick-access ${isOpen
               ? "is-open"
               : "is-closed"}"
           ></wa-icon>
@@ -454,15 +454,15 @@ export class NavigationQuickAccess extends LitElement {
   ): HTMLTemplateResult {
     return html`
       <div
-        class="quick-access-content-wrapper ${isOpen
+        class="quick-access__content-wrapper quick-access-content-wrapper ${isOpen
           ? "is-open"
           : "is-closed"}"
       >
-        <div class="quick-access-content">
+        <div class="quick-access__content quick-access-content">
           ${QUICK_ACCESS_BUTTON_GROUPS.map(
             (group, groupIndex) => html`
               ${groupIndex > 0
-                ? html`<wa-divider class="quick-access-divider"></wa-divider>`
+                ? html`<wa-divider class="quick-access__divider quick-access-divider"></wa-divider>`
                 : nothing}
               ${group.map((item) =>
                 this.renderFilterButton(
