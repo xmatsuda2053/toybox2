@@ -17,7 +17,11 @@
   --wa-color-surface-border: #d0d7de;
   --wa-color-text-normal: #1f2328;
   --wa-color-text-quiet: #57606a;
+  --wa-color-neutral-fill-quiet: #e2e5e8;
+  --wa-color-neutral-fill-normal: #d8dce0;
+  --wa-color-neutral-fill-normal-hover: #c2c7cd;
   --wa-color-neutral-on-normal: #0d1117;
+  --wa-color-mix-hover: #000000 12%;
   --wa-border-width-s: 1px;
   --wa-border-style: solid;
 
@@ -75,9 +79,11 @@
   --wa-color-surface-border: #434857;
   --wa-color-text-normal: #e6edf3;
   --wa-color-text-quiet: #9da7b3;
-  --wa-color-neutral-fill-quiet: #383c4b;
+  --wa-color-neutral-fill-quiet: #252833;
   --wa-color-neutral-fill-normal: #484d5e;
+  --wa-color-neutral-fill-normal-hover: #1f212b;
   --wa-color-neutral-on-normal: #ffffff;
+  --wa-color-mix-hover: #000000 20%;
 
   /* Quick Access アイコンカラー（Dark モード: 70系 / 白） */
   --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
@@ -119,9 +125,11 @@
     --wa-color-surface-border: #434857;
     --wa-color-text-normal: #e6edf3;
     --wa-color-text-quiet: #9da7b3;
-    --wa-color-neutral-fill-quiet: #383c4b;
+    --wa-color-neutral-fill-quiet: #252833;
     --wa-color-neutral-fill-normal: #484d5e;
+    --wa-color-neutral-fill-normal-hover: #1f212b;
     --wa-color-neutral-on-normal: #ffffff;
+    --wa-color-mix-hover: #000000 20%;
 
     --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
     --quick-access-icon-uncategorized: #ffffff;

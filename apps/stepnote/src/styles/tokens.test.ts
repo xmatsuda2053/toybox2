@@ -12,10 +12,17 @@ import * as fs from "node:fs";
  * 仕様 5: Dark モードの控えめテキスト色（--wa-color-text-quiet）にコントラストを確保した #9da7b3 が定義されていること
  * 仕様 6: Dark モードのスクロールバーサム色（--scrollbar-thumb-color）に #434857 が定義されていること
  * 仕様 7: Dark モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に背景と同化しない #484d5e が定義されていること
- * 仕様 8: Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に背景より明るい #383c4b が定義されていること
+ * 仕様 8: Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #252833 が定義されていること
  * 仕様 9: Light モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に引き締まった漆黒 #0d1117 が定義されていること
  * 仕様 10: Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に高コントラストな純白 #ffffff が定義されていること
  * 仕様 11: OS 連動ダークモード（@media (prefers-color-scheme: dark)）にも調整後の各トークン値が定義されていること
+ * 仕様 12: Light モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #e2e5e8 が定義されていること
+ * 仕様 13: Light モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に通常ホバー色（#e2e5e8）より濃い #d8dce0 が定義されていること
+ * 仕様 14: Light モードのアクティブボタンホバー混色（--wa-color-mix-hover）に白浮きせず暗く沈み込ませる #000000 12% が定義されていること
+ * 仕様 15: Dark モードのアクティブボタンホバー混色（--wa-color-mix-hover）に暗く沈み込ませる #000000 20% が定義されていること
+ * 仕様 16: Light モードのアクティブボタンホバー背景色（--wa-color-neutral-fill-normal-hover）に基調色より暗い #c2c7cd が定義されていること
+ * 仕様 17: Dark モードのアクティブボタンホバー背景色（--wa-color-neutral-fill-normal-hover）に基調色より暗い #1f212b が定義されていること
+ * 仕様 18: OS 連動ダークモードにも同様に #1f212b が定義されていること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -64,6 +71,40 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
         /:root[\s\S]*?\[data-theme="light"\]/,
       );
       expect(lightBlock).toMatch(/--wa-color-neutral-on-normal:\s*#0d1117;/);
+    });
+
+    it("Light モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #e2e5e8 が定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#e2e5e8;/);
+    });
+
+    it("Light モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に通常ホバー色より濃い #d8dce0 が定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#d8dce0;/);
+    });
+
+    it("Light モードのアクティブボタンホバー混色（--wa-color-mix-hover）に白浮きせず暗く沈み込ませる #000000 12% が定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--wa-color-mix-hover:\s*#000000 12%;/);
+    });
+
+    it("Light モードのアクティブボタンホバー背景色（--wa-color-neutral-fill-normal-hover）に基調色より暗い #c2c7cd が定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(
+        /--wa-color-neutral-fill-normal-hover:\s*#c2c7cd;/,
+      );
     });
 
     it("Light モードのセレクタに Dark モードと同様の .wa-light および [data-theme=\"light\"] が定義されていること", () => {
@@ -123,12 +164,12 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(darkBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
     });
 
-    it("Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に背景より明るい #383c4b が定義されていること", () => {
+    it("Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #252833 が定義されていること", () => {
       const darkBlock = extractBlock(
         tokensScss,
         /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
       );
-      expect(darkBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#383c4b;/);
+      expect(darkBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
     });
 
     it("Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に高コントラストな純白 #ffffff が定義されていること", () => {
@@ -137,6 +178,24 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
         /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
       );
       expect(darkBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+    });
+
+    it("Dark モードのアクティブボタンホバー混色（--wa-color-mix-hover）に暗く沈み込ませる #000000 20% が定義されていること", () => {
+      const darkBlock = extractBlock(
+        tokensScss,
+        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
+      );
+      expect(darkBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
+    });
+
+    it("Dark モードのアクティブボタンホバー背景色（--wa-color-neutral-fill-normal-hover）に基調色より暗い #1f212b が定義されていること", () => {
+      const darkBlock = extractBlock(
+        tokensScss,
+        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
+      );
+      expect(darkBlock).toMatch(
+        /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
+      );
     });
   });
 
@@ -151,8 +210,12 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(mediaBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
       expect(mediaBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
       expect(mediaBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
-      expect(mediaBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#383c4b;/);
+      expect(mediaBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
       expect(mediaBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+      expect(mediaBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
+      expect(mediaBlock).toMatch(
+        /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
+      );
     });
   });
 });
