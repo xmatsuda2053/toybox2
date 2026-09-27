@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Components Preview - @shared/components</title>
+    <script type="module" crossorigin src="/assets/index-DOWdtOhs.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Bi2bGXhp.css">
+  </head>
+  <body>
+    <div class="preview-container">
+      <header class="preview-header">
+        <div>
+          <h1 class="preview-header__title">Components Catalog</h1>
+          <p class="preview-header__subtitle">@shared/components 独立単体プレビュー環境</p>
+        </div>
+        <button id="theme-toggle" class="preview-header__theme-btn" type="button">
+          🌙 Dark Mode
+        </button>
+      </header>
+
+      <main class="preview-grid">
+        <!-- 1. Default -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">1. Default SearchInput</h2>
+          <p class="preview-card__desc">
+            デフォルト状態。英文プレースホルダー（"Search..."）、虫眼鏡アイコン、with-clear 属性、250ms デバウンス。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-default"></search-input>
+          </div>
+        </section>
+
+        <!-- 2. Custom Placeholder -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">2. Custom Placeholder</h2>
+          <p class="preview-card__desc">
+            任意の placeholder（例: "Filter labels..."）を指定した状態。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-custom-ph" placeholder="Filter labels..."></search-input>
+          </div>
+        </section>
+
+        <!-- 3. Pre-filled Value -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">3. Initial Value</h2>
+          <p class="preview-card__desc">
+            初期値（value）が設定された状態。クリアボタンによる即時クリアとイベント発火を確認できます。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-prefilled" value="Project A"></search-input>
+          </div>
+        </section>
+
+        <!-- 4. Loading State -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">4. Loading State</h2>
+          <p class="preview-card__desc">
+            非同期検索中の状態（loading 属性）。虫眼鏡アイコンがスピナーに切り替わります。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-loading" loading value="Searching..."></search-input>
+          </div>
+        </section>
+
+        <!-- 5. Fast Debounce (100ms) -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">5. Fast Debounce (100ms)</h2>
+          <p class="preview-card__desc">
+            debounceWait を 100ms に設定。高速に入力完了イベントを発行します。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-fast" debounceWait="100" placeholder="Fast debounce (100ms)..."></search-input>
+          </div>
+        </section>
+
+        <!-- 6. Medium Size -->
+        <section class="preview-card">
+          <h2 class="preview-card__title">6. Medium Size</h2>
+          <p class="preview-card__desc">
+            サイズを medium に設定したバリエーション。
+          </p>
+          <div class="preview-card__component">
+            <search-input id="search-medium" size="medium" placeholder="Medium size..."></search-input>
+          </div>
+        </section>
+      </main>
+
+      <section class="preview-console">
+        <div class="preview-console__header">
+          <h2 class="preview-console__title">Event Monitor (search-input)</h2>
+          <button id="clear-log" class="preview-console__clear-btn" type="button">Clear</button>
+        </div>
+        <div id="event-log" class="preview-console__log">コンポーネントに入力すると、ここに search-input カスタムイベントが記録されます...</div>
+      </section>
+    </div>
+
+  </body>
+</html>
