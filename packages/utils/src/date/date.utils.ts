@@ -136,3 +136,18 @@ export function getJapaneseWeekday(
   return new Intl.DateTimeFormat("ja-JP", { weekday: format }).format(date);
 }
 
+/**
+ * 基準年度からシステム年度の翌年度までの年度リストを取得する。
+ * @param baseYear - 基準年度（デフォルト: 2025）
+ * @param order - 並び順 ("asc" | "desc", デフォルト: "desc")
+ * @returns 年度のリスト
+ */
+export function getFiscalYearRange(
+  baseYear: number = 2025,
+  order: "asc" | "desc" = "desc",
+): number[] {
+  const currentFiscalYear = getCurrentFiscalYear();
+  const nextFiscalYear = currentFiscalYear + 1;
+  return getYearList(baseYear, nextFiscalYear, order);
+}
+

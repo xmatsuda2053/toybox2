@@ -9,6 +9,7 @@ import {
   getYearList,
   getCurrentFiscalYear,
   getJapaneseWeekday,
+  getFiscalYearRange,
 } from "./date.utils";
 
 /**
@@ -65,6 +66,16 @@ import {
  * - [x] 仕様 34: 日曜日から土曜日までの各曜日を正しく判定して返すこと。
  * - [x] 仕様 35: format を省略した場合（デフォルト long）、フル表記（「日曜日」「月曜日」…）を返すこと。
  * - [x] 仕様 36: format に short を指定した場合、省略表記（「日」「月」…）を返すこと。
+ *
+ * getFiscalYearRange:
+ * - [x] 仕様 37: 引数を省略した場合、デフォルト（基準年度2025年、降順 desc）で「2025年からシステム年度の翌年度まで」の年度リストを返すこと。
+ * - [x] 仕様 38: システム日付が4月1日〜12月31日（当年がシステム年度）の場合、基準年度から「当年+1年度」までの範囲を返すこと。
+ * - [x] 仕様 39: システム日付が1月1日〜3月31日（前年がシステム年度）の場合、基準年度から「当年年度（前年+1）」までの範囲を返すこと。
+ * - [x] 仕様 40: order に asc を指定した場合、昇順（基準年度から翌年度へ向かう順）で年度リストを返すこと。
+ * - [x] 仕様 41: order に desc を指定した場合、降順（翌年度から基準年度へ向かう順）で年度リストを返すこと。
+ * - [x] 仕様 42: 任意の基準年度（baseYear）を指定した場合、その年を開始年として年度リストを返すこと。
+ * - [x] 仕様 43: 基準年度がシステム年度の翌年度より大きい場合（baseYear > nextFiscalYear）、空配列を返すこと。
+ * - [x] 仕様 44: 基準年度がシステム年度の翌年度と同一の場合、その年度のみを含む要素数1の配列を返すこと。
  */
 
 describe("date.utils.format", () => {
@@ -377,5 +388,74 @@ describe("date.utils.startOfDay", () => {
     startOfDay(original);
 
     expect(original.getTime()).toBe(timeBefore);
+  });
+});
+
+describe("date.utils.getFiscalYearRange", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("引数を省略した場合、デフォルト（基準年度2025年、降順 desc）で「2025年からシステム年度の翌年度まで」の年度リストを返すこと", () => {
+    // 2026年9月（2026年度） -> 翌年度は 2027年
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    // 2025年〜2027年を降順で返却
+    expect(getFiscalYearRange()).toEqual([2027, 2026, 2025]);
+  });
+
+  it("システム日付が4月1日〜12月31日（当年がシステム年度）の場合、基準年度から「当年+1年度」までの範囲を返すこと", () => {
+    // 2026年4月1日 00:00:00（2026年度開始） -> 翌年度は 2027年
+    vi.setSystemTime(new Date(2026, 3, 1, 0, 0, 0));
+    expect(getFiscalYearRange()).toEqual([2027, 2026, 2025]);
+
+    // 2026年12月31日 23:59:59（2026年度中） -> 翌年度は 2027年
+    vi.setSystemTime(new Date(2026, 11, 31, 23, 59, 59));
+    expect(getFiscalYearRange()).toEqual([2027, 2026, 2025]);
+  });
+
+  it("システム日付が1月1日〜3月31日（前年がシステム年度）の場合、基準年度から「当年年度（前年+1）」までの範囲を返すこと", () => {
+    // 2026年1月1日 00:00:00（2025年度） -> 翌年度は 2026年
+    vi.setSystemTime(new Date(2026, 0, 1, 0, 0, 0));
+    expect(getFiscalYearRange()).toEqual([2026, 2025]);
+
+    // 2026年3月31日 23:59:59（2025年度末） -> 翌年度は 2026年
+    vi.setSystemTime(new Date(2026, 2, 31, 23, 59, 59));
+    expect(getFiscalYearRange()).toEqual([2026, 2025]);
+  });
+
+  it("order に asc を指定した場合、昇順（基準年度から翌年度へ向かう順）で年度リストを返すこと", () => {
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    expect(getFiscalYearRange(2025, "asc")).toEqual([2025, 2026, 2027]);
+  });
+
+  it("order に desc を指定した場合、降順（翌年度から基準年度へ向かう順）で年度リストを返すこと", () => {
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    expect(getFiscalYearRange(2025, "desc")).toEqual([2027, 2026, 2025]);
+  });
+
+  it("任意の基準年度（baseYear）を指定した場合、その年を開始年として年度リストを返すこと", () => {
+    // 2026年9月（2026年度） -> 翌年度 2027年
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    // 基準年度を2020年に指定
+    expect(getFiscalYearRange(2020)).toEqual([
+      2027, 2026, 2025, 2024, 2023, 2022, 2021, 2020,
+    ]);
+  });
+
+  it("基準年度がシステム年度の翌年度より大きい場合（baseYear > nextFiscalYear）、空配列を返すこと", () => {
+    // 2026年9月（2026年度） -> 翌年度 2027年
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    // 基準年度を2030年に指定
+    expect(getFiscalYearRange(2030)).toEqual([]);
+  });
+
+  it("基準年度がシステム年度の翌年度と同一の場合、その年度のみを含む要素数1の配列を返すこと", () => {
+    // 2026年9月（2026年度） -> 翌年度 2027年
+    vi.setSystemTime(new Date(2026, 8, 15, 12, 0, 0));
+    expect(getFiscalYearRange(2027)).toEqual([2027]);
   });
 });
