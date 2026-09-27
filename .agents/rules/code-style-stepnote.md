@@ -5,12 +5,14 @@ trigger: always_on
 # プロジェクト固有開発ルール（Project Rules: Step-Note）
 
 ## 適用スコープ（Scope）
+
 - **対象**: 本ルールは `apps/stepnote/` 配下のアプリケーションコード、画面設計、および関連する実装作業にのみ適用する。
 - **除外**: モノレポ直下の共通パッケージ（`packages/*`）や、今後追加される他の独立アプリケーション（`apps/other-app/` 等）の個別設計には、本ルールのレイアウト規約や特定モデル仕様を適用しないこと。
 
 ---
 
 ## 1. プロジェクト概要・基本設計思想
+
 - **完全スタンドアロン・オフライン前提**:
   - 外部ネットワークへの通信、オンライン前提の外部依存ライブラリ、外部CDN（`<script src="https://...">` 等）を一切追加しないこと。
   - ビルド成果物は `vite-plugin-singlefile` による単一HTML（Single File）出力とし、ローカル環境で自立動作することを前提とする。
@@ -19,8 +21,12 @@ trigger: always_on
 - **UIフォント指定**:
   - 欧文と数字には Windows 標準の `Segoe UI` を優先し、日本語には視認性の高い `BIZ UD Gothic`（または一覧性に優れた `Yu Gothic UI`）を適用すること。
   - 推奨指定: `font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;`
+- **Antigravity Browser Control**
+  - 使用しないこと。
+  - 画面を操作しての確認が必要な場合、その旨をユーザーに伝えて依頼すること。
 
 ## 2. 画面レイアウト・基本構成方針（Header / Footer ＋ 5ペイン）
+
 画面全体は上下の **「Header」「Footer」** と、中央の **5ペイン（Panes Container）** で構成する。
 
 - **Header（上部バー）**:
@@ -56,10 +62,12 @@ trigger: always_on
       - **Notes タブ**: メモ・備忘録ノートの一覧表示および追加。
 
 ## 3. 開閉状態管理（LayoutUIController）
+
 - Navigation Area および Task List Area の表示・非表示、ならびに Quick Access の上下開閉状態は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
 - Lit コンポーネント側に直接開閉フラグを持たせず、`LayoutState`（`isNavigationAreaOpen`, `isNavigationListAreaOpen`, `isQuickAccessOpen`）を通じて制御すること。
 
 ## 4. アーキテクチャ・層の責務分離（Pure Lit ＋ Dexie）
+
 - **UIとビジネスロジックの分離**:
   - Web Components（`LitElement`）内に直接 IndexedDB アクセスや非同期通信処理を書かないこと。
   - ビジネスロジック・データ操作・状態管理はすべて **`Reactive Controller`** にカプセル化すること。
@@ -70,6 +78,7 @@ trigger: always_on
   - 予測可能性とTDDの容易性を高めるため、過度な自動監視（`liveQuery`）に依存せず明示的なクエリ・データフェッチを優先すること。
 
 ## 5. 型定義・モデル・定数（Types / Models / Constants）
+
 - **ディレクトリ配置規則**:
   - `src/types/view/`: 画面表示・Props受け渡し専用の型（例: `TaskSummary`, `TaskProperty`, `LayoutState`）。
   - `src/types/domain/`: DBモデルとUIで共有される基本型・コード値型（例: `TaskStatusCode`, `Contact`, `CurrentStatus`）。
@@ -79,6 +88,7 @@ trigger: always_on
   - 1つの型定義や1つのヘルパー関数ごとにファイルを細分化せず、関連するドメイン・カテゴリ単位で集約すること。
 
 ## 6. 単体テスト・厳格な TDD フロー方針（Vitest）
+
 - **ユーザー許可制 TDD サイクルの徹底（厳格遵守）**:
   - **フェーズ1（🔴 Red の提示）**: 実装コードを書く前に、仕様を満たすテストコード（🔴 Red）を作成・提示し、テストを実行して失敗（Red）することをユーザーへ報告する。
   - **フェーズ2（ユーザー確認待機・一時停止）**: テスト作成後、**ユーザーがテストを実行して失敗（Red）したことを確認し、実装進行の許可（「進めてください」「OK」等）を出すまで、絶対にプロダクションコード（本体実装）を作成・変更してはならない。**
@@ -92,10 +102,11 @@ trigger: always_on
   - `it` のテストケース説明文は、仕様が直感的に把握できるよう**日本語**（「〜すること」形式）で統一すること。
 
 ## 7. スタイル・UI実装方針
+
 - **コンポーネントとSCSSのペア構成**:
   - コンポーネント固有のスタイルは `.ts` と同階層に `.scss` を配置し、`?inline` でインポートして `unsafeCSS` または `css` タグで組み込むこと。
 - **セレクタ命名規則（簡易BEM記法の採用）**:
-  - 各コンポーネントのSCSSセレクタ名には「簡易BEM（Block__Element--Modifier）記法」を採用する。
+  - 各コンポーネントのSCSSセレクタ名には「簡易BEM（Block\_\_Element--Modifier）記法」を採用する。
   - **Block**: コンポーネントまたは独立した主要UIブロックのルート（例: `.pane-menu`, `.pane-navigation`, `.app-header`）。
   - **Element**: Blockを構成する子要素（`__` で接続、例: `.pane-menu__button`, `.pane-navigation__header`）。過度なネスト構造（例: `.block__elem1__elem2`）は避け、すべて単一の Element としてフラットに命名すること。
   - **Modifier**: 状態やバリエーション（`--` で接続、例: `.pane-menu__button--active`, `.pane-navigation__item--selected`）。
@@ -109,8 +120,13 @@ trigger: always_on
   - SCSS 内のセレクタ名や構造を変更（簡易BEM記法導入、クラス改名等）する場合、SCSS 側で旧セレクタをカンマ区切り等で残存・併記させたままにしてはならない。
   - ペアとなるコンポーネント（TypeScript / Lit テンプレート）のクラス名も同一改修内で同時にリファクタリングし、新命名規則へ完全に一本化すること。
   - 単体テスト（`*.test.ts`）においても新クラス名の検証へ同期させ、旧クラス名が一切残存していないことをアサーションで担保すること。
+- **テーマ切替トランジションの適用規約**:
+  - 新規コンポーネント作成時は、コンポーネントの `:host` や背景・文字・境界線を持つ主要要素に対し、共通トークン `var(--stepnote-transition-theme)`（または共通 mixin `@include theme-transition;`）を指定すること。
+  - これにより、テーマ切替時に背景色・文字色・境界線が滑らかにクロスフェード（0.2s ease）し、画面のチラつきを防止する。
+  - OS のアニメーション抑制設定（`prefers-reduced-motion: reduce`）が有効な環境ではトランジションが無効化されるよう配慮すること。
 
 ## 8. 共有プラクティスの継続的取り込み・ルールの更新（Rule Maintenance）
+
 - **ユーザー承認制のルール更新フロー（厳格遵守）**:
   - 開発の過程において、ワークスペース内で共有すべき新たなベストプラクティス、コード規約、設計判断（スタイリング方針、コンポーネント設計、テスト手法等）が確認された場合、勝手にルールファイルを更新してはならない。
   - ルール追記の是非について必ずユーザーへ確認を行い、その際は以下の2点を明確に提示・説明すること。
@@ -121,6 +137,7 @@ trigger: always_on
   - 本ルールを静的なドキュメントにとどめず、承認された知見を継続的に反映・蓄積することで、ワークスペース全体の一貫した開発体験とコード品質を担保すること。
 
 ## 9. 標準作業ワークフロー規約（Standard Workflow）
+
 リポジトリにおけるすべての開発作業（機能開発・不具合修正・リファクタリング・ドキュメント更新等）は、以下の標準サイクルに従って進行すること。各フェーズの境界では「ユーザーの明示的な確認・承認」を経てから自律実行へ移行すること。
 
 1. **要件の対話的検討（Requirements & Design）**:
