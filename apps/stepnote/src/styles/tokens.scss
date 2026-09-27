@@ -7,14 +7,17 @@
  * -------------------------------------------------------------------------- */
 :root,
 :root.wa-light,
-:root[data-theme="light"] {
+:root[data-theme="light"],
+.wa-light,
+[data-theme="light"] {
   /* Web Awesome 標準デザイントークン */
   --wa-font-family-body:
     "Segoe UI", "BIZ UD Gothic", "Yu Gothic UI", Meiryo, sans-serif;
-  --wa-color-surface-default: #ffffff;
+  --wa-color-surface-default: #f1f2f3;
   --wa-color-surface-border: #d0d7de;
   --wa-color-text-normal: #1f2328;
   --wa-color-text-quiet: #57606a;
+  --wa-color-neutral-on-normal: #0d1117;
   --wa-border-width-s: 1px;
   --wa-border-style: solid;
 
@@ -64,10 +67,13 @@
 .wa-dark,
 [data-theme="dark"] {
   /* Web Awesome 標準デザイントークン */
-  --wa-color-surface-default: #0d1117;
-  --wa-color-surface-border: #30363d;
+  --wa-color-surface-default: #2f323f;
+  --wa-color-surface-border: #434857;
   --wa-color-text-normal: #e6edf3;
-  --wa-color-text-quiet: #8b949e;
+  --wa-color-text-quiet: #9da7b3;
+  --wa-color-neutral-fill-quiet: #383c4b;
+  --wa-color-neutral-fill-normal: #484d5e;
+  --wa-color-neutral-on-normal: #ffffff;
 
   /* Quick Access アイコンカラー（Dark モード: 70系 / 白） */
   --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
@@ -95,8 +101,8 @@
   --label-menu-trigger-color: #c9d1d9;
   --label-menu-trigger-hover-color: #ffffff;
   --label-menu-trigger-active-color: #ffffff;
-  --scrollbar-thumb-color: #30363d;
-  --scrollbar-thumb-hover-color: #6e7681;
+  --scrollbar-thumb-color: #434857;
+  --scrollbar-thumb-hover-color: #60677a;
   --scrollbar-track-color: transparent;
 }
 
@@ -105,10 +111,13 @@
  * -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not(.wa-light):not([data-theme="light"]) {
-    --wa-color-surface-default: #0d1117;
-    --wa-color-surface-border: #30363d;
+    --wa-color-surface-default: #2f323f;
+    --wa-color-surface-border: #434857;
     --wa-color-text-normal: #e6edf3;
-    --wa-color-text-quiet: #8b949e;
+    --wa-color-text-quiet: #9da7b3;
+    --wa-color-neutral-fill-quiet: #383c4b;
+    --wa-color-neutral-fill-normal: #484d5e;
+    --wa-color-neutral-on-normal: #ffffff;
 
     --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
     --quick-access-icon-uncategorized: #ffffff;
@@ -133,8 +142,8 @@
     --label-menu-trigger-color: #c9d1d9;
     --label-menu-trigger-hover-color: #ffffff;
     --label-menu-trigger-active-color: #ffffff;
-    --scrollbar-thumb-color: #30363d;
-    --scrollbar-thumb-hover-color: #6e7681;
+    --scrollbar-thumb-color: #434857;
+    --scrollbar-thumb-hover-color: #60677a;
     --scrollbar-track-color: transparent;
   }
 }

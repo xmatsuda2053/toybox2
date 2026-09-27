@@ -365,7 +365,7 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("--scrollbar-thumb-hover-color");
       expect(scssContent).toContain("--scrollbar-track-color");
       expect(tokensContent).toContain("#d0d7de");
-      expect(tokensContent).toContain("#30363d");
+      expect(tokensContent).toContain("#434857");
     });
 
     it("7-3. .labels__content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること", () => {
