@@ -126,10 +126,13 @@
   background-color: var(--wa-color-neutral-fill-normal);
 
   &:hover {
-    background-color: color-mix(
-      in oklab,
-      var(--wa-color-neutral-fill-normal),
-      var(--wa-color-mix-hover)
+    background-color: var(
+      --wa-color-neutral-fill-normal-hover,
+      color-mix(
+        in oklab,
+        var(--wa-color-neutral-fill-normal),
+        var(--wa-color-mix-hover)
+      )
     );
   }
 }
