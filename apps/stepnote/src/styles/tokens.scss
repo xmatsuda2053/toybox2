@@ -28,6 +28,10 @@
   --stepnote-pane-navigation-width: 260px;
   --stepnote-pane-task-list-width: 310px;
 
+  /* テーマ切り替えトランジショントークン */
+  --stepnote-transition-theme: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+
   /* Quick Access アイコンカラー（Light モード: 60系 / 黒） */
   --quick-access-icon-bookmark: var(--wa-color-indigo-60, #4f46e5);
   --quick-access-icon-uncategorized: #000000;
@@ -145,5 +149,15 @@
     --scrollbar-thumb-color: #434857;
     --scrollbar-thumb-hover-color: #60677a;
     --scrollbar-track-color: transparent;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * 4. アクセシビリティ配慮 (prefers-reduced-motion)
+ * -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  * {
+    --stepnote-transition-theme: none !important;
   }
 }

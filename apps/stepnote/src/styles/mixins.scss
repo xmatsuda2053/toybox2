@@ -24,3 +24,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* テーマ切り替えトランジション（背景色・文字色・境界線を滑らかにクロスフェード） */
+@mixin theme-transition {
+  transition: var(--stepnote-transition-theme);
+}
+

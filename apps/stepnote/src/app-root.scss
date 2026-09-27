@@ -17,6 +17,7 @@
   font-family: var(--wa-font-family-body);
   color: var(--wa-color-text-normal);
   background-color: var(--wa-color-surface-default);
+  @include theme-transition;
 }
 
 .app-shell {
@@ -36,6 +37,7 @@
   border-bottom: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
   background-color: var(--wa-color-surface-default);
+  @include theme-transition;
 }
 
 .header-branding {
@@ -71,6 +73,7 @@
   border-top: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
   background-color: var(--wa-color-surface-default);
+  @include theme-transition;
 }
 
 /* 1. Menu (最左ペイン): 固定サイズ 50px */
@@ -80,6 +83,7 @@
   overflow: hidden;
   border-right: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
+  @include theme-transition;
 }
 
 /* 共通コラプシブル（開閉ペイン）スタイル */
@@ -93,7 +97,9 @@
     width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.4s ease,
     opacity 0.4s ease,
-    visibility 0.5s;
+    visibility 0.5s,
+    background-color 0.2s ease,
+    color 0.2s ease;
 
   /* 縮小中の内部テキスト折り返し崩れを防止 */
   > * {
@@ -117,6 +123,7 @@
   flex-direction: column;
   border-right: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
+  @include theme-transition;
 }
 
 /* フラットなセレクタ（ルール7準拠） */
@@ -135,6 +142,7 @@
   overflow-y: auto;
   border-right: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
+  @include theme-transition;
 }
 
 /* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */
@@ -144,6 +152,7 @@
   overflow-y: auto;
   border-right: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-surface-border);
+  @include theme-transition;
 }
 
 /* 5. Journal (第5ペイン): Task と均等分割 (1:1) */
@@ -151,4 +160,5 @@
   flex: 1 1 0%;
   min-width: 0;
   overflow-y: auto;
+  @include theme-transition;
 }
