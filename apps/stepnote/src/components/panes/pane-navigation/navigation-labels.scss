@@ -93,7 +93,7 @@
   width: 100%;
   @include flex-between;
   box-sizing: border-box;
-  padding-block: var(--wa-space-3xs);
+  padding-block: var(--wa-space-2xs);
   padding-inline: var(--wa-space-xs);
   border-radius: var(--wa-border-radius-m, 4px);
   border: 1px solid transparent;
@@ -159,7 +159,7 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  gap: var(--wa-space-3xs, 2px);
+  gap: var(--wa-space-xs, 8px);
 }
 
 .labels__icon {
