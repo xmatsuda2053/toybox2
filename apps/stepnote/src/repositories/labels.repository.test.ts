@@ -15,10 +15,12 @@ import { LabelsRepository } from "@/repositories/labels.repository";
  *    - [x] 2-1. 新規ラベルを正常に追加できること
  *    - [x] 2-2. 既存ラベルのプロパティを更新できること
  *    - [x] 2-3. 指定したIDのラベルを削除できること
- * 3. 選択状態の操作と永続化
- *    - [x] 3-1. 選択状態（isSelected）を反転・更新できること
- *    - [x] 3-2. すべてのラベルの選択状態を解除できること
- *    - [x] 3-3. 存在しないIDのラベルを反転しようとした場合、例外がスローされること
+ * 3. 選択状態の操作と排他制御
+ *    - [x] 3-1. 非選択のラベルをトグルした際、選択状態（isSelected: true）に更新されること
+ *    - [x] 3-2. あるラベルが選択中に別のラベルをトグルした際、新しく選択したラベルのみが選択状態となり、以前選択されていたラベルは解除されること（排他制御）
+ *    - [x] 3-3. 既に選択中のラベルを再度トグルした際、選択解除（isSelected: false）となり、選択中ラベルが0件になること
+ *    - [x] 3-4. すべてのラベルの選択状態を解除できること
+ *    - [x] 3-5. 存在しないIDのラベルを反転しようとした場合、例外がスローされること
  */
 describe("Label Repository Tests", () => {
   let repository: LabelsRepository;
@@ -108,8 +110,8 @@ describe("Label Repository Tests", () => {
     });
   });
 
-  describe("3. 選択状態の操作と永続化", () => {
-    it("3-1. 選択状態（isSelected）を反転・更新できること", async () => {
+  describe("3. 選択状態の操作と排他制御", () => {
+    it("3-1. 非選択のラベルをトグルした際、選択状態（isSelected: true）に更新されること", async () => {
       const baseLabel: Omit<LabelRecord, "id"> = {
         name: "Test Label",
         description: "Test Description",
@@ -120,33 +122,59 @@ describe("Label Repository Tests", () => {
       await repository.toggleLabel(id);
       const result: LabelRecord = (await repository.getById(id))!;
 
-      expect(result.isSelected).toEqual(true);
+      expect(result.isSelected).toBe(true);
     });
 
-    it("3-2. すべてのラベルの選択状態を解除できること", async () => {
-      const baseLabel: Omit<LabelRecord, "id"> = {
+    it("3-2. あるラベルが選択中に別のラベルをトグルした際、新しく選択したラベルのみが選択状態となり、以前選択されていたラベルは解除されること（排他制御）", async () => {
+      const id1 = await repository.add({
+        name: "Label 1",
+        description: "Description 1",
+        isSelected: false,
+      });
+      const id2 = await repository.add({
+        name: "Label 2",
+        description: "Description 2",
+        isSelected: false,
+      });
+
+      // Label 1 をトグル -> Label 1 が true
+      await repository.toggleLabel(id1);
+      expect((await repository.getById(id1))?.isSelected).toBe(true);
+      expect((await repository.getById(id2))?.isSelected).toBe(false);
+
+      // Label 2 をトグル -> Label 1 は解除され、Label 2 のみ true
+      await repository.toggleLabel(id2);
+      expect((await repository.getById(id1))?.isSelected).toBe(false);
+      expect((await repository.getById(id2))?.isSelected).toBe(true);
+    });
+
+    it("3-3. 既に選択中のラベルを再度トグルした際、選択解除（isSelected: false）となり、選択中ラベルが0件になること", async () => {
+      const id = await repository.add({
         name: "Test Label",
         description: "Test Description",
-        isSelected: false,
-      };
+        isSelected: true,
+      });
 
-      let id;
-
-      id = await repository.add(baseLabel);
       await repository.toggleLabel(id);
+      const result = (await repository.getById(id))!;
 
-      id = await repository.add(baseLabel);
-      await repository.toggleLabel(id);
+      expect(result.isSelected).toBe(false);
+    });
 
-      id = await repository.add(baseLabel);
+    it("3-4. すべてのラベルの選択状態を解除できること", async () => {
+      await repository.add({
+        name: "Test Label",
+        description: "Test Description",
+        isSelected: true,
+      });
 
       await repository.clearAllSelected();
       const result: LabelRecord[] = await repository.getAll();
 
-      expect(result.every((label) => !label.isSelected)).toEqual(true);
+      expect(result.every((label) => !label.isSelected)).toBe(true);
     });
 
-    it("3-3. 存在しないIDのラベルを反転しようとした場合、例外がスローされること", async () => {
+    it("3-5. 存在しないIDのラベルを反転しようとした場合、例外がスローされること", async () => {
       await expect(repository.toggleLabel(99999)).rejects.toThrow(
         "Label with id 99999 not found",
       );

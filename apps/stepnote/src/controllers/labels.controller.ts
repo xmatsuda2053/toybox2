@@ -96,7 +96,7 @@ export class LabelsController extends BaseDataController<
   };
 
   /**
-   * 現在選択中のラベルIDの配列を取得する
+   * 現在選択中のラベルIDの配列を取得する（排他制御により要素数は 0 または 1）
    *
    * @returns {number[]}
    * @readonly
@@ -109,6 +109,18 @@ export class LabelsController extends BaseDataController<
           label.isSelected && label.id !== undefined,
       )
       .map((label) => label.id);
+  }
+
+  /**
+   * 現在選択中のラベルIDを取得する（未選択時は undefined）
+   *
+   * @returns {number | undefined}
+   * @readonly
+   * @memberof LabelsController
+   */
+  public get selectedLabelId(): number | undefined {
+    const selected = this._state.find((label) => label.isSelected);
+    return selected?.id;
   }
 
   /**

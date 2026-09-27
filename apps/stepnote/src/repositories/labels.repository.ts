@@ -15,7 +15,9 @@ export class LabelsRepository extends BaseRepository<LabelRecord> {
   }
 
   /**
-   * 指定したIDのラベルの選択状態を反転させる。
+   * 指定したIDのラベルの選択状態を排他的にトグルする。
+   * 対象ラベルが非選択だった場合、対象ラベルのみを選択状態にし、他のラベルは解除する。
+   * 対象ラベルが選択中だった場合、選択状態を解除する。
    *
    * @param {number} id
    * @return {*} {Promise<void>}
@@ -26,7 +28,14 @@ export class LabelsRepository extends BaseRepository<LabelRecord> {
     if (!label) {
       throw new Error(`Label with id ${id} not found`);
     }
-    await this.update(id, { isSelected: !label.isSelected });
+
+    const nextSelected = !label.isSelected;
+    await db.transaction("rw", this.table, async () => {
+      await this.table.toCollection().modify({ isSelected: false });
+      if (nextSelected) {
+        await this.table.update(id, { isSelected: true });
+      }
+    });
   };
 
   /**
