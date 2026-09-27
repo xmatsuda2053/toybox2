@@ -12,6 +12,7 @@ import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
 import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
 import plus_solid_full from "./assets/icons/plus-solid-full.svg?raw";
@@ -37,6 +38,7 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "magnifying-glass-solid-full": magnifying_glass_solid_full,
   "moon-solid-full": moon_solid_full,
   "pen-to-square-solid-full": pen_to_square_solid_full,
   "plus-solid-full": plus_solid_full,

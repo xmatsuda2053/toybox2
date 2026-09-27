@@ -4,6 +4,7 @@
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@shared/components": ["../../packages/components/src/index.ts"],
       "@shared/icons": ["../../packages/icons/src/index.ts"],
       "@shared/utils": ["../../packages/utils/src/index.ts"]
     }
