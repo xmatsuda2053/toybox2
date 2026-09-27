@@ -86,36 +86,6 @@
   @include theme-transition;
 }
 
-/* 共通コラプシブル（開閉ペイン）スタイル */
-.pane-collapsible {
-  width: var(--pane-target-width);
-  flex-shrink: 0;
-  overflow: hidden;
-  visibility: visible;
-  opacity: 1;
-  transition:
-    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.4s ease,
-    opacity 0.4s ease,
-    visibility 0.5s,
-    background-color 0.2s ease,
-    color 0.2s ease;
-
-  /* 縮小中の内部テキスト折り返し崩れを防止 */
-  > * {
-    min-width: var(--pane-target-width);
-  }
-
-  &[hidden] {
-    display: flex;
-    width: 0;
-    opacity: 0;
-    border-right-color: transparent;
-    visibility: hidden;
-    pointer-events: none;
-  }
-}
-
 /* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
 .pane-navigation {
   --pane-target-width: var(--stepnote-pane-navigation-width);
@@ -161,4 +131,34 @@
   min-width: 0;
   overflow-y: auto;
   @include theme-transition;
+}
+
+/* 共通コラプシブル（開閉ペイン）スタイル: 個別ペイン定義より後に配置しカスケード優先 */
+.pane-collapsible {
+  width: var(--pane-target-width);
+  flex-shrink: 0;
+  overflow: hidden;
+  visibility: visible;
+  opacity: 1;
+  transition:
+    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s ease,
+    opacity 0.4s ease,
+    visibility 0.5s,
+    background-color 0.2s ease,
+    color 0.2s ease;
+
+  /* 縮小中の内部テキスト折り返し崩れを防止 */
+  > * {
+    min-width: var(--pane-target-width);
+  }
+
+  &[hidden] {
+    display: flex;
+    width: 0;
+    opacity: 0;
+    border-right-color: transparent;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
