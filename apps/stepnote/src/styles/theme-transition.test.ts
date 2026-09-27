@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-import * as fs from "node:fs";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /**
  * テーマ切替トランジション仕様（Theme Transition Specifications）
@@ -11,18 +10,27 @@ import * as fs from "node:fs";
  * 仕様 5: prefers-reduced-motion: reduce 時にトランジションを抑止するアクセシビリティ配慮が含まれていること
  */
 describe("テーマ切替トランジション仕様 (Theme Transition)", () => {
-  const tokensScss = fs.readFileSync(
-    new URL("./tokens.scss", import.meta.url),
-    "utf-8",
-  );
-  const mixinsScss = fs.readFileSync(
-    new URL("./mixins.scss", import.meta.url),
-    "utf-8",
-  );
-  const appRootScss = fs.readFileSync(
-    new URL("../app-root.scss", import.meta.url),
-    "utf-8",
-  );
+  let tokensScss = "";
+  let mixinsScss = "";
+  let appRootScss = "";
+
+  beforeAll(async () => {
+    const fsModule = "node:" + "fs";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fs: any = await import(/* @vite-ignore */ fsModule);
+    tokensScss = fs.readFileSync(
+      new URL("./tokens.scss", import.meta.url),
+      "utf-8",
+    );
+    mixinsScss = fs.readFileSync(
+      new URL("./mixins.scss", import.meta.url),
+      "utf-8",
+    );
+    appRootScss = fs.readFileSync(
+      new URL("../app-root.scss", import.meta.url),
+      "utf-8",
+    );
+  });
 
   describe("1. デザイントークン & mixin 定義", () => {
     it("tokens.scss にテーマ切替トランジショントークン（--stepnote-transition-theme）が定義されていること", () => {
