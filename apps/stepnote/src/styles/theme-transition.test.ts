@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error Node.js standard fs module import in vitest environment
 import * as fs from "node:fs";
 
 /**
@@ -70,7 +69,9 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
         /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
       );
 
-      const paneNavMatch = appRootScss.match(/\.pane-navigation\s*\{[\s\S]*?\}/);
+      const paneNavMatch = appRootScss.match(
+        /\.pane-navigation\s*\{[\s\S]*?\}/,
+      );
       expect(paneNavMatch).not.toBeNull();
       expect(paneNavMatch![0]).toMatch(
         /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
@@ -82,7 +83,9 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
         /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
       );
 
-      const paneJournalMatch = appRootScss.match(/\.pane-journal\s*\{[\s\S]*?\}/);
+      const paneJournalMatch = appRootScss.match(
+        /\.pane-journal\s*\{[\s\S]*?\}/,
+      );
       expect(paneJournalMatch).not.toBeNull();
       expect(paneJournalMatch![0]).toMatch(
         /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
@@ -90,7 +93,9 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
     });
 
     it("app-root.scss の pane-collapsible において開閉アニメーションとテーマ切替トランジション（background-color, color, border-color）が両立されていること", () => {
-      const collapsibleMatch = appRootScss.match(/\.pane-collapsible\s*\{[\s\S]*?\}/);
+      const collapsibleMatch = appRootScss.match(
+        /\.pane-collapsible\s*\{[\s\S]*?\}/,
+      );
       expect(collapsibleMatch).not.toBeNull();
       expect(collapsibleMatch![0]).toMatch(/background-color/);
       expect(collapsibleMatch![0]).toMatch(/color/);
@@ -100,7 +105,9 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
 
   describe("3. アクセシビリティ配慮 (prefers-reduced-motion)", () => {
     it("prefers-reduced-motion: reduce 時にトランジションを抑止する定義が含まれていること", () => {
-      expect(tokensScss).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+      expect(tokensScss).toMatch(
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)/,
+      );
     });
   });
 });
