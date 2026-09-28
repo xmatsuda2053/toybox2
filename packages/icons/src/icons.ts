@@ -1,3 +1,7 @@
+import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
+import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
+import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
+import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
 import bookmark_solid_full from "./assets/icons/bookmark-solid-full.svg?raw";
 import calendar_solid_full from "./assets/icons/calendar-solid-full.svg?raw";
 import caret_right_solid_full from "./assets/icons/caret-right-solid-full.svg?raw";
@@ -12,6 +16,7 @@ import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import location_dot_solid_full from "./assets/icons/location-dot-solid-full.svg?raw";
 import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
 import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
@@ -24,6 +29,10 @@ import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation
 import xmark_solid_full from "./assets/icons/xmark-solid-full.svg?raw";
 
 export const icons: Record<string, string> = {
+  "angle-left-solid-full": angle_left_solid_full,
+  "angle-right-solid-full": angle_right_solid_full,
+  "angles-left-solid-full": angles_left_solid_full,
+  "angles-right-solid-full": angles_right_solid_full,
   "bookmark-solid-full": bookmark_solid_full,
   "calendar-solid-full": calendar_solid_full,
   "caret-right-solid-full": caret_right_solid_full,
@@ -38,6 +47,7 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "location-dot-solid-full": location_dot_solid_full,
   "magnifying-glass-solid-full": magnifying_glass_solid_full,
   "moon-solid-full": moon_solid_full,
   "pen-to-square-solid-full": pen_to_square_solid_full,
