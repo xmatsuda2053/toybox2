@@ -23,6 +23,16 @@ export function format(
   if (format === "yyyy/MM/dd") {
     return `${year}/${month}/${day}`;
   }
+  if (format === "yyyy-MM-dd") {
+    return `${year}-${month}-${day}`;
+  }
+  if (format === "yyyy-MM-dd (EEE)") {
+    const weekday = getJapaneseWeekday(date, "short");
+    return `${year}-${month}-${day} (${weekday})`;
+  }
+  if (format === "yyyy年M月") {
+    return `${year}年${date.getMonth() + 1}月`;
+  }
   if (format === "HH:mm:ss") {
     return `${hours}:${minutes}:${seconds}`;
   }
@@ -150,4 +160,17 @@ export function getFiscalYearRange(
   const nextFiscalYear = currentFiscalYear + 1;
   return getYearList(baseYear, nextFiscalYear, order);
 }
+
+/**
+ * 指定された日付の和暦の年表記（例: "令和8年"）を取得する。
+ * @param date - 対象の日付
+ * @returns 和暦の年表記文字列
+ */
+export function getJapaneseEraYear(date: Date): string {
+  return new Intl.DateTimeFormat("ja-JP-u-ca-japanese", {
+    era: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 
