@@ -7,6 +7,18 @@
 :host {
   display: inline-block;
   width: 100%;
+  --datepicker-weekend-color: var(--wa-color-pink-50, #c84382);
+}
+
+:host-context(.wa-dark),
+:host-context([data-theme="dark"]) {
+  --datepicker-weekend-color: var(--wa-color-pink-60, #da6e74);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not([data-theme="light"])) {
+    --datepicker-weekend-color: var(--wa-color-pink-60, #da6e74);
+  }
 }
 
 .datepicker-input {
@@ -20,12 +32,8 @@
 }
 
 .datepicker-calendar {
-  width: 280px;
+  width: 320px;
   padding: var(--wa-space-xs, 8px);
-  background-color: var(--wa-color-surface-default, #ffffff);
-  border: 1px solid var(--wa-color-surface-border, #d0d7de);
-  border-radius: var(--wa-border-radius-m, 8px);
-  box-shadow: var(--wa-shadow-m, 0 4px 12px rgba(0, 0, 0, 0.15));
   color: var(--wa-color-text-normal, #1f2328);
   user-select: none;
   font-family: inherit;
@@ -39,14 +47,14 @@
 
   &__title {
     font-weight: 700;
-    font-size: var(--wa-font-size-s);
+    font-size: var(--wa-font-size-m);
     color: var(--wa-color-text-normal, #1f2328);
     letter-spacing: 0.02em;
   }
 
   &__era {
     margin-inline-start: var(--wa-space-3xs, 2px);
-    font-size: var(--wa-font-size-2xs);
+    font-size: var(--wa-font-size-xs);
     font-weight: 400;
     color: var(--wa-color-text-quiet, #57606a);
   }
@@ -88,7 +96,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--wa-font-size-s, 14px);
+    font-size: var(--wa-font-size-m, 18px);
     color: currentColor;
   }
 
@@ -100,7 +108,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     margin-block-end: var(--wa-space-3xs, 2px);
-    font-size: var(--wa-font-size-xs, 12px);
+    font-size: var(--wa-font-size-s, 14px);
     text-align: center;
   }
 
@@ -114,14 +122,14 @@
   }
 
   &__weekday--weekend {
-    color: var(--wa-color-danger-quiet, #f85149);
+    color: var(--datepicker-weekend-color, var(--wa-color-pink-50, #c84382));
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    font-size: var(--wa-font-size-s);
+    font-size: var(--wa-font-size-m);
   }
 
   &__cell {
@@ -129,14 +137,14 @@
     align-items: center;
     justify-content: center;
     aspect-ratio: 1 / 1;
-    min-width: 28px;
-    min-height: 28px;
+    min-width: 26px;
+    min-height: 26px;
     border-radius: 50%;
     cursor: pointer;
     border: none;
     background: transparent;
     color: var(--wa-color-text-normal);
-    font-size: var(--wa-font-size-xs, 12px);
+    font-size: var(--wa-font-size-s, 14px);
     transition:
       background-color 0.15s ease,
       color 0.15s ease;
@@ -157,7 +165,7 @@
   }
 
   &__cell--weekend {
-    color: var(--wa-color-danger-quiet, #f85149);
+    color: var(--datepicker-weekend-color, var(--wa-color-pink-50, #c84382));
   }
 
   &__cell--today {
@@ -166,12 +174,13 @@
   }
 
   &__cell--current {
-    background-color: var(--wa-color-brand-fill, #1f6feb);
-    color: var(--wa-color-brand-on-quiet, #ffffff);
+    background-color: var(--wa-color-brand-fill-loud, #1f6feb);
+    color: var(--wa-color-brand-on-loud, #ffffff);
     font-weight: 700;
   }
 
   &__cell--current:hover {
-    background-color: var(--wa-color-brand-fill, #1f6feb);
+    background-color: var(--wa-color-brand-fill-loud, #1f6feb);
+    color: var(--wa-color-brand-on-loud, #ffffff);
   }
 }
