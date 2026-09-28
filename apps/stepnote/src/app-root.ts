@@ -24,6 +24,7 @@ import "@/components/theme-switcher/theme-switcher.js";
 import "@/components/panes/pane-menu/pane-menu.js";
 import "@/components/panes/pane-navigation/navigation-quick-access.js";
 import "@/components/panes/pane-navigation/navigation-labels.js";
+import "@/components/panes/pane-task-list/pane-task-list.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -197,9 +198,11 @@ export class AppRoot extends LitElement {
         </aside>
 
         <!-- 3. Task List ペイン (第3ペイン) -->
-        <section class="pane-task-list pane-collapsible" ?hidden=${!isOpen}>
-          task-list
-        </section>
+        <pane-task-list
+          class="pane-task-list pane-collapsible"
+          data-theme=${resolvedTheme}
+          ?hidden=${!isOpen}
+        ></pane-task-list>
 
         <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
         <main class="pane-task">task</main>

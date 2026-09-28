@@ -7,7 +7,8 @@ import { beforeAll, describe, expect, it } from "vitest";
  * 仕様 2: mixins.scss にテーマ切替トランジション適用用 mixin（theme-transition）が定義されていること
  * 仕様 3: app-root.scss の :host, .app-header, .app-footer, 各ペインにテーマ切替トランジションが適用されていること
  * 仕様 4: app-root.scss の pane-collapsible において開閉アニメーションとテーマ切替トランジションが両立されていること
- * 仕様 5: prefers-reduced-motion: reduce 時にトランジションを抑止するアクセシビリティ配慮が含まれていること
+ * 仕様 5: app-root.scss において .pane-collapsible が個別ペイン（.pane-navigation, .pane-task-list）より後に定義され、開閉トランジションが上書きされないこと
+ * 仕様 6: prefers-reduced-motion: reduce 時にトランジションを抑止するアクセシビリティ配慮が含まれていること
  */
 describe("テーマ切替トランジション仕様 (Theme Transition)", () => {
   let tokensScss = "";
@@ -108,6 +109,21 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
       expect(collapsibleMatch![0]).toMatch(/background-color/);
       expect(collapsibleMatch![0]).toMatch(/color/);
       expect(collapsibleMatch![0]).toMatch(/width/);
+    });
+
+    it("app-root.scss において .pane-collapsible が個別ペイン（.pane-navigation, .pane-task-list）より後に定義され、開閉トランジションが上書きされないこと", () => {
+      const collapsibleIndex = appRootScss.indexOf(".pane-collapsible {");
+      const navigationIndex = appRootScss.indexOf(".pane-navigation {");
+      const taskListIndex = appRootScss.indexOf(".pane-task-list {");
+
+      expect(collapsibleIndex).toBeGreaterThan(-1);
+      expect(navigationIndex).toBeGreaterThan(-1);
+      expect(taskListIndex).toBeGreaterThan(-1);
+
+      // 同一詳細度 (0, 1, 0) において、修飾クラス .pane-collapsible のトランジションが
+      // 個別ペインの @include theme-transition に上書きされないよう、後に配置されていること
+      expect(collapsibleIndex).toBeGreaterThan(navigationIndex);
+      expect(collapsibleIndex).toBeGreaterThan(taskListIndex);
     });
   });
 
