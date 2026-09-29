@@ -12,6 +12,7 @@ import { NavigationLabels } from "./navigation-labels";
  * 1. タイトル部（Header）の描画と追加ボタン
  *    - 1-1. タイトル部に「LABELS」ラベルおよびツールチップ付き「追加ボタン」（labels__btn-add、plus-solid-full アイコン）がレンダリングされること
  *    - 1-2. 追加ボタン押下ハンドラー（handleOpenAddDialog）の実行により、新規登録ダイアログが開状態（isAddDialogOpen = true）になること
+ *    - 1-3. 追加ボタンのツールチップ（wa-tooltip）に trigger="hover" が設定され、ダイアログ閉鎖時のフォーカス復帰による不要なツールチップ表示が抑止されていること
  *
  * 2. コンテンツ部（Content）の描画とラベルボタン一覧
  *    - 2-1. コンテンツ部ラッパー（.labels__content）が存在すること
@@ -127,6 +128,11 @@ describe("NavigationLabels Component", () => {
       element.handleOpenAddDialog();
       expect(element.isAddDialogOpen).toBe(true);
       expect(element.editingLabel).toBeNull();
+    });
+
+    it("1-3. 追加ボタンのツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、ダイアログ閉鎖時のフォーカス復帰による不要なツールチップ表示が抑止されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="labels-add-btn"[^>]*trigger="hover"/);
     });
   });
 

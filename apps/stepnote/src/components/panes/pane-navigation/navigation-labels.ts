@@ -412,7 +412,7 @@ export class NavigationLabels extends LitElement {
                 </wa-button>
               `
             : nothing}
-          <wa-tooltip for="labels-add-btn" placement="bottom">
+          <wa-tooltip for="labels-add-btn" placement="bottom" trigger="hover">
             Add Label
           </wa-tooltip>
           <wa-button

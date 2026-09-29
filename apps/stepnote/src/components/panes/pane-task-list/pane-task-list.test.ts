@@ -15,6 +15,7 @@ import { PaneTaskList } from "./pane-task-list";
  *    - [x] 2-1. ヘッダ部タイトルに「LIST」および選択中の年度が表示されること（例: LIST 2026）
  *    - [x] 2-2. ヘッダ部に年度指定ボタン（pane-task-list__btn-year）が配置され、アイコンおよびツールチップが設定されていること
  *    - [x] 2-3. ヘッダ部にタスク追加ボタン（pane-task-list__btn-add）が配置され、プラスアイコンおよびツールチップが設定されていること
+ *    - [x] 2-4. タスク追加ボタンのツールチップ（wa-tooltip）に trigger="hover" が設定され、ダイアログ閉鎖時のフォーカス復帰による不要なツールチップ表示が抑止されていること
  *
  * 3. 検索部（Search）における共通コンポーネント連携
  *    - [x] 3-1. 検索部に共通部品 search-input がレンダリングされること
@@ -77,6 +78,11 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       expect(htmlStr).toContain("plus-solid-full");
       expect(htmlStr).toContain("wa-tooltip");
       expect(htmlStr).toContain("wa-button");
+    });
+
+    it("2-4. タスク追加ボタンのツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、ダイアログ閉鎖時のフォーカス復帰による不要なツールチップ表示が抑止されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="pane-task-list-btn-add"[^>]*trigger="hover"/);
     });
   });
 
