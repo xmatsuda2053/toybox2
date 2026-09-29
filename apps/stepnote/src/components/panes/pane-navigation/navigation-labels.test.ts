@@ -1,5 +1,4 @@
 import "fake-indexeddb/auto";
-// @ts-ignore
 import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";

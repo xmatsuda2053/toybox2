@@ -1,5 +1,4 @@
 import "fake-indexeddb/auto";
-// @ts-ignore
 import * as fs from "node:fs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
@@ -147,6 +146,25 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       const rootBlockMatch = scssContent.match(/\.pane-task-list\s*\{[\s\S]*?\n\}/);
       expect(rootBlockMatch).not.toBeNull();
       expect(rootBlockMatch![0]).toMatch(/min-width:\s*(?:var\(--stepnote-pane-task-list-width[^)]*\)|310px)/);
+    });
+  });
+
+  describe("6. タスク新規作成ダイアログ連携 (Phase 2: #110)", () => {
+    it("6-1. テンプレート内に task-create-dialog がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("task-create-dialog");
+    });
+
+    it("6-2. 新規追加ボタンのクリックハンドラー実行により、isCreateDialogOpen が true になること", () => {
+      expect(element.isCreateDialogOpen).toBe(false);
+      element.handleOpenCreateDialog();
+      expect(element.isCreateDialogOpen).toBe(true);
+    });
+
+    it("6-3. クローズハンドラー実行により、isCreateDialogOpen が false になること", () => {
+      element.isCreateDialogOpen = true;
+      element.handleCloseCreateDialog();
+      expect(element.isCreateDialogOpen).toBe(false);
     });
   });
 });

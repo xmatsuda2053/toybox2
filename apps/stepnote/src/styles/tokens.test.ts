@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error
 import * as fs from "node:fs";
 
 /**
