@@ -105,7 +105,7 @@ export class PaneTaskList extends LitElement {
             ></wa-icon>
           </wa-button>
 
-          <wa-tooltip for="pane-task-list-btn-add" placement="bottom">
+          <wa-tooltip for="pane-task-list-btn-add" placement="bottom" trigger="hover">
             新規タスクを追加
           </wa-tooltip>
           <wa-button
