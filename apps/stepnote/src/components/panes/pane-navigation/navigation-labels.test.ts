@@ -45,6 +45,7 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 6-5. input および textarea の入力文字色（value-color / #ffffff）が定義されていること
  *    - 6-6. Dark モード時にドロップダウンメニューの文字色（#ffffff）および独立サーフェス背景色（#1c2128）が定義されていること
  *    - 6-7. メニュートリガーボタン（labels__btn-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること
+ *    - 6-8. ダイアログのフォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること
  *
  * 7. コンテンツ部スクロールバー仕様（Scrollbar & Gutter）
  *    - 7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること
@@ -347,6 +348,14 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("--label-menu-trigger-active-color");
       expect(tokensContent).toContain("#c9d1d9");
       expect(scssContent).toContain("labels__btn-menu");
+    });
+
+    it("6-8. ダイアログのフォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).not.toMatch(/margin-bottom:\s*var\(--wa-space-3xs/);
     });
 
     it("7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること", () => {

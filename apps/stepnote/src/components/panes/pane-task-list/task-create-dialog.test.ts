@@ -40,6 +40,7 @@ import { TaskCreateDialog } from "./task-create-dialog";
  *    - [x] 5-1. SCSSスタイルシート（task-create-dialog.scss）が存在し、ルートブロック .task-create-dialog およびBEMセレクタが定義されていること
  *    - [x] 5-2. テーマ切替トランジション等のCSS変数指定が定義されていること
  *    - [x] 5-3. フォームラベルに対する個別の font-size 上書きが存在せず、Web Awesome の標準サイズ設計に準拠していること
+ *    - [x] 5-4. フォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること
  *
  * 6. Web Awesome コンポーネント登録の検証
  *    - [x] 6-1. アプリケーションエントリ（index.ts）で wa-select および wa-option がインポートされていること
@@ -339,6 +340,12 @@ describe("TaskCreateDialog Component", () => {
       const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).not.toMatch(/font-size:\s*var\(--wa-font-size-s/);
+    });
+
+    it("5-4. フォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること", () => {
+      const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).not.toMatch(/margin-bottom:\s*var\(--wa-space-3xs/);
     });
   });
 
