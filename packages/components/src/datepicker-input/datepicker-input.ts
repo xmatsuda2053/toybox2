@@ -122,6 +122,18 @@ export class DatePickerInput extends LitElement {
   }
 
   /**
+   * 入力欄のラベル
+   */
+  @property({ type: String })
+  public label?: string;
+
+  /**
+   * 必須入力フラグ
+   */
+  @property({ type: Boolean })
+  public required: boolean = false;
+
+  /**
    * 入力欄のサイズ
    */
   @property({ type: String })
@@ -351,6 +363,9 @@ export class DatePickerInput extends LitElement {
     return html`
       <wa-input
         id="input-date"
+        exportparts="form-control-label, label, input"
+        label=${this.label ?? ""}
+        ?required=${this.required}
         size=${normalizeWaSize(this.size)}
         .value=${this.getDisplayValue()}
         placeholder=${this.placeholder}

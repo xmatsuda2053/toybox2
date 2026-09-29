@@ -13,6 +13,7 @@
     /* 3. ライブラリ型定義の解決設定 */
     "allowSyntheticDefaultImports": true,
     "customConditions": ["development"],
+    "types": ["node"],
 
     /* 4. 厳格な型チェックと保守性 */
     "strict": true,

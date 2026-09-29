@@ -1,4 +1,3 @@
-// @ts-ignore
 import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
@@ -13,6 +12,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 1-3. カレンダーヘッダー（.datepicker-calendar__header）に年月表示および5つの操作ボタン（前年・前月・当日・翌月・翌年）がレンダリングされること
  *    - 1-4. 曜日ヘッダー（.datepicker-calendar__weekdays）に日〜土の7曜日がレンダリングされること
  *    - 1-5. 日付グリッド（.datepicker-calendar__grid）に42個の日付セルがレンダリングされること
+ *    - 1-6. wa-input に exportparts="form-control-label, label, input" が指定され、外側からのスタイリングが可能であること
  *
  * 2. プロパティ・フォーマット・初期表示（Properties & Formatting）
  *    - 2-1. value に指定された日付（例: "2026-04-15"）が入力欄にフォーマット（"2026-04-15 (水)"）されて反映されること
@@ -21,6 +21,8 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 2-4. 選択中の日付セルにアクティブ修飾子（datepicker-calendar__cell--current）が付与されること
  *    - 2-5. 今日の日付セルに当日修飾子（datepicker-calendar__cell--today）が付与されること
  *    - 2-6. 当月以外の日付セルに当月外修飾子（datepicker-calendar__cell--other-month）が付与されること
+ *    - 2-7. label プロパティが wa-input の label 属性へ反映されること
+ *    - 2-8. required プロパティが wa-input の required 属性へ反映されること
  *
  * 3. カレンダーナビゲーション操作（Navigation Handling）
  *    - 3-1. 前月操作（handlePrevMonth）により表示年月が1ヶ月前へ更新されること
@@ -92,6 +94,11 @@ describe("DatePickerInput Component", () => {
       const matches = rendered.match(/data-date=/g) || [];
       expect(matches.length).toBe(42);
     });
+
+    it("1-6. wa-input に exportparts=\"form-control-label, label, input\" が指定され、外側からのスタイリングが可能であること", () => {
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).toContain('exportparts="form-control-label, label, input"');
+    });
   });
 
   describe("2. プロパティ・フォーマット・初期表示（Properties & Formatting）", () => {
@@ -133,6 +140,22 @@ describe("DatePickerInput Component", () => {
     it("2-6. 当月以外の日付セルに当月外修飾子（datepicker-calendar__cell--other-month）が付与されること", () => {
       const rendered = flattenTemplate(element.render());
       expect(rendered).toContain("datepicker-calendar__cell--other-month");
+    });
+
+    it("2-7. label プロパティが wa-input の label 属性へ反映されること", () => {
+      element.label = "期日";
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).toMatch(/label=["']?期日["']?/);
+    });
+
+    it("2-8. required プロパティが wa-input の required 属性へ反映されること", () => {
+      element.required = true;
+      let rendered = flattenTemplate(element.render());
+      expect(rendered).toContain("required");
+
+      element.required = false;
+      rendered = flattenTemplate(element.render());
+      expect(rendered).not.toContain("required");
     });
   });
 

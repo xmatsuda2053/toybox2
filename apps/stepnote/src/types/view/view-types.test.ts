@@ -13,9 +13,7 @@
  */
 
 import { describe, it, expect, expectTypeOf } from "vitest";
-// @ts-expect-error node:fs type definitions are not included in DOM lib
 import * as fs from "node:fs";
-// @ts-expect-error node:path type definitions are not included in DOM lib
 import * as path from "node:path";
 import type { Log, Note } from "./journal-view.type";
 import type { LogRecord, NoteRecord, JournalRecord } from "@/db/models/journal.model";

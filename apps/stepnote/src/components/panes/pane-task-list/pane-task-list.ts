@@ -1,9 +1,10 @@
 import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import "@lit-labs/virtualizer";
 import "@shared/components";
 import { getCurrentFiscalYear } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
+import "./task-create-dialog.js";
 import paneTaskListStyles from "./pane-task-list.scss?inline";
 
 /**
@@ -50,6 +51,36 @@ export class PaneTaskList extends LitElement {
   public searchKeyword: string = "";
 
   /**
+   * 新規タスク作成ダイアログの開閉状態
+   *
+   * @type {boolean}
+   * @memberof PaneTaskList
+   */
+  @state()
+  public isCreateDialogOpen: boolean = false;
+
+  /**
+   * 新規タスク作成ダイアログを開く
+   */
+  public handleOpenCreateDialog = (): void => {
+    this.isCreateDialogOpen = true;
+  };
+
+  /**
+   * 新規タスク作成ダイアログを閉じる
+   */
+  public handleCloseCreateDialog = (): void => {
+    this.isCreateDialogOpen = false;
+  };
+
+  /**
+   * タスク作成完了イベントハンドラー
+   */
+  public handleTaskCreated = (): void => {
+    this.isCreateDialogOpen = false;
+  };
+
+  /**
    * ヘッダー部（タイトルおよび操作ボタン）を描画する
    */
   private renderHeader(): HTMLTemplateResult {
@@ -83,6 +114,7 @@ export class PaneTaskList extends LitElement {
             variant="neutral"
             appearance="plain"
             size="m"
+            @click=${this.handleOpenCreateDialog}
           >
             <wa-icon
               library="my-icons"
@@ -142,6 +174,13 @@ export class PaneTaskList extends LitElement {
     return html`
       <div class="pane-task-list">
         ${this.renderHeader()} ${this.renderSearch()} ${this.renderList()}
+        <task-create-dialog
+          ?open=${this.isCreateDialogOpen}
+          .fiscalYear=${this.fiscalYear}
+          data-theme=${this.getAttribute("data-theme") ?? ""}
+          @dialog-close=${this.handleCloseCreateDialog}
+          @task-created=${this.handleTaskCreated}
+        ></task-create-dialog>
       </div>
     `;
   }
