@@ -7,6 +7,7 @@ import {
   quickAccessContext,
   labelsContext,
   taskContext,
+  taskListContext,
   logsContext,
   notesContext,
   issuesContext,
@@ -16,6 +17,7 @@ import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import { LabelsController } from "@/controllers/labels.controller.js";
 import { TaskController } from "@/controllers/task.controller.js";
+import { TaskListController } from "@/controllers/task-list.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
@@ -27,7 +29,7 @@ import { AppRoot } from "./app-root.js";
  * 【AppRoot Provider 仕様 (Phase 1)】
  *
  * 1. Controller インスタンスの生成と初期化 (Instantiation)
- *    - [x] 1-1. AppRoot インスタンス生成時、8つの各 Controller (LayoutUI, QuickAccess, Labels, Task, Logs, Notes, Issues, Theme) がインスタンス化されていること
+ *    - [x] 1-1. AppRoot インスタンス生成時、9つの各 Controller (LayoutUI, QuickAccess, Labels, Task, TaskList, Logs, Notes, Issues, Theme) がインスタンス化されていること
  *
  * 2. @lit/context による Context 配給 (Context Provision)
  *    - [x] 2-1. layoutUIContext が配下コンポーネントへ正しく配給されること
@@ -38,6 +40,7 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 2-6. notesContext が配下コンポーネントへ正しく配給されること
  *    - [x] 2-7. issuesContext が配下コンポーネントへ正しく配給されること
  *    - [x] 2-8. themeContext が配下コンポーネントへ正しく配給されること
+ *    - [x] 2-9. taskListContext が配下コンポーネントへ正しく配給されること
  *
  * 【AppRoot Layout 仕様 (Phase 2)】
  * 3. 基本レイアウト構造の提供
@@ -90,13 +93,14 @@ describe("AppRoot Provider (Phase 1)", () => {
   const appRoot = sharedAppRoot;
 
   describe("1. Controller インスタンスの生成と初期化 (Instantiation)", () => {
-    it("1-1. AppRoot インスタンス生成時、8つの各 Controller (LayoutUI, QuickAccess, Labels, Task, Logs, Notes, Issues, Theme) がインスタンス化されていること", () => {
+    it("1-1. AppRoot インスタンス生成時、9つの各 Controller (LayoutUI, QuickAccess, Labels, Task, TaskList, Logs, Notes, Issues, Theme) がインスタンス化されていること", () => {
       expect(appRoot.layoutUIController).toBeInstanceOf(LayoutUIController);
       expect(appRoot.quickAccessController).toBeInstanceOf(
         QuickAccessController,
       );
       expect(appRoot.labelsController).toBeInstanceOf(LabelsController);
       expect(appRoot.taskController).toBeInstanceOf(TaskController);
+      expect(appRoot.taskListController).toBeInstanceOf(TaskListController);
       expect(appRoot.logsController).toBeInstanceOf(LogsController);
       expect(appRoot.notesController).toBeInstanceOf(NotesController);
       expect(appRoot.issuesController).toBeInstanceOf(IssuesController);
@@ -151,6 +155,12 @@ describe("AppRoot Provider (Phase 1)", () => {
       const consumed = consumeContext(appRoot, themeContext);
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.themeController);
+    });
+
+    it("2-9. taskListContext が配下コンポーネントへ正しく配給されること", () => {
+      const consumed = consumeContext(appRoot, taskListContext);
+      expect(consumed).toBeDefined();
+      expect(consumed).toBe(appRoot.taskListController);
     });
   });
 });

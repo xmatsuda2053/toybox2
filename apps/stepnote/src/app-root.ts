@@ -7,6 +7,7 @@ import {
   quickAccessContext,
   labelsContext,
   taskContext,
+  taskListContext,
   logsContext,
   notesContext,
   issuesContext,
@@ -16,6 +17,7 @@ import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import { LabelsController } from "@/controllers/labels.controller.js";
 import { TaskController } from "@/controllers/task.controller.js";
+import { TaskListController } from "@/controllers/task-list.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
@@ -37,7 +39,7 @@ import {
 /**
  * StepNote アプリケーションのルートコンポーネント (AppRoot)
  *
- * 全体で利用する 8 つの Reactive Controller をインスタンス化し、
+ * 全体で利用する 9 つの Reactive Controller をインスタンス化し、
  * @lit/context を通じて子コンポーネントへ配給（Provider）する。
  *
  * @export
@@ -51,6 +53,7 @@ export class AppRoot extends LitElement {
   public quickAccessController: QuickAccessController;
   public labelsController: LabelsController;
   public taskController: TaskController;
+  public taskListController: TaskListController;
   public logsController: LogsController;
   public notesController: NotesController;
   public issuesController: IssuesController;
@@ -60,13 +63,15 @@ export class AppRoot extends LitElement {
     super();
 
     // 1. Controller インスタンスの生成と初期化
+    const taskRepository = new TaskRepository();
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
       this,
       new QuickAccessRepository(),
     );
     this.labelsController = new LabelsController(this, new LabelsRepository());
-    this.taskController = new TaskController(this, new TaskRepository());
+    this.taskController = new TaskController(this, taskRepository);
+    this.taskListController = new TaskListController(this, taskRepository);
     this.logsController = new LogsController(this, new LogsRepository());
     this.notesController = new NotesController(this, new NotesRepository());
     this.issuesController = new IssuesController(this, new IssuesRepository());
@@ -88,6 +93,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: taskContext,
       initialValue: this.taskController,
+    });
+    new ContextProvider(this, {
+      context: taskListContext,
+      initialValue: this.taskListController,
     });
     new ContextProvider(this, {
       context: logsContext,
