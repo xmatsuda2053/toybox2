@@ -1,6 +1,6 @@
 import "fake-indexeddb/auto";
 import * as fs from "node:fs";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { PaneTaskList } from "./pane-task-list";
 
@@ -29,6 +29,15 @@ import { PaneTaskList } from "./pane-task-list";
  *    - [x] 5-1. SCSSスタイルシートが存在し、ルートブロック .pane-task-list および主要要素のBEMセレクタが定義されていること
  *    - [x] 5-2. 背景色および境界線に正式なデザイントークン（--wa-color-surface-default, --wa-color-surface-border）が適用されていること
  *    - [x] 5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .pane-task-list に最小幅（min-width）が設定されていること
+ *
+ * 【PaneTaskList 仕様 (Phase 3: #118 年度指定・年度フィルタリング)】
+ * 7. 年度選択ドロップダウンUIおよび状態連動
+ *    - [x] 7-1. ヘッダ部に年度選択ドロップダウン（wa-dropdown）がレンダリングされ、年度指定ボタン（pane-task-list__btn-year）がトリガー（slot="trigger"）として配置されること
+ *    - [x] 7-2. 年度ドロップダウン内に getFiscalYearRange() に基づく年度項目（wa-dropdown-item）がレンダリングされること
+ *    - [x] 7-3. 現在選択中の年度に対応する wa-dropdown-item に type="checkbox" および checked が適用されること
+ *    - [x] 7-4. 年度選択ボタンのツールチップに trigger="hover" が設定されていること
+ *    - [x] 7-5. ドロップダウンでの年度選択イベント発生時に handleFiscalYearSelect により年度が更新され、fiscal-year-change イベントがディスパッチされること
+ *    - [x] 7-6. TaskListController が注入されている場合、年度選択時に taskListController.setFiscalYear が呼び出されること
  */
 
 describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
@@ -68,6 +77,7 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
     it("2-2. ヘッダ部に年度指定ボタン（pane-task-list__btn-year）が配置され、アイコンおよびツールチップが設定されていること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("pane-task-list__btn-year");
+      expect(htmlStr).toContain("sliders-solid-full");
       expect(htmlStr).toContain("wa-tooltip");
       expect(htmlStr).toContain("wa-button");
     });
@@ -171,6 +181,74 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       element.isCreateDialogOpen = true;
       element.handleCloseCreateDialog();
       expect(element.isCreateDialogOpen).toBe(false);
+    });
+  });
+
+  describe("7. 年度指定・年度フィルタリング (Phase 3: #118)", () => {
+    it("7-1. ヘッダ部に年度選択ドロップダウン（wa-dropdown）がレンダリングされ、年度指定ボタン（pane-task-list__btn-year）がトリガー（slot=\"trigger\"）として配置されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("wa-dropdown");
+      expect(htmlStr).toMatch(/<wa-button[^>]*class="[^"]*pane-task-list__btn-year[^"]*"[^>]*slot="trigger"/);
+    });
+
+    it("7-2. 年度ドロップダウン内に getFiscalYearRange() に基づく年度項目（wa-dropdown-item）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("wa-dropdown-item");
+      expect(htmlStr).toContain("2025年度");
+      expect(htmlStr).toContain("2026年度");
+    });
+
+    it("7-3. 現在選択中の年度に対応する wa-dropdown-item に type=\"checkbox\" および checked が適用されること", () => {
+      element.fiscalYear = 2026;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*value="2026"[^>]*type="checkbox"[^>]*\bchecked\b/);
+    });
+
+    it("7-4. 年度選択ボタンのツールチップに trigger=\"hover\" が設定されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="pane-task-list-btn-year"[^>]*trigger="hover"/);
+    });
+
+    it("7-5. ドロップダウンでの年度選択イベント発生時に handleFiscalYearSelect により年度が更新され、fiscal-year-change イベントがディスパッチされること", () => {
+      let dispatchedYear: number | undefined;
+      element.addEventListener("fiscal-year-change", ((e: CustomEvent<{ fiscalYear: number }>) => {
+        dispatchedYear = e.detail?.fiscalYear;
+      }) as EventListener);
+
+      const fakeEvent = {
+        detail: {
+          item: {
+            value: "2025",
+          },
+        },
+      } as unknown as CustomEvent<{ item: { value: string } }>;
+
+      element.handleFiscalYearSelect(fakeEvent);
+
+      expect(element.fiscalYear).toBe(2025);
+      expect(dispatchedYear).toBe(2025);
+    });
+
+    it("7-6. TaskListController が注入されている場合、年度選択時に taskListController.setFiscalYear が呼び出されること", async () => {
+      const fakeController = {
+        setFiscalYear: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        fiscalYear: 2026,
+        state: [],
+      };
+      element.taskListController = fakeController as any;
+
+      const fakeEvent = {
+        detail: {
+          item: {
+            value: "2025",
+          },
+        },
+      } as unknown as CustomEvent<{ item: { value: string } }>;
+
+      await element.handleFiscalYearSelect(fakeEvent);
+
+      expect(fakeController.setFiscalYear).toHaveBeenCalledWith(2025);
     });
   });
 });

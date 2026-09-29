@@ -38,4 +38,17 @@ export class TaskRepository extends BaseRepository<TaskRecord> {
       await this.table.update(id, { selected: true });
     });
   };
+
+  /**
+   * 指定した会計年度に合致するタスク一覧を取得する。
+   *
+   * @param {number} fiscalYear 会計年度
+   * @return {*} {Promise<TaskRecord[]>}
+   * @memberof TaskRepository
+   */
+  public getByFiscalYear = async (
+    fiscalYear: number,
+  ): Promise<TaskRecord[]> => {
+    return await this.table.where("fiscalYear").equals(fiscalYear).toArray();
+  };
 }

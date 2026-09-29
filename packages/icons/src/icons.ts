@@ -22,6 +22,7 @@ import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
 import plus_solid_full from "./assets/icons/plus-solid-full.svg?raw";
 import question_solid_full from "./assets/icons/question-solid-full.svg?raw";
+import sliders_solid_full from "./assets/icons/sliders-solid-full.svg?raw";
 import sun_solid_full from "./assets/icons/sun-solid-full.svg?raw";
 import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
@@ -53,6 +54,7 @@ export const icons: Record<string, string> = {
   "pen-to-square-solid-full": pen_to_square_solid_full,
   "plus-solid-full": plus_solid_full,
   "question-solid-full": question_solid_full,
+  "sliders-solid-full": sliders_solid_full,
   "sun-solid-full": sun_solid_full,
   "tag-solid-full": tag_solid_full,
   "trash-solid-full": trash_solid_full,

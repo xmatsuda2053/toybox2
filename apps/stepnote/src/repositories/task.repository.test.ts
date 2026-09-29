@@ -23,6 +23,10 @@ import { TaskRepository } from "@/repositories/task.repository";
  *    - [x] 3-1. 指定したIDのタスクを選択状態（selected: true）に更新できること
  *    - [x] 3-2. 別のタスクを選択した際、前回選択されていたタスクの selected が false に解除されること（単一選択制御）
  *    - [x] 3-3. すべてのタスクの選択状態を解除できること（clearSelection）
+ *
+ * 4. 年度による絞り込み (getByFiscalYear)
+ *    - [x] 4-1. 指定した年度に合致するタスクのみを取得できること
+ *    - [x] 4-2. 該当する年度のタスクが存在しない場合は空配列 [] を返すこと
  */
 describe("TaskRepository Tests", () => {
   let repository: TaskRepository;
@@ -328,4 +332,45 @@ describe("TaskRepository Tests", () => {
       expect(result.every((t) => t.selected === false)).toBe(true);
     });
   });
+
+  describe("4. 年度による絞り込み (getByFiscalYear)", () => {
+    it("4-1. 指定した年度に合致するタスクのみを取得できること", async () => {
+      const task2025: Omit<TaskRecord, "id"> = {
+        name: "Task 2025",
+        statusCode: 0,
+        dueDate: new Date("2025-05-01"),
+        contacts: [],
+        description: "2025 Task",
+        fiscalYear: 2025,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      };
+      const task2026: Omit<TaskRecord, "id"> = {
+        name: "Task 2026",
+        statusCode: 0,
+        dueDate: new Date("2026-05-01"),
+        contacts: [],
+        description: "2026 Task",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      };
+
+      await repository.add(task2025);
+      await repository.add(task2026);
+
+      const result = await repository.getByFiscalYear(2026);
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("Task 2026");
+      expect(result[0].fiscalYear).toBe(2026);
+    });
+
+    it("4-2. 該当する年度のタスクが存在しない場合は空配列 [] を返すこと", async () => {
+      const result = await repository.getByFiscalYear(2099);
+      expect(result).toEqual([]);
+    });
+  });
 });
+

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { layoutUIContext } from "./layout-ui.context";
-import { taskContext, issuesContext } from "./task.context";
+import { taskContext, taskListContext, issuesContext } from "./task.context";
 import { logsContext, notesContext } from "./journal.context";
 import { labelsContext } from "./labels.context";
 import { quickAccessContext } from "./quick-access.context";
@@ -14,14 +14,15 @@ const asSymbol = (context: unknown): symbol => context as symbol;
  * テスト仕様一覧:
  * 1. layoutUIContext が正しく定義され、固有の Symbol キーを持つこと
  * 2. taskContext が正しく定義され、固有の Symbol キーを持つこと
- * 3. issuesContext が正しく定義され、固有の Symbol キーを持つこと
- * 4. logsContext が正しく定義され、固有の Symbol キーを持つこと
- * 5. notesContext が正しく定義され、固有の Symbol キーを持つこと
- * 6. labelsContext が正しく定義され、固有の Symbol キーを持つこと
- * 7. quickAccessContext が正しく定義され、固有の Symbol キーを持つこと
- * 8. themeContext が正しく定義され、固有の Symbol キーを持つこと
- * 9. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
- * 10. index.ts からすべての Context が正しく再エクスポートされていること
+ * 3. taskListContext が正しく定義され、固有の Symbol キーを持つこと
+ * 4. issuesContext が正しく定義され、固有の Symbol キーを持つこと
+ * 5. logsContext が正しく定義され、固有の Symbol キーを持つこと
+ * 6. notesContext が正しく定義され、固有の Symbol キーを持つこと
+ * 7. labelsContext が正しく定義され、固有の Symbol キーを持つこと
+ * 8. quickAccessContext が正しく定義され、固有の Symbol キーを持つこと
+ * 9. themeContext が正しく定義され、固有の Symbol キーを持つこと
+ * 10. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
+ * 11. index.ts からすべての Context が正しく再エクスポートされていること
  */
 describe("contexts の定義とエクスポート", () => {
   describe("個別の Context 定義", () => {
@@ -35,6 +36,12 @@ describe("contexts の定義とエクスポート", () => {
       expect(taskContext).toBeDefined();
       expect(typeof taskContext).toBe("symbol");
       expect(asSymbol(taskContext).description).toBe("task-context");
+    });
+
+    it("taskListContext が正しく定義され、固有の Symbol キーを持つこと", () => {
+      expect(taskListContext).toBeDefined();
+      expect(typeof taskListContext).toBe("symbol");
+      expect(asSymbol(taskListContext).description).toBe("task-list-context");
     });
 
     it("issuesContext が正しく定義され、固有の Symbol キーを持つこと", () => {
@@ -81,6 +88,7 @@ describe("contexts の定義とエクスポート", () => {
       const contexts = [
         layoutUIContext,
         taskContext,
+        taskListContext,
         issuesContext,
         logsContext,
         notesContext,
@@ -101,6 +109,7 @@ describe("contexts の定義とエクスポート", () => {
     it("index.ts からすべての Context が正しく再エクスポートされていること", () => {
       expect(allContexts.layoutUIContext).toBe(layoutUIContext);
       expect(allContexts.taskContext).toBe(taskContext);
+      expect(allContexts.taskListContext).toBe(taskListContext);
       expect(allContexts.issuesContext).toBe(issuesContext);
       expect(allContexts.logsContext).toBe(logsContext);
       expect(allContexts.notesContext).toBe(notesContext);
