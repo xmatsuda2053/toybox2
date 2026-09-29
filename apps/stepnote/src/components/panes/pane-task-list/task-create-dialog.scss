@@ -62,7 +62,6 @@ wa-dialog {
   &::part(label) {
     color: #1f2328;
     font-weight: 600;
-    margin-bottom: var(--wa-space-3xs, 4px);
   }
 
   &::part(input) {
