@@ -80,6 +80,16 @@ const createMockHost = () => {
  * 7. タスク選択・ブックマーク状態操作
  *    - 7-1. selectTask(id) 実行時に repository.select(id) が呼ばれ、最新一覧が再読み込みされること
  *    - 7-2. toggleBookmark(id, current) 実行時に repository.update が呼ばれ、最新一覧が再読み込みされること
+ *
+ * 8. 検索キーワード絞り込み（Search Keyword Filtering）
+ *    - 8-1. setSearchKeyword 実行時に searchKeyword が更新され、キーワードで絞り込まれた一覧が state に格納されること
+ *    - 8-2. 空文字または空白のみを設定した場合、検索絞り込みが解除されて元の全件一覧が復帰すること
+ *    - 8-3. 同一キーワードが渡された場合、不要な再取得・通知を行わないこと
+ *
+ * 9. QuickAccess フィルタリング連動（QuickAccess Filtering）
+ *    - 9-1. setQuickAccessFilter 実行時に QuickAccess の条件（ブックマーク・未分類・期限・ステータス等）が適用されて state が更新されること
+ *    - 9-2. setQuickAccessFilter 実行後に host.requestUpdate() および subscribe リスナーが呼ばれること
+ *    - 9-3. QuickAccess フィルタを解除（デフォルト状態）した場合、元の条件の一覧に復帰すること
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -416,4 +426,93 @@ describe("TaskListController (TDD)", () => {
       expect(controller.state.find((t) => t.id === 1)?.bookmark).toBe(false);
     });
   });
+
+  describe("8. 検索キーワード絞り込み（Search Keyword Filtering）", () => {
+    it("8-1. setSearchKeyword 実行時に searchKeyword が更新され、キーワードで絞り込まれた一覧が state に格納されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      expect(controller.searchKeyword).toBe("");
+
+      await controller.setSearchKeyword("タスク1");
+
+      expect(controller.searchKeyword).toBe("タスク1");
+      expect(controller.state.length).toBe(1);
+      expect(controller.state[0].name).toBe("当年度タスク1");
+    });
+
+    it("8-2. 空文字または空白のみを設定した場合、検索絞り込みが解除されて元の全件一覧が復帰すること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      await controller.setSearchKeyword("タスク1");
+      expect(controller.state.length).toBe(1);
+
+      await controller.setSearchKeyword("   ");
+      expect(controller.searchKeyword).toBe("");
+      expect(controller.state.length).toBe(2);
+    });
+
+    it("8-3. 同一キーワードが渡された場合、不要な再取得・通知を行わないこと", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      await controller.setSearchKeyword("タスク1");
+      mockHost.requestUpdateMock.mockClear();
+
+      await controller.setSearchKeyword("タスク1");
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("9. QuickAccess フィルタリング連動（QuickAccess Filtering）", () => {
+    it("9-1. setQuickAccessFilter 実行時に QuickAccess の条件（ブックマーク・未分類・期限・ステータス等）が適用されて state が更新されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      // sampleTasks[0] は bookmark: false, sampleTasks[1] は bookmark: true
+      await controller.setQuickAccessFilter({ isBookmarkSelected: true });
+
+      expect(controller.quickAccess?.isBookmarkSelected).toBe(true);
+      expect(controller.state.length).toBe(1);
+      expect(controller.state[0].bookmark).toBe(true);
+    });
+
+    it("9-2. setQuickAccessFilter 実行後に host.requestUpdate() および subscribe リスナーが呼ばれること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      const listenerMock = vi.fn();
+      controller.subscribe(listenerMock);
+
+      await controller.setQuickAccessFilter({ isBookmarkSelected: true });
+
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("9-3. QuickAccess フィルタを解除（未指定またはデフォルト）した場合、元の条件の一覧に復帰すること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      await controller.setQuickAccessFilter({ isBookmarkSelected: true });
+      expect(controller.state.length).toBe(1);
+
+      await controller.setQuickAccessFilter(undefined);
+      expect(controller.state.length).toBe(2);
+    });
+  });
 });
+

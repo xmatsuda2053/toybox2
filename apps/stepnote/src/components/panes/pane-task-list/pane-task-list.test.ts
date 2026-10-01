@@ -46,6 +46,15 @@ import { PaneTaskList } from "./pane-task-list";
  *    - 8-3. handleBookmarkToggle 実行時に taskListController.toggleBookmark が呼び出されること
  *    - 8-4. LabelsController が注入されている場合、選択ラベルが変更されると taskListController.setLabelFilter が同期されること
  *    - 8-5. handleTaskCreated 実行時に taskListController.refresh が呼び出され、taskId が渡された場合は selectTask も呼び出されること
+ *
+ * 【PaneTaskList 仕様 (Phase 5: #122 検索および QuickAccess 連携)】
+ * 9. 検索入力連動（Search Input Integration）
+ *    - 9-1. search-input の search-input カスタムイベント発火時に handleSearchInput が呼ばれ、taskListController.setSearchKeyword が呼び出されること
+ *    - 9-2. 検索キーワードのクリア時（keyword: ""）にも taskListController.setSearchKeyword が呼び出され、検索条件がリセットされること
+ *
+ * 10. QuickAccess 状態連携（QuickAccess Context Integration）
+ *    - 10-1. quickAccessController が注入された際、その状態が taskListController.setQuickAccessFilter に同期されること
+ *    - 10-2. quickAccessController の状態変更リスナーが発火した際、最新状態が taskListController へ反映されること
  */
 
 describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
@@ -347,4 +356,98 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       expect(fakeTaskListController.selectTask).toHaveBeenCalledWith(99);
     });
   });
+
+  describe("9. 検索入力連動（Search Input Integration）", () => {
+    it("9-1. search-input の search-input カスタムイベント発火時に handleSearchInput が呼ばれ、taskListController.setSearchKeyword が呼び出されること", async () => {
+      const fakeTaskListController = {
+        setSearchKeyword: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      element.taskListController = fakeTaskListController as any;
+
+      const event = new CustomEvent("search-input", {
+        detail: { value: "test", keyword: "test" },
+      });
+      await element.handleSearchInput(event);
+
+      expect(element.searchKeyword).toBe("test");
+      expect(fakeTaskListController.setSearchKeyword).toHaveBeenCalledWith("test");
+    });
+
+    it("9-2. 検索キーワードのクリア時（keyword: ''）にも taskListController.setSearchKeyword が呼び出され、検索条件がリセットされること", async () => {
+      const fakeTaskListController = {
+        setSearchKeyword: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      element.taskListController = fakeTaskListController as any;
+      element.searchKeyword = "before";
+
+      const event = new CustomEvent("search-input", {
+        detail: { value: "", keyword: "" },
+      });
+      await element.handleSearchInput(event);
+
+      expect(element.searchKeyword).toBe("");
+      expect(fakeTaskListController.setSearchKeyword).toHaveBeenCalledWith("");
+    });
+  });
+
+  describe("10. QuickAccess 状態連携（QuickAccess Context Integration）", () => {
+    it("10-1. quickAccessController が注入された際、その状態が taskListController.setQuickAccessFilter に同期されること", async () => {
+      const fakeTaskListController = {
+        setQuickAccessFilter: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      element.taskListController = fakeTaskListController as any;
+
+      const fakeQuickAccessController = {
+        state: { isBookmarkSelected: true },
+        subscribe: vi.fn(() => vi.fn()),
+      };
+
+      element.quickAccessController = fakeQuickAccessController as any;
+
+      expect(fakeTaskListController.setQuickAccessFilter).toHaveBeenCalledWith(
+        fakeQuickAccessController.state,
+      );
+    });
+
+    it("10-2. quickAccessController の状態変更リスナーが発火した際、最新状態が taskListController へ反映されること", async () => {
+      const fakeTaskListController = {
+        setQuickAccessFilter: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      element.taskListController = fakeTaskListController as any;
+
+      let subscriberCallback: (() => void) | undefined;
+      const fakeQuickAccessController = {
+        state: { isBookmarkSelected: true },
+        subscribe: vi.fn((listener) => {
+          subscriberCallback = listener;
+          return vi.fn();
+        }),
+      };
+
+      element.quickAccessController = fakeQuickAccessController as any;
+      fakeTaskListController.setQuickAccessFilter.mockClear();
+
+      fakeQuickAccessController.state = { isBookmarkSelected: false } as any;
+      if (subscriberCallback) {
+        subscriberCallback();
+      }
+
+      expect(fakeTaskListController.setQuickAccessFilter).toHaveBeenCalledWith(
+        fakeQuickAccessController.state,
+      );
+    });
+  });
 });
+

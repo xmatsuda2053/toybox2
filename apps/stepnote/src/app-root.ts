@@ -27,6 +27,9 @@ import "@/components/panes/pane-menu/pane-menu.js";
 import "@/components/panes/pane-navigation/navigation-quick-access.js";
 import "@/components/panes/pane-navigation/navigation-labels.js";
 import "@/components/panes/pane-task-list/pane-task-list.js";
+import { getCurrentFiscalYear } from "@shared/utils";
+import { db } from "@/db/schema/database.schema.js";
+import { TaskListQuery } from "@/db/queries/task-list.query.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -71,7 +74,12 @@ export class AppRoot extends LitElement {
     );
     this.labelsController = new LabelsController(this, new LabelsRepository());
     this.taskController = new TaskController(this, taskRepository);
-    this.taskListController = new TaskListController(this, taskRepository);
+    this.taskListController = new TaskListController(
+      this,
+      taskRepository,
+      getCurrentFiscalYear(),
+      new TaskListQuery(db),
+    );
     this.logsController = new LogsController(this, new LogsRepository());
     this.notesController = new NotesController(this, new NotesRepository());
     this.issuesController = new IssuesController(this, new IssuesRepository());
