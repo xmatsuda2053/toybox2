@@ -9,10 +9,17 @@ import {
   dispatchCustomEvent,
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
-import { taskListContext } from "@/contexts/index.js";
+import {
+  taskListContext,
+  taskContext,
+  labelsContext,
+} from "@/contexts/index.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
+import type { TaskController } from "@/controllers/task.controller.js";
+import type { LabelsController } from "@/controllers/labels.controller.js";
 import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import "./task-create-dialog.js";
+import "./task-list-item.js";
 import paneTaskListStyles from "./pane-task-list.scss?inline";
 
 /**
@@ -32,6 +39,8 @@ export class PaneTaskList extends LitElement {
 
   private subscriber = new ControllerSubscriber(this);
   private _taskListController?: TaskListController;
+  private _taskController?: TaskController;
+  private _labelsController?: LabelsController;
 
   /**
    * タスク一覧管理コントローラー
@@ -46,7 +55,55 @@ export class PaneTaskList extends LitElement {
     if (this._taskListController === controller) return;
     this._taskListController = controller;
     this.subscriber.subscribe("taskList", controller);
+    this.syncLabelFilter();
     this.requestUpdate();
+  }
+
+  /**
+   * 単一選択タスク管理コントローラー
+   */
+  public get taskController(): TaskController | undefined {
+    return this._taskController;
+  }
+
+  @consume({ context: taskContext, subscribe: true })
+  @property({ attribute: false })
+  public set taskController(controller: TaskController | undefined) {
+    if (this._taskController === controller) return;
+    this._taskController = controller;
+    this.subscriber.subscribe("task", controller);
+    this.requestUpdate();
+  }
+
+  /**
+   * ラベル管理コントローラー
+   */
+  public get labelsController(): LabelsController | undefined {
+    return this._labelsController;
+  }
+
+  @consume({ context: labelsContext, subscribe: true })
+  @property({ attribute: false })
+  public set labelsController(controller: LabelsController | undefined) {
+    if (this._labelsController === controller) return;
+    this._labelsController = controller;
+    this.subscriber.subscribe("labels", controller, () => {
+      this.syncLabelFilter();
+      this.requestUpdate();
+    });
+    this.syncLabelFilter();
+    this.requestUpdate();
+  }
+
+  /**
+   * ラベルコントローラーの選択ラベルIDをタスク一覧コントローラーへ同期する
+   */
+  private syncLabelFilter(): void {
+    if (this.taskListController && this.labelsController) {
+      this.taskListController.setLabelFilter(
+        this.labelsController.selectedLabelId,
+      );
+    }
   }
 
   override disconnectedCallback(): void {
@@ -143,8 +200,17 @@ export class PaneTaskList extends LitElement {
   /**
    * タスク作成完了イベントハンドラー
    */
-  public handleTaskCreated = (): void => {
+  public handleTaskCreated = async (
+    event?: CustomEvent<{ taskId?: number }>,
+  ): Promise<void> => {
     this.isCreateDialogOpen = false;
+    if (this.taskListController) {
+      await this.taskListController.refresh();
+      if (event?.detail?.taskId !== undefined) {
+        await this.taskListController.selectTask(event.detail.taskId);
+      }
+    }
+    this.requestUpdate();
   };
 
   /**
@@ -261,6 +327,65 @@ export class PaneTaskList extends LitElement {
   }
 
   /**
+   * 指定したラベルIDに対応するラベル名を取得する
+   *
+   * @param {(number | undefined)} labelId
+   * @return {string}
+   * @memberof PaneTaskList
+   */
+  public getLabelName(labelId?: number): string {
+    if (labelId === undefined) {
+      return "未分類";
+    }
+    const label = this.labelsController?.state.find((l) => l.id === labelId);
+    return label?.name ?? "未分類";
+  }
+
+  /**
+   * タスク選択ハンドラー
+   *
+   * @param {CustomEvent<{ taskId: number }>} event
+   * @memberof PaneTaskList
+   */
+  public handleTaskSelect = async (
+    event: CustomEvent<{ taskId: number }>,
+  ): Promise<void> => {
+    const taskId = event.detail?.taskId;
+    if (taskId === undefined) {
+      return;
+    }
+    if (this.taskListController) {
+      await this.taskListController.selectTask(taskId);
+    }
+    if (this.taskController) {
+      await this.taskController.setTaskId(taskId);
+    }
+    dispatchCustomEvent(this, "task-select", { detail: { taskId } });
+  };
+
+  /**
+   * ブックマークトグルハンドラー
+   *
+   * @param {CustomEvent<{ taskId: number; bookmark: boolean }>} event
+   * @memberof PaneTaskList
+   */
+  public handleBookmarkToggle = async (
+    event: CustomEvent<{ taskId: number; bookmark: boolean }>,
+  ): Promise<void> => {
+    const detail = event.detail;
+    if (detail?.taskId === undefined) {
+      return;
+    }
+    if (this.taskListController) {
+      await this.taskListController.toggleBookmark(
+        detail.taskId,
+        detail.bookmark,
+      );
+    }
+    dispatchCustomEvent(this, "bookmark-toggle", { detail });
+  };
+
+  /**
    * リスト部（仮想スクロールまたは空状態）を描画する
    */
   private renderList(): HTMLTemplateResult {
@@ -279,9 +404,16 @@ export class PaneTaskList extends LitElement {
           class="pane-task-list__virtualizer"
           .items=${tasks}
           .renderItem=${(task: TaskRecord) => html`
-            <div class="pane-task-list__item" data-task-id=${task.id ?? ""}>
-              ${task.name}
-            </div>
+            <task-list-item
+              class="pane-task-list__item"
+              data-task-id=${task.id ?? ""}
+              .task=${task}
+              .labelName=${this.getLabelName(task.labelId)}
+              .issuesDone=${0}
+              .issuesTotal=${0}
+              @task-select=${this.handleTaskSelect}
+              @bookmark-toggle=${this.handleBookmarkToggle}
+            ></task-list-item>
           `}
         ></lit-virtualizer>
       </div>
