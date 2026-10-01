@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import "@lit-labs/virtualizer";
 import "@shared/components";
+import type { SearchInputEventDetail } from "@shared/components";
 import {
   getCurrentFiscalYear,
   getFiscalYearRange,
@@ -13,10 +14,12 @@ import {
   taskListContext,
   taskContext,
   labelsContext,
+  quickAccessContext,
 } from "@/contexts/index.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
 import type { LabelsController } from "@/controllers/labels.controller.js";
+import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import "./task-create-dialog.js";
 import "./task-list-item.js";
@@ -41,6 +44,7 @@ export class PaneTaskList extends LitElement {
   private _taskListController?: TaskListController;
   private _taskController?: TaskController;
   private _labelsController?: LabelsController;
+  private _quickAccessController?: QuickAccessController;
 
   /**
    * タスク一覧管理コントローラー
@@ -56,6 +60,7 @@ export class PaneTaskList extends LitElement {
     this._taskListController = controller;
     this.subscriber.subscribe("taskList", controller);
     this.syncLabelFilter();
+    this.syncQuickAccessFilter();
     this.requestUpdate();
   }
 
@@ -96,12 +101,45 @@ export class PaneTaskList extends LitElement {
   }
 
   /**
+   * クイックアクセス管理コントローラー
+   */
+  public get quickAccessController(): QuickAccessController | undefined {
+    return this._quickAccessController;
+  }
+
+  @consume({ context: quickAccessContext, subscribe: true })
+  @property({ attribute: false })
+  public set quickAccessController(
+    controller: QuickAccessController | undefined,
+  ) {
+    if (this._quickAccessController === controller) return;
+    this._quickAccessController = controller;
+    this.subscriber.subscribe("quickAccess", controller, () => {
+      this.syncQuickAccessFilter();
+      this.requestUpdate();
+    });
+    this.syncQuickAccessFilter();
+    this.requestUpdate();
+  }
+
+  /**
    * ラベルコントローラーの選択ラベルIDをタスク一覧コントローラーへ同期する
    */
   private syncLabelFilter(): void {
     if (this.taskListController && this.labelsController) {
       this.taskListController.setLabelFilter(
         this.labelsController.selectedLabelId,
+      );
+    }
+  }
+
+  /**
+   * クイックアクセスコントローラーの状態をタスク一覧コントローラーへ同期する
+   */
+  private syncQuickAccessFilter(): void {
+    if (this.taskListController && this.quickAccessController) {
+      this.taskListController.setQuickAccessFilter(
+        this.quickAccessController.state,
       );
     }
   }
@@ -214,6 +252,23 @@ export class PaneTaskList extends LitElement {
   };
 
   /**
+   * 検索入力ハンドラー（共通 search-input の search-input カスタムイベント）
+   *
+   * @param {CustomEvent<SearchInputEventDetail>} event
+   * @memberof PaneTaskList
+   */
+  public handleSearchInput = async (
+    event: CustomEvent<SearchInputEventDetail>,
+  ): Promise<void> => {
+    const keyword = event.detail?.keyword ?? "";
+    this.searchKeyword = keyword;
+    if (this.taskListController) {
+      await this.taskListController.setSearchKeyword(keyword);
+    }
+    this.requestUpdate();
+  };
+
+  /**
    * 年度ドロップダウン選択ハンドラー
    *
    * @param {CustomEvent<{ item: { value: string } }>} event
@@ -321,6 +376,7 @@ export class PaneTaskList extends LitElement {
           size="s"
           placeholder="Search..."
           .value=${this.searchKeyword}
+          @search-input=${this.handleSearchInput}
         ></search-input>
       </div>
     `;

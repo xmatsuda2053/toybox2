@@ -1,6 +1,6 @@
 /**
  * 指定した桁数で数値をゼロパディングし、文字列として返却する。
- * @param num　- 対象の数値
+ * @param num - 対象の数値
  * @param length - 桁数
  * @returns ゼロパディングされた文字列
  * @example
