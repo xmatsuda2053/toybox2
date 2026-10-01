@@ -66,6 +66,14 @@ export class SearchInput extends LitElement {
   debounceWait = 250;
 
   /**
+   * スピナー（ローディング表示）の最低表示時間（ミリ秒）
+   * 高速なインメモリ検索やローカルDB検索時の一瞬のチラつきを防ぎ、視認性を担保します。
+   * デフォルトは 300ms です。
+   */
+  @property({ type: Number })
+  minLoadingDuration = 300;
+
+  /**
    * 検索中ローディング状態フラグ
    * true の場合、虫眼鏡アイコンの代わりにスピナーが表示されます。
    */
@@ -85,6 +93,27 @@ export class SearchInput extends LitElement {
   private _isComposing = false;
 
   /**
+   * デバウンス待機中および最低表示時間の内部ローディング状態フラグ
+   */
+  @state()
+  private _isDebounceLoading = false;
+
+  /**
+   * 現在デバウンスの待機中かどうかのフラグ
+   */
+  private _isWaitingDebounce = false;
+
+  /**
+   * ローディング表示を開始した時刻（ミリ秒タイムスタンプ）
+   */
+  private _loadingStartTime: number | null = null;
+
+  /**
+   * 最低表示時間完了を待つタイマーID
+   */
+  private _minDurationTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
    * 内部デバウンス実行関数インスタンス
    */
   private _debouncedSearch: DebouncedFunction<(val: string) => void> | null = null;
@@ -98,6 +127,57 @@ export class SearchInput extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._debouncedSearch?.cancel();
+    this._stopLoading();
+  }
+
+  /**
+   * ローディング表示を開始する
+   */
+  private _startLoading(): void {
+    this._isDebounceLoading = true;
+    this._isWaitingDebounce = true;
+    if (this._loadingStartTime === null) {
+      this._loadingStartTime = Date.now();
+    }
+  }
+
+  /**
+   * デバウンス完了後に最低表示時間を考慮してローディング終了をスケジュールする
+   */
+  private _scheduleLoadingEnd(): void {
+    if (this._isWaitingDebounce) {
+      return;
+    }
+
+    if (this._minDurationTimer) {
+      clearTimeout(this._minDurationTimer);
+      this._minDurationTimer = null;
+    }
+
+    const elapsed =
+      this._loadingStartTime !== null ? Date.now() - this._loadingStartTime : 0;
+    const remaining = Math.max(0, this.minLoadingDuration - elapsed);
+
+    if (remaining > 0) {
+      this._minDurationTimer = setTimeout(() => {
+        this._stopLoading();
+      }, remaining);
+    } else {
+      this._stopLoading();
+    }
+  }
+
+  /**
+   * ローディング状態を即時終了・リセットする
+   */
+  private _stopLoading(): void {
+    if (this._minDurationTimer) {
+      clearTimeout(this._minDurationTimer);
+      this._minDurationTimer = null;
+    }
+    this._isDebounceLoading = false;
+    this._isWaitingDebounce = false;
+    this._loadingStartTime = null;
   }
 
   /**
@@ -110,7 +190,9 @@ export class SearchInput extends LitElement {
     this._debouncedSearch?.cancel();
     this._currentWait = this.debounceWait;
     this._debouncedSearch = debounce((val: string) => {
+      this._isWaitingDebounce = false;
       this._emitSearch(val);
+      this._scheduleLoadingEnd();
     }, this.debounceWait);
   }
 
@@ -144,6 +226,9 @@ export class SearchInput extends LitElement {
     const target = e.target as HTMLInputElement | null;
     const val = target?.value ?? "";
     this.value = val;
+    if (val !== "") {
+      this._startLoading();
+    }
     this._initDebounce();
     this._debouncedSearch?.(val);
   };
@@ -156,24 +241,27 @@ export class SearchInput extends LitElement {
     const val = target?.value ?? "";
     this.value = val;
 
-    // 空文字（クリア操作等）の場合は待機せずに即座に発火
+    // 空文字（クリア操作等）の場合は待機せずに即座に発火し、ローディングも即時停止
     if (val === "") {
       this._debouncedSearch?.cancel();
+      this._stopLoading();
       this._emitSearch(val);
       return;
     }
 
-    // IME変換中は発火をスキップ
+    // IME変換中は発火およびローディング表示をスキップ
     if (this._isComposing) {
       return;
     }
 
+    this._startLoading();
     this._initDebounce();
     this._debouncedSearch?.(val);
   };
 
   override render(): HTMLTemplateResult {
     const effectivePlaceholder = this.placeholder || "Search...";
+    const isLoading = this.loading || this._isDebounceLoading;
 
     return html`
       <wa-input
@@ -186,7 +274,7 @@ export class SearchInput extends LitElement {
         @compositionstart=${this.handleCompositionStart}
         @compositionend=${this.handleCompositionEnd}
       >
-        ${this.loading
+        ${isLoading
           ? html`<wa-spinner
               slot="start"
               class="search-input__spinner"
