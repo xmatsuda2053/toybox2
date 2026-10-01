@@ -38,6 +38,14 @@ import { PaneTaskList } from "./pane-task-list";
  *    - [x] 7-4. 年度選択ボタンのツールチップに trigger="hover" が設定されていること
  *    - [x] 7-5. ドロップダウンでの年度選択イベント発生時に handleFiscalYearSelect により年度が更新され、fiscal-year-change イベントがディスパッチされること
  *    - [x] 7-6. TaskListController が注入されている場合、年度選択時に taskListController.setFiscalYear が呼び出されること
+ *
+ * 【PaneTaskList 仕様 (Phase 4: #120 タスク詳細表示・ソート・選択制御)】
+ * 8. タスクリスト描画および TaskListItem 連携
+ *    - 8-1. タスクが存在する場合、リスト部に task-list-item がレンダリングされること
+ *    - 8-2. handleTaskSelect 実行時に taskListController.selectTask および taskController.setTaskId が呼び出されること
+ *    - 8-3. handleBookmarkToggle 実行時に taskListController.toggleBookmark が呼び出されること
+ *    - 8-4. LabelsController が注入されている場合、選択ラベルが変更されると taskListController.setLabelFilter が同期されること
+ *    - 8-5. handleTaskCreated 実行時に taskListController.refresh が呼び出され、taskId が渡された場合は selectTask も呼び出されること
  */
 
 describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
@@ -249,6 +257,94 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       await element.handleFiscalYearSelect(fakeEvent);
 
       expect(fakeController.setFiscalYear).toHaveBeenCalledWith(2025);
+    });
+  });
+
+  describe("8. タスクリスト描画および TaskListItem 連携", () => {
+    it("8-1. タスクが存在する場合、リスト部に task-list-item がレンダリングされること", () => {
+      element.tasks = [
+        {
+          id: 1,
+          name: "テストタスク1",
+          statusCode: 0,
+          dueDate: new Date("2026-05-01"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("task-list-item");
+    });
+
+    it("8-2. handleTaskSelect 実行時に taskListController.selectTask および taskController.setTaskId が呼び出されること", async () => {
+      const fakeTaskListController = {
+        selectTask: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      const fakeTaskController = {
+        setTaskId: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+      };
+
+      element.taskListController = fakeTaskListController as any;
+      element.taskController = fakeTaskController as any;
+
+      const fakeCustomEvent = new CustomEvent("task-select", {
+        detail: { taskId: 42 },
+      });
+
+      await element.handleTaskSelect(fakeCustomEvent);
+
+      expect(fakeTaskListController.selectTask).toHaveBeenCalledWith(42);
+      expect(fakeTaskController.setTaskId).toHaveBeenCalledWith(42);
+    });
+
+    it("8-3. handleBookmarkToggle 実行時に taskListController.toggleBookmark が呼び出されること", async () => {
+      const fakeTaskListController = {
+        toggleBookmark: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+
+      element.taskListController = fakeTaskListController as any;
+
+      const fakeCustomEvent = new CustomEvent("bookmark-toggle", {
+        detail: { taskId: 42, bookmark: true },
+      });
+
+      await element.handleBookmarkToggle(fakeCustomEvent);
+
+      expect(fakeTaskListController.toggleBookmark).toHaveBeenCalledWith(42, true);
+    });
+
+    it("8-5. handleTaskCreated 実行時に taskListController.refresh が呼び出され、taskId が渡された場合は selectTask も呼び出されること", async () => {
+      const fakeTaskListController = {
+        refresh: vi.fn(),
+        selectTask: vi.fn(),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+
+      element.taskListController = fakeTaskListController as any;
+      element.isCreateDialogOpen = true;
+
+      const fakeCustomEvent = new CustomEvent("task-created", {
+        detail: { taskId: 99 },
+      });
+
+      await element.handleTaskCreated(fakeCustomEvent);
+
+      expect(element.isCreateDialogOpen).toBe(false);
+      expect(fakeTaskListController.refresh).toHaveBeenCalled();
+      expect(fakeTaskListController.selectTask).toHaveBeenCalledWith(99);
     });
   });
 });

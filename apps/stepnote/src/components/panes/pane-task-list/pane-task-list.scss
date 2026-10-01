@@ -78,6 +78,32 @@
     overflow-y: auto;
     position: relative;
     scrollbar-gutter: stable;
+    padding-block: 6px;
+    padding-inline-start: var(--wa-space-s, 12px);
+    padding-inline-end: var(--wa-space-2xs, 6px);
+
+    /* モダンブラウザ標準プロパティ */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+
+    /* WebKit系（Chrome, Edge, Safari）詳細スタイリング */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--scrollbar-track-color);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--scrollbar-thumb-color);
+      border-radius: 2px;
+      transition: background-color 0.15s ease;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background-color: var(--scrollbar-thumb-hover-color);
+    }
   }
 
   &__virtualizer {
