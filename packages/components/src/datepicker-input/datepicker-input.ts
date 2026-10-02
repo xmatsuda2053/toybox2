@@ -33,23 +33,12 @@ export interface DatePickerChangeEventDetail {
   date: Date | null;
 }
 
-export type DatePickerInputSize = "s" | "m" | "l" | "small" | "medium" | "large";
+import {
+  normalizeWaSize,
+  type ComponentSize,
+} from "../utils/size.utils";
 
-/**
- * Web Awesome のサイズ属性（s, m, l）に正規化する
- */
-function normalizeWaSize(size: DatePickerInputSize): "s" | "m" | "l" {
-  switch (size) {
-    case "small":
-      return "s";
-    case "medium":
-      return "m";
-    case "large":
-      return "l";
-    default:
-      return size;
-  }
-}
+export type DatePickerInputSize = ComponentSize;
 
 /**
  * カレンダーグリッドの日付セル情報
@@ -63,6 +52,33 @@ interface CalendarCellData {
   isToday: boolean;
   isOtherMonth: boolean;
   isWeekend: boolean;
+}
+
+/**
+ * カレンダーセルの単一データを構築する純粋ヘルパー関数
+ */
+function createCalendarCell(
+  year: number,
+  month: number,
+  day: number,
+  isOtherMonth: boolean,
+  selectedValue: string,
+  todayStr: string,
+): CalendarCellData {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateStr = `${year}-${pad(month)}-${pad(day)}`;
+  const dayOfWeek = new Date(year, month - 1, day).getDay();
+
+  return {
+    year,
+    month,
+    day,
+    dateStr,
+    isCurrent: dateStr === selectedValue,
+    isToday: dateStr === todayStr,
+    isOtherMonth,
+    isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+  };
 }
 
 const WEEKDAY_NAMES = ["日", "月", "火", "水", "木", "金", "土"] as const;
@@ -93,9 +109,6 @@ export class DatePickerInput extends LitElement {
         this._internals = null;
       }
     }
-    const today = new Date();
-    this._currentYear = today.getFullYear();
-    this._currentMonth = today.getMonth() + 1;
   }
 
   private _value: string = "";
@@ -161,13 +174,13 @@ export class DatePickerInput extends LitElement {
    * カレンダー表示中の年
    */
   @state()
-  private _currentYear: number;
+  private _currentYear: number = new Date().getFullYear();
 
   /**
    * カレンダー表示中の月（1〜12）
    */
   @state()
-  private _currentMonth: number;
+  private _currentMonth: number = new Date().getMonth() + 1;
 
   /**
    * ポップオーバー要素の参照
@@ -214,12 +227,19 @@ export class DatePickerInput extends LitElement {
   };
 
   /**
-   * 当日へ移動
+   * カレンダーの表示年月をシステム日付の現在年月にリセットする
    */
-  public handleToday = (): void => {
+  private resetToCurrentYearMonth(): void {
     const today = new Date();
     this._currentYear = today.getFullYear();
     this._currentMonth = today.getMonth() + 1;
+  }
+
+  /**
+   * 当日へ移動
+   */
+  public handleToday = (): void => {
+    this.resetToCurrentYearMonth();
   };
 
   /**
@@ -257,75 +277,37 @@ export class DatePickerInput extends LitElement {
   private getCalendarCells(): CalendarCellData[] {
     const year = this._currentYear;
     const month = this._currentMonth;
-
-    // 当月1日の曜日（0=日, 1=月, ..., 6=土）
     const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-
-    // 前月の最終日
     const prevMonthLastDate = new Date(year, month - 1, 0).getDate();
-    // 当月の最終日
     const currentMonthLastDate = new Date(year, month, 0).getDate();
-
     const todayStr = format(new Date(), "yyyy-MM-dd");
-    const pad = (n: number) => String(n).padStart(2, "0");
-
     const cells: CalendarCellData[] = [];
 
     // 1. 前月分の日付（パディング）
+    const prevYear = month === 1 ? year - 1 : year;
+    const prevMonth = month === 1 ? 12 : month - 1;
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const d = prevMonthLastDate - i;
-      const prevYear = month === 1 ? year - 1 : year;
-      const prevMonth = month === 1 ? 12 : month - 1;
-      const dateStr = `${prevYear}-${pad(prevMonth)}-${pad(d)}`;
-      const dayOfWeek = new Date(prevYear, prevMonth - 1, d).getDay();
-
-      cells.push({
-        year: prevYear,
-        month: prevMonth,
-        day: d,
-        dateStr,
-        isCurrent: dateStr === this.value,
-        isToday: dateStr === todayStr,
-        isOtherMonth: true,
-        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-      });
+      cells.push(
+        createCalendarCell(prevYear, prevMonth, d, true, this.value, todayStr),
+      );
     }
 
     // 2. 当月分の日付
     for (let d = 1; d <= currentMonthLastDate; d++) {
-      const dateStr = `${year}-${pad(month)}-${pad(d)}`;
-      const dayOfWeek = new Date(year, month - 1, d).getDay();
-
-      cells.push({
-        year,
-        month,
-        day: d,
-        dateStr,
-        isCurrent: dateStr === this.value,
-        isToday: dateStr === todayStr,
-        isOtherMonth: false,
-        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-      });
+      cells.push(
+        createCalendarCell(year, month, d, false, this.value, todayStr),
+      );
     }
 
     // 3. 翌月分の日付（42個になるまでパディング）
+    const nextYear = month === 12 ? year + 1 : year;
+    const nextMonth = month === 12 ? 1 : month + 1;
     const remaining = 42 - cells.length;
     for (let d = 1; d <= remaining; d++) {
-      const nextYear = month === 12 ? year + 1 : year;
-      const nextMonth = month === 12 ? 1 : month + 1;
-      const dateStr = `${nextYear}-${pad(nextMonth)}-${pad(d)}`;
-      const dayOfWeek = new Date(nextYear, nextMonth - 1, d).getDay();
-
-      cells.push({
-        year: nextYear,
-        month: nextMonth,
-        day: d,
-        dateStr,
-        isCurrent: dateStr === this.value,
-        isToday: dateStr === todayStr,
-        isOtherMonth: true,
-        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-      });
+      cells.push(
+        createCalendarCell(nextYear, nextMonth, d, true, this.value, todayStr),
+      );
     }
 
     return cells;
@@ -383,10 +365,142 @@ export class DatePickerInput extends LitElement {
   }
 
   /**
+   * カレンダーのナビゲーション操作ボタンを描画する
+   */
+  private renderNavButton(
+    id: string,
+    label: string,
+    icon: string,
+    onClick: () => void,
+    extraClass: string = "",
+  ): HTMLTemplateResult {
+    return html`
+      <button
+        type="button"
+        id=${id}
+        class="datepicker-calendar__btn ${extraClass}"
+        aria-label=${label}
+        @click=${onClick}
+      >
+        <wa-tooltip for=${id}>${label}</wa-tooltip>
+        <wa-icon
+          class="datepicker-calendar__btn-icon"
+          library="my-icons"
+          name=${icon}
+        ></wa-icon>
+      </button>
+    `;
+  }
+
+  /**
+   * カレンダーヘッダー部（年月・和暦および操作ボタン）を描画する
+   */
+  private renderCalendarHeader(): HTMLTemplateResult {
+    const { western, japanese } = this.getYearMonthTitle();
+
+    return html`
+      <div class="datepicker-calendar__header">
+        <div class="datepicker-calendar__title">
+          ${western}<span class="datepicker-calendar__era">(${japanese})</span>
+        </div>
+        <div class="datepicker-calendar__actions">
+          ${this.renderNavButton(
+            "btn-prev-year",
+            "前年",
+            "angles-left-solid-full",
+            this.handlePrevYear,
+            "datepicker-calendar__btn-prev-year",
+          )}
+          ${this.renderNavButton(
+            "btn-prev-month",
+            "前月",
+            "angle-left-solid-full",
+            this.handlePrevMonth,
+            "datepicker-calendar__btn-prev-month",
+          )}
+          ${this.renderNavButton(
+            "btn-today",
+            "当日",
+            "location-dot-solid-full",
+            this.handleToday,
+            "datepicker-calendar__btn-today",
+          )}
+          ${this.renderNavButton(
+            "btn-next-month",
+            "翌月",
+            "angle-right-solid-full",
+            this.handleNextMonth,
+            "datepicker-calendar__btn-next-month",
+          )}
+          ${this.renderNavButton(
+            "btn-next-year",
+            "翌年",
+            "angles-right-solid-full",
+            this.handleNextYear,
+            "datepicker-calendar__btn-next-year",
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * カレンダーの曜日ヘッダー部を描画する
+   */
+  private renderCalendarWeekdays(): HTMLTemplateResult {
+    return html`
+      <div class="datepicker-calendar__weekdays">
+        ${WEEKDAY_NAMES.map(
+          (w, i) => html`
+            <div
+              class="datepicker-calendar__weekday ${i === 0 || i === 6
+                ? "datepicker-calendar__weekday--weekend"
+                : ""}"
+            >
+              ${w}
+            </div>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
+   * カレンダーの日付グリッド部（42セル）を描画する
+   */
+  private renderCalendarGrid(cells: CalendarCellData[]): HTMLTemplateResult {
+    return html`
+      <div class="datepicker-calendar__grid">
+        ${cells.map(
+          (c) => html`
+            <button
+              type="button"
+              class="datepicker-calendar__cell ${c.isCurrent
+                ? "datepicker-calendar__cell--current"
+                : ""} ${c.isToday
+                ? "datepicker-calendar__cell--today"
+                : ""} ${c.isOtherMonth
+                ? "datepicker-calendar__cell--other-month"
+                : ""} ${c.isWeekend
+                ? "datepicker-calendar__cell--weekend"
+                : ""}"
+              data-date=${c.dateStr}
+              aria-label=${c.dateStr}
+              aria-selected=${c.isCurrent ? "true" : "false"}
+              @click=${() => this.handleDateClick(c.dateStr)}
+            >
+              ${c.day}
+            </button>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
    * カレンダーポップオーバーを描画する
    */
   private renderCalendar(): HTMLTemplateResult {
-    const { western, japanese } = this.getYearMonthTitle();
     const cells = this.getCalendarCells();
 
     return html`
@@ -396,131 +510,10 @@ export class DatePickerInput extends LitElement {
         placement="bottom-start"
       >
         <div class="datepicker-calendar">
-          <!-- 1. ヘッダー部（年月・和暦・ナビゲーション操作） -->
-          <div class="datepicker-calendar__header">
-            <div class="datepicker-calendar__title">
-              ${western}<span class="datepicker-calendar__era">(${japanese})</span>
-            </div>
-            <div class="datepicker-calendar__actions">
-              <button
-                type="button"
-                id="btn-prev-year"
-                class="datepicker-calendar__btn datepicker-calendar__btn-prev-year"
-                aria-label="前年"
-                @click=${this.handlePrevYear}
-              >
-                <wa-tooltip for="btn-prev-year">前年</wa-tooltip>
-                <wa-icon
-                  class="datepicker-calendar__btn-icon"
-                  library="my-icons"
-                  name="angles-left-solid-full"
-                ></wa-icon>
-              </button>
-
-              <button
-                type="button"
-                id="btn-prev-month"
-                class="datepicker-calendar__btn datepicker-calendar__btn-prev-month"
-                aria-label="前月"
-                @click=${this.handlePrevMonth}
-              >
-                <wa-tooltip for="btn-prev-month">前月</wa-tooltip>
-                <wa-icon
-                  class="datepicker-calendar__btn-icon"
-                  library="my-icons"
-                  name="angle-left-solid-full"
-                ></wa-icon>
-              </button>
-
-              <button
-                type="button"
-                id="btn-today"
-                class="datepicker-calendar__btn datepicker-calendar__btn-today"
-                aria-label="当日"
-                @click=${this.handleToday}
-              >
-                <wa-tooltip for="btn-today">当日</wa-tooltip>
-                <wa-icon
-                  class="datepicker-calendar__btn-icon"
-                  library="my-icons"
-                  name="location-dot-solid-full"
-                ></wa-icon>
-              </button>
-
-              <button
-                type="button"
-                id="btn-next-month"
-                class="datepicker-calendar__btn datepicker-calendar__btn-next-month"
-                aria-label="翌月"
-                @click=${this.handleNextMonth}
-              >
-                <wa-tooltip for="btn-next-month">翌月</wa-tooltip>
-                <wa-icon
-                  class="datepicker-calendar__btn-icon"
-                  library="my-icons"
-                  name="angle-right-solid-full"
-                ></wa-icon>
-              </button>
-
-              <button
-                type="button"
-                id="btn-next-year"
-                class="datepicker-calendar__btn datepicker-calendar__btn-next-year"
-                aria-label="翌年"
-                @click=${this.handleNextYear}
-              >
-                <wa-tooltip for="btn-next-year">翌年</wa-tooltip>
-                <wa-icon
-                  class="datepicker-calendar__btn-icon"
-                  library="my-icons"
-                  name="angles-right-solid-full"
-                ></wa-icon>
-              </button>
-            </div>
-          </div>
-
+          ${this.renderCalendarHeader()}
           <wa-divider class="datepicker-calendar__divider"></wa-divider>
-
-          <!-- 2. 曜日ヘッダー部 -->
-          <div class="datepicker-calendar__weekdays">
-            ${WEEKDAY_NAMES.map(
-              (w, i) => html`
-                <div
-                  class="datepicker-calendar__weekday ${i === 0 || i === 6
-                    ? "datepicker-calendar__weekday--weekend"
-                    : ""}"
-                >
-                  ${w}
-                </div>
-              `,
-            )}
-          </div>
-
-          <!-- 3. 日付グリッド部（42セル） -->
-          <div class="datepicker-calendar__grid">
-            ${cells.map(
-              (c) => html`
-                <button
-                  type="button"
-                  class="datepicker-calendar__cell ${c.isCurrent
-                    ? "datepicker-calendar__cell--current"
-                    : ""} ${c.isToday
-                    ? "datepicker-calendar__cell--today"
-                    : ""} ${c.isOtherMonth
-                    ? "datepicker-calendar__cell--other-month"
-                    : ""} ${c.isWeekend
-                    ? "datepicker-calendar__cell--weekend"
-                    : ""}"
-                  data-date=${c.dateStr}
-                  aria-label=${c.dateStr}
-                  aria-selected=${c.isCurrent ? "true" : "false"}
-                  @click=${() => this.handleDateClick(c.dateStr)}
-                >
-                  ${c.day}
-                </button>
-              `,
-            )}
-          </div>
+          ${this.renderCalendarWeekdays()}
+          ${this.renderCalendarGrid(cells)}
         </div>
       </wa-popover>
     `;
