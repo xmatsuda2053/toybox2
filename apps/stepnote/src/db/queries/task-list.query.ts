@@ -2,6 +2,7 @@ import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
 import type { Database } from "../schema/database.schema";
 import type { TaskRecord } from "../models/task.model";
 import type { QuickAccessRecord } from "../models/navigation.model";
+import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 
 /**
  * タスク一覧の抽出条件オプション
@@ -187,4 +188,83 @@ export class TaskListQuery {
       return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
     });
   }
+
+  /**
+   * 指定した会計年度に属するタスクを対象に、各 QuickAccess フィルター条件の該当件数を集計して取得する。
+   *
+   * @param {number} fiscalYear 対象会計年度
+   * @return {*}  {Promise<QuickAccessTaskCounts>} 各属性の該当タスク件数
+   * @memberof TaskListQuery
+   */
+  public async getQuickAccessTaskCounts(
+    fiscalYear: number,
+  ): Promise<QuickAccessTaskCounts> {
+    const tasks = await this.db.tasks
+      .where("fiscalYear")
+      .equals(fiscalYear)
+      .toArray();
+
+    return calculateQuickAccessTaskCounts(tasks);
+  }
+
+  /**
+   * タスク一覧から各 QuickAccess フィルターの該当件数を集計する。
+   *
+   * @param {readonly TaskRecord[]} tasks 対象タスク一覧
+   * @return {*}  {QuickAccessTaskCounts} 集計結果
+   * @memberof TaskListQuery
+   */
+  public calculateQuickAccessTaskCounts(
+    tasks: readonly TaskRecord[],
+  ): QuickAccessTaskCounts {
+    return calculateQuickAccessTaskCounts(tasks);
+  }
 }
+
+/**
+ * タスク一覧から各 QuickAccess フィルターの該当件数を集計する純粋関数。
+ *
+ * @export
+ * @param {readonly TaskRecord[]} tasks 対象タスク一覧
+ * @return {*}  {QuickAccessTaskCounts} 集計結果
+ */
+export function calculateQuickAccessTaskCounts(
+  tasks: readonly TaskRecord[],
+): QuickAccessTaskCounts {
+  let bookmark = 0;
+  let uncategorized = 0;
+  let overdue = 0;
+  let asap = 0;
+  let upcoming = 0;
+
+  for (const task of tasks) {
+    if (task.bookmark) {
+      bookmark += 1;
+    }
+    if (!task.labelId || task.labelId === 0) {
+      uncategorized += 1;
+    }
+    // 期限警告系は未完了タスク（対応中・開始待ち、statusCode !== 9）のみをカウント
+    if (task.statusCode !== 9) {
+      const dueDate = new Date(task.dueDate);
+      if (isOverdue(dueDate)) {
+        overdue += 1;
+      }
+      if (isAsap(dueDate)) {
+        asap += 1;
+      }
+      if (isWithinAnyDaysBefore(dueDate, 3)) {
+        upcoming += 1;
+      }
+    }
+  }
+
+  return {
+    bookmark,
+    uncategorized,
+    overdue,
+    asap,
+    upcoming,
+  };
+}
+

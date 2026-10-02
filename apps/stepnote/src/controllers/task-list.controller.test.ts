@@ -90,6 +90,12 @@ const createMockHost = () => {
  *    - 9-1. setQuickAccessFilter 実行時に QuickAccess の条件（ブックマーク・未分類・期限・ステータス等）が適用されて state が更新されること
  *    - 9-2. setQuickAccessFilter 実行後に host.requestUpdate() および subscribe リスナーが呼ばれること
  *    - 9-3. QuickAccess フィルタを解除（デフォルト状態）した場合、元の条件の一覧に復帰すること
+ *
+ * 10. QuickAccess タスク件数の集計・保持（QuickAccess Task Counts）
+ *    - 10-1. 初期ロード完了時に、指定年度の全タスクから集計された quickAccessTaskCounts が保持されること
+ *    - 10-2. setFiscalYear で年度を切り替えた際、切り替え先年度の集計件数に quickAccessTaskCounts が更新されること
+ *    - 10-3. 検索キーワードやラベルフィルタ、QuickAccess フィルタを適用しても、quickAccessTaskCounts は年度全体の件数を維持すること
+ *    - 10-4. toggleBookmark 実行時にタスクのブックマーク状態が更新され、quickAccessTaskCounts.bookmark が再集計されること
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -512,6 +518,62 @@ describe("TaskListController (TDD)", () => {
 
       await controller.setQuickAccessFilter(undefined);
       expect(controller.state.length).toBe(2);
+    });
+  });
+
+  describe("10. QuickAccess タスク件数の集計・保持（QuickAccess Task Counts）", () => {
+    it("10-1. 初期ロード完了時に、指定年度の全タスクから集計された quickAccessTaskCounts が保持されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      // sampleTasks[0]: bookmark: false, labelId: 1
+      // sampleTasks[1]: bookmark: true, labelId: 2
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(1);
+    });
+
+    it("10-2. setFiscalYear で年度を切り替えた際、切り替え先年度の集計件数に quickAccessTaskCounts が更新されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(1);
+
+      await controller.setFiscalYear(currentYear - 1);
+      // sampleTasks[2]: bookmark: false
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(0);
+    });
+
+    it("10-3. 検索キーワードやラベルフィルタ、QuickAccess フィルタを適用しても、quickAccessTaskCounts は年度全体の件数を維持すること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      // ブックマークのみに絞り込む（state は1件になる）
+      await controller.setQuickAccessFilter({ isBookmarkSelected: true });
+      expect(controller.state.length).toBe(1);
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(1);
+
+      // 検索キーワードで0件に絞り込む（state は0件になる）
+      await controller.setSearchKeyword("存在しないキーワードxyz");
+      expect(controller.state.length).toBe(0);
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(1);
+    });
+
+    it("10-4. toggleBookmark 実行時にタスクのブックマーク状態が更新され、quickAccessTaskCounts.bookmark が再集計されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(1);
+
+      // sampleTasks[0]（id: 1, bookmark: false）をブックマーク
+      await controller.toggleBookmark(1, false);
+      expect(controller.quickAccessTaskCounts.bookmark).toBe(2);
     });
   });
 });

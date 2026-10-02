@@ -7,9 +7,14 @@ import {
 } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import { layoutUIContext, quickAccessContext } from "@/contexts/index.js";
+import {
+  layoutUIContext,
+  quickAccessContext,
+  taskListContext,
+} from "@/contexts/index.js";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
+import type { TaskListController } from "@/controllers/task-list.controller.js";
 import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
 import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
@@ -131,14 +136,28 @@ const QUICK_ACCESS_BUTTON_GROUPS: readonly QuickAccessButtonItem[][] = [
 export class NavigationQuickAccess extends LitElement {
   public static override styles = unsafeCSS(quickAccessStyles);
 
+  private _taskCounts?: QuickAccessTaskCounts;
+
   /**
    * 外部から注入されるタスク件数（View Props）
+   * 明示的な指定がない場合は TaskListController の quickAccessTaskCounts を参照する。
    *
    * @type {QuickAccessTaskCounts}
    * @memberof NavigationQuickAccess
    */
   @property({ attribute: false })
-  public taskCounts: QuickAccessTaskCounts = {};
+  public get taskCounts(): QuickAccessTaskCounts {
+    return (
+      this._taskCounts ??
+      this._taskListController?.quickAccessTaskCounts ??
+      {}
+    );
+  }
+
+  public set taskCounts(counts: QuickAccessTaskCounts) {
+    this._taskCounts = counts;
+    this.requestUpdate();
+  }
 
   private subscriber = new ControllerSubscriber(this);
 
@@ -159,6 +178,15 @@ export class NavigationQuickAccess extends LitElement {
    * @memberof NavigationQuickAccess
    */
   private _quickAccessController?: QuickAccessController;
+
+  /**
+   * 内部で保持する TaskListController インスタンス
+   *
+   * @private
+   * @type {TaskListController | undefined}
+   * @memberof NavigationQuickAccess
+   */
+  private _taskListController?: TaskListController;
 
   /**
    * レイアウト開閉状態管理コントローラーを取得する。
@@ -209,6 +237,31 @@ export class NavigationQuickAccess extends LitElement {
 
     this._quickAccessController = controller;
     this.subscriber.subscribe("quickAccess", controller);
+    this.requestUpdate();
+  }
+
+  /**
+   * タスク一覧管理コントローラーを取得する。
+   *
+   * @type {TaskListController | undefined}
+   * @memberof NavigationQuickAccess
+   */
+  public get taskListController(): TaskListController | undefined {
+    return this._taskListController;
+  }
+
+  /**
+   * タスク一覧管理コントローラーを設定し、状態変更の購読を開始する。
+   * コントローラーが差し替えられた場合は既存の購読を解除し、新たなインスタンスを購読します。
+   *
+   * @memberof NavigationQuickAccess
+   */
+  @consume({ context: taskListContext, subscribe: true })
+  public set taskListController(controller: TaskListController | undefined) {
+    if (this._taskListController === controller) return;
+
+    this._taskListController = controller;
+    this.subscriber.subscribe("taskList", controller);
     this.requestUpdate();
   }
 

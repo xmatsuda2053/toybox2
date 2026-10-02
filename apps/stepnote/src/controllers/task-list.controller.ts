@@ -8,7 +8,11 @@ import {
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
-import type { TaskListQuery } from "@/db/queries/task-list.query";
+import {
+  type TaskListQuery,
+  calculateQuickAccessTaskCounts,
+} from "@/db/queries/task-list.query";
+import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 import { BaseDataController } from "./base-reactive.controller";
 
 /**
@@ -27,6 +31,7 @@ export class TaskListController extends BaseDataController<
   private _searchKeyword: string = "";
   private _quickAccess?: Partial<QuickAccessRecord>;
   private _query?: TaskListQuery;
+  private _quickAccessTaskCounts: QuickAccessTaskCounts = {};
 
   /**
    * 現在選択中の会計年度
@@ -73,6 +78,17 @@ export class TaskListController extends BaseDataController<
   }
 
   /**
+   * 現在選択中の会計年度における QuickAccess 各項目のタスク集計件数
+   *
+   * @readonly
+   * @type {QuickAccessTaskCounts}
+   * @memberof TaskListController
+   */
+  public get quickAccessTaskCounts(): QuickAccessTaskCounts {
+    return this._quickAccessTaskCounts;
+  }
+
+  /**
    * Creates an instance of TaskListController.
    * @param {ReactiveControllerHost} host ホストコンポーネント
    * @param {TaskRepository} repository タスクリポジトリ
@@ -106,12 +122,15 @@ export class TaskListController extends BaseDataController<
         quickAccess: this._quickAccess,
         searchKeyword: this._searchKeyword,
       });
+      this._quickAccessTaskCounts =
+        await this._query.getQuickAccessTaskCounts(this._fiscalYear);
       this.notify();
       return;
     }
 
     const tasks = await this.repository.getByFiscalYear(this._fiscalYear);
     this._state = this.filterTasksInMemory(tasks);
+    this._quickAccessTaskCounts = calculateQuickAccessTaskCounts(tasks);
     this.notify();
   }
 
