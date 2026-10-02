@@ -1,16 +1,15 @@
 import {
-  LitElement,
   html,
   unsafeCSS,
   nothing,
   type HTMLTemplateResult,
 } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { consume } from "@lit/context";
-import { labelsContext } from "@/contexts/index.js";
-import type { LabelsController } from "@/controllers/labels.controller.js";
+import { customElement, state } from "lit/decorators.js";
 import type { LabelRecord } from "@/db/models/navigation.model.js";
-import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
+import {
+  SubscriberElement,
+  WithLabelsController,
+} from "@/utils/controller-consumers.mixin.js";
 import labelsStyles from "./navigation-labels.scss?inline";
 
 /**
@@ -21,45 +20,11 @@ import labelsStyles from "./navigation-labels.scss?inline";
  *
  * @export
  * @class NavigationLabels
- * @extends {LitElement}
+ * @extends {WithLabelsController(SubscriberElement)}
  */
 @customElement("navigation-labels")
-export class NavigationLabels extends LitElement {
-  public static override styles = unsafeCSS(labelsStyles);
-
-  private subscriber = new ControllerSubscriber(this);
-
-  /**
-   * 内部で保持する LabelsController インスタンス
-   *
-   * @private
-   * @type {LabelsController | undefined}
-   */
-  private _labelsController?: LabelsController;
-
-  /**
-   * ラベル管理コントローラーを取得する。
-   *
-   * @type {LabelsController | undefined}
-   */
-  public get labelsController(): LabelsController | undefined {
-    return this._labelsController;
-  }
-
-  /**
-   * ラベル管理コントローラーを設定し、状態変更の購読を開始する。
-   *
-   * @param {LabelsController | undefined} controller
-   */
-  @consume({ context: labelsContext, subscribe: true })
-  @property({ attribute: false })
-  public set labelsController(controller: LabelsController | undefined) {
-    if (this._labelsController === controller) return;
-
-    this._labelsController = controller;
-    this.subscriber.subscribe("labels", controller);
-    this.requestUpdate();
-  }
+export class NavigationLabels extends WithLabelsController(SubscriberElement) {
+  public static styles = unsafeCSS(labelsStyles);
 
   /**
    * 新規作成/編集ダイアログの開閉状態

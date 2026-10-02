@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import "@lit-labs/virtualizer";
@@ -12,15 +12,16 @@ import {
 import type { TaskRecord } from "@/db/models/task.model";
 import {
   taskListContext,
-  taskContext,
   labelsContext,
   quickAccessContext,
 } from "@/contexts/index.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
-import type { TaskController } from "@/controllers/task.controller.js";
 import type { LabelsController } from "@/controllers/labels.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
-import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
+import {
+  SubscriberElement,
+  WithTaskController,
+} from "@/utils/controller-consumers.mixin.js";
 import "./task-create-dialog.js";
 import "./task-list-item.js";
 import paneTaskListStyles from "./pane-task-list.scss?inline";
@@ -34,15 +35,13 @@ import paneTaskListStyles from "./pane-task-list.scss?inline";
  *
  * @export
  * @class PaneTaskList
- * @extends {LitElement}
+ * @extends {WithTaskController(SubscriberElement)}
  */
 @customElement("pane-task-list")
-export class PaneTaskList extends LitElement {
-  public static override styles = unsafeCSS(paneTaskListStyles);
+export class PaneTaskList extends WithTaskController(SubscriberElement) {
+  public static styles = unsafeCSS(paneTaskListStyles);
 
-  private subscriber = new ControllerSubscriber(this);
   private _taskListController?: TaskListController;
-  private _taskController?: TaskController;
   private _labelsController?: LabelsController;
   private _quickAccessController?: QuickAccessController;
 
@@ -57,27 +56,13 @@ export class PaneTaskList extends LitElement {
   @property({ attribute: false })
   public set taskListController(controller: TaskListController | undefined) {
     if (this._taskListController === controller) return;
-    this._taskListController = controller;
-    this.subscriber.subscribe("taskList", controller);
+    this._taskListController = this.subscriber.bind(
+      "taskList",
+      this._taskListController,
+      controller,
+    );
     this.syncLabelFilter();
     this.syncQuickAccessFilter();
-    this.requestUpdate();
-  }
-
-  /**
-   * 単一選択タスク管理コントローラー
-   */
-  public get taskController(): TaskController | undefined {
-    return this._taskController;
-  }
-
-  @consume({ context: taskContext, subscribe: true })
-  @property({ attribute: false })
-  public set taskController(controller: TaskController | undefined) {
-    if (this._taskController === controller) return;
-    this._taskController = controller;
-    this.subscriber.subscribe("task", controller);
-    this.requestUpdate();
   }
 
   /**
@@ -91,13 +76,16 @@ export class PaneTaskList extends LitElement {
   @property({ attribute: false })
   public set labelsController(controller: LabelsController | undefined) {
     if (this._labelsController === controller) return;
-    this._labelsController = controller;
-    this.subscriber.subscribe("labels", controller, () => {
-      this.syncLabelFilter();
-      this.requestUpdate();
-    });
+    this._labelsController = this.subscriber.bind(
+      "labels",
+      this._labelsController,
+      controller,
+      () => {
+        this.syncLabelFilter();
+        this.requestUpdate();
+      },
+    );
     this.syncLabelFilter();
-    this.requestUpdate();
   }
 
   /**
@@ -113,13 +101,16 @@ export class PaneTaskList extends LitElement {
     controller: QuickAccessController | undefined,
   ) {
     if (this._quickAccessController === controller) return;
-    this._quickAccessController = controller;
-    this.subscriber.subscribe("quickAccess", controller, () => {
-      this.syncQuickAccessFilter();
-      this.requestUpdate();
-    });
+    this._quickAccessController = this.subscriber.bind(
+      "quickAccess",
+      this._quickAccessController,
+      controller,
+      () => {
+        this.syncQuickAccessFilter();
+        this.requestUpdate();
+      },
+    );
     this.syncQuickAccessFilter();
-    this.requestUpdate();
   }
 
   /**

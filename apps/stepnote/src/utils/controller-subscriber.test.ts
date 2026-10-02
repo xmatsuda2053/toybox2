@@ -29,6 +29,12 @@ import {
  *    - 5-1. unsubscribeAll() 呼出時に保持されているすべてのコントローラーの購読解除関数が実行されること
  *    - 5-2. hostDisconnected() 呼出時にすべてのコントローラーの購読解除関数が実行されること
  *    - 5-3. 一度解除された後に再度 unsubscribeAll() を呼んでも購読解除関数が多重実行されないこと
+ *
+ * 6. コントローラーバインド（bind）によるプロパティセッター集約
+ *    - 6-1. 新規コントローラーまたは異なるインスタンスが渡された場合、旧購読を解除して新購読を登録し、host.requestUpdate() を呼び出して新インスタンスを返すこと
+ *    - 6-2. 同一インスタンスが渡された場合（current === next）、購読登録や host.requestUpdate() を行わず、そのままインスタンスを返すこと
+ *    - 6-3. カスタムコールバックが指定された場合、購読時のリスナー発火時にそのコールバックが呼び出されること
+ *    - 6-4. next に undefined が渡された場合、旧購読を解除して host.requestUpdate() を呼び出し、undefined を返すこと
  */
 
 describe("ControllerSubscriber", () => {
@@ -176,6 +182,64 @@ describe("ControllerSubscriber", () => {
 
       subscriber.unsubscribeAll();
       expect(ctrl.unsubscribeMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("6. コントローラーバインド（bind）によるプロパティセッター集約", () => {
+    it("6-1. 新規コントローラーまたは異なるインスタンスが渡された場合、旧購読を解除して新購読を登録し、host.requestUpdate() を呼び出して新インスタンスを返すこと", () => {
+      const ctrl1 = createMockController();
+      const ctrl2 = createMockController();
+
+      // 初期バインド（undefined -> ctrl1）
+      const bound1 = subscriber.bind("test", undefined, ctrl1);
+      expect(bound1).toBe(ctrl1);
+      expect(ctrl1.subscribe).toHaveBeenCalledTimes(1);
+      expect(mockHost.requestUpdate).toHaveBeenCalledTimes(1);
+
+      // コントローラー差し替え（ctrl1 -> ctrl2）
+      mockHost.requestUpdate = vi.fn();
+      const bound2 = subscriber.bind("test", ctrl1, ctrl2);
+      expect(bound2).toBe(ctrl2);
+      expect(ctrl1.unsubscribeMock).toHaveBeenCalledTimes(1);
+      expect(ctrl2.subscribe).toHaveBeenCalledTimes(1);
+      expect(mockHost.requestUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it("6-2. 同一インスタンスが渡された場合（current === next）、購読登録や host.requestUpdate() を行わず、そのままインスタンスを返すこと", () => {
+      const ctrl = createMockController();
+      subscriber.bind("test", undefined, ctrl);
+
+      const updateMock = vi.fn();
+      mockHost.requestUpdate = updateMock;
+
+      const bound = subscriber.bind("test", ctrl, ctrl);
+      expect(bound).toBe(ctrl);
+      expect(ctrl.subscribe).toHaveBeenCalledTimes(1); // 最初の1回のみ
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    it("6-3. カスタムコールバックが指定された場合、購読時のリスナー発火時にそのコールバックが呼び出されること", () => {
+      const ctrl = createMockController();
+      const onUpdate = vi.fn();
+
+      subscriber.bind("test", undefined, ctrl, onUpdate);
+      expect(onUpdate).not.toHaveBeenCalled();
+
+      ctrl.triggerUpdate();
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it("6-4. next に undefined が渡された場合、旧購読を解除して host.requestUpdate() を呼び出し、undefined を返すこと", () => {
+      const ctrl = createMockController();
+      subscriber.bind("test", undefined, ctrl);
+
+      const updateMock = vi.fn();
+      mockHost.requestUpdate = updateMock;
+
+      const bound = subscriber.bind("test", ctrl, undefined);
+      expect(bound).toBeUndefined();
+      expect(ctrl.unsubscribeMock).toHaveBeenCalledTimes(1);
+      expect(updateMock).toHaveBeenCalledTimes(1);
     });
   });
 });

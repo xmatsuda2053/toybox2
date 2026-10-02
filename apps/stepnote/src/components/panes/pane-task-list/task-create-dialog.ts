@@ -1,12 +1,10 @@
 import {
-  LitElement,
   html,
   unsafeCSS,
   type HTMLTemplateResult,
   type PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { consume } from "@lit/context";
 import "@shared/components";
 import {
   format,
@@ -14,11 +12,12 @@ import {
   getFiscalYearRange,
   dispatchCustomEvent,
 } from "@shared/utils";
-import { labelsContext, taskContext } from "@/contexts/index.js";
-import type { LabelsController } from "@/controllers/labels.controller.js";
-import type { TaskController } from "@/controllers/task.controller.js";
 import type { DatePickerChangeEventDetail } from "@shared/components";
-import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
+import {
+  SubscriberElement,
+  WithLabelsController,
+  WithTaskController,
+} from "@/utils/controller-consumers.mixin.js";
 import styles from "./task-create-dialog.scss?inline";
 
 /**
@@ -29,48 +28,13 @@ import styles from "./task-create-dialog.scss?inline";
  *
  * @export
  * @class TaskCreateDialog
- * @extends {LitElement}
+ * @extends {WithTaskController(WithLabelsController(SubscriberElement))}
  */
 @customElement("task-create-dialog")
-export class TaskCreateDialog extends LitElement {
-  public static override styles = unsafeCSS(styles);
-
-  private subscriber = new ControllerSubscriber(this);
-
-  private _labelsController?: LabelsController;
-  private _taskController?: TaskController;
-
-  /**
-   * ラベル管理コントローラー
-   */
-  public get labelsController(): LabelsController | undefined {
-    return this._labelsController;
-  }
-
-  @consume({ context: labelsContext, subscribe: true })
-  @property({ attribute: false })
-  public set labelsController(controller: LabelsController | undefined) {
-    if (this._labelsController === controller) return;
-    this._labelsController = controller;
-    this.subscriber.subscribe("labels", controller);
-    this.requestUpdate();
-  }
-
-  /**
-   * タスク管理コントローラー
-   */
-  public get taskController(): TaskController | undefined {
-    return this._taskController;
-  }
-
-  @consume({ context: taskContext, subscribe: true })
-  @property({ attribute: false })
-  public set taskController(controller: TaskController | undefined) {
-    if (this._taskController === controller) return;
-    this._taskController = controller;
-    this.subscriber.subscribe("task", controller);
-    this.requestUpdate();
-  }
+export class TaskCreateDialog extends WithTaskController(
+  WithLabelsController(SubscriberElement),
+) {
+  public static styles = unsafeCSS(styles);
 
   /**
    * ダイアログの開閉状態

@@ -57,6 +57,31 @@ export class ControllerSubscriber implements ReactiveController {
   }
 
   /**
+   * コントローラーの変更を検知して購読を更新し、ホスト要素の更新を要求する。
+   * プロパティセッターにおけるボイラープレート（同一判定、subscribe、requestUpdate）を集約する。
+   *
+   * @template T
+   * @param {string} key コントローラーの識別キー
+   * @param {T | undefined} current 現在保持しているコントローラーインスタンス
+   * @param {T | undefined} next 新たに設定されるコントローラーインスタンス
+   * @param {(() => void)} [onUpdate] 更新通知時のコールバック（省略時は host.requestUpdate()）
+   * @return {T | undefined} 設定されたコントローラーインスタンス（next）
+   */
+  public bind<T extends SubscribableController>(
+    key: string,
+    current: T | undefined,
+    next: T | undefined,
+    onUpdate?: () => void,
+  ): T | undefined {
+    if (current === next) {
+      return current;
+    }
+    this.subscribe(key, next, onUpdate);
+    this.host.requestUpdate();
+    return next;
+  }
+
+  /**
    * 指定したキーの購読を明示的に解除する。
    *
    * @param {string} key コントローラーの識別キー
