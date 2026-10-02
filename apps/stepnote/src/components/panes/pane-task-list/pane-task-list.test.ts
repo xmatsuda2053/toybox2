@@ -449,5 +449,20 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       );
     });
   });
+
+  describe("11. 内部描画メソッド分割（renderFiscalYearDropdown）の検証", () => {
+    it("11-1. renderFiscalYearDropdown により年度選択ドロップダウンが正しくレンダリングされること", () => {
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as {
+            renderFiscalYearDropdown: (year: number) => unknown;
+          }
+        ).renderFiscalYearDropdown(2026),
+      );
+      expect(htmlStr).toContain("wa-dropdown");
+      expect(htmlStr).toContain("pane-task-list__btn-year");
+      expect(htmlStr).toContain("2026年度");
+    });
+  });
 });
 

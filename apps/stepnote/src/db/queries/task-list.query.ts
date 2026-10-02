@@ -174,6 +174,27 @@ export class TaskListQuery {
   }
 }
 
+interface DueAlertCounts {
+  overdue: number;
+  asap: number;
+  upcoming: number;
+}
+
+/**
+ * 未完了タスクの期限日を判定し、期限警告件数を加算する。
+ */
+function updateDueAlertCounts(dueDate: Date, counts: DueAlertCounts): void {
+  if (isOverdue(dueDate)) {
+    counts.overdue += 1;
+  }
+  if (isAsap(dueDate)) {
+    counts.asap += 1;
+  }
+  if (isWithinAnyDaysBefore(dueDate, 3)) {
+    counts.upcoming += 1;
+  }
+}
+
 /**
  * タスク一覧から各 QuickAccess フィルターの該当件数を集計する純粋関数。
  *
@@ -186,9 +207,11 @@ export function calculateQuickAccessTaskCounts(
 ): QuickAccessTaskCounts {
   let bookmark = 0;
   let uncategorized = 0;
-  let overdue = 0;
-  let asap = 0;
-  let upcoming = 0;
+  const dueCounts: DueAlertCounts = {
+    overdue: 0,
+    asap: 0,
+    upcoming: 0,
+  };
 
   for (const task of tasks) {
     if (task.bookmark) {
@@ -199,25 +222,14 @@ export function calculateQuickAccessTaskCounts(
     }
     // 期限警告系は未完了タスク（対応中・開始待ち、statusCode !== 9）のみをカウント
     if (task.statusCode !== 9) {
-      const dueDate = new Date(task.dueDate);
-      if (isOverdue(dueDate)) {
-        overdue += 1;
-      }
-      if (isAsap(dueDate)) {
-        asap += 1;
-      }
-      if (isWithinAnyDaysBefore(dueDate, 3)) {
-        upcoming += 1;
-      }
+      updateDueAlertCounts(new Date(task.dueDate), dueCounts);
     }
   }
 
   return {
     bookmark,
     uncategorized,
-    overdue,
-    asap,
-    upcoming,
+    ...dueCounts,
   };
 }
 

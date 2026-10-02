@@ -170,17 +170,87 @@ export class TaskListItem extends LitElement {
     return fullDate.slice(2);
   }
 
-  override render(): HTMLTemplateResult {
+  /**
+   * 1行目: ステータスアイコン、タスク名、Issue進捗を描画する
+   */
+  private renderHeaderRow(): HTMLTemplateResult {
     const task = this.task;
-    const isSelected = Boolean(task?.selected);
-    const isBookmarked = Boolean(task?.bookmark);
-    const labelText = this.labelName.trim() || "未分類";
-
     const statusIcon = this.getStatusIconName();
     const statusModifier = this.getStatusModifierClass();
+
+    return html`
+      <div class="task-list-item__row task-list-item__row--header">
+        <wa-icon
+          class="task-list-item__status-icon ${statusModifier}"
+          library="my-icons"
+          name=${statusIcon}
+        ></wa-icon>
+        <span class="task-list-item__title" title=${task?.name ?? ""}>
+          ${task?.name ?? ""}
+        </span>
+        <span class="task-list-item__issues-progress">
+          ${this.issuesDone}/${this.issuesTotal}
+        </span>
+      </div>
+    `;
+  }
+
+  /**
+   * 2行目: ブックマークボタン、期限日および期限状態、所属ラベルを描画する
+   */
+  private renderMetaRow(): HTMLTemplateResult {
+    const task = this.task;
+    const isBookmarked = Boolean(task?.bookmark);
+    const labelText = this.labelName.trim() || "未分類";
     const dueIcon = this.getDueIconName();
     const dueModifier = this.getDueModifierClass();
     const dueDateStr = this.getFormattedDueDate();
+
+    return html`
+      <div class="task-list-item__row task-list-item__row--meta">
+        <button
+          type="button"
+          class="task-list-item__btn-bookmark ${isBookmarked
+            ? "task-list-item__btn-bookmark--active"
+            : ""}"
+          title=${isBookmarked ? "ブックマーク解除" : "ブックマーク追加"}
+          @click=${this.handleBookmarkClick}
+        >
+          <wa-icon
+            class="task-list-item__bookmark-icon ${isBookmarked
+              ? "task-list-item__bookmark-icon--active"
+              : ""}"
+            library="my-icons"
+            name="bookmark-solid-full"
+          ></wa-icon>
+        </button>
+
+        <wa-divider
+          orientation="vertical"
+          class="task-list-item__divider"
+        ></wa-divider>
+
+        <wa-icon
+          class="task-list-item__due-icon ${dueModifier}"
+          library="my-icons"
+          name=${dueIcon}
+        ></wa-icon>
+        <span class="task-list-item__due-date">${dueDateStr}</span>
+
+        <wa-divider
+          orientation="vertical"
+          class="task-list-item__divider"
+        ></wa-divider>
+
+        <span class="task-list-item__label" title=${labelText}>
+          ${labelText}
+        </span>
+      </div>
+    `;
+  }
+
+  override render(): HTMLTemplateResult {
+    const isSelected = Boolean(this.task?.selected);
 
     return html`
       <div
@@ -189,61 +259,8 @@ export class TaskListItem extends LitElement {
         tabindex="0"
         @click=${this.handleCardClick}
       >
-        <!-- 1行目: ステータスアイコン、タスク名、Issue件数 -->
-        <div class="task-list-item__row task-list-item__row--header">
-          <wa-icon
-            class="task-list-item__status-icon ${statusModifier}"
-            library="my-icons"
-            name=${statusIcon}
-          ></wa-icon>
-          <span class="task-list-item__title" title=${task?.name ?? ""}>
-            ${task?.name ?? ""}
-          </span>
-          <span class="task-list-item__issues-progress">
-            ${this.issuesDone}/${this.issuesTotal}
-          </span>
-        </div>
-
-        <!-- 2行目: ブックマークボタン、期限日および期限状態、所属ラベル -->
-        <div class="task-list-item__row task-list-item__row--meta">
-          <button
-            type="button"
-            class="task-list-item__btn-bookmark ${isBookmarked
-              ? "task-list-item__btn-bookmark--active"
-              : ""}"
-            title=${isBookmarked ? "ブックマーク解除" : "ブックマーク追加"}
-            @click=${this.handleBookmarkClick}
-          >
-            <wa-icon
-              class="task-list-item__bookmark-icon ${isBookmarked
-                ? "task-list-item__bookmark-icon--active"
-                : ""}"
-              library="my-icons"
-              name="bookmark-solid-full"
-            ></wa-icon>
-          </button>
-
-          <wa-divider
-            orientation="vertical"
-            class="task-list-item__divider"
-          ></wa-divider>
-
-          <wa-icon
-            class="task-list-item__due-icon ${dueModifier}"
-            library="my-icons"
-            name=${dueIcon}
-          ></wa-icon>
-          <span class="task-list-item__due-date">${dueDateStr}</span>
-
-          <wa-divider
-            orientation="vertical"
-            class="task-list-item__divider"
-          ></wa-divider>
-
-          <span class="task-list-item__label" title=${labelText}>
-            ${labelText}
-          </span>
-        </div>
+        ${this.renderHeaderRow()}
+        ${this.renderMetaRow()}
       </div>
     `;
   }

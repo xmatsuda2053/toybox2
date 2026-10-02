@@ -265,4 +265,31 @@ describe("TaskListItem Component", () => {
       expect(content).toMatch(/\.task-list-item__divider\s*\{[^}]*--color:\s*var\(--wa-color-text-quiet/);
     });
   });
+
+  describe("6. 内部描画メソッド分割（renderHeaderRow / renderMetaRow）の検証", () => {
+    it("6-1. renderHeaderRow によりヘッダー行（ステータス・タイトル・進捗）が正しくレンダリングされること", () => {
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as {
+            renderHeaderRow: () => unknown;
+          }
+        ).renderHeaderRow(),
+      );
+      expect(htmlStr).toContain("task-list-item__row--header");
+      expect(htmlStr).toContain("task-list-item__title");
+    });
+
+    it("6-2. renderMetaRow によりメタ行（ブックマーク・期限・ラベル）が正しくレンダリングされること", () => {
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as {
+            renderMetaRow: () => unknown;
+          }
+        ).renderMetaRow(),
+      );
+      expect(htmlStr).toContain("task-list-item__row--meta");
+      expect(htmlStr).toContain("task-list-item__btn-bookmark");
+      expect(htmlStr).toContain("task-list-item__due-date");
+    });
+  });
 });
