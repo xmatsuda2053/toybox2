@@ -228,12 +228,12 @@ export class TaskListItem extends LitElement {
             class="task-list-item__divider"
           ></wa-divider>
 
-          <span class="task-list-item__due-date">${dueDateStr}</span>
           <wa-icon
             class="task-list-item__due-icon ${dueModifier}"
             library="my-icons"
             name=${dueIcon}
           ></wa-icon>
+          <span class="task-list-item__due-date">${dueDateStr}</span>
 
           <wa-divider
             orientation="vertical"

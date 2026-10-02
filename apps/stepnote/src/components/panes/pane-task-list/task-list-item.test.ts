@@ -25,6 +25,7 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 3-4. labelName が指定されている場合、ラベル要素（.task-list-item__label）にラベル名が表示されること
  *    - 3-5. labelName が未指定（空）の場合、フォールバック（未分類）が表示されること
  *    - 3-6. 垂直ディバイダー（wa-divider[orientation="vertical"]）が区切りとしてレンダリングされること
+ *    - 3-7. 期限情報表示において、期限アイコン（.task-list-item__due-icon）が期限日（.task-list-item__due-date）の直前に配置されていること（アイコン > ラベルの順序）
  *
  * 4. ユーザーインタラクションとカスタムイベント発火
  *    - 4-1. アイテム本体のクリック時に task-select カスタムイベント（detail: { taskId }）がディスパッチされること
@@ -174,6 +175,19 @@ describe("TaskListItem Component", () => {
       expect(htmlStr).toContain('orientation="vertical"');
       expect(htmlStr).toContain("task-list-item__divider");
       expect(htmlStr).not.toContain("task-list-item__divider\">|");
+    });
+
+    it("3-7. 期限情報表示において、期限アイコン（.task-list-item__due-icon）が期限日（.task-list-item__due-date）の直前に配置されていること", () => {
+      element.task = { ...baseTask, dueDate: new Date("2026-05-15") };
+      const htmlStr = flattenTemplate(element.render());
+
+      const dueIconIndex = htmlStr.indexOf("task-list-item__due-icon");
+      const dueDateIndex = htmlStr.indexOf("task-list-item__due-date");
+
+      expect(dueIconIndex).toBeGreaterThan(-1);
+      expect(dueDateIndex).toBeGreaterThan(-1);
+      // アイコンが日付よりも前に出現すること
+      expect(dueIconIndex).toBeLessThan(dueDateIndex);
     });
   });
 
