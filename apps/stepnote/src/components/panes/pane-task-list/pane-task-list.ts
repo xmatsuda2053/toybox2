@@ -283,6 +283,54 @@ export class PaneTaskList extends WithTaskController(SubscriberElement) {
   };
 
   /**
+   * 年度選択ドロップダウンを描画する
+   */
+  private renderFiscalYearDropdown(
+    currentYear: number = this.currentFiscalYear,
+  ): HTMLTemplateResult {
+    return html`
+      <wa-dropdown
+        placement="bottom-start"
+        @wa-select=${this.handleFiscalYearSelect}
+      >
+        <wa-tooltip
+          for="pane-task-list-btn-year"
+          placement="bottom"
+          trigger="hover"
+        >
+          年度を選択
+        </wa-tooltip>
+        <wa-button
+          id="pane-task-list-btn-year"
+          class="pane-task-list__btn-year"
+          slot="trigger"
+          variant="neutral"
+          appearance="plain"
+          size="m"
+        >
+          <wa-icon
+            library="my-icons"
+            name="sliders-solid-full"
+            label="年度を選択"
+          ></wa-icon>
+        </wa-button>
+        ${this.fiscalYears.map(
+          (fy) => html`
+            <wa-dropdown-item
+              value="${fy}"
+              type="checkbox"
+              .checked=${currentYear === fy}
+              ?checked=${currentYear === fy}
+            >
+              ${fy}年度
+            </wa-dropdown-item>
+          `,
+        )}
+      </wa-dropdown>
+    `;
+  }
+
+  /**
    * ヘッダー部（タイトルおよび操作ボタン）を描画する
    */
   private renderHeader(): HTMLTemplateResult {
@@ -291,44 +339,7 @@ export class PaneTaskList extends WithTaskController(SubscriberElement) {
       <header class="pane-task-list__header">
         <span class="pane-task-list__title">LIST ${currentYear}</span>
         <div class="pane-task-list__actions">
-          <wa-dropdown
-            placement="bottom-start"
-            @wa-select=${this.handleFiscalYearSelect}
-          >
-            <wa-tooltip
-              for="pane-task-list-btn-year"
-              placement="bottom"
-              trigger="hover"
-            >
-              年度を選択
-            </wa-tooltip>
-            <wa-button
-              id="pane-task-list-btn-year"
-              class="pane-task-list__btn-year"
-              slot="trigger"
-              variant="neutral"
-              appearance="plain"
-              size="m"
-            >
-              <wa-icon
-                library="my-icons"
-                name="sliders-solid-full"
-                label="年度を選択"
-              ></wa-icon>
-            </wa-button>
-            ${this.fiscalYears.map(
-              (fy) => html`
-                <wa-dropdown-item
-                  value="${fy}"
-                  type="checkbox"
-                  .checked=${currentYear === fy}
-                  ?checked=${currentYear === fy}
-                >
-                  ${fy}年度
-                </wa-dropdown-item>
-              `,
-            )}
-          </wa-dropdown>
+          ${this.renderFiscalYearDropdown(currentYear)}
 
           <wa-tooltip
             for="pane-task-list-btn-add"

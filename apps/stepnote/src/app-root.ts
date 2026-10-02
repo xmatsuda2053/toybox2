@@ -86,6 +86,16 @@ export class AppRoot extends LitElement {
     this.themeController = new ThemeController(this);
 
     // 2. @lit/context Provider による Context 配給の登録
+    this.registerContextProviders();
+  }
+
+  /**
+   * @lit/context Provider による Context 配給を登録する。
+   *
+   * @private
+   * @memberof AppRoot
+   */
+  private registerContextProviders(): void {
     new ContextProvider(this, {
       context: layoutUIContext,
       initialValue: this.layoutUIController,

@@ -1,7 +1,11 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 import { db } from "@/db/schema/database.schema";
-import { TaskListQuery } from "./task-list.query";
+import type { TaskRecord } from "@/db/models/task.model";
+import {
+  TaskListQuery,
+  calculateQuickAccessTaskCounts,
+} from "./task-list.query";
 
 /**
  * 【TaskListQuery テスト仕様】
@@ -923,6 +927,80 @@ describe("TaskListQuery Tests", () => {
       expect(counts.bookmark).toBe(1);
       expect(counts.uncategorized).toBe(1);
       expect(counts.overdue).toBe(1);
+    });
+  });
+
+  describe("5. calculateQuickAccessTaskCounts の直接単体テスト", () => {
+    it("5-1. 未完了タスクの期限警告（overdue, asap, upcoming）が正確に集計され、完了タスク（statusCode: 9）は除外されること", () => {
+      const dummyTasks = [
+        {
+          name: "期限切れタスク",
+          statusCode: 0,
+          dueDate: overdueDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          name: "当日タスク",
+          statusCode: 5,
+          dueDate: asapDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          name: "間近タスク",
+          statusCode: 0,
+          dueDate: upcomingDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          name: "完了済み期限切れタスク",
+          statusCode: 9,
+          dueDate: overdueDate,
+          bookmark: false,
+          labelId: 1,
+        },
+      ];
+
+      const counts = calculateQuickAccessTaskCounts(
+        dummyTasks as unknown as TaskRecord[],
+      );
+      expect(counts.overdue).toBe(1);
+      expect(counts.asap).toBe(1);
+      expect(counts.upcoming).toBe(1);
+    });
+
+    it("5-2. bookmark および未分類（labelId: undefined / 0）がステータスに関わらず正確に集計されること", () => {
+      const dummyTasks = [
+        {
+          name: "ブックマーク付き未分類",
+          statusCode: 0,
+          dueDate: futureDate,
+          bookmark: true,
+          labelId: undefined,
+        },
+        {
+          name: "完了済みブックマーク未分類",
+          statusCode: 9,
+          dueDate: futureDate,
+          bookmark: true,
+          labelId: 0,
+        },
+        {
+          name: "分類済み非ブックマーク",
+          statusCode: 0,
+          dueDate: futureDate,
+          bookmark: false,
+          labelId: 10,
+        },
+      ];
+
+      const counts = calculateQuickAccessTaskCounts(
+        dummyTasks as unknown as TaskRecord[],
+      );
+      expect(counts.bookmark).toBe(2);
+      expect(counts.uncategorized).toBe(2);
     });
   });
 });
