@@ -3,6 +3,10 @@ import type { Database } from "../schema/database.schema";
 import type { TaskRecord } from "../models/task.model";
 import type { QuickAccessRecord } from "../models/navigation.model";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
+import {
+  applyQuickAccessFilter,
+  sortTasksByDueDateAndName,
+} from "@/utils/task-filter.utils";
 
 /**
  * タスク一覧の抽出条件オプション
@@ -132,61 +136,10 @@ export class TaskListQuery {
     }
 
     if (options.quickAccess) {
-      tasks = this.applyQuickAccessFilter(tasks, options.quickAccess);
+      tasks = applyQuickAccessFilter(tasks, options.quickAccess);
     }
 
-    return this.sortTasks(tasks);
-  }
-
-  /**
-   * QuickAccess フィルター条件をタスク一覧に適用する。
-   */
-  private applyQuickAccessFilter(
-    tasks: TaskRecord[],
-    qa: Partial<QuickAccessRecord>,
-  ): TaskRecord[] {
-    return tasks.filter((task) => {
-      if (qa.isBookmarkSelected && !task.bookmark) return false;
-      if (qa.isUncategorizedSelected && task.labelId && task.labelId !== 0) {
-        return false;
-      }
-      if (!this.matchesDueDateFilter(new Date(task.dueDate), qa)) return false;
-      if (!this.matchesStatusFilter(task.statusCode, qa)) return false;
-      return true;
-    });
-  }
-
-  /** 期限属性フィルターの合致判定 */
-  private matchesDueDateFilter(
-    dueDate: Date,
-    qa: Partial<QuickAccessRecord>,
-  ): boolean {
-    if (qa.isOverdueSelected && !isOverdue(dueDate)) return false;
-    if (qa.isAsapSelected && !isAsap(dueDate)) return false;
-    if (qa.isUpcomingSelected && !isWithinAnyDaysBefore(dueDate, 3)) return false;
-    return true;
-  }
-
-  /** ステータス表示/非表示フィルターの合致判定 */
-  private matchesStatusFilter(
-    statusCode: number,
-    qa: Partial<QuickAccessRecord>,
-  ): boolean {
-    if (qa.isDoneSelected === false && statusCode === 9) return false;
-    if (qa.isProgressSelected === false && statusCode === 5) return false;
-    if (qa.isPendingSelected === false && statusCode === 0) return false;
-    return true;
-  }
-
-  /**
-   * タスク一覧を期限日昇順、タスク名五十音順でソートする。
-   */
-  private sortTasks(tasks: TaskRecord[]): TaskRecord[] {
-    return tasks.sort((a, b) => {
-      const timeDiff =
-        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
-    });
+    return sortTasksByDueDateAndName(tasks);
   }
 
   /**

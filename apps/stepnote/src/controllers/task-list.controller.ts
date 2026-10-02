@@ -1,10 +1,5 @@
 import type { ReactiveControllerHost } from "lit";
-import {
-  getCurrentFiscalYear,
-  isOverdue,
-  isAsap,
-  isWithinAnyDaysBefore,
-} from "@shared/utils";
+import { getCurrentFiscalYear } from "@shared/utils";
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
@@ -13,6 +8,10 @@ import {
   calculateQuickAccessTaskCounts,
 } from "@/db/queries/task-list.query";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
+import {
+  applyQuickAccessFilter,
+  sortTasksByDueDateAndName,
+} from "@/utils/task-filter.utils";
 import { BaseDataController } from "./base-reactive.controller";
 
 /**
@@ -154,61 +153,10 @@ export class TaskListController extends BaseDataController<
     }
 
     if (this._quickAccess) {
-      filtered = this.applyQuickAccessInMemory(filtered, this._quickAccess);
+      filtered = applyQuickAccessFilter(filtered, this._quickAccess);
     }
 
-    return this.sortTasksInMemory(filtered);
-  }
-
-  /**
-   * QuickAccess フィルター条件をインメモリで適用する。
-   */
-  private applyQuickAccessInMemory(
-    tasks: TaskRecord[],
-    qa: Partial<QuickAccessRecord>,
-  ): TaskRecord[] {
-    return tasks.filter((task) => {
-      if (qa.isBookmarkSelected && !task.bookmark) return false;
-      if (qa.isUncategorizedSelected && task.labelId && task.labelId !== 0) {
-        return false;
-      }
-      if (!this.matchesDueDateFilter(new Date(task.dueDate), qa)) return false;
-      if (!this.matchesStatusFilter(task.statusCode, qa)) return false;
-      return true;
-    });
-  }
-
-  /** 期限属性フィルターの合致判定 */
-  private matchesDueDateFilter(
-    dueDate: Date,
-    qa: Partial<QuickAccessRecord>,
-  ): boolean {
-    if (qa.isOverdueSelected && !isOverdue(dueDate)) return false;
-    if (qa.isAsapSelected && !isAsap(dueDate)) return false;
-    if (qa.isUpcomingSelected && !isWithinAnyDaysBefore(dueDate, 3)) return false;
-    return true;
-  }
-
-  /** ステータス表示/非表示フィルターの合致判定 */
-  private matchesStatusFilter(
-    statusCode: number,
-    qa: Partial<QuickAccessRecord>,
-  ): boolean {
-    if (qa.isDoneSelected === false && statusCode === 9) return false;
-    if (qa.isProgressSelected === false && statusCode === 5) return false;
-    if (qa.isPendingSelected === false && statusCode === 0) return false;
-    return true;
-  }
-
-  /**
-   * タスク一覧をインメモリでソートする（期限日昇順 → タスク名五十音順）。
-   */
-  private sortTasksInMemory(tasks: TaskRecord[]): TaskRecord[] {
-    return tasks.sort((a, b) => {
-      const timeDiff =
-        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
-    });
+    return sortTasksByDueDateAndName(filtered);
   }
 
   /**
