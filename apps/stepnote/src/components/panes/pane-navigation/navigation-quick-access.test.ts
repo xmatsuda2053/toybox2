@@ -4,7 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
+import type { TaskListController } from "@/controllers/task-list.controller.js";
 import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
+import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
 import {
   DEFAULT_QUICK_ACCESS,
   QUICK_ACCESS_STATIC_ID,
@@ -52,6 +54,10 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること
  *    - [x] 7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  *    - [x] 7-4. 廃止された旧クラス名（quick-access-btn、quick-access-counter等）がHTMLテンプレートおよびSCSSに一切残存していないこと
+ * 8. TaskListController 連動によるタスク件数の自動取得（Context連携）
+ *    - [x] 8-1. taskListController が設定されている場合、明示的な taskCounts プロパティ指定がなくても controller.quickAccessTaskCounts がバッジとしてレンダリングされること
+ *    - [x] 8-2. taskListController の購読リスナーが発火した際に requestUpdate が呼び出されること
+ *    - [x] 8-3. disconnectedCallback 呼び出し時に taskListController の購読解除関数が実行されること
  */
 
 describe("NavigationQuickAccess Component", () => {
@@ -456,5 +462,61 @@ describe("NavigationQuickAccess Component", () => {
       }
     });
   });
+
+  describe("8. TaskListController 連動によるタスク件数の自動取得（Context連携）", () => {
+    let mockTaskListController: {
+      quickAccessTaskCounts: QuickAccessTaskCounts;
+      subscribe: ReturnType<typeof vi.fn>;
+    };
+    let taskListUnsubMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      taskListUnsubMock = vi.fn();
+      mockTaskListController = {
+        quickAccessTaskCounts: {
+          bookmark: 7,
+          uncategorized: 4,
+          overdue: 1,
+          asap: 2,
+          upcoming: 3,
+        },
+        subscribe: vi.fn().mockReturnValue(taskListUnsubMock),
+      };
+    });
+
+    it("8-1. taskListController が設定されている場合、明示的な taskCounts プロパティ指定がなくても controller.quickAccessTaskCounts がバッジとしてレンダリングされること", () => {
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("quick-access__counter");
+      expect(htmlStr).toContain("7");
+      expect(htmlStr).toContain("4");
+      expect(htmlStr).toContain("1");
+      expect(htmlStr).toContain("2");
+      expect(htmlStr).toContain("3");
+    });
+
+    it("8-2. taskListController の購読リスナーが発火した際に requestUpdate が呼び出されること", () => {
+      const requestUpdateSpy = vi.spyOn(element, "requestUpdate");
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+
+      expect(mockTaskListController.subscribe).toHaveBeenCalledTimes(1);
+      const listener = mockTaskListController.subscribe.mock.calls[0][0];
+      listener();
+
+      expect(requestUpdateSpy).toHaveBeenCalled();
+    });
+
+    it("8-3. disconnectedCallback 呼び出し時に taskListController の購読解除関数が実行されること", () => {
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+
+      element.disconnectedCallback();
+      expect(taskListUnsubMock).toHaveBeenCalledTimes(1);
+    });
+  });
 });
+
 

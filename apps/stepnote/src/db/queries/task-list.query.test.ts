@@ -28,6 +28,14 @@ import { TaskListQuery } from "./task-list.query";
  * 3. 複合フィルタリングおよびソート
  *    - 3-1. fiscalYear, labelId, QuickAccess, 検索キーワードを同時に指定した場合、全ての条件を満たすタスクのみ抽出されること
  *    - 3-2. 抽出されたタスクが第1キー: dueDate 昇順、第2キー: name 昇順（五十音順）で正しくソートされること
+ *
+ * 4. QuickAccess タスク件数の集計機能（getQuickAccessTaskCounts）
+ *    - 4-1. 対象年度に属するタスクのうち、bookmark が true の件数が正しく集計されること（全ステータス対象）
+ *    - 4-2. 対象年度に属するタスクのうち、未分類（labelId が 0 または undefined）の件数が正しく集計されること（全ステータス対象）
+ *    - 4-3. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限切れ（isOverdue）の件数が正しく集計され、完了タスクは除外されること
+ *    - 4-4. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限当日（isAsap）の件数が正しく集計され、完了タスクは除外されること
+ *    - 4-5. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限間近（isWithinAnyDaysBefore 3日以内）の件数が正しく集計され、完了タスクは除外されること
+ *    - 4-6. 異なる年度のタスクが混在する場合、指定した年度のタスクのみが集計対象となること
  */
 describe("TaskListQuery Tests", () => {
   let query: TaskListQuery;
@@ -643,6 +651,278 @@ describe("TaskListQuery Tests", () => {
       expect(results[1].id).toBe(t1);
       // date2: "かタスク" (t3)
       expect(results[2].id).toBe(t3);
+    });
+  });
+
+  describe("4. QuickAccess タスク件数の集計機能（getQuickAccessTaskCounts）", () => {
+    it("4-1. 対象年度に属するタスクのうち、bookmark が true の件数が正しく集計されること（全ステータス対象）", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "未着手・ブックマークあり",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: true,
+          selected: false,
+        },
+        {
+          name: "完了・ブックマークあり",
+          statusCode: 9,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: true,
+          selected: false,
+        },
+        {
+          name: "未着手・ブックマークなし",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.bookmark).toBe(2);
+    });
+
+    it("4-2. 対象年度に属するタスクのうち、未分類（labelId が 0 または undefined）の件数が正しく集計されること（全ステータス対象）", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "未分類タスク（labelId: 0）",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 0,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "未分類タスク（完了・labelId: 0）",
+          statusCode: 9,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 0,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "分類済みタスク（labelId: 2）",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 2,
+          bookmark: false,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.uncategorized).toBe(2);
+    });
+
+    it("4-3. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限切れ（isOverdue）の件数が正しく集計され、完了タスクは除外されること", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "期限切れ（未着手）",
+          statusCode: 0,
+          dueDate: overdueDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限切れ（対応中）",
+          statusCode: 5,
+          dueDate: overdueDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限切れ（完了：除外対象）",
+          statusCode: 9,
+          dueDate: overdueDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限内（未着手）",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.overdue).toBe(2);
+    });
+
+    it("4-4. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限当日（isAsap）の件数が正しく集計され、完了タスクは除外されること", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "期限当日（未着手）",
+          statusCode: 0,
+          dueDate: asapDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限当日（対応中）",
+          statusCode: 5,
+          dueDate: asapDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限当日（完了：除外対象）",
+          statusCode: 9,
+          dueDate: asapDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "将来タスク（未着手）",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.asap).toBe(2);
+    });
+
+    it("4-5. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限間近（isWithinAnyDaysBefore 3日以内）の件数が正しく集計され、完了タスクは除外されること", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "期限間近（未着手）",
+          statusCode: 0,
+          dueDate: upcomingDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限間近（対応中）",
+          statusCode: 5,
+          dueDate: upcomingDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "期限間近（完了：除外対象）",
+          statusCode: 9,
+          dueDate: upcomingDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+        {
+          name: "遠い将来タスク（10日後）",
+          statusCode: 0,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.upcoming).toBe(2);
+    });
+
+    it("4-6. 異なる年度のタスクが混在する場合、指定した年度のタスクのみが集計対象となること", async () => {
+      await db.tasks.bulkAdd([
+        {
+          name: "2026年度タスク",
+          statusCode: 0,
+          dueDate: overdueDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 0,
+          bookmark: true,
+          selected: false,
+        },
+        {
+          name: "2025年度タスク（集計対象外）",
+          statusCode: 0,
+          dueDate: overdueDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2025,
+          labelId: 0,
+          bookmark: true,
+          selected: false,
+        },
+      ]);
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.bookmark).toBe(1);
+      expect(counts.uncategorized).toBe(1);
+      expect(counts.overdue).toBe(1);
     });
   });
 });
