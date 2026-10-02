@@ -2001,5 +2001,695 @@
         "tokens": 0
       }
     }
+  },
+  {
+    "id": "REF-064",
+    "target_file": "apps/stepnote/src/app-root.ts",
+    "target_symbol": "Line 65",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 265,
+      "function_lines": 57
+    },
+    "issue_summary": "Constructor has too many lines (57). Maximum allowed is 50.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/app-root.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 9,
+      "completed_at": "2026-10-03T00:12:14+09:00",
+      "issue_number": 134,
+      "pr_number": 135,
+      "commit_hash": "3fda67e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "function_lines": 22
+      }
+    }
+  },
+  {
+    "id": "REF-065",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts",
+    "target_symbol": "Line 297",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 501,
+      "function_lines": 69
+    },
+    "issue_summary": "Method 'renderHeader' has too many lines (69). Maximum allowed is 50.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 9,
+      "completed_at": "2026-10-03T00:12:14+09:00",
+      "issue_number": 134,
+      "pr_number": 135,
+      "commit_hash": "3fda67e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "function_lines": 31
+      }
+    }
+  },
+  {
+    "id": "REF-066",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-list-item.ts",
+    "target_symbol": "Line 173",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 257,
+      "function_lines": 70
+    },
+    "issue_summary": "Method 'render' has too many lines (70). Maximum allowed is 50.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/task-list-item.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 9,
+      "completed_at": "2026-10-03T00:12:14+09:00",
+      "issue_number": 134,
+      "pr_number": 135,
+      "commit_hash": "3fda67e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "function_lines": 15
+      }
+    }
+  },
+  {
+    "id": "REF-067",
+    "target_file": "apps/stepnote/src/db/queries/task-list.query.ts",
+    "target_symbol": "Line 231",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 271,
+      "cognitive_complexity": 16
+    },
+    "issue_summary": "Refactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/db/queries/task-list.query.test.ts",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 9,
+      "completed_at": "2026-10-03T00:12:14+09:00",
+      "issue_number": 134,
+      "pr_number": 135,
+      "commit_hash": "3fda67e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "cognitive_complexity": 8
+      }
+    }
+  },
+  {
+    "id": "REF-068",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "Line 257",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 543,
+      "function_lines": 59
+    },
+    "issue_summary": "Method 'getCalendarCells' has too many lines (59). Maximum allowed is 50.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "function_lines": 28
+      }
+    }
+  },
+  {
+    "id": "REF-069",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "Line 388",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 543,
+      "function_lines": 132
+    },
+    "issue_summary": "Method 'renderCalendar' has too many lines (132). Maximum allowed is 50.",
+    "approach": "早期リターン（ガード節）の導入と関数の分割",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "function_lines": 20
+      }
+    }
+  },
+  {
+    "id": "REF-070",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.ts",
+    "target_symbol": "38-62",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 25,
+      "tokens": 84
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.ts とのコード重複 (25行, 84トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 8,
+      "completed_at": "2026-10-02T23:37:11+09:00",
+      "issue_number": 132,
+      "pr_number": 133,
+      "commit_hash": "d0ee11d",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-071",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.ts",
+    "target_symbol": "45-60",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 16,
+      "tokens": 74
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (16行, 74トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 8,
+      "completed_at": "2026-10-02T23:37:11+09:00",
+      "issue_number": 132,
+      "pr_number": 133,
+      "commit_hash": "d0ee11d",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-072",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.ts",
+    "target_symbol": "112-120",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 9,
+      "tokens": 23
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts とのコード重複 (9行, 23トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-073",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "212-232",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 21,
+      "tokens": 38
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (21行, 38トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-074",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "232-239",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 39
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (8行, 39トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-075",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "249-259",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 29
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (11行, 29トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-076",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "259-265",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 42
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (7行, 42トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-077",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "265-287",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 23,
+      "tokens": 25
+    },
+    "issue_summary": "apps/stepnote/src/components/theme-switcher/theme-switcher.ts とのコード重複 (23行, 25トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-078",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "266-278",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 13,
+      "tokens": 23
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (13行, 23トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-079",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts",
+    "target_symbol": "63-81",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 19,
+      "tokens": 92
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.ts とのコード重複 (19行, 92トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 8,
+      "completed_at": "2026-10-02T23:37:11+09:00",
+      "issue_number": 132,
+      "pr_number": 133,
+      "commit_hash": "d0ee11d",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 642,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-080",
+    "target_file": "apps/stepnote/src/controllers/task-list.controller.ts",
+    "target_symbol": "166-206",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 41,
+      "tokens": 247
+    },
+    "issue_summary": "apps/stepnote/src/db/queries/task-list.query.ts とのコード重複 (41行, 247トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/controllers/task-list.controller.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 7,
+      "completed_at": "2026-10-02T23:10:56+09:00",
+      "issue_number": 130,
+      "pr_number": 131,
+      "commit_hash": "38f111e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 641,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-081",
+    "target_file": "apps/stepnote/src/controllers/task-list.controller.ts",
+    "target_symbol": "206-222",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 17,
+      "tokens": 76
+    },
+    "issue_summary": "apps/stepnote/src/db/queries/task-list.query.ts とのコード重複 (17行, 76トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/controllers/task-list.controller.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 7,
+      "completed_at": "2026-10-02T23:10:56+09:00",
+      "issue_number": 130,
+      "pr_number": 131,
+      "commit_hash": "38f111e",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 641,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-082",
+    "target_file": "apps/stepnote/src/controllers/task-list.controller.ts",
+    "target_symbol": "300-317",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 18,
+      "tokens": 25
+    },
+    "issue_summary": "apps/stepnote/src/controllers/task.controller.ts とのコード重複 (18行, 25トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/controllers/task-list.controller.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-083",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "41-52",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 12,
+      "tokens": 38
+    },
+    "issue_summary": "packages/components/src/search-input/search-input.ts とのコード重複 (12行, 38トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-084",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "96-101",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 31
+    },
+    "issue_summary": "packages/components/src/datepicker-input/datepicker-input.ts とのコード重複 (6行, 31トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-085",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "284-289",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 23
+    },
+    "issue_summary": "packages/components/src/datepicker-input/datepicker-input.ts とのコード重複 (6行, 23トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-086",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "284-292",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 9,
+      "tokens": 39
+    },
+    "issue_summary": "packages/components/src/datepicker-input/datepicker-input.ts とのコード重複 (9行, 39トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-087",
+    "target_file": "packages/components/src/datepicker-input/datepicker-input.ts",
+    "target_symbol": "285-295",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 35
+    },
+    "issue_summary": "packages/components/src/datepicker-input/datepicker-input.ts とのコード重複 (11行, 35トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/datepicker-input/datepicker-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-088",
+    "target_file": "packages/components/src/search-input/search-input.ts",
+    "target_symbol": "152-157",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 21
+    },
+    "issue_summary": "packages/components/src/search-input/search-input.ts とのコード重複 (6行, 21トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/search-input/search-input.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 10,
+      "completed_at": "2026-10-03T00:33:02+09:00",
+      "issue_number": 136,
+      "pr_number": 137,
+      "commit_hash": "7001219",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 648,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   }
 ]
