@@ -275,4 +275,40 @@ describe("DatePickerInput Component", () => {
       expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
     });
   });
+
+  describe("6. カレンダー描画メソッド分割（renderCalendarHeader / renderCalendarWeekdays / renderCalendarGrid）の検証", () => {
+    it("6-1. renderCalendarHeader により年月表示と操作ボタンがレンダリングされること", () => {
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as { renderCalendarHeader: () => unknown }
+        ).renderCalendarHeader(),
+      );
+      expect(htmlStr).toContain("datepicker-calendar__header");
+      expect(htmlStr).toContain("datepicker-calendar__title");
+      expect(htmlStr).toContain("datepicker-calendar__actions");
+    });
+
+    it("6-2. renderCalendarWeekdays により曜日ヘッダーがレンダリングされること", () => {
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as { renderCalendarWeekdays: () => unknown }
+        ).renderCalendarWeekdays(),
+      );
+      expect(htmlStr).toContain("datepicker-calendar__weekdays");
+    });
+
+    it("6-3. renderCalendarGrid により日付グリッドがレンダリングされること", () => {
+      const cells = (
+        element as unknown as { getCalendarCells: () => unknown[] }
+      ).getCalendarCells();
+      const htmlStr = flattenTemplate(
+        (
+          element as unknown as {
+            renderCalendarGrid: (c: unknown[]) => unknown;
+          }
+        ).renderCalendarGrid(cells),
+      );
+      expect(htmlStr).toContain("datepicker-calendar__grid");
+    });
+  });
 });

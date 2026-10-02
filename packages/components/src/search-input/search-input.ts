@@ -3,6 +3,11 @@ import { customElement, property, state } from "lit/decorators.js";
 import { debounce, dispatchCustomEvent, type DebouncedFunction } from "@shared/utils";
 import styles from "./search-input.scss?inline";
 
+import {
+  normalizeWaSize,
+  type ComponentSize,
+} from "../utils/size.utils";
+
 /**
  * 検索入力完了時に発行されるカスタムイベントのペイロード型定義
  */
@@ -13,23 +18,7 @@ export interface SearchInputEventDetail {
   keyword: string;
 }
 
-export type SearchInputSize = "s" | "m" | "l" | "small" | "medium" | "large";
-
-/**
- * Web Awesome のサイズ指定（s, m, l）に正規化する
- */
-function normalizeWaSize(size: SearchInputSize): "s" | "m" | "l" {
-  switch (size) {
-    case "small":
-      return "s";
-    case "medium":
-      return "m";
-    case "large":
-      return "l";
-    default:
-      return size;
-  }
-}
+export type SearchInputSize = ComponentSize;
 
 /**
  * 共通検索条件入力コンポーネント
@@ -143,16 +132,25 @@ export class SearchInput extends LitElement {
 
   /**
    * デバウンス完了後に最低表示時間を考慮してローディング終了をスケジュールする
+  /**
+   * 最低表示時間タイマーを安全に停止・リセットする
+   */
+  private _clearMinDurationTimer(): void {
+    if (this._minDurationTimer) {
+      clearTimeout(this._minDurationTimer);
+      this._minDurationTimer = null;
+    }
+  }
+
+  /**
+   * デバウンス完了後に最低表示時間を考慮してローディング終了をスケジュールする
    */
   private _scheduleLoadingEnd(): void {
     if (this._isWaitingDebounce) {
       return;
     }
 
-    if (this._minDurationTimer) {
-      clearTimeout(this._minDurationTimer);
-      this._minDurationTimer = null;
-    }
+    this._clearMinDurationTimer();
 
     const elapsed =
       this._loadingStartTime !== null ? Date.now() - this._loadingStartTime : 0;
@@ -171,10 +169,7 @@ export class SearchInput extends LitElement {
    * ローディング状態を即時終了・リセットする
    */
   private _stopLoading(): void {
-    if (this._minDurationTimer) {
-      clearTimeout(this._minDurationTimer);
-      this._minDurationTimer = null;
-    }
+    this._clearMinDurationTimer();
     this._isDebounceLoading = false;
     this._isWaitingDebounce = false;
     this._loadingStartTime = null;
