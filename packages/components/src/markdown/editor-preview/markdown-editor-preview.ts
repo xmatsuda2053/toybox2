@@ -5,7 +5,10 @@ import type { Extension } from "@codemirror/state";
 import type { MarkdownProcessorOptions } from "../types.js";
 import { debounce } from "@shared/utils";
 import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
-import "../editor/markdown-editor.js";
+import {
+  MarkdownEditor,
+  type MarkdownActionType,
+} from "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
 
 export type MarkdownDisplayMode = "split" | "edit" | "preview";
@@ -151,12 +154,179 @@ export class MarkdownEditorPreview extends LitElement {
   };
 
   /**
+   * Markdown 書式ツールバーのアクションを実行する。
+   *
+   * @param action Markdown アクション種別
+   */
+  public handleToolbarAction(action: MarkdownActionType): void {
+    const editor = this.renderRoot?.querySelector(
+      "markdown-editor",
+    ) as MarkdownEditor | null;
+    if (editor) {
+      editor.insertMarkdown(action);
+    }
+  }
+
+  /**
+   * Markdown 書式ツールバーを描画する。
+   */
+  private renderToolbar() {
+    return html`
+      <div
+        class="markdown-editor-preview__toolbar"
+        role="toolbar"
+        aria-label="Markdown 書式ツールバー"
+      >
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="見出し"
+          aria-label="見出し"
+          @click=${() => this.handleToolbarAction("heading")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="heading-solid-full"
+            label="見出し"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="太字"
+          aria-label="太字"
+          @click=${() => this.handleToolbarAction("bold")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="bold-solid-full"
+            label="太字"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="斜体"
+          aria-label="斜体"
+          @click=${() => this.handleToolbarAction("italic")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="italic-solid-full"
+            label="斜体"
+          ></wa-icon>
+        </button>
+
+        <span class="markdown-editor-preview__toolbar-separator"></span>
+
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="箇条書きリスト"
+          aria-label="箇条書きリスト"
+          @click=${() => this.handleToolbarAction("bullet-list")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="list-ul-solid-full"
+            label="箇条書きリスト"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="番号付きリスト"
+          aria-label="番号付きリスト"
+          @click=${() => this.handleToolbarAction("ordered-list")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="list-ol-solid-full"
+            label="番号付きリスト"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="タスクリスト"
+          aria-label="タスクリスト"
+          @click=${() => this.handleToolbarAction("task-list")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="list-check-solid-full"
+            label="タスクリスト"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="引用"
+          aria-label="引用"
+          @click=${() => this.handleToolbarAction("quote")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="blockquote-left"
+            label="引用"
+          ></wa-icon>
+        </button>
+
+        <span class="markdown-editor-preview__toolbar-separator"></span>
+
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="コード"
+          aria-label="コード"
+          @click=${() => this.handleToolbarAction("code")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="code-solid-full"
+            label="コード"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="リンク"
+          aria-label="リンク"
+          @click=${() => this.handleToolbarAction("link")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="link-solid-full"
+            label="リンク"
+          ></wa-icon>
+        </button>
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn"
+          title="テーブル"
+          aria-label="テーブル"
+          @click=${() => this.handleToolbarAction("table")}
+        >
+          <wa-icon
+            library="my-icons"
+            name="table-solid-full"
+            label="テーブル"
+          ></wa-icon>
+        </button>
+      </div>
+    `;
+  }
+
+  /**
    * ツールバーヘッダーを描画する。
    */
   private renderHeader() {
     return html`
       <header class="markdown-editor-preview__header">
-        <span class="markdown-editor-preview__title">${this.titleText}</span>
+        <div class="markdown-editor-preview__header-left">
+          <span class="markdown-editor-preview__title">${this.titleText}</span>
+          ${this.mode !== "preview" ? this.renderToolbar() : ""}
+        </div>
         <div
           class="markdown-editor-preview__mode-group"
           role="tablist"

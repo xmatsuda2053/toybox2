@@ -10,6 +10,10 @@
  *   - dispatchChangeEvent() により "markdown-change" カスタムイベントが最新値とともに発火すること
  * 4. 拡張機能の注入（Open-Closed Principle）
  *   - customExtensions で外部から注入された CodeMirror 拡張が認識されること
+ * 5. Markdown構文の挿入機能 (insertMarkdown)
+ *   - "bold" アクションで太字構文が挿入されること
+ *   - "heading" アクションで見出し構文が挿入されること
+ *   - "task-list" アクションでタスクリスト構文が挿入されること
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -64,6 +68,25 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
 
       editor.customExtensions = [dummyExtension];
       expect(editor.customExtensions).toHaveLength(1);
+    });
+  });
+
+  describe("Markdown構文の挿入機能 (insertMarkdown)", () => {
+    it("insertMarkdown('bold') により太字テキストが挿入またはラップされること", () => {
+      editor.insertMarkdown("bold");
+      expect(editor.value).toContain("**太字**");
+    });
+
+    it("insertMarkdown('heading') により見出し構文が挿入されること", () => {
+      editor.value = "テスト行";
+      editor.insertMarkdown("heading");
+      expect(editor.value).toContain("### ");
+    });
+
+    it("insertMarkdown('task-list') によりタスク構文が挿入されること", () => {
+      editor.value = "宿題をする";
+      editor.insertMarkdown("task-list");
+      expect(editor.value).toContain("- [ ] ");
     });
   });
 });

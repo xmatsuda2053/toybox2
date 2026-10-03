@@ -19,6 +19,10 @@
  *   - 各ボタンにアクセシビリティ用の aria-label および title が設定されていること
  * 7. アイコンボタンのスタイルと視認性
  *   - モード切替アイコンボタンの wa-icon のサイズが視認性向上のため 18px 以上に設定されていること
+ * 8. 書式ツールバーのレンダリングとアクション
+ *   - split モードまたは edit モード時、ヘッダーに書式ツールバー（太字、見出し、リスト、テーブル等）がレンダリングされること
+ *   - 各ツールバーボタンに適切な wa-icon が配置されていること
+ *   - preview モード時は書式ツールバーが非表示となること
  */
 
 import * as fs from "node:fs";
@@ -136,10 +140,38 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("モード切替ボタン内の wa-icon のサイズが視認性向上のため 18px 以上に設定されていること", () => {
       const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
-      const match = scssContent.match(/wa-icon\s*\{[^}]*font-size:\s*(\d+)px/);
+      const match = scssContent.match(
+        /\.markdown-editor-preview__mode-btn\s*\{[\s\S]*?wa-icon\s*\{[^}]*font-size:\s*(\d+)px/,
+      );
       expect(match).not.toBeNull();
       const fontSize = parseInt(match![1], 10);
       expect(fontSize).toBeGreaterThanOrEqual(18);
+    });
+  });
+
+  describe("書式ツールバーのレンダリングとアクション", () => {
+    it("split モード時に書式ツールバーと主要アイコンがレンダリングされること", () => {
+      element.setMode("split");
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain('class="markdown-editor-preview__toolbar"');
+      expect(htmlStr).toContain('name="heading-solid-full"');
+      expect(htmlStr).toContain('name="bold-solid-full"');
+      expect(htmlStr).toContain('name="italic-solid-full"');
+      expect(htmlStr).toContain('name="list-ul-solid-full"');
+      expect(htmlStr).toContain('name="list-ol-solid-full"');
+      expect(htmlStr).toContain('name="list-check-solid-full"');
+      expect(htmlStr).toContain('name="blockquote-left"');
+      expect(htmlStr).toContain('name="code-solid-full"');
+      expect(htmlStr).toContain('name="link-solid-full"');
+      expect(htmlStr).toContain('name="table-solid-full"');
+    });
+
+    it("preview モード時は書式ツールバーが非表示になること", () => {
+      element.setMode("preview");
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain('class="markdown-editor-preview__toolbar"');
     });
   });
 });

@@ -57,15 +57,85 @@
   border-bottom-color: #30363d !important;
 }
 
+.markdown-editor-preview__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
 .markdown-editor-preview__title {
   font-size: 13px;
   font-weight: 600;
   color: var(--stepnote-text-secondary, #64748b);
+  white-space: nowrap;
 }
 
 :host([data-theme="dark"]) .markdown-editor-preview__title,
 :host(.wa-dark) .markdown-editor-preview__title {
   color: #8b949e !important;
+}
+
+/* 書式ツールバー */
+.markdown-editor-preview__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.markdown-editor-preview__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 4px;
+  color: var(--stepnote-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+
+  wa-icon {
+    font-size: 18px;
+    width: 1.1em;
+    height: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.markdown-editor-preview__toolbar-btn:hover {
+  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn,
+:host(.wa-dark) .markdown-editor-preview__toolbar-btn {
+  color: #8b949e;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn:hover,
+:host(.wa-dark) .markdown-editor-preview__toolbar-btn:hover {
+  background-color: #30363d !important;
+  color: #f0f6fc !important;
+}
+
+.markdown-editor-preview__toolbar-separator {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background-color: var(--stepnote-border-subtle, #e2e8f0);
+  margin: 0 4px;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-separator,
+:host(.wa-dark) .markdown-editor-preview__toolbar-separator {
+  background-color: #30363d !important;
 }
 
 .markdown-editor-preview__mode-group {

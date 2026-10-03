@@ -2,6 +2,8 @@
 import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
+import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
+import bold_solid_full from "./assets/icons/bold-solid-full.svg?raw";
 import bookmark_solid_full from "./assets/icons/bookmark-solid-full.svg?raw";
 import calendar_solid_full from "./assets/icons/calendar-solid-full.svg?raw";
 import caret_right_solid_full from "./assets/icons/caret-right-solid-full.svg?raw";
@@ -10,13 +12,20 @@ import chevron_right from "./assets/icons/chevron-right.svg?raw";
 import circle_check_solid_full from "./assets/icons/circle-check-solid-full.svg?raw";
 import circle_play_solid_full from "./assets/icons/circle-play-solid-full.svg?raw";
 import circle_stop_solid_full from "./assets/icons/circle-stop-solid-full.svg?raw";
+import code_solid_full from "./assets/icons/code-solid-full.svg?raw";
 import cubes_stacked_solid_full from "./assets/icons/cubes-stacked-solid-full.svg?raw";
 import display_solid_full from "./assets/icons/display-solid-full.svg?raw";
 import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
 import html5_brands_solid_full from "./assets/icons/html5-brands-solid-full.svg?raw";
+import italic_solid_full from "./assets/icons/italic-solid-full.svg?raw";
+import link_solid_full from "./assets/icons/link-solid-full.svg?raw";
+import list_check_solid_full from "./assets/icons/list-check-solid-full.svg?raw";
+import list_ol_solid_full from "./assets/icons/list-ol-solid-full.svg?raw";
+import list_ul_solid_full from "./assets/icons/list-ul-solid-full.svg?raw";
 import location_dot_solid_full from "./assets/icons/location-dot-solid-full.svg?raw";
 import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
 import markdown_brands_solid_full from "./assets/icons/markdown-brands-solid-full.svg?raw";
@@ -27,6 +36,7 @@ import question_solid_full from "./assets/icons/question-solid-full.svg?raw";
 import sliders_solid_full from "./assets/icons/sliders-solid-full.svg?raw";
 import sun_solid_full from "./assets/icons/sun-solid-full.svg?raw";
 import table_columns_solid_full from "./assets/icons/table-columns-solid-full.svg?raw";
+import table_solid_full from "./assets/icons/table-solid-full.svg?raw";
 import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
 import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation-solid-full.svg?raw";
@@ -37,6 +47,8 @@ export const icons: Record<string, string> = {
   "angle-right-solid-full": angle_right_solid_full,
   "angles-left-solid-full": angles_left_solid_full,
   "angles-right-solid-full": angles_right_solid_full,
+  "blockquote-left": blockquote_left,
+  "bold-solid-full": bold_solid_full,
   "bookmark-solid-full": bookmark_solid_full,
   "calendar-solid-full": calendar_solid_full,
   "caret-right-solid-full": caret_right_solid_full,
@@ -45,13 +57,20 @@ export const icons: Record<string, string> = {
   "circle-check-solid-full": circle_check_solid_full,
   "circle-play-solid-full": circle_play_solid_full,
   "circle-stop-solid-full": circle_stop_solid_full,
+  "code-solid-full": code_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
   "display-solid-full": display_solid_full,
   "ellipsis-vertical-solid-full": ellipsis_vertical_solid_full,
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "heading-solid-full": heading_solid_full,
   "html5-brands-solid-full": html5_brands_solid_full,
+  "italic-solid-full": italic_solid_full,
+  "link-solid-full": link_solid_full,
+  "list-check-solid-full": list_check_solid_full,
+  "list-ol-solid-full": list_ol_solid_full,
+  "list-ul-solid-full": list_ul_solid_full,
   "location-dot-solid-full": location_dot_solid_full,
   "magnifying-glass-solid-full": magnifying_glass_solid_full,
   "markdown-brands-solid-full": markdown_brands_solid_full,
@@ -62,6 +81,7 @@ export const icons: Record<string, string> = {
   "sliders-solid-full": sliders_solid_full,
   "sun-solid-full": sun_solid_full,
   "table-columns-solid-full": table_columns_solid_full,
+  "table-solid-full": table_solid_full,
   "tag-solid-full": tag_solid_full,
   "trash-solid-full": trash_solid_full,
   "triangle-exclamation-solid-full": triangle_exclamation_solid_full,
