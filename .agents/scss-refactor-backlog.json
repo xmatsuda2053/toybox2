@@ -285,8 +285,8 @@
       "completed_order": 10,
       "completed_at": "2026-10-03T20:53:00+09:00",
       "issue_number": 146,
-      "pr_number": null,
-      "commit_hash": null,
+      "pr_number": 147,
+      "commit_hash": "de09132",
       "regressions_detected": 0,
       "tests_passed": 675,
       "metrics_after": {
