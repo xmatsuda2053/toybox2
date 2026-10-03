@@ -17,7 +17,7 @@
   :host,
   .task-list-item,
   .task-list-item__btn-bookmark {
-    transition: none !important;
+    transition: none;
   }
 }
 
@@ -137,10 +137,10 @@
   line-height: 1;
   display: inline-flex;
   transition: var(--stepnote-transition-theme);
+}
 
-  &--active {
-    color: var(--quick-access-icon-active-bookmark, #4f46e5) !important;
-  }
+.task-list-item__bookmark-icon--active {
+  color: var(--quick-access-icon-active-bookmark, #4f46e5);
 }
 
 .task-list-item__due-date {

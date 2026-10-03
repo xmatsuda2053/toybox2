@@ -166,6 +166,6 @@
 @media (prefers-reduced-motion: reduce) {
   :root,
   * {
-    --stepnote-transition-theme: none !important;
+    --stepnote-transition-theme: none;
   }
 }
