@@ -34,12 +34,25 @@
   margin: 0 auto;
   background-color: transparent !important;
   font-family: inherit !important;
+  color: #1f2328 !important;
+  --fgColor-default: #1f2328 !important;
+  --bgColor-default: transparent !important;
+}
+
+.markdown-preview__body pre {
+  background-color: #f6f8fa !important;
+}
+
+.markdown-preview__body code {
+  background-color: rgba(175, 184, 193, 0.2) !important;
 }
 
 /* ダークモード対応 */
 :host([data-theme="dark"]) .markdown-preview__body,
 :host(.wa-dark) .markdown-preview__body {
   color: #e6edf3 !important;
+  --fgColor-default: #e6edf3 !important;
+  --bgColor-default: transparent !important;
 }
 
 :host([data-theme="dark"]) .markdown-preview__body pre,

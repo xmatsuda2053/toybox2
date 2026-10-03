@@ -12,9 +12,16 @@
  *   - XSS を含む入力に対して安全な HTML のみが描画されること
  * 5. カスタムイベント通知
  *   - パース・レンダリング完了時に "markdown-rendered" イベントが発火すること
+ * 6. テーマ別文字色・CSS変数の定義（Light / Dark モード対応）
+ *   - markdown-preview.scss において、ライトモードのプレビュー本文文字色および --fgColor-default が指定されていること
+ *   - markdown-preview.scss において、ダークモードのプレビュー本文文字色および --fgColor-default が指定されていること
+ *   - レンダリングされた markdown-preview__body 要素に現在のテーマに応じた data-theme が付与されること
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { flattenTemplate } from "@shared/utils";
 import { MarkdownPreview } from "./markdown-preview.js";
 import type { Plugin } from "unified";
 import type { Root as MdastRoot, Heading } from "mdast";
@@ -108,6 +115,34 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
 
       expect(eventDetail).not.toBeNull();
       expect(eventDetail!.html).toContain("<p>イベントテスト</p>");
+    });
+  });
+
+  describe("テーマ別文字色・CSS変数の定義（Light / Dark モード対応）", () => {
+    const scssPath = path.resolve(
+      __dirname,
+      "markdown-preview.scss",
+    );
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("SCSS でライトモード時の本文文字色および --fgColor-default が定義されていること", () => {
+      // OS のダークモード設定に引きずられないよう、ライトモードの文字色を明示的に指定していること
+      expect(scssContent).toMatch(/--fgColor-default:\s*#1f2328/);
+      expect(scssContent).toMatch(/color:\s*#1f2328/);
+    });
+
+    it("SCSS でダークモード時の本文文字色および --fgColor-default が定義されていること", () => {
+      expect(scssContent).toMatch(/--fgColor-default:\s*#e6edf3/);
+      expect(scssContent).toMatch(/color:\s*#e6edf3/);
+    });
+
+    it("レンダリングされた body 要素に data-theme が付与されること", async () => {
+      element.content = "テスト";
+      await element.renderMarkdown();
+      const template = element.render();
+      const renderedStr = flattenTemplate(template);
+
+      expect(renderedStr).toMatch(/data-theme="light"/);
     });
   });
 });

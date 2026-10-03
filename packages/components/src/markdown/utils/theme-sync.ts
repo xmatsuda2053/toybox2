@@ -6,19 +6,32 @@ function isElementDark(element: HTMLElement): boolean | undefined {
   if (theme === "dark") return true;
   if (theme === "light") return false;
   if (element.classList.contains("wa-dark")) return true;
+  if (element.classList.contains("wa-light")) return false;
   return undefined;
 }
 
 /**
- * 現在の実行環境（ルート要素、要素自身、OS設定）からダークモードかどうかを判定する
+ * 現在の実行環境（祖先要素、ルート要素、OS設定）からダークモードかどうかを判定する
  *
- * @param element 判定対象の要素（任意）
+ * @param element 判定対象の要素（任意）。要素自身のローカル属性ではなく親・祖先要素を辿って判定します。
  * @returns ダークモードの場合は true
  */
 export function detectIsDarkMode(element?: HTMLElement): boolean {
   if (element) {
-    const elResult = isElementDark(element);
-    if (elResult !== undefined) return elResult;
+    let current: HTMLElement | null =
+      element.parentElement ??
+      ((element as any).getRootNode?.() as ShadowRoot)?.host as HTMLElement ??
+      null;
+
+    while (current) {
+      const parentResult = isElementDark(current);
+      if (parentResult !== undefined) return parentResult;
+
+      current =
+        current.parentElement ??
+        ((current as any).getRootNode?.() as ShadowRoot)?.host as HTMLElement ??
+        null;
+    }
   }
 
   if (typeof document !== "undefined") {

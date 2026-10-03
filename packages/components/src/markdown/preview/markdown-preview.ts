@@ -146,12 +146,20 @@ export class MarkdownPreview extends LitElement {
   }
 
   override render() {
+    const isDark =
+      this.getAttribute?.("data-theme") === "dark" ||
+      Boolean(this.classList?.contains?.("wa-dark"));
+    const currentTheme = isDark ? "dark" : "light";
+
     return html`
       <div
         class="markdown-preview ${this.isLoading ? "markdown-preview--loading" : ""}"
       >
         ${this.renderedHtml
-          ? html`<div class="markdown-preview__body markdown-body">
+          ? html`<div
+              class="markdown-preview__body markdown-body"
+              data-theme="${currentTheme}"
+            >
               ${unsafeHTML(this.renderedHtml)}
             </div>`
           : html`<div class="markdown-preview__empty">
