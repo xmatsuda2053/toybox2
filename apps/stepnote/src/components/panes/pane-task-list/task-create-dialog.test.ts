@@ -38,7 +38,7 @@ import { TaskCreateDialog } from "./task-create-dialog";
  *
  * 5. BEM設計およびSCSSスタイルの検証
  *    - [x] 5-1. SCSSスタイルシート（task-create-dialog.scss）が存在し、ルートブロック .task-create-dialog およびBEMセレクタが定義されていること
- *    - [x] 5-2. テーマ切替トランジション等のCSS変数指定が定義されていること
+ *    - [x] 5-2. ダイアログ共通 Mixin（dialog-common.scss）がインポートされ、ダイアログサーフェスが適用されていること
  *    - [x] 5-3. フォームラベルに対する個別の font-size 上書きが存在せず、Web Awesome の標準サイズ設計に準拠していること
  *    - [x] 5-4. フォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること
  *
@@ -330,10 +330,11 @@ describe("TaskCreateDialog Component", () => {
       expect(scssContent).toContain(".task-create-dialog__actions");
     });
 
-    it("5-2. テーマ切替トランジション等のCSS変数指定が定義されていること", () => {
+    it("5-2. ダイアログ共通 Mixin（dialog-common.scss）がインポートされ、ダイアログサーフェスが適用されていること", () => {
       const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toContain("--wa-color-");
+      expect(scssContent).toContain("dialog-common.scss");
+      expect(scssContent).toContain("@include dialog-surface");
     });
 
     it("5-3. フォームラベルに対する個別の font-size 上書きが存在せず、Web Awesome の標準サイズ設計に準拠していること", () => {

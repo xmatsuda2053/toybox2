@@ -1,0 +1,125 @@
+@use "./tokens.scss";
+@use "./mixins.scss" as *;
+
+/* ==========================================================================
+   StepNote Dialog & Form Common Mixins
+   ダイアログサーフェスおよびダイアログ内フォームの共通スタイル
+   ========================================================================== */
+
+/**
+ * 1. ダイアログ基本サーフェス（Light 既定）
+ * wa-dialog 要素に直接 include して使用します。
+ */
+@mixin dialog-surface {
+  color: var(--wa-color-text-normal);
+  --wa-form-control-label-color: var(--wa-color-text-normal);
+  --wa-form-control-value-color: var(--wa-color-text-normal);
+
+  &::part(dialog) {
+    background-color: var(--wa-color-surface-default, #ffffff);
+    color: #1f2328;
+    border: 1px solid var(--wa-color-surface-border, #d0d7de);
+    border-radius: var(--wa-border-radius-l, 8px);
+    box-shadow: 0 12px 28px rgba(140, 149, 159, 0.3);
+  }
+
+  &::part(title) {
+    color: #1f2328;
+    font-weight: 700;
+    font-size: var(--wa-font-size-m, 16px);
+  }
+
+  &::part(body) {
+    color: #1f2328;
+  }
+}
+
+/**
+ * 2. フォーム全体レイアウト
+ * ダイアログ内の form 要素に include して使用します。
+ */
+@mixin dialog-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-m, 16px);
+  padding-block: var(--wa-space-s, 12px);
+}
+
+/**
+ * 3. フォームフィールド（入力項目ラッパーまたはフィールドクラス）
+ * 各入力コンポーネントまたはフィールドラッパーに include して使用します。
+ */
+@mixin dialog-field-layout {
+  width: 100%;
+  --wa-form-control-background-color: #f6f8fa;
+  --wa-form-control-border-color: #d0d7de;
+  --wa-form-control-label-color: #1f2328;
+  --wa-form-control-value-color: #1f2328;
+  --wa-form-control-placeholder-color: #8c959f;
+
+  &::part(form-control-label),
+  &::part(label) {
+    color: #1f2328;
+    font-weight: 600;
+  }
+
+  &::part(input),
+  &::part(textarea) {
+    color: #1f2328;
+  }
+}
+
+/**
+ * 4. フッター・ボタングループレイアウト
+ * ダイアログ下部のアクションボタングループに include して使用します。
+ */
+@mixin dialog-footer-layout {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-xs, 8px);
+}
+
+/**
+ * 5. Dark モード ダイアログサーフェス（独立サーフェス・高コントラスト）
+ * テーマ切替 Mixin 内で include して使用します。
+ */
+@mixin dialog-dark-surface {
+  wa-dialog::part(dialog) {
+    background-color: #1c2128;
+    border: 1px solid #444c56;
+    box-shadow:
+      0 16px 36px rgba(0, 0, 0, 0.8),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+    color: #f0f6fc;
+  }
+
+  wa-dialog::part(title) {
+    color: #ffffff;
+  }
+
+  wa-dialog::part(body) {
+    color: #f0f6fc;
+  }
+}
+
+/**
+ * 6. Dark モード フォームフィールド（高コントラスト）
+ * テーマ切替 Mixin 内でフィールドクラスに include して使用します。
+ */
+@mixin dialog-field-dark-theme {
+  --wa-form-control-background-color: #0d1117;
+  --wa-form-control-border-color: #444c56;
+  --wa-form-control-label-color: #e6edf3;
+  --wa-form-control-value-color: #ffffff;
+  --wa-form-control-placeholder-color: #768390;
+
+  &::part(form-control-label),
+  &::part(label) {
+    color: #ffffff;
+  }
+
+  &::part(input),
+  &::part(textarea) {
+    color: #ffffff;
+  }
+}
