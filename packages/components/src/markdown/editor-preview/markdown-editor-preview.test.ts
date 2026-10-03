@@ -17,8 +17,11 @@
  *   - スプリット、編集、プレビューの各ボタンに wa-icon が配置され、適切なアイコン名が設定されていること
  *   - スプリット: table-columns-solid-full、編集: markdown-brands-solid-full、プレビュー: html5-brands-solid-full
  *   - 各ボタンにアクセシビリティ用の aria-label および title が設定されていること
+ * 7. アイコンボタンのスタイルと視認性
+ *   - モード切替アイコンボタンの wa-icon のサイズが視認性向上のため 18px 以上に設定されていること
  */
 
+import * as fs from "node:fs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { MarkdownEditorPreview } from "./markdown-editor-preview.js";
@@ -126,6 +129,17 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       // プレビュー（HTML5）アイコン
       expect(htmlStr).toContain('name="html5-brands-solid-full"');
       expect(htmlStr).toContain('title="プレビュー"');
+    });
+  });
+
+  describe("アイコンボタンのスタイルと視認性", () => {
+    it("モード切替ボタン内の wa-icon のサイズが視認性向上のため 18px 以上に設定されていること", () => {
+      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      const match = scssContent.match(/wa-icon\s*\{[^}]*font-size:\s*(\d+)px/);
+      expect(match).not.toBeNull();
+      const fontSize = parseInt(match![1], 10);
+      expect(fontSize).toBeGreaterThanOrEqual(18);
     });
   });
 });
