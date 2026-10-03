@@ -1,5 +1,6 @@
 @use "../../../styles/tokens.scss";
 @use "../../../styles/mixins.scss" as *;
+@use "../../../styles/dialog-common.scss" as *;
 @use "../pane-common.scss" as *;
 
 *,
@@ -245,58 +246,19 @@ wa-dropdown-item[variant="danger"] {
    ダイアログスタイル（Light既定）
    ========================================================================== */
 wa-dialog {
-  color: var(--wa-color-text-normal);
-  --wa-form-control-label-color: var(--wa-color-text-normal);
-  --wa-form-control-value-color: var(--wa-color-text-normal);
-
-  &::part(dialog) {
-    background-color: #ffffff;
-    color: #1f2328;
-    border: 1px solid #d0d7de;
-    box-shadow: 0 12px 28px rgba(140, 149, 159, 0.3);
-  }
-
-  &::part(title) {
-    color: #1f2328;
-    font-weight: 700;
-  }
-
-  &::part(body) {
-    color: #1f2328;
-  }
+  @include dialog-surface;
 }
 
 .dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-m, 16px);
-  padding-block: var(--wa-space-s, 12px);
+  @include dialog-form-layout;
 }
 
 .dialog-field {
-  width: 100%;
-  --wa-form-control-background-color: #f6f8fa;
-  --wa-form-control-border-color: #d0d7de;
-  --wa-form-control-label-color: #1f2328;
-  --wa-form-control-value-color: #1f2328;
-  --wa-form-control-placeholder-color: #8c959f;
-
-  &::part(form-control-label),
-  &::part(label) {
-    color: #1f2328;
-    font-weight: 600;
-  }
-
-  &::part(input),
-  &::part(textarea) {
-    color: #1f2328;
-  }
+  @include dialog-field-layout;
 }
 
 .dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--wa-space-xs, 8px);
+  @include dialog-footer-layout;
 }
 
 .delete-dialog-message {
@@ -346,39 +308,10 @@ wa-dialog {
     }
   }
 
-  wa-dialog::part(dialog) {
-    background-color: #1c2128;
-    border: 1px solid #444c56;
-    box-shadow:
-      0 16px 36px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
-    color: #f0f6fc;
-  }
-
-  wa-dialog::part(title) {
-    color: #ffffff;
-  }
-
-  wa-dialog::part(body) {
-    color: #f0f6fc;
-  }
+  @include dialog-dark-surface;
 
   .dialog-field {
-    --wa-form-control-background-color: #0d1117;
-    --wa-form-control-border-color: #444c56;
-    --wa-form-control-label-color: #e6edf3;
-    --wa-form-control-value-color: #ffffff;
-    --wa-form-control-placeholder-color: #768390;
-  }
-
-  .dialog-field::part(form-control-label),
-  .dialog-field::part(label) {
-    color: #ffffff;
-  }
-
-  .dialog-field::part(input),
-  .dialog-field::part(textarea) {
-    color: #ffffff;
+    @include dialog-field-dark-theme;
   }
 
   .delete-dialog-message {
@@ -400,3 +333,4 @@ wa-dialog {
     @include dark-surface-theme;
   }
 }
+

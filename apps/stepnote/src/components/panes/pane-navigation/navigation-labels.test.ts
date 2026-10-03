@@ -38,11 +38,11 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 5-3. disconnectedCallback 呼び出し時に購読解除関数が実行されること
  *
  * 6. ダイアログ・ドロップダウンのスタイリングと Dark モード視認性仕様
- *    - 6-1. スタイルシートに wa-dialog::part(title) に対する文字色定義が含まれていること
- *    - 6-2. スタイルシートに .dialog-field に対するラベル文字色（form-control-label）定義が含まれていること
+ *    - 6-1. スタイルシートに wa-dialog に対する共通 Mixin（@include dialog-surface）が適用されていること
+ *    - 6-2. スタイルシートに .dialog-field に対する共通 Mixin（@include dialog-field-layout）が適用されていること
  *    - 6-3. Dark モード用の高コントラストカラー指定が含まれていること
- *    - 6-4. Dark モード時にダイアログ背景色がアプリ本体と同化しない独立サーフェス（#1c2128）および枠線（border）が定義されていること
- *    - 6-5. input および textarea の入力文字色（value-color / #ffffff）が定義されていること
+ *    - 6-4. Dark モード時に共通 Mixin（@include dialog-dark-surface）が適用され、独立サーフェス（#1c2128）および枠線（border）が集約定義されていること
+ *    - 6-5. 入力文字色（value-color / #ffffff）が共通 Mixin（dialog-field-layout / dialog-field-dark-theme）を通じて定義されていること
  *    - 6-6. Dark モード時にドロップダウンメニューの文字色（#ffffff）および独立サーフェス背景色（#1c2128）が定義されていること
  *    - 6-7. メニュートリガーボタン（labels__btn-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること
  *    - 6-8. ダイアログのフォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること
@@ -278,21 +278,26 @@ describe("NavigationLabels Component", () => {
   });
 
   describe("6. ダイアログのスタイリングと Dark モード視認性仕様", () => {
-    it("6-1. スタイルシートに wa-dialog::part(title) に対する文字色定義が含まれていること", () => {
+    it("6-1. スタイルシートに wa-dialog に対する共通 Mixin（@include dialog-surface）が適用されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
       expect(scssContent).toContain("wa-dialog");
-      expect(scssContent).toContain("part(title)");
+      expect(scssContent).toContain("@include dialog-surface");
     });
 
-    it("6-2. スタイルシートに .dialog-field に対するラベル文字色（form-control-label）定義が含まれていること", () => {
+    it("6-2. スタイルシートに .dialog-field に対する共通 Mixin（@include dialog-field-layout）が適用されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("form-control-label");
+      expect(scssContent).toContain("@include dialog-field-layout");
+      const dialogCommonContent = fs.readFileSync(
+        new URL("../../../styles/dialog-common.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(dialogCommonContent).toContain("form-control-label");
     });
 
     it("6-3. Dark モード用の高コントラストカラー指定が含まれていること", () => {
@@ -304,24 +309,35 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("#ffffff");
     });
 
-    it("6-4. Dark モード時にダイアログ背景色がアプリ本体と同化しない独立サーフェス（#1c2128）および枠線（border）が定義されていること", () => {
+    it("6-4. Dark モード時に共通 Mixin（@include dialog-dark-surface）が適用され、独立サーフェス（#1c2128）および枠線（border）が集約定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("#1c2128");
-      expect(scssContent).toContain("#444c56");
-      expect(scssContent).toContain("box-shadow");
+      expect(scssContent).toContain("@include dialog-dark-surface");
+      const dialogCommonContent = fs.readFileSync(
+        new URL("../../../styles/dialog-common.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(dialogCommonContent).toContain("#1c2128");
+      expect(dialogCommonContent).toContain("#444c56");
+      expect(dialogCommonContent).toContain("box-shadow");
     });
 
-    it("6-5. input および textarea の入力文字色（value-color / #ffffff）が定義されていること", () => {
+    it("6-5. 入力文字色（value-color / #ffffff）が共通 Mixin（dialog-field-layout / dialog-field-dark-theme）を通じて定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("--wa-form-control-value-color");
-      expect(scssContent).toContain("part(input)");
-      expect(scssContent).toContain("part(textarea)");
+      expect(scssContent).toContain("@include dialog-field-layout");
+      expect(scssContent).toContain("@include dialog-field-dark-theme");
+      const dialogCommonContent = fs.readFileSync(
+        new URL("../../../styles/dialog-common.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(dialogCommonContent).toContain("--wa-form-control-value-color");
+      expect(dialogCommonContent).toContain("part(input)");
+      expect(dialogCommonContent).toContain("part(textarea)");
     });
 
     it("6-6. Dark モード時にドロップダウンメニューの文字色（#ffffff）および独立サーフェス背景色（#1c2128）が定義されていること", () => {
