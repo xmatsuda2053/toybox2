@@ -9,6 +9,7 @@ import { beforeAll, describe, expect, it } from "vitest";
  * 仕様 4: app-root.scss の pane-collapsible において開閉アニメーションとテーマ切替トランジションが両立されていること
  * 仕様 5: app-root.scss において .pane-collapsible が個別ペイン（.pane-navigation, .pane-task-list）より後に定義され、開閉トランジションが上書きされないこと
  * 仕様 6: prefers-reduced-motion: reduce 時にトランジションを抑止するアクセシビリティ配慮が含まれていること
+ * 仕様 7: tokens.scss の prefers-reduced-motion: reduce において !important を使用せず安全にトランジショントークンが無効化されていること
  */
 describe("テーマ切替トランジション仕様 (Theme Transition)", () => {
   let tokensScss = "";
@@ -132,6 +133,15 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
       expect(tokensScss).toMatch(
         /@media\s*\(prefers-reduced-motion:\s*reduce\)/,
       );
+    });
+
+    it("prefers-reduced-motion: reduce 内において !important を使用せず安全にトランジションが無効化されていること", () => {
+      const mediaBlock = tokensScss.match(
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\}/,
+      );
+      expect(mediaBlock).not.toBeNull();
+      expect(mediaBlock![0]).not.toContain("!important");
+      expect(mediaBlock![0]).toMatch(/--stepnote-transition-theme:\s*none/);
     });
   });
 });

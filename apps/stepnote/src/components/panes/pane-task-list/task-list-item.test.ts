@@ -35,6 +35,8 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 5-1. SCSSスタイルシート（task-list-item.scss）が存在し、ルートブロック .task-list-item および主要BEMセレクタが定義されていること
  *    - 5-2. テーマ切替トランジション等のCSS変数指定（var(--stepnote-transition-theme)）が定義されていること
  *    - 5-3. 垂直ディバイダー（.task-list-item__divider）に選択時でも視認可能なカラー（--wa-color-text-quiet）と高さが定義されていること
+ *    - 5-4. task-list-item.scss に !important 宣言が一切含まれていないこと
+ *    - 5-5. ブックマークアイコンのアクティブ状態に !important を用いずカラーが定義されていること
  */
 describe("TaskListItem Component", () => {
   let element: TaskListItem;
@@ -263,6 +265,31 @@ describe("TaskListItem Component", () => {
       const content = fs.readFileSync(normalizedPath, "utf-8");
       expect(content).toContain(".task-list-item__divider");
       expect(content).toMatch(/\.task-list-item__divider\s*\{[^}]*--color:\s*var\(--wa-color-text-quiet/);
+    });
+
+    it("5-4. task-list-item.scss に !important 宣言が一切含まれていないこと", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+      expect(content).not.toContain("!important");
+    });
+
+    it("5-5. ブックマークアイコンのアクティブ状態に !important を用いずカラーが定義されていること", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+      expect(content).toMatch(
+        /\.task-list-item__bookmark-icon--active\s*\{[^}]*color:\s*var\(--quick-access-icon-active-bookmark/,
+      );
+      expect(content).not.toMatch(
+        /\.task-list-item__bookmark-icon--active\s*\{[^}]*!important/,
+      );
     });
   });
 

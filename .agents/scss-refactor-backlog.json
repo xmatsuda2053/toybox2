@@ -176,5 +176,82 @@
         "nesting_depth_max": 2
       }
     }
+  },
+  {
+    "id": "SCSS-007",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-list-item.scss, apps/stepnote/src/styles/tokens.scss",
+    "target_selector": ".task-list-item__bookmark-icon--active, prefers-reduced-motion",
+    "category": "AntiPattern",
+    "metrics": {
+      "important_count": 3
+    },
+    "issue_summary": "task-list-item.scss および tokens.scss における !important 宣言（3箇所）の排除",
+    "approach": "セレクタ詳細度の適正化（親ボタンホバー指定との衝突解消）およびアクセシビリティ宣言の標準化による !important の完全排除",
+    "scope": "component",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 7,
+      "completed_at": "2026-10-03T11:09:48+09:00",
+      "issue_number": 140,
+      "pr_number": 141,
+      "commit_hash": "c5754d7",
+      "regressions_detected": 0,
+      "tests_passed": 651,
+      "metrics_after": {
+        "important_count": 0
+      }
+    }
+  },
+  {
+    "id": "SCSS-008",
+    "target_file": "apps/stepnote/src/styles/mixins.scss",
+    "target_selector": "&::-webkit-scrollbar, scrollbar-width",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_lines": 23,
+      "duplicated_tokens": 219,
+      "files_involved": 2
+    },
+    "issue_summary": "navigation-labels.scss と pane-task-list.scss におけるカスタムスクロールバースタイルの重複（23行）",
+    "approach": "src/styles/mixins.scss に @mixin custom-scrollbar を新設し、各コンポーネントで @include 置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending"
+  },
+  {
+    "id": "SCSS-009",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.scss",
+    "target_selector": "wa-dialog, .dialog-form, .dialog-field, .dialog-footer",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_lines": 72,
+      "duplicated_tokens": 482,
+      "files_involved": 2
+    },
+    "issue_summary": "navigation-labels.scss と task-create-dialog.scss における wa-dialog およびダイアログフォーム・ダークモードオーバーライドスタイルの重複",
+    "approach": "ダイアログ共通スタイルの集約（pane-common.scss またはダイアログ用 Mixin の新設・適用）",
+    "scope": "shared",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending"
+  },
+  {
+    "id": "SCSS-010",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.scss",
+    "target_selector": ".pane-task-list__header, .task-list-item__title",
+    "category": "Standardization",
+    "metrics": {
+      "hardcoded_colors": 12,
+      "files_involved": 2
+    },
+    "issue_summary": "Task List コンポーネント群における共通セクションヘッダースタイルの再定義およびハードコードカラー、@mixin text-ellipsis 未適用",
+    "approach": "pane-common.scss の活用、@mixin text-ellipsis の適用、ハードコードカラーの tokens.scss カスタムプロパティ置換",
+    "scope": "component",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending"
   }
 ]
