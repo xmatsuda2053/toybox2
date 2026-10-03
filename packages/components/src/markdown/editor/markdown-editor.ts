@@ -1,12 +1,36 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import editorStyles from "./markdown-editor.scss?inline";
-import { EditorView, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap } from "@codemirror/view";
+import {
+  EditorView,
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  dropCursor,
+  rectangularSelection,
+  crosshairCursor,
+  highlightActiveLine,
+  keymap,
+} from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "@codemirror/language";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
+import {
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  bracketMatching,
+} from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
 
 /**
  * Markdown エディタコンポーネント (<markdown-editor>)
@@ -38,6 +62,15 @@ export class MarkdownEditor extends LitElement {
   private containerElement?: HTMLDivElement;
 
   private editorView?: EditorView;
+  private disconnectThemeObserver?: () => void;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.syncTheme(false);
+    this.disconnectThemeObserver = observeThemeChanges(() => {
+      this.syncTheme(true);
+    });
+  }
 
   override firstUpdated(): void {
     this.initEditor();
@@ -61,14 +94,47 @@ export class MarkdownEditor extends LitElement {
         changedProperties.has("disabled")) &&
       this.editorView
     ) {
-      this.reconfigureEditor();
+      this.syncTheme(true);
     }
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.disconnectThemeObserver?.();
     this.editorView?.destroy();
     this.editorView = undefined;
+  }
+
+  /**
+   * 現在ダークモードが有効かどうかを取得する。
+   */
+  public get isDarkMode(): boolean {
+    if (this.themeMode === "dark") return true;
+    if (this.themeMode === "light") return false;
+    return detectIsDarkMode(this);
+  }
+
+  /**
+   * ホスト要素のテーマ属性およびクラスを同期し、必要に応じてエディタを再構成する。
+   */
+  private syncTheme(reconfigureEditor = false): void {
+    const isDark = this.isDarkMode;
+    const targetTheme = isDark ? "dark" : "light";
+
+    if (this.getAttribute("data-theme") !== targetTheme) {
+      this.setAttribute("data-theme", targetTheme);
+    }
+    if (isDark) {
+      this.classList.add("wa-dark");
+      this.classList.remove("wa-light");
+    } else {
+      this.classList.remove("wa-dark");
+      this.classList.add("wa-light");
+    }
+
+    if (reconfigureEditor && this.editorView) {
+      this.reconfigureEditor();
+    }
   }
 
   /**
@@ -111,13 +177,8 @@ export class MarkdownEditor extends LitElement {
       extensions.push(EditorState.readOnly.of(true));
     }
 
-    // テーマ設定
-    const isDark =
-      this.themeMode === "dark" ||
-      (this.themeMode === "auto" &&
-        this.matches(":host([data-theme='dark']), :host-context([data-theme='dark']), :host-context(.wa-dark)"));
-
-    if (isDark) {
+    // テーマ設定: ダークモード判定時に oneDark を適用
+    if (this.isDarkMode) {
       extensions.push(oneDark);
     }
 

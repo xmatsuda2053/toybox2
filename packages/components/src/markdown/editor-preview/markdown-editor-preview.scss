@@ -15,6 +15,13 @@
   }
 }
 
+:host([data-theme="dark"]),
+:host(.wa-dark) {
+  --stepnote-bg-surface: #0d1117;
+  --stepnote-bg-primary: #0d1117;
+  --stepnote-text-primary: #f0f6fc;
+}
+
 .markdown-editor-preview {
   display: flex;
   flex-direction: column;
@@ -29,8 +36,8 @@
 
 :host([data-theme="dark"]) .markdown-editor-preview,
 :host(.wa-dark) .markdown-editor-preview {
-  background-color: #0d1117;
-  border-color: #30363d;
+  background-color: #0d1117 !important;
+  border-color: #30363d !important;
 }
 
 /* ツールバーヘッダー */
@@ -46,14 +53,19 @@
 
 :host([data-theme="dark"]) .markdown-editor-preview__header,
 :host(.wa-dark) .markdown-editor-preview__header {
-  background-color: #161b22;
-  border-bottom-color: #30363d;
+  background-color: #161b22 !important;
+  border-bottom-color: #30363d !important;
 }
 
 .markdown-editor-preview__title {
   font-size: 13px;
   font-weight: 600;
   color: var(--stepnote-text-secondary, #64748b);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__title,
+:host(.wa-dark) .markdown-editor-preview__title {
+  color: #8b949e !important;
 }
 
 .markdown-editor-preview__mode-group {
@@ -66,7 +78,7 @@
 
 :host([data-theme="dark"]) .markdown-editor-preview__mode-group,
 :host(.wa-dark) .markdown-editor-preview__mode-group {
-  background-color: #21262d;
+  background-color: #21262d !important;
 }
 
 .markdown-editor-preview__mode-btn {
@@ -99,7 +111,7 @@
 
 :host([data-theme="dark"]) .markdown-editor-preview__mode-btn--active,
 :host(.wa-dark) .markdown-editor-preview__mode-btn--active {
-  background-color: #30363d;
+  background-color: #30363d !important;
   color: #58a6ff !important;
 }
 
@@ -129,7 +141,7 @@
 
 :host([data-theme="dark"]) .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor,
 :host(.wa-dark) .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
-  border-right-color: #30363d;
+  border-right-color: #30363d !important;
 }
 
 .markdown-editor-preview--mode-split .markdown-editor-preview__pane--preview {

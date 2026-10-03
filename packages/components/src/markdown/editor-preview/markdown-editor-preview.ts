@@ -4,6 +4,7 @@ import editorPreviewStyles from "./markdown-editor-preview.scss?inline";
 import type { Extension } from "@codemirror/state";
 import type { MarkdownProcessorOptions } from "../types.js";
 import { debounce } from "@shared/utils";
+import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
 import "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
 
@@ -43,6 +44,12 @@ export class MarkdownEditorPreview extends LitElement {
   @state()
   private previewValue = "";
 
+  /** 現在適用されている解決済みテーマ ("light" | "dark") */
+  @state()
+  public currentTheme: "light" | "dark" = "light";
+
+  private disconnectThemeObserver?: () => void;
+
   private debouncedUpdatePreview = debounce((val: string) => {
     this.previewValue = val;
   }, 150);
@@ -50,6 +57,35 @@ export class MarkdownEditorPreview extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.previewValue = this.value;
+    this.syncTheme();
+    this.disconnectThemeObserver = observeThemeChanges(() => {
+      this.syncTheme();
+    });
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.disconnectThemeObserver?.();
+  }
+
+  /**
+   * ホスト要素および子コンポーネントのテーマを同期する。
+   */
+  private syncTheme(): void {
+    const isDark = detectIsDarkMode(this);
+    const targetTheme: "light" | "dark" = isDark ? "dark" : "light";
+    this.currentTheme = targetTheme;
+
+    if (this.getAttribute("data-theme") !== targetTheme) {
+      this.setAttribute("data-theme", targetTheme);
+    }
+    if (isDark) {
+      this.classList.add("wa-dark");
+      this.classList.remove("wa-light");
+    } else {
+      this.classList.remove("wa-dark");
+      this.classList.add("wa-light");
+    }
   }
 
   /**
@@ -151,6 +187,8 @@ export class MarkdownEditorPreview extends LitElement {
           class="markdown-editor-preview__pane markdown-editor-preview__pane--editor"
         >
           <markdown-editor
+            data-theme=${this.currentTheme}
+            .themeMode=${this.currentTheme}
             .value=${this.value}
             .customExtensions=${this.customExtensions}
             @markdown-change=${this.onEditorInput}
@@ -160,6 +198,7 @@ export class MarkdownEditorPreview extends LitElement {
           class="markdown-editor-preview__pane markdown-editor-preview__pane--preview"
         >
           <markdown-preview
+            data-theme=${this.currentTheme}
             .content=${this.previewValue}
             .processorOptions=${this.processorOptions}
           ></markdown-preview>
