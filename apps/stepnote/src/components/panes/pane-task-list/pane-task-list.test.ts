@@ -55,6 +55,9 @@ import { PaneTaskList } from "./pane-task-list";
  * 10. QuickAccess 状態連携（QuickAccess Context Integration）
  *    - 10-1. quickAccessController が注入された際、その状態が taskListController.setQuickAccessFilter に同期されること
  *    - 10-2. quickAccessController の状態変更リスナーが発火した際、最新状態が taskListController へ反映されること
+ *
+ * 12. スクロールバー仕様（SCSS-008: custom-scrollbar Mixin 連携）
+ *    - 12-1. .pane-task-list__list に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること
  */
 
 describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
@@ -462,6 +465,18 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       expect(htmlStr).toContain("wa-dropdown");
       expect(htmlStr).toContain("pane-task-list__btn-year");
       expect(htmlStr).toContain("2026年度");
+    });
+  });
+
+  describe("12. スクロールバー仕様（SCSS-008: custom-scrollbar Mixin 連携）", () => {
+    it("12-1. .pane-task-list__list に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./pane-task-list.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toContain("@include custom-scrollbar");
+      expect(scssContent).not.toContain("scrollbar-width: thin");
+      expect(scssContent).not.toContain("&::-webkit-scrollbar {");
     });
   });
 });

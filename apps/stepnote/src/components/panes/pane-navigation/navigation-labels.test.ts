@@ -49,8 +49,8 @@ import { NavigationLabels } from "./navigation-labels";
  *
  * 7. コンテンツ部スクロールバー仕様（Scrollbar & Gutter）
  *    - 7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること
- *    - 7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義されていること
- *    - 7-3. .labels__content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること
+ *    - 7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義され、custom-scrollbar Mixin で参照されていること
+ *    - 7-3. .labels__content に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること
  *
  * 8. 選択中ラベルの一括解除（Clear All Selected）
  *    - 8-1. ラベルが未選択（hasSelectedLabels === false）のとき、一括解除ボタン（labels__btn-clear）が表示されないこと
@@ -366,32 +366,30 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("scrollbar-gutter: stable");
     });
 
-    it("7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義されていること", () => {
-      const scssContent = fs.readFileSync(
-        new URL("./navigation-labels.scss", import.meta.url),
+    it("7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義され、custom-scrollbar Mixin で参照されていること", () => {
+      const mixinsContent = fs.readFileSync(
+        new URL("../../../styles/mixins.scss", import.meta.url),
         "utf-8",
       );
       const tokensContent = fs.readFileSync(
         new URL("../../../styles/tokens.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("--scrollbar-thumb-color");
-      expect(scssContent).toContain("--scrollbar-thumb-hover-color");
-      expect(scssContent).toContain("--scrollbar-track-color");
+      expect(mixinsContent).toContain("--scrollbar-thumb-color");
+      expect(mixinsContent).toContain("--scrollbar-thumb-hover-color");
+      expect(mixinsContent).toContain("--scrollbar-track-color");
       expect(tokensContent).toContain("#d0d7de");
       expect(tokensContent).toContain("#434857");
     });
 
-    it("7-3. .labels__content にマイクロ角丸（border-radius: 2px）および幅 6px のスクロールバースタイルが定義されていること", () => {
+    it("7-3. .labels__content に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("::-webkit-scrollbar");
-      expect(scssContent).toContain("width: 6px");
-      expect(scssContent).toContain("border-radius: 2px");
-      expect(scssContent).toContain("scrollbar-width: thin");
-      expect(scssContent).toContain("scrollbar-color");
+      expect(scssContent).toContain("@include custom-scrollbar");
+      expect(scssContent).not.toContain("scrollbar-width: thin");
+      expect(scssContent).not.toContain("&::-webkit-scrollbar {");
     });
   });
 
