@@ -1,4 +1,4 @@
-import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
+﻿import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
 import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
@@ -16,14 +16,17 @@ import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import html5_brands_solid_full from "./assets/icons/html5-brands-solid-full.svg?raw";
 import location_dot_solid_full from "./assets/icons/location-dot-solid-full.svg?raw";
 import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
+import markdown_brands_solid_full from "./assets/icons/markdown-brands-solid-full.svg?raw";
 import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
 import plus_solid_full from "./assets/icons/plus-solid-full.svg?raw";
 import question_solid_full from "./assets/icons/question-solid-full.svg?raw";
 import sliders_solid_full from "./assets/icons/sliders-solid-full.svg?raw";
 import sun_solid_full from "./assets/icons/sun-solid-full.svg?raw";
+import table_columns_solid_full from "./assets/icons/table-columns-solid-full.svg?raw";
 import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
 import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation-solid-full.svg?raw";
@@ -48,14 +51,17 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "html5-brands-solid-full": html5_brands_solid_full,
   "location-dot-solid-full": location_dot_solid_full,
   "magnifying-glass-solid-full": magnifying_glass_solid_full,
+  "markdown-brands-solid-full": markdown_brands_solid_full,
   "moon-solid-full": moon_solid_full,
   "pen-to-square-solid-full": pen_to_square_solid_full,
   "plus-solid-full": plus_solid_full,
   "question-solid-full": question_solid_full,
   "sliders-solid-full": sliders_solid_full,
   "sun-solid-full": sun_solid_full,
+  "table-columns-solid-full": table_columns_solid_full,
   "tag-solid-full": tag_solid_full,
   "trash-solid-full": trash_solid_full,
   "triangle-exclamation-solid-full": triangle_exclamation_solid_full,

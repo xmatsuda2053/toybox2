@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS } from "lit";
+import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import editorPreviewStyles from "./markdown-editor-preview.scss?inline";
 import type { Extension } from "@codemirror/state";
@@ -42,7 +42,7 @@ export class MarkdownEditorPreview extends LitElement {
 
   /** プレビューへ渡す遅延同期テキスト */
   @state()
-  private previewValue = "";
+  public previewValue = "";
 
   /** 現在適用されている解決済みテーマ ("light" | "dark") */
   @state()
@@ -66,6 +66,25 @@ export class MarkdownEditorPreview extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.disconnectThemeObserver?.();
+  }
+
+  override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has("value")) {
+      this.previewValue = this.value;
+    }
+  }
+
+  /**
+   * 外部からドキュメントテキストを設定し、プレビューも即時同期する。
+   *
+   * @param newValue 新しいテキスト
+   */
+  public setValue(newValue: string): void {
+    this.value = newValue;
+    this.debouncedUpdatePreview.cancel();
+    this.previewValue = newValue;
   }
 
   /**
@@ -94,6 +113,10 @@ export class MarkdownEditorPreview extends LitElement {
    * @param newMode 新しい表示モード
    */
   public setMode(newMode: MarkdownDisplayMode): void {
+    if (newMode === "preview" || newMode === "split") {
+      this.debouncedUpdatePreview.flush();
+      this.previewValue = this.value;
+    }
     if (this.mode === newMode) return;
     this.mode = newMode;
     this.dispatchEvent(
@@ -146,9 +169,15 @@ export class MarkdownEditorPreview extends LitElement {
               : ""}"
             role="tab"
             aria-selected=${this.mode === "split"}
+            title="スプリット"
+            aria-label="スプリット"
             @click=${() => this.setMode("split")}
           >
-            スプリット
+            <wa-icon
+              library="my-icons"
+              name="table-columns-solid-full"
+              label="スプリット"
+            ></wa-icon>
           </button>
           <button
             type="button"
@@ -157,9 +186,15 @@ export class MarkdownEditorPreview extends LitElement {
               : ""}"
             role="tab"
             aria-selected=${this.mode === "edit"}
+            title="編集"
+            aria-label="編集"
             @click=${() => this.setMode("edit")}
           >
-            編集
+            <wa-icon
+              library="my-icons"
+              name="markdown-brands-solid-full"
+              label="編集"
+            ></wa-icon>
           </button>
           <button
             type="button"
@@ -168,9 +203,15 @@ export class MarkdownEditorPreview extends LitElement {
               : ""}"
             role="tab"
             aria-selected=${this.mode === "preview"}
+            title="プレビュー"
+            aria-label="プレビュー"
             @click=${() => this.setMode("preview")}
           >
-            プレビュー
+            <wa-icon
+              library="my-icons"
+              name="html5-brands-solid-full"
+              label="プレビュー"
+            ></wa-icon>
           </button>
         </div>
       </header>
