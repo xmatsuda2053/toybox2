@@ -27,9 +27,44 @@ export class MarkdownEditorPreview extends LitElement {
   @property({ type: String })
   public value = "";
 
+  /** スプリット表示の利用可否 */
+  @property({
+    type: Boolean,
+    attribute: "allow-split",
+    converter: {
+      fromAttribute: (val: string | null) => val !== "false" && val !== null,
+    },
+  })
+  public allowSplit = true;
+
+  private _mode?: MarkdownDisplayMode;
+
   /** 表示モード ("split" | "edit" | "preview") */
   @property({ type: String })
-  public mode: MarkdownDisplayMode = "split";
+  public get mode(): MarkdownDisplayMode {
+    if (this._mode) {
+      if (!this.allowSplit && this._mode === "split") {
+        return this.hasContent ? "preview" : "edit";
+      }
+      return this._mode;
+    }
+    return this.hasContent ? "preview" : "edit";
+  }
+
+  public set mode(val: MarkdownDisplayMode) {
+    const oldMode = this._mode;
+    if (val === "split" && !this.allowSplit) {
+      this._mode = this.hasContent ? "preview" : "edit";
+    } else {
+      this._mode = val;
+    }
+    this.requestUpdate("mode", oldMode);
+  }
+
+  /** 入力内容が存在するかどうか */
+  private get hasContent(): boolean {
+    return Boolean(this.value && this.value.trim().length > 0);
+  }
 
   /** タイトル表示文字列 */
   @property({ type: String })
@@ -116,15 +151,18 @@ export class MarkdownEditorPreview extends LitElement {
    * @param newMode 新しい表示モード
    */
   public setMode(newMode: MarkdownDisplayMode): void {
+    if (newMode === "split" && !this.allowSplit) {
+      return;
+    }
     if (newMode === "preview" || newMode === "split") {
       this.debouncedUpdatePreview.flush();
       this.previewValue = this.value;
     }
-    if (this.mode === newMode) return;
+    if (this._mode === newMode) return;
     this.mode = newMode;
     this.dispatchEvent(
       new CustomEvent("mode-change", {
-        detail: { mode: newMode },
+        detail: { mode: this.mode },
         bubbles: true,
         composed: true,
       }),
@@ -332,23 +370,27 @@ export class MarkdownEditorPreview extends LitElement {
           role="tablist"
           aria-label="表示モード切替"
         >
-          <button
-            type="button"
-            class="markdown-editor-preview__mode-btn ${this.mode === "split"
-              ? "markdown-editor-preview__mode-btn--active"
-              : ""}"
-            role="tab"
-            aria-selected=${this.mode === "split"}
-            title="スプリット"
-            aria-label="スプリット"
-            @click=${() => this.setMode("split")}
-          >
-            <wa-icon
-              library="my-icons"
-              name="table-columns-solid-full"
-              label="スプリット"
-            ></wa-icon>
-          </button>
+          ${this.allowSplit
+            ? html`
+                <button
+                  type="button"
+                  class="markdown-editor-preview__mode-btn ${this.mode === "split"
+                    ? "markdown-editor-preview__mode-btn--active"
+                    : ""}"
+                  role="tab"
+                  aria-selected=${this.mode === "split"}
+                  title="スプリット"
+                  aria-label="スプリット"
+                  @click=${() => this.setMode("split")}
+                >
+                  <wa-icon
+                    library="my-icons"
+                    name="table-columns-solid-full"
+                    label="スプリット"
+                  ></wa-icon>
+                </button>
+              `
+            : ""}
           <button
             type="button"
             class="markdown-editor-preview__mode-btn ${this.mode === "edit"

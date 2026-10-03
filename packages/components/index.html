@@ -150,6 +150,28 @@
             <markdown-editor-preview id="markdown-plugin-demo" titleText="Plugin DI Demonstration"></markdown-editor-preview>
           </div>
         </section>
+
+        <!-- 13. Empty State (Default Edit Mode & Split Disabled) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">13. Empty State Editor (Default Edit Mode & allowSplit=false)</h2>
+          <p class="preview-card__desc">
+            入力内容が空の場合は編集モード（edit）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
+          </p>
+          <div class="preview-card__component" style="height: 360px;">
+            <markdown-editor-preview id="markdown-empty-demo" titleText="New Note" allow-split="false"></markdown-editor-preview>
+          </div>
+        </section>
+
+        <!-- 14. Existing Content (Default Preview Mode & Split Disabled) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">14. Existing Content Note (Default Preview Mode & allowSplit=false)</h2>
+          <p class="preview-card__desc">
+            入力内容が存在する場合はプレビューモード（preview）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
+          </p>
+          <div class="preview-card__component" style="height: 360px;">
+            <markdown-editor-preview id="markdown-no-split-demo" titleText="Existing Meeting Note" allow-split="false"></markdown-editor-preview>
+          </div>
+        </section>
       </main>
 
       <section class="preview-console">

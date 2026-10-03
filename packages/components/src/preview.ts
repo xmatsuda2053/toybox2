@@ -219,3 +219,53 @@ if (markdownPluginDemo) {
     appendLog("markdown-plugin-demo", "mode-change", customEvt.detail);
   });
 }
+
+// 13. 空のエディタ (デフォルト編集モード & スプリット無効)
+const markdownEmptyDemo = document.getElementById("markdown-empty-demo") as MarkdownEditorPreview | null;
+if (markdownEmptyDemo) {
+  markdownEmptyDemo.allowSplit = false;
+
+  markdownEmptyDemo.addEventListener("markdown-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ value: string }>;
+    appendLog("markdown-empty-demo", "markdown-change", {
+      length: customEvt.detail.value.length,
+      snippet: customEvt.detail.value.slice(0, 30) + "...",
+    });
+  });
+
+  markdownEmptyDemo.addEventListener("mode-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ mode: string }>;
+    appendLog("markdown-empty-demo", "mode-change", customEvt.detail);
+  });
+}
+
+// 14. 既存メモエディタ (デフォルトプレビューモード & スプリット無効)
+const markdownNoSplitDemo = document.getElementById("markdown-no-split-demo") as MarkdownEditorPreview | null;
+if (markdownNoSplitDemo) {
+  markdownNoSplitDemo.allowSplit = false;
+  markdownNoSplitDemo.value = `### プロジェクト定例ミーティング議事録
+
+- **日時**: 2026年10月4日 10:00 - 11:00
+- **参加者**: 松田、佐藤、田中
+
+#### アジェンダ
+1. Step-Note UI コンポーネント開発進捗
+2. Markdown エディタ＆プレビュー結合テスト結果
+3. 次週リリース計画
+
+> **Note**: このコンポーネントは \`allowSplit = false\` が設定されており、初期状態では入力内容があるため「プレビューモード」で表示されます。ヘッダーにはスプリットボタンが表示されず、編集とプレビューの2者間切り替えとなります。
+`;
+
+  markdownNoSplitDemo.addEventListener("markdown-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ value: string }>;
+    appendLog("markdown-no-split-demo", "markdown-change", {
+      length: customEvt.detail.value.length,
+      snippet: customEvt.detail.value.slice(0, 30) + "...",
+    });
+  });
+
+  markdownNoSplitDemo.addEventListener("mode-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ mode: string }>;
+    appendLog("markdown-no-split-demo", "mode-change", customEvt.detail);
+  });
+}

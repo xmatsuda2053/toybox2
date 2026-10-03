@@ -1,25 +1,32 @@
 /**
  * MarkdownEditorPreview コンポーネント単体テスト仕様
  *
- * 1. 初期化とプロパティ
- *   - デフォルトで mode は "split" であり、value が保持されること
- * 2. 表示モードの切り替え
+ * 1. 初期化とデフォルト表示モードの制御
+ *   - 入力内容が空の場合は、"edit"（編集モード）をデフォルトとすること
+ *   - 入力内容がある場合は、"preview"（プレビューモード）をデフォルトとすること
+ *   - デフォルト表示には "split"（スプリット）を使用しないこと
+ *   - 外部から明示的に mode が指定されている場合は指定値が優先されること
+ * 2. スプリットモードの利用可否制御 (allowSplit)
+ *   - allowSplit のデフォルト値は true であり、スプリットボタンが描画されること
+ *   - allowSplit が false の場合、スプリットボタンが非表示となること
+ *   - allowSplit が false の場合、setMode("split") を呼び出してもスプリットに遷移しないこと
+ * 3. 表示モードの切り替え
  *   - setMode() により mode が更新され、"mode-change" カスタムイベントが発火すること
- * 3. 入力変更イベントの通知
+ * 4. 入力変更イベントの通知
  *   - handleEditorChange() により value が更新され、"markdown-change" カスタムイベントが発火すること
- * 4. 拡張性・DI 設定の伝播
+ * 5. 拡張性・DI 設定の伝播
  *   - processorOptions および customExtensions が保持され、子要素へ伝播可能であること
- * 5. プレビュー値の同期とライフサイクル
+ * 6. プレビュー値の同期とライフサイクル
  *   - setValue() により value と previewValue が即座に同期されること
  *   - 外部から value が更新された際、updated ライフサイクルで previewValue が同期されること
  *   - setMode("preview") を呼び出した際、debounce 待機中であっても previewValue が現在の value と同期されること
- * 6. 表示モード切り替えアイコンボタンのレンダリング
+ * 7. 表示モード切り替えアイコンボタンのレンダリング
  *   - スプリット、編集、プレビューの各ボタンに wa-icon が配置され、適切なアイコン名が設定されていること
  *   - スプリット: table-columns-solid-full、編集: markdown-brands-solid-full、プレビュー: html5-brands-solid-full
  *   - 各ボタンにアクセシビリティ用の aria-label および title が設定されていること
- * 7. アイコンボタンのスタイルと視認性
+ * 8. アイコンボタンのスタイルと視認性
  *   - モード切替アイコンボタンの wa-icon のサイズが視認性向上のため 18px 以上に設定されていること
- * 8. 書式ツールバーのレンダリングとアクション
+ * 9. 書式ツールバーのレンダリングとアクション
  *   - split モードまたは edit モード時、ヘッダーに書式ツールバー（太字、見出し、リスト、テーブル等）がレンダリングされること
  *   - 各ツールバーボタンに適切な wa-icon が配置されていること
  *   - preview モード時は書式ツールバーが非表示となること
@@ -40,15 +47,50 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     element = new MarkdownEditorPreview();
   });
 
-  describe("初期化とプロパティ", () => {
-    it("デフォルトで mode は split、value は空文字列であること", () => {
-      expect(element.mode).toBe("split");
+  describe("初期化とデフォルト表示モードの制御", () => {
+    it("入力内容が空の場合は edit（編集モード）をデフォルトとすること", () => {
+      element.value = "";
+      expect(element.mode).toBe("edit");
       expect(element.value).toBe("");
     });
 
-    it("初期 value を設定できること", () => {
-      element.value = "# 初期値";
-      expect(element.value).toBe("# 初期値");
+    it("入力内容がある場合は preview（プレビューモード）をデフォルトとすること", () => {
+      element.value = "# 初期値テキスト";
+      expect(element.mode).toBe("preview");
+    });
+
+    it("デフォルト表示に split（スプリット）は使用されないこと", () => {
+      expect(element.mode).not.toBe("split");
+    });
+
+    it("明示的に mode が指定されている場合は指定値が維持されること", () => {
+      element.value = "# テキスト";
+      element.mode = "edit";
+      expect(element.mode).toBe("edit");
+    });
+  });
+
+  describe("スプリットモードの利用可否制御 (allowSplit)", () => {
+    it("デフォルトで allowSplit は true であり、スプリットボタンが描画されること", () => {
+      expect(element.allowSplit).toBe(true);
+      const template = element.render();
+      const renderedStr = flattenTemplate(template);
+      expect(renderedStr).toContain("table-columns-solid-full");
+    });
+
+    it("allowSplit が false の場合、スプリットボタンが描画されないこと", () => {
+      element.allowSplit = false;
+      const template = element.render();
+      const renderedStr = flattenTemplate(template);
+      expect(renderedStr).not.toContain("table-columns-solid-full");
+    });
+
+    it("allowSplit が false の場合、setMode('split') を呼び出してもスプリットに遷移しないこと", () => {
+      element.allowSplit = false;
+      element.value = "";
+      element.setMode("split");
+      expect(element.mode).not.toBe("split");
+      expect(element.mode).toBe("edit");
     });
   });
 
