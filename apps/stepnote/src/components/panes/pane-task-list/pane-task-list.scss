@@ -1,5 +1,6 @@
 @use "../../../styles/tokens.scss";
 @use "../../../styles/mixins.scss" as *;
+@use "../pane-common.scss" as *;
 
 *,
 *::before,
@@ -31,22 +32,11 @@
   @include theme-transition;
 
   &__header {
-    @include flex-between;
-    height: 48px;
-    padding-inline: var(--wa-space-s, 12px);
-    border-bottom: var(--wa-border-width-s) var(--wa-border-style)
-      var(--wa-color-surface-border);
-    flex-shrink: 0;
-    @include theme-transition;
+    @include pane-section-header;
   }
 
   &__title {
-    font-size: var(--wa-font-size-s);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--wa-color-text-normal);
-    text-transform: uppercase;
-    @include text-ellipsis;
+    @include pane-section-title;
   }
 
   &__actions {

@@ -1,4 +1,5 @@
 @use "../../../styles/tokens.scss";
+@use "../../../styles/mixins.scss" as *;
 
 :host {
   display: block;
@@ -31,7 +32,7 @@
   border: 1px solid var(--wa-color-surface-border, #d0d7de);
   background-color: var(--wa-color-surface-default, #f1f2f3);
   color: var(--wa-color-text-normal, #1f2328);
-  font-family: "Segoe UI", "BIZ UD Gothic", "Yu Gothic UI", Meiryo, sans-serif;
+  font-family: var(--wa-font-family-body);
   cursor: pointer;
   user-select: none;
   text-align: left;
@@ -84,7 +85,7 @@
 }
 
 .task-list-item__status-icon--pending {
-  color: var(--quick-access-icon-pending, #000);
+  color: var(--quick-access-icon-pending, #000000);
 }
 
 .task-list-item__status-icon--progress {
@@ -98,18 +99,14 @@
 .task-list-item__title {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
 }
 
 .task-list-item__label {
   flex: 1;
   min-width: 0;
   display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
 }
 
 .task-list-item__btn-bookmark {
