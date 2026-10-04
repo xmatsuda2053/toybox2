@@ -7,7 +7,11 @@ import type {
   IMarkdownProcessor,
   MarkdownProcessorOptions,
 } from "../types.js";
-import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
+import {
+  detectIsDarkMode,
+  observeThemeChanges,
+  syncHostTheme,
+} from "../utils/theme-sync.js";
 
 /**
  * Markdown プレビューコンポーネント (<markdown-preview>)
@@ -59,23 +63,9 @@ export class MarkdownPreview extends LitElement {
     this.disconnectThemeObserver?.();
   }
 
-  /**
-   * ホスト要素のテーマ属性（data-theme, wa-dark）を同期する。
-   */
   private syncTheme(): void {
     const isDark = detectIsDarkMode(this);
-    const targetTheme = isDark ? "dark" : "light";
-
-    if (this.getAttribute("data-theme") !== targetTheme) {
-      this.setAttribute("data-theme", targetTheme);
-    }
-    if (isDark) {
-      this.classList.add("wa-dark");
-      this.classList.remove("wa-light");
-    } else {
-      this.classList.remove("wa-dark");
-      this.classList.add("wa-light");
-    }
+    syncHostTheme(this, isDark);
   }
 
   override updated(changedProperties: PropertyValues): void {
