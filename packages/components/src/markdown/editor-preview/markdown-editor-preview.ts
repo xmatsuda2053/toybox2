@@ -7,7 +7,7 @@ import type {
   MarkdownFeatureExtension,
 } from "../types.js";
 import { debounce } from "@shared/utils";
-import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
+import { detectIsDarkMode, observeThemeChanges, syncHostTheme } from "../utils/theme-sync.js";
 import {
   MarkdownEditor,
   type MarkdownActionType,
@@ -15,6 +15,51 @@ import {
 import "../preview/markdown-preview.js";
 
 export type MarkdownDisplayMode = "split" | "edit" | "preview";
+
+interface ToolbarButtonDef {
+  readonly action: MarkdownActionType;
+  readonly icon: string;
+  readonly label: string;
+}
+
+const BASIC_TOOLBAR_BUTTONS: readonly ToolbarButtonDef[] = [
+  { action: "heading", icon: "heading-solid-full", label: "見出し" },
+  { action: "bold", icon: "bold-solid-full", label: "太字" },
+  { action: "bullet-list", icon: "list-ul-solid-full", label: "箇条書きリスト" },
+  { action: "task-list", icon: "list-check-solid-full", label: "タスクリスト" },
+];
+
+const SECONDARY_TOOLBAR_BUTTONS: readonly ToolbarButtonDef[] = [
+  { action: "ordered-list", icon: "list-ol-solid-full", label: "番号付きリスト" },
+  { action: "quote", icon: "blockquote-left", label: "引用" },
+  { action: "code", icon: "code-solid-full", label: "コード" },
+  { action: "link", icon: "link-solid-full", label: "リンク" },
+  { action: "table", icon: "table-solid-full", label: "テーブル" },
+];
+
+interface ModeTabDef {
+  readonly mode: MarkdownDisplayMode;
+  readonly icon: string;
+  readonly label: string;
+}
+
+const MODE_TABS: readonly ModeTabDef[] = [
+  { mode: "edit", icon: "markdown-brands-solid-full", label: "編集" },
+  { mode: "preview", icon: "html5-brands-solid-full", label: "プレビュー" },
+];
+
+const BASIC_MARKDOWN_HELP_ROWS = [
+  { name: "見出し", syntax: "### 見出し3", result: "小見出し" },
+  { name: "太字", syntax: "**太字**", result: html`<strong>太字</strong>` },
+  { name: "斜体", syntax: "*斜体*", result: html`<em>斜体</em>` },
+  { name: "箇条書き", syntax: "- リスト項目", result: "箇条書きリスト" },
+  { name: "番号付き", syntax: "1. リスト項目", result: "順序付きリスト" },
+  { name: "タスク", syntax: "- [ ] 未完了タスク", result: "チェックボックス" },
+  { name: "引用", syntax: "> 引用文", result: "引用ブロック" },
+  { name: "コード", syntax: "`code`", result: "インラインコード" },
+  { name: "リンク", syntax: "[テキスト](URL)", result: "ハイパーリンク" },
+  { name: "テーブル", syntax: "| A | B |", result: "表組" },
+];
 
 /**
  * 統合 Markdown エディタ＆プレビューコンポーネント (<markdown-editor-preview>)
@@ -276,19 +321,8 @@ export class MarkdownEditorPreview extends LitElement {
    */
   private syncTheme(): void {
     const isDark = detectIsDarkMode(this);
-    const targetTheme: "light" | "dark" = isDark ? "dark" : "light";
-    this.currentTheme = targetTheme;
-
-    if (this.getAttribute("data-theme") !== targetTheme) {
-      this.setAttribute("data-theme", targetTheme);
-    }
-    if (isDark) {
-      this.classList.add("wa-dark");
-      this.classList.remove("wa-light");
-    } else {
-      this.classList.remove("wa-dark");
-      this.classList.add("wa-light");
-    }
+    this.currentTheme = isDark ? "dark" : "light";
+    syncHostTheme(this, isDark);
   }
 
   /**
@@ -395,6 +429,90 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * 高さモードを確定し、イベントを発火する。
+   *
+   * @param targetAutoHeight 反映する自動伸長フラグ
+   */
+  private commitHeightMode(targetAutoHeight: boolean): void {
+    this.autoHeight = targetAutoHeight;
+    this.isTransitioning = false;
+    this.dispatchEvent(
+      new CustomEvent("height-mode-change", {
+        detail: { autoHeight: this.autoHeight },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * 固定モードから自動伸長モードへの滑らかな伸縮アニメーションを実行する。
+   */
+  private animateToAutoHeight(currentHeight: number): void {
+    this.style.height = `${currentHeight}px`;
+    this.autoHeight = true;
+
+    requestAnimationFrame(() => {
+      const container = this.renderRoot?.querySelector(
+        ".markdown-editor-preview",
+      ) as HTMLElement | null;
+      const naturalHeight = container ? container.scrollHeight : currentHeight;
+      const targetHeight = Math.max(naturalHeight, 240);
+
+      requestAnimationFrame(() => {
+        this.style.height = `${targetHeight}px`;
+
+        this.transitionTimer = setTimeout(() => {
+          if (this.autoHeight) {
+            this.style.height = "";
+          }
+          this.isTransitioning = false;
+          this.transitionTimer = null;
+        }, 400);
+      });
+    });
+  }
+
+  /**
+   * 自動伸長モードから固定モードへの滑らかな縮小アニメーションを実行する。
+   */
+  private animateToFixedHeight(currentHeight: number): void {
+    this.style.height = `${currentHeight}px`;
+    const targetFixed = this.effectiveHeight || "380px";
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.autoHeight = false;
+        this.style.height = targetFixed;
+
+        this.transitionTimer = setTimeout(() => {
+          this.isTransitioning = false;
+          this.transitionTimer = null;
+        }, 400);
+      });
+    });
+  }
+
+  /**
+   * 高さモード切替時の滑らかな伸縮アニメーションを実行する。
+   */
+  private animateHeightTransition(currentHeight: number, targetAutoHeight: boolean): void {
+    this.isTransitioning = true;
+    if (targetAutoHeight) {
+      this.animateToAutoHeight(currentHeight);
+    } else {
+      this.animateToFixedHeight(currentHeight);
+    }
+    this.dispatchEvent(
+      new CustomEvent("height-mode-change", {
+        detail: { autoHeight: targetAutoHeight },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
    * 高さモード（自動伸長 / 固定スクロール）を切り替える。
    *
    * @param force 指定した状態（省略時はトグル）
@@ -417,87 +535,19 @@ export class MarkdownEditorPreview extends LitElement {
       isBrowser &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-    // Node.js テスト環境またはアニメーション抑制設定時は即座に切り替え
+    // Node.js テスト環境、アニメーション抑制、または非表示時は即座に切り替え
     if (!isBrowser || prefersReducedMotion) {
-      this.autoHeight = targetAutoHeight;
-      this.isTransitioning = false;
-      this.dispatchEvent(
-        new CustomEvent("height-mode-change", {
-          detail: { autoHeight: this.autoHeight },
-          bubbles: true,
-          composed: true,
-        }),
-      );
+      this.commitHeightMode(targetAutoHeight);
       return;
     }
 
     const currentHeight = this.getBoundingClientRect().height;
-
-    // 高さ未計算または非表示の場合は即時切り替え
     if (currentHeight <= 0) {
-      this.autoHeight = targetAutoHeight;
-      this.isTransitioning = false;
-      this.dispatchEvent(
-        new CustomEvent("height-mode-change", {
-          detail: { autoHeight: this.autoHeight },
-          bubbles: true,
-          composed: true,
-        }),
-      );
+      this.commitHeightMode(targetAutoHeight);
       return;
     }
 
-    this.isTransitioning = true;
-
-    if (targetAutoHeight) {
-      // 固定モード -> 自動伸長モードへの滑らかな伸縮アニメーション
-      this.style.height = `${currentHeight}px`;
-      this.autoHeight = true;
-
-      requestAnimationFrame(() => {
-        const container = this.renderRoot?.querySelector(
-          ".markdown-editor-preview",
-        ) as HTMLElement | null;
-        const naturalHeight = container ? container.scrollHeight : currentHeight;
-        const targetHeight = Math.max(naturalHeight, 240);
-
-        requestAnimationFrame(() => {
-          this.style.height = `${targetHeight}px`;
-
-          this.transitionTimer = setTimeout(() => {
-            if (this.autoHeight) {
-              this.style.height = "";
-            }
-            this.isTransitioning = false;
-            this.transitionTimer = null;
-          }, 400);
-        });
-      });
-    } else {
-      // 自動伸長モード -> 固定モードへの滑らかな縮小アニメーション
-      this.style.height = `${currentHeight}px`;
-      const targetFixed = this.effectiveHeight || "380px";
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.autoHeight = false;
-          this.style.height = targetFixed;
-
-          this.transitionTimer = setTimeout(() => {
-            this.isTransitioning = false;
-            this.transitionTimer = null;
-          }, 400);
-        });
-      });
-    }
-
-    this.dispatchEvent(
-      new CustomEvent("height-mode-change", {
-        detail: { autoHeight: targetAutoHeight },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.animateHeightTransition(currentHeight, targetAutoHeight);
   }
 
   /**
@@ -540,313 +590,314 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * ツールバーの主要書式アクションボタングループを描画する。
+   */
+  private renderToolbarBasicActions() {
+    const renderBtn = (btn: ToolbarButtonDef) => html`
+      <button
+        type="button"
+        class="markdown-editor-preview__toolbar-btn"
+        title="${btn.label}"
+        aria-label="${btn.label}"
+        @click=${() => this.handleToolbarAction(btn.action)}
+      >
+        <wa-icon library="my-icons" name="${btn.icon}" label="${btn.label}"></wa-icon>
+      </button>
+    `;
+
+    return html`
+      ${BASIC_TOOLBAR_BUTTONS.slice(0, 2).map(renderBtn)}
+      <span class="markdown-editor-preview__toolbar-separator"></span>
+      ${BASIC_TOOLBAR_BUTTONS.slice(2).map(renderBtn)}
+    `;
+  }
+
+  /**
+   * ツールバーの二次的書式アクションボタングループを描画する。
+   */
+  private renderToolbarSecondaryActions() {
+    const renderSecondaryBtn = (btn: ToolbarButtonDef) => html`
+      <button
+        type="button"
+        class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
+        title="${btn.label}"
+        aria-label="${btn.label}"
+        @click=${() => this.handleToolbarAction(btn.action)}
+      >
+        <wa-icon library="my-icons" name="${btn.icon}" label="${btn.label}"></wa-icon>
+      </button>
+    `;
+
+    return html`
+      ${SECONDARY_TOOLBAR_BUTTONS.slice(0, 2).map(renderSecondaryBtn)}
+      <span class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"></span>
+      ${SECONDARY_TOOLBAR_BUTTONS.slice(2).map(renderSecondaryBtn)}
+    `;
+  }
+
+  /**
+   * 拡張メニュー内の追加書式セクションを描画する。
+   */
+  private renderMenuSecondaryActions() {
+    return html`
+      <div class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary">
+        <div class="markdown-editor-preview__extension-menu-header">
+          <span class="markdown-editor-preview__extension-menu-title">追加の書式</span>
+        </div>
+        <div class="markdown-editor-preview__extension-menu-list">
+          ${SECONDARY_TOOLBAR_BUTTONS.map(
+            (btn) => html`
+              <button
+                type="button"
+                class="markdown-editor-preview__extension-menu-item"
+                role="menuitem"
+                @click=${() => this.handleMenuToolbarAction(btn.action)}
+              >
+                <wa-icon
+                  library="my-icons"
+                  name="${btn.icon}"
+                  class="markdown-editor-preview__extension-menu-item-icon"
+                ></wa-icon>
+                <span class="markdown-editor-preview__extension-menu-item-label">${btn.label}</span>
+              </button>
+            `,
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * 拡張メニュー内の独自記法・拡張機能セクションを描画する。
+   */
+  private renderMenuExtensions() {
+    if (this.extensions.length === 0) return "";
+    return html`
+      <div class="markdown-editor-preview__extension-menu-header">
+        <span class="markdown-editor-preview__extension-menu-title"
+          >独自記法・拡張機能</span
+        >
+      </div>
+      <div class="markdown-editor-preview__extension-menu-list">
+        ${this.extensions.map(
+          (ext) => html`
+            <button
+              type="button"
+              class="markdown-editor-preview__extension-menu-item"
+              role="menuitem"
+              @click=${() => this.selectExtensionMenuItem(ext)}
+            >
+              <wa-icon
+                library="my-icons"
+                name=${ext.toolbarItem?.icon || "tag-solid-full"}
+                class="markdown-editor-preview__extension-menu-item-icon"
+              ></wa-icon>
+              <div
+                class="markdown-editor-preview__extension-menu-item-body"
+              >
+                <span
+                  class="markdown-editor-preview__extension-menu-item-label"
+                  >${ext.label}</span
+                >
+                <code
+                  class="markdown-editor-preview__extension-menu-item-syntax"
+                  >${ext.template}</code
+                >
+              </div>
+            </button>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
+   * 拡張機能ドロップダウンメニューコンテナを描画する。
+   */
+  private renderExtensionMenu() {
+    const containerClass = this.extensions.length > 0
+      ? ""
+      : "markdown-editor-preview__extension-menu-container--responsive";
+
+    return html`
+      <div
+        class="markdown-editor-preview__extension-menu-container ${containerClass}"
+      >
+        <button
+          type="button"
+          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu ${this.isExtensionMenuOpen
+            ? "markdown-editor-preview__toolbar-btn--active"
+            : ""}"
+          title="拡張機能"
+          aria-label="拡張機能"
+          aria-haspopup="true"
+          aria-expanded=${this.isExtensionMenuOpen ? "true" : "false"}
+          @click=${() => this.toggleExtensionMenu()}
+        >
+          <wa-icon
+            library="my-icons"
+            name="ellipsis-solid-full"
+            label="拡張機能"
+          ></wa-icon>
+        </button>
+        <div
+          class="markdown-editor-preview__extension-menu ${this.isExtensionMenuOpen
+            ? "markdown-editor-preview__extension-menu--open"
+            : ""}"
+          role="menu"
+          aria-label="拡張機能メニュー"
+        >
+          ${this.renderMenuSecondaryActions()}
+          ${this.renderMenuExtensions()}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * Markdown 書式ツールバーを描画する。
    */
   private renderToolbar() {
+    const separatorClass = this.extensions.length > 0
+      ? ""
+      : "markdown-editor-preview__toolbar-menu-separator--responsive";
+
     return html`
       <div
         class="markdown-editor-preview__toolbar"
         role="toolbar"
         aria-label="Markdown 書式ツールバー"
       >
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn"
-          title="見出し"
-          aria-label="見出し"
-          @click=${() => this.handleToolbarAction("heading")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="heading-solid-full"
-            label="見出し"
-          ></wa-icon>
-        </button>
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn"
-          title="太字"
-          aria-label="太字"
-          @click=${() => this.handleToolbarAction("bold")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="bold-solid-full"
-            label="太字"
-          ></wa-icon>
-        </button>
-
-        <span class="markdown-editor-preview__toolbar-separator"></span>
-
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn"
-          title="箇条書きリスト"
-          aria-label="箇条書きリスト"
-          @click=${() => this.handleToolbarAction("bullet-list")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="list-ul-solid-full"
-            label="箇条書きリスト"
-          ></wa-icon>
-        </button>
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn"
-          title="タスクリスト"
-          aria-label="タスクリスト"
-          @click=${() => this.handleToolbarAction("task-list")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="list-check-solid-full"
-            label="タスクリスト"
-          ></wa-icon>
-        </button>
-
+        ${this.renderToolbarBasicActions()}
         <span
           class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"
         ></span>
-
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-          title="番号付きリスト"
-          aria-label="番号付きリスト"
-          @click=${() => this.handleToolbarAction("ordered-list")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="list-ol-solid-full"
-            label="番号付きリスト"
-          ></wa-icon>
-        </button>
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-          title="引用"
-          aria-label="引用"
-          @click=${() => this.handleToolbarAction("quote")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="blockquote-left"
-            label="引用"
-          ></wa-icon>
-        </button>
-
+        ${this.renderToolbarSecondaryActions()}
         <span
-          class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"
+          class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-menu-separator ${separatorClass}"
         ></span>
+        ${this.renderExtensionMenu()}
+      </div>
+    `;
+  }
 
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-          title="コード"
-          aria-label="コード"
-          @click=${() => this.handleToolbarAction("code")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="code-solid-full"
-            label="コード"
-          ></wa-icon>
-        </button>
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-          title="リンク"
-          aria-label="リンク"
-          @click=${() => this.handleToolbarAction("link")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="link-solid-full"
-            label="リンク"
-          ></wa-icon>
-        </button>
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-          title="テーブル"
-          aria-label="テーブル"
-          @click=${() => this.handleToolbarAction("table")}
-        >
-          <wa-icon
-            library="my-icons"
-            name="table-solid-full"
-            label="テーブル"
-          ></wa-icon>
-        </button>
+  /**
+   * 自動伸長トグルボタンを描画する。
+   */
+  private renderAutoHeightButton() {
+    if (!this.allowAutoHeight) return "";
 
-        <span
-          class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-menu-separator ${this.extensions.length > 0
-            ? ""
-            : "markdown-editor-preview__toolbar-menu-separator--responsive"}"
-        ></span>
-        <div
-          class="markdown-editor-preview__extension-menu-container ${this.extensions.length > 0
-            ? ""
-            : "markdown-editor-preview__extension-menu-container--responsive"}"
-        >
-          <button
-            type="button"
-            class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu ${this.isExtensionMenuOpen
-              ? "markdown-editor-preview__toolbar-btn--active"
-              : ""}"
-            title="拡張機能"
-            aria-label="拡張機能"
-            aria-haspopup="true"
-            aria-expanded=${this.isExtensionMenuOpen ? "true" : "false"}
-            @click=${() => this.toggleExtensionMenu()}
-          >
-            <wa-icon
-              library="my-icons"
-              name="ellipsis-solid-full"
-              label="拡張機能"
-            ></wa-icon>
-          </button>
-          <div
-            class="markdown-editor-preview__extension-menu ${this.isExtensionMenuOpen
-              ? "markdown-editor-preview__extension-menu--open"
-              : ""}"
-            role="menu"
-            aria-label="拡張機能メニュー"
-          >
-            <!-- 追加の書式（狭幅時および拡張メニュー内の二次的アクション） -->
-            <div
-              class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary"
+    return html`
+      <button
+        type="button"
+        class="markdown-editor-preview__auto-height-btn ${this.autoHeight
+          ? "markdown-editor-preview__auto-height-btn--active"
+          : ""}"
+        title=${this.autoHeight
+          ? "固定サイズ表示に切り替え"
+          : "高さを自動伸縮（コンテンツにフィット）"}
+        aria-label=${this.autoHeight
+          ? "固定サイズ表示に切り替え"
+          : "高さを自動伸縮（コンテンツにフィット）"}
+        aria-pressed=${this.autoHeight ? "true" : "false"}
+        @click=${(e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleAutoHeight();
+        }}
+      >
+        <wa-icon
+          library="my-icons"
+          name="arrows-up-down-solid-full"
+          label=${this.autoHeight ? "固定サイズ表示" : "自動伸縮"}
+        ></wa-icon>
+      </button>
+    `;
+  }
+
+  /**
+   * 構文ヘルプボタンを描画する。
+   */
+  private renderHelpButton() {
+    return html`
+      <button
+        type="button"
+        class="markdown-editor-preview__help-btn"
+        title="構文ヘルプ"
+        aria-label="構文ヘルプ"
+        @click=${(e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleHelp();
+        }}
+      >
+        <wa-icon
+          library="my-icons"
+          name="question-solid-full"
+          label="構文ヘルプ"
+        ></wa-icon>
+      </button>
+    `;
+  }
+
+  /**
+   * スプリットモード切替タブボタンを描画する。
+   */
+  private renderSplitTabButton() {
+    if (!this.allowSplit) return "";
+    const activeClass = this.mode === "split" ? "markdown-editor-preview__mode-btn--active" : "";
+
+    return html`
+      <button
+        type="button"
+        class="markdown-editor-preview__mode-btn ${activeClass}"
+        role="tab"
+        aria-selected=${this.mode === "split"}
+        title="スプリット"
+        aria-label="スプリット"
+        @click=${() => this.setMode("split")}
+      >
+        <wa-icon
+          library="my-icons"
+          name="table-columns-solid-full"
+          label="スプリット"
+        ></wa-icon>
+      </button>
+    `;
+  }
+
+  /**
+   * 表示モード切替タブグループを描画する。
+   */
+  private renderModeSwitchTabs() {
+    return html`
+      <div
+        class="markdown-editor-preview__mode-group"
+        role="tablist"
+        aria-label="表示モード切替"
+      >
+        ${this.renderSplitTabButton()}
+        ${MODE_TABS.map(
+          (tab) => html`
+            <button
+              type="button"
+              class="markdown-editor-preview__mode-btn ${this.mode === tab.mode
+                ? "markdown-editor-preview__mode-btn--active"
+                : ""}"
+              role="tab"
+              aria-selected=${this.mode === tab.mode}
+              title="${tab.label}"
+              aria-label="${tab.label}"
+              @click=${() => this.setMode(tab.mode)}
             >
-              <div class="markdown-editor-preview__extension-menu-header">
-                <span class="markdown-editor-preview__extension-menu-title"
-                  >追加の書式</span
-                >
-              </div>
-              <div class="markdown-editor-preview__extension-menu-list">
-                <button
-                  type="button"
-                  class="markdown-editor-preview__extension-menu-item"
-                  role="menuitem"
-                  @click=${() => this.handleMenuToolbarAction("ordered-list")}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="list-ol-solid-full"
-                    class="markdown-editor-preview__extension-menu-item-icon"
-                  ></wa-icon>
-                  <span class="markdown-editor-preview__extension-menu-item-label"
-                    >番号付きリスト</span
-                  >
-                </button>
-                <button
-                  type="button"
-                  class="markdown-editor-preview__extension-menu-item"
-                  role="menuitem"
-                  @click=${() => this.handleMenuToolbarAction("quote")}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="blockquote-left"
-                    class="markdown-editor-preview__extension-menu-item-icon"
-                  ></wa-icon>
-                  <span class="markdown-editor-preview__extension-menu-item-label"
-                    >引用</span
-                  >
-                </button>
-                <button
-                  type="button"
-                  class="markdown-editor-preview__extension-menu-item"
-                  role="menuitem"
-                  @click=${() => this.handleMenuToolbarAction("code")}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="code-solid-full"
-                    class="markdown-editor-preview__extension-menu-item-icon"
-                  ></wa-icon>
-                  <span class="markdown-editor-preview__extension-menu-item-label"
-                    >コード</span
-                  >
-                </button>
-                <button
-                  type="button"
-                  class="markdown-editor-preview__extension-menu-item"
-                  role="menuitem"
-                  @click=${() => this.handleMenuToolbarAction("link")}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="link-solid-full"
-                    class="markdown-editor-preview__extension-menu-item-icon"
-                  ></wa-icon>
-                  <span class="markdown-editor-preview__extension-menu-item-label"
-                    >リンク</span
-                  >
-                </button>
-                <button
-                  type="button"
-                  class="markdown-editor-preview__extension-menu-item"
-                  role="menuitem"
-                  @click=${() => this.handleMenuToolbarAction("table")}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="table-solid-full"
-                    class="markdown-editor-preview__extension-menu-item-icon"
-                  ></wa-icon>
-                  <span class="markdown-editor-preview__extension-menu-item-label"
-                    >テーブル</span
-                  >
-                </button>
-              </div>
-            </div>
-
-            <!-- 独自記法・拡張機能 -->
-            ${this.extensions.length > 0
-              ? html`
-                  <div
-                    class="markdown-editor-preview__extension-menu-header"
-                  >
-                    <span
-                      class="markdown-editor-preview__extension-menu-title"
-                      >独自記法・拡張機能</span
-                    >
-                  </div>
-                  <div class="markdown-editor-preview__extension-menu-list">
-                    ${this.extensions.map(
-                      (ext) => html`
-                        <button
-                          type="button"
-                          class="markdown-editor-preview__extension-menu-item"
-                          role="menuitem"
-                          @click=${() => this.selectExtensionMenuItem(ext)}
-                        >
-                          <wa-icon
-                            library="my-icons"
-                            name=${ext.toolbarItem?.icon || "tag-solid-full"}
-                            class="markdown-editor-preview__extension-menu-item-icon"
-                          ></wa-icon>
-                          <div
-                            class="markdown-editor-preview__extension-menu-item-body"
-                          >
-                            <span
-                              class="markdown-editor-preview__extension-menu-item-label"
-                              >${ext.label}</span
-                            >
-                            <code
-                              class="markdown-editor-preview__extension-menu-item-syntax"
-                              >${ext.template}</code
-                            >
-                          </div>
-                        </button>
-                      `,
-                    )}
-                  </div>
-                `
-              : ""}
-          </div>
-        </div>
+              <wa-icon
+                library="my-icons"
+                name="${tab.icon}"
+                label="${tab.label}"
+              ></wa-icon>
+            </button>
+          `,
+        )}
       </div>
     `;
   }
@@ -861,112 +912,9 @@ export class MarkdownEditorPreview extends LitElement {
           ${this.mode !== "preview" ? this.renderToolbar() : ""}
         </div>
         <div class="markdown-editor-preview__header-right">
-          ${this.allowAutoHeight
-            ? html`
-                <button
-                  type="button"
-                  class="markdown-editor-preview__auto-height-btn ${this.autoHeight
-                    ? "markdown-editor-preview__auto-height-btn--active"
-                    : ""}"
-                  title=${this.autoHeight
-                    ? "固定サイズ表示に切り替え"
-                    : "高さを自動伸縮（コンテンツにフィット）"}
-                  aria-label=${this.autoHeight
-                    ? "固定サイズ表示に切り替え"
-                    : "高さを自動伸縮（コンテンツにフィット）"}
-                  aria-pressed=${this.autoHeight ? "true" : "false"}
-                  @click=${(e: Event) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.toggleAutoHeight();
-                  }}
-                >
-                  <wa-icon
-                    library="my-icons"
-                    name="arrows-up-down-solid-full"
-                    label=${this.autoHeight ? "固定サイズ表示" : "自動伸縮"}
-                  ></wa-icon>
-                </button>
-              `
-            : ""}
-          <button
-            type="button"
-            class="markdown-editor-preview__help-btn"
-            title="構文ヘルプ"
-            aria-label="構文ヘルプ"
-            @click=${(e: Event) => {
-              e.preventDefault();
-              e.stopPropagation();
-              this.toggleHelp();
-            }}
-          >
-            <wa-icon
-              library="my-icons"
-              name="question-solid-full"
-              label="構文ヘルプ"
-            ></wa-icon>
-          </button>
-          <div
-            class="markdown-editor-preview__mode-group"
-            role="tablist"
-            aria-label="表示モード切替"
-          >
-            ${this.allowSplit
-              ? html`
-                  <button
-                    type="button"
-                    class="markdown-editor-preview__mode-btn ${this.mode === "split"
-                      ? "markdown-editor-preview__mode-btn--active"
-                      : ""}"
-                    role="tab"
-                    aria-selected=${this.mode === "split"}
-                    title="スプリット"
-                    aria-label="スプリット"
-                    @click=${() => this.setMode("split")}
-                  >
-                    <wa-icon
-                      library="my-icons"
-                      name="table-columns-solid-full"
-                      label="スプリット"
-                    ></wa-icon>
-                  </button>
-                `
-              : ""}
-            <button
-              type="button"
-              class="markdown-editor-preview__mode-btn ${this.mode === "edit"
-                ? "markdown-editor-preview__mode-btn--active"
-                : ""}"
-              role="tab"
-              aria-selected=${this.mode === "edit"}
-              title="編集"
-              aria-label="編集"
-              @click=${() => this.setMode("edit")}
-            >
-              <wa-icon
-                library="my-icons"
-                name="markdown-brands-solid-full"
-                label="編集"
-              ></wa-icon>
-            </button>
-            <button
-              type="button"
-              class="markdown-editor-preview__mode-btn ${this.mode === "preview"
-                ? "markdown-editor-preview__mode-btn--active"
-                : ""}"
-              role="tab"
-              aria-selected=${this.mode === "preview"}
-              title="プレビュー"
-              aria-label="プレビュー"
-              @click=${() => this.setMode("preview")}
-            >
-              <wa-icon
-                library="my-icons"
-                name="html5-brands-solid-full"
-                label="プレビュー"
-              ></wa-icon>
-            </button>
-          </div>
+          ${this.renderAutoHeightButton()}
+          ${this.renderHelpButton()}
+          ${this.renderModeSwitchTabs()}
         </div>
       </header>
     `;
@@ -1007,6 +955,103 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * 構文ヘルプモーダルを閉じる。
+   */
+  private handleCloseHelp(e: Event): void {
+    e.preventDefault();
+    e.stopPropagation();
+    this.toggleHelp(false);
+  }
+
+  /**
+   * 構文ヘルプダイアログ内の拡張機能・独自タグテーブルを描画する。
+   */
+  private renderHelpExtensionTable() {
+    if (this.extensions.length === 0) return "";
+
+    return html`
+      <section class="markdown-editor-preview__help-section">
+        <h4 class="markdown-editor-preview__help-subtitle">
+          拡張機能・独自タグ
+        </h4>
+        <table class="markdown-editor-preview__help-table">
+          <thead>
+            <tr>
+              <th>機能名</th>
+              <th>構文</th>
+              <th>説明</th>
+              <th>使用例</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.extensions.map(
+              (ext) => html`
+                <tr>
+                  <td class="markdown-editor-preview__help-col-label">
+                    ${ext.label}
+                  </td>
+                  <td class="markdown-editor-preview__help-col-syntax">
+                    <code>${ext.template}</code>
+                  </td>
+                  <td class="markdown-editor-preview__help-col-desc">
+                    ${ext.description || "-"}
+                  </td>
+                  <td class="markdown-editor-preview__help-col-example">
+                    <code>${ext.example || ext.template}</code>
+                  </td>
+                  <td class="markdown-editor-preview__help-col-action">
+                    <button
+                      type="button"
+                      class="markdown-editor-preview__help-insert-btn"
+                      @click=${() => this.insertExtensionTemplate(ext)}
+                    >
+                      挿入
+                    </button>
+                  </td>
+                </tr>
+              `,
+            )}
+          </tbody>
+        </table>
+      </section>
+    `;
+  }
+
+  /**
+   * 構文ヘルプダイアログ内の基本 Markdown 記法テーブルを描画する。
+   */
+  private renderHelpBasicTable() {
+    return html`
+      <section class="markdown-editor-preview__help-section">
+        <h4 class="markdown-editor-preview__help-subtitle">
+          基本 Markdown 記法
+        </h4>
+        <table class="markdown-editor-preview__help-table">
+          <thead>
+            <tr>
+              <th>記法</th>
+              <th>入力例</th>
+              <th>結果</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${BASIC_MARKDOWN_HELP_ROWS.map(
+              (row) => html`
+                <tr>
+                  <td>${row.name}</td>
+                  <td><code>${row.syntax}</code></td>
+                  <td>${row.result}</td>
+                </tr>
+              `,
+            )}
+          </tbody>
+        </table>
+      </section>
+    `;
+  }
+
+  /**
    * 構文ヘルプダイアログモーダルを描画する。
    */
   private renderHelpModal() {
@@ -1021,11 +1066,7 @@ export class MarkdownEditorPreview extends LitElement {
       >
         <div
           class="markdown-editor-preview__help-backdrop"
-          @click=${(e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleHelp(false);
-          }}
+          @click=${(e: Event) => this.handleCloseHelp(e)}
         ></div>
         <div
           class="markdown-editor-preview__help-dialog"
@@ -1038,11 +1079,7 @@ export class MarkdownEditorPreview extends LitElement {
               class="markdown-editor-preview__help-close-btn"
               title="閉じる"
               aria-label="閉じる"
-              @click=${(e: Event) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleHelp(false);
-              }}
+              @click=${(e: Event) => this.handleCloseHelp(e)}
             >
               <wa-icon
                 library="my-icons"
@@ -1052,122 +1089,8 @@ export class MarkdownEditorPreview extends LitElement {
             </button>
           </header>
           <div class="markdown-editor-preview__help-content">
-            ${this.extensions.length > 0
-              ? html`
-                  <section class="markdown-editor-preview__help-section">
-                    <h4 class="markdown-editor-preview__help-subtitle">
-                      拡張機能・独自タグ
-                    </h4>
-                    <table class="markdown-editor-preview__help-table">
-                      <thead>
-                        <tr>
-                          <th>機能名</th>
-                          <th>構文</th>
-                          <th>説明</th>
-                          <th>使用例</th>
-                          <th>操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${this.extensions.map(
-                          (ext) => html`
-                            <tr>
-                              <td class="markdown-editor-preview__help-col-label">
-                                ${ext.label}
-                              </td>
-                              <td class="markdown-editor-preview__help-col-syntax">
-                                <code>${ext.template}</code>
-                              </td>
-                              <td class="markdown-editor-preview__help-col-desc">
-                                ${ext.description || "-"}
-                              </td>
-                              <td class="markdown-editor-preview__help-col-example">
-                                <code>${ext.example || ext.template}</code>
-                              </td>
-                              <td class="markdown-editor-preview__help-col-action">
-                                <button
-                                  type="button"
-                                  class="markdown-editor-preview__help-insert-btn"
-                                  @click=${() =>
-                                    this.insertExtensionTemplate(ext)}
-                                >
-                                  挿入
-                                </button>
-                              </td>
-                            </tr>
-                          `,
-                        )}
-                      </tbody>
-                    </table>
-                  </section>
-                `
-              : ""}
-            <section class="markdown-editor-preview__help-section">
-              <h4 class="markdown-editor-preview__help-subtitle">
-                基本 Markdown 記法
-              </h4>
-              <table class="markdown-editor-preview__help-table">
-                <thead>
-                  <tr>
-                    <th>記法</th>
-                    <th>入力例</th>
-                    <th>結果</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>見出し</td>
-                    <td><code>### 見出し3</code></td>
-                    <td>小見出し</td>
-                  </tr>
-                  <tr>
-                    <td>太字</td>
-                    <td><code>**太字**</code></td>
-                    <td><strong>太字</strong></td>
-                  </tr>
-                  <tr>
-                    <td>斜体</td>
-                    <td><code>*斜体*</code></td>
-                    <td><em>斜体</em></td>
-                  </tr>
-                  <tr>
-                    <td>箇条書き</td>
-                    <td><code>- リスト項目</code></td>
-                    <td>箇条書きリスト</td>
-                  </tr>
-                  <tr>
-                    <td>番号付き</td>
-                    <td><code>1. リスト項目</code></td>
-                    <td>順序付きリスト</td>
-                  </tr>
-                  <tr>
-                    <td>タスク</td>
-                    <td><code>- [ ] 未完了タスク</code></td>
-                    <td>チェックボックス</td>
-                  </tr>
-                  <tr>
-                    <td>引用</td>
-                    <td><code>> 引用文</code></td>
-                    <td>引用ブロック</td>
-                  </tr>
-                  <tr>
-                    <td>コード</td>
-                    <td><code>\`code\`</code></td>
-                    <td>インラインコード</td>
-                  </tr>
-                  <tr>
-                    <td>リンク</td>
-                    <td><code>[テキスト](URL)</code></td>
-                    <td>ハイパーリンク</td>
-                  </tr>
-                  <tr>
-                    <td>テーブル</td>
-                    <td><code>| A | B |</code></td>
-                    <td>表組</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
+            ${this.renderHelpExtensionTable()}
+            ${this.renderHelpBasicTable()}
           </div>
         </div>
       </div>

@@ -52,6 +52,16 @@
  *   - ドロップダウンメニュー内に追加の書式セクションがレンダリングされること
  *   - メニュー内の書式ボタン実行により、対応する markdown 書式がエディタへ挿入されメニューが閉じること
  *   - SCSS にコンテナクエリ @container が定義され、狭幅時に二次的アクションが非表示となるスタイルが存在すること
+ * 14. サブレンダーメソッドと責務分離仕様 (Phase 3: REF-090〜094, REF-115, REF-118, REF-120)
+ *   - renderToolbarBasicActions() により見出し・太字・リスト・タスクリスト等の主要書式ボタンが描画されること
+ *   - renderToolbarSecondaryActions() により番号付きリスト・引用・コード等のセカンダリ書式ボタンが描画されること
+ *   - renderExtensionMenu() によりミートボールメニューおよび拡張・レスポンシブメニューが描画されること
+ *   - renderAutoHeightButton() により自動伸長トグルボタンが描画されること
+ *   - renderHelpButton() により構文ヘルプボタンが描画されること
+ *   - renderModeSwitchTabs() によりモード切替タブグループが描画されること
+ *   - renderHelpBasicTable() により基本記法チートシートテーブルが描画されること
+ *   - renderHelpExtensionTable() により拡張機能テーブルが描画されること
+ *   - commitHeightMode() により高さモードの確定と height-mode-change イベントが単一箇所で発火されること
  */
 
 import * as fs from "node:fs";
@@ -597,6 +607,84 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       (element as any).isTransitioning = true;
       htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("markdown-editor-preview--animating");
+    });
+  });
+
+  describe("サブレンダーメソッドと責務分離仕様 (Phase 3: REF-090〜094, REF-115, REF-118, REF-120)", () => {
+    it("renderToolbarBasicActions() により主要書式ボタン（見出し・太字・リスト・タスク）が描画されること", () => {
+      const result = (element as any).renderToolbarBasicActions();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain('title="見出し"');
+      expect(htmlStr).toContain('title="太字"');
+      expect(htmlStr).toContain('title="箇条書きリスト"');
+      expect(htmlStr).toContain('title="タスクリスト"');
+    });
+
+    it("renderToolbarSecondaryActions() によりセカンダリ書式ボタン（番号リスト・引用・コード・リンク・テーブル）が描画されること", () => {
+      const result = (element as any).renderToolbarSecondaryActions();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain('title="番号付きリスト"');
+      expect(htmlStr).toContain('title="引用"');
+      expect(htmlStr).toContain('title="コード"');
+      expect(htmlStr).toContain('title="リンク"');
+      expect(htmlStr).toContain('title="テーブル"');
+    });
+
+    it("renderExtensionMenu() によりミートボールボタンおよび拡張ドロップダウンが描画されること", () => {
+      const result = (element as any).renderExtensionMenu();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("markdown-editor-preview__toolbar-btn--extension-menu");
+      expect(htmlStr).toContain("markdown-editor-preview__extension-menu");
+    });
+
+    it("renderAutoHeightButton() により自動伸長トグルボタンが描画されること", () => {
+      element.allowAutoHeight = true;
+      const result = (element as any).renderAutoHeightButton();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
+    });
+
+    it("renderHelpButton() により構文ヘルプボタンが描画されること", () => {
+      const result = (element as any).renderHelpButton();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("markdown-editor-preview__help-btn");
+    });
+
+    it("renderModeSwitchTabs() によりモード切替タブグループが描画されること", () => {
+      const result = (element as any).renderModeSwitchTabs();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("markdown-editor-preview__mode-group");
+      expect(htmlStr).toContain('title="編集"');
+      expect(htmlStr).toContain('title="プレビュー"');
+    });
+
+    it("renderHelpBasicTable() により基本記法チートシートテーブルが描画されること", () => {
+      const result = (element as any).renderHelpBasicTable();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("基本 Markdown 記法");
+      expect(htmlStr).toContain("### 見出し3");
+    });
+
+    it("renderHelpExtensionTable() により拡張機能テーブルが描画されること", () => {
+      element.extensions = [customBadgeExtension];
+      const result = (element as any).renderHelpExtensionTable();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toContain("拡張機能・独自タグ");
+      expect(htmlStr).toContain(customBadgeExtension.label);
+    });
+
+    it("commitHeightMode() により高さモードが確定され、isTransitioning がリセットされ、イベントが発火すること", () => {
+      let eventDetail: any = null;
+      element.addEventListener("height-mode-change", (e: any) => {
+        eventDetail = e.detail;
+      });
+
+      (element as any).isTransitioning = true;
+      (element as any).commitHeightMode(true);
+
+      expect(element.autoHeight).toBe(true);
+      expect((element as any).isTransitioning).toBe(false);
+      expect(eventDetail).toEqual({ autoHeight: true });
     });
   });
 });
