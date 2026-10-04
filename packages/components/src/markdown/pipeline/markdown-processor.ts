@@ -56,43 +56,19 @@ export function createMarkdownProcessor(
     sanitizeSchemaModifier,
   } = options;
 
-  let processor: Processor<any, any, any, any, any> = unified()
-    .use(remarkParse)
-    .use(remarkGfm);
-
-  // 1. 外部注入された remark プラグイン群の登録 (MDAST レベルの拡張・独自構文解析)
-  for (const pluginItem of remarkPlugins) {
-    if (Array.isArray(pluginItem)) {
-      const [plugin, pluginOptions] = pluginItem;
-      processor = processor.use(plugin as any, pluginOptions);
-    } else {
-      processor = processor.use(pluginItem as any);
-    }
-  }
-
-  // 2. remark -> rehype 変換 (MDAST -> HAST)
-  processor = processor.use(remarkRehype);
-
-  // 3. サニタイズ処理 (XSS 防御)
   const baseSchema = baseMarkdownSanitizeSchema;
   const finalSchema: SanitizeSchema = sanitizeSchemaModifier
     ? sanitizeSchemaModifier(baseSchema)
     : baseSchema;
 
-  processor = processor.use(rehypeSanitize, finalSchema);
-
-  // 4. 外部注入された rehype プラグイン群の登録 (サニタイズ後の安全な HAST に対する装飾・変換)
-  for (const pluginItem of rehypePlugins) {
-    if (Array.isArray(pluginItem)) {
-      const [plugin, pluginOptions] = pluginItem;
-      processor = processor.use(plugin as any, pluginOptions);
-    } else {
-      processor = processor.use(pluginItem as any);
-    }
-  }
-
-  // 5. HTML 文字列シリアライズ (HAST -> HTML string)
-  processor = processor.use(rehypeStringify);
+  const processor = unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkPlugins)
+    .use(remarkRehype)
+    .use(rehypeSanitize, finalSchema)
+    .use(rehypePlugins)
+    .use(rehypeStringify);
 
   return {
     async process(markdown: string): Promise<string> {
@@ -100,7 +76,7 @@ export function createMarkdownProcessor(
       return String(vfile);
     },
     get internalProcessor() {
-      return processor;
+      return processor as unknown as Processor;
     },
   };
 }

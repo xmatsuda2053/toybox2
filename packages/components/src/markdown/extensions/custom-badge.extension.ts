@@ -1,7 +1,25 @@
 import type { Plugin } from "unified";
-import type { Root as MdastRoot, Text, Node } from "mdast";
+import type { Root as MdastRoot, Text, Parent } from "mdast";
 import { visit } from "unist-util-visit";
 import type { MarkdownFeatureExtension } from "../types.js";
+
+/**
+ * カスタムバッジの MDAST ノード型
+ */
+interface CustomBadgeNode extends Parent {
+  type: "customBadge";
+  data?: {
+    hName?: string;
+    hProperties?: Record<string, string>;
+  };
+  children: Text[];
+}
+
+declare module "mdast" {
+  interface RootContentMap {
+    customBadge: CustomBadgeNode;
+  }
+}
 
 /**
  * 独自構文 :badge[テキスト]: を認識する remark プラグイン
@@ -13,7 +31,7 @@ export const remarkCustomBadgePlugin: Plugin<[], MdastRoot> = () => {
       if (!regex.test(node.value) || !parent || typeof index !== "number") return;
 
       regex.lastIndex = 0;
-      const newNodes: Node[] = [];
+      const newNodes: (Text | CustomBadgeNode)[] = [];
       let lastIdx = 0;
       let match: RegExpExecArray | null;
 
@@ -22,7 +40,7 @@ export const remarkCustomBadgePlugin: Plugin<[], MdastRoot> = () => {
           newNodes.push({
             type: "text",
             value: node.value.slice(lastIdx, match.index),
-          } as Text);
+          });
         }
         const badgeText = match[1];
         const isHigh = badgeText.includes("高") || badgeText.includes("緊急");
@@ -36,7 +54,7 @@ export const remarkCustomBadgePlugin: Plugin<[], MdastRoot> = () => {
             },
           },
           children: [{ type: "text", value: badgeText }],
-        } as any);
+        });
         lastIdx = match.index + match[0].length;
       }
 
@@ -44,10 +62,10 @@ export const remarkCustomBadgePlugin: Plugin<[], MdastRoot> = () => {
         newNodes.push({
           type: "text",
           value: node.value.slice(lastIdx),
-        } as Text);
+        });
       }
 
-      parent.children.splice(index, 1, ...(newNodes as any[]));
+      (parent as Parent).children.splice(index, 1, ...newNodes);
     });
   };
 };

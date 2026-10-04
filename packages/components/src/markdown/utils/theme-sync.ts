@@ -11,6 +11,55 @@ function isElementDark(element: HTMLElement): boolean | undefined {
 }
 
 /**
+ * 対象要素の直接の親要素、または Shadow DOM 内の場合はホスト要素を取得する
+ *
+ * @param element 対象要素
+ * @returns 親要素またはホスト要素。存在しない場合は null
+ */
+export function getParentOrHost(
+  element: HTMLElement | null | undefined,
+): HTMLElement | null {
+  if (!element) return null;
+  if (element.parentElement) return element.parentElement;
+
+  const root = element.getRootNode?.();
+  if (root && root !== element && "host" in root) {
+    return (root as ShadowRoot).host as HTMLElement;
+  }
+
+  return null;
+}
+
+/**
+ * 祖先要素を辿ってテーマ（ダーク/ライト）を検知する
+ */
+function detectFromAncestors(element: HTMLElement): boolean | undefined {
+  let current = getParentOrHost(element);
+  while (current) {
+    const result = isElementDark(current);
+    if (result !== undefined) return result;
+    current = getParentOrHost(current);
+  }
+  return undefined;
+}
+
+/**
+ * document または body 要素からテーマ（ダーク/ライト）を検知する
+ */
+function detectFromDocument(): boolean | undefined {
+  if (typeof document === "undefined") return undefined;
+
+  const rootResult = isElementDark(document.documentElement);
+  if (rootResult !== undefined) return rootResult;
+
+  if (document.body) {
+    return isElementDark(document.body);
+  }
+
+  return undefined;
+}
+
+/**
  * 現在の実行環境（祖先要素、ルート要素、OS設定）からダークモードかどうかを判定する
  *
  * @param element 判定対象の要素（任意）。要素自身のローカル属性ではなく親・祖先要素を辿って判定します。
@@ -18,31 +67,12 @@ function isElementDark(element: HTMLElement): boolean | undefined {
  */
 export function detectIsDarkMode(element?: HTMLElement): boolean {
   if (element) {
-    let current: HTMLElement | null =
-      element.parentElement ??
-      ((element as any).getRootNode?.() as ShadowRoot)?.host as HTMLElement ??
-      null;
-
-    while (current) {
-      const parentResult = isElementDark(current);
-      if (parentResult !== undefined) return parentResult;
-
-      current =
-        current.parentElement ??
-        ((current as any).getRootNode?.() as ShadowRoot)?.host as HTMLElement ??
-        null;
-    }
+    const ancestorResult = detectFromAncestors(element);
+    if (ancestorResult !== undefined) return ancestorResult;
   }
 
-  if (typeof document !== "undefined") {
-    const rootResult = isElementDark(document.documentElement);
-    if (rootResult !== undefined) return rootResult;
-
-    if (document.body) {
-      const bodyResult = isElementDark(document.body);
-      if (bodyResult !== undefined) return bodyResult;
-    }
-  }
+  const documentResult = detectFromDocument();
+  if (documentResult !== undefined) return documentResult;
 
   if (typeof window !== "undefined" && window.matchMedia) {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;

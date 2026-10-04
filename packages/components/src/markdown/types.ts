@@ -39,7 +39,7 @@ export interface IMarkdownProcessor {
   /**
    * 内部で保持している unified プロセッサインスタンスを取得する（高度な検証用）。
    */
-  readonly internalProcessor: Processor<any, any, any, any, any>;
+  readonly internalProcessor: Processor;
 }
 
 /**
@@ -73,11 +73,7 @@ export interface MarkdownFeatureExtension {
   };
 
   /** unified (remark / rehype) パイプライン設定 */
-  processor?: {
-    remarkPlugins?: Pluggable[];
-    rehypePlugins?: Pluggable[];
-    sanitizeSchemaModifier?: SanitizeSchemaModifier;
-  };
+  processor?: MarkdownProcessorOptions;
 
   /** CodeMirror 拡張機能 (ハイライトやキーバインド等を追加する場合) */
   editorExtensions?: Extension[];
