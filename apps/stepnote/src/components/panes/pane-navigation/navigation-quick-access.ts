@@ -206,11 +206,11 @@ export class NavigationQuickAccess extends LitElement {
    */
   @consume({ context: layoutUIContext, subscribe: true })
   public set layoutUIController(controller: LayoutUIController | undefined) {
-    if (this._layoutUIController === controller) return;
-
-    this._layoutUIController = controller;
-    this.subscriber.subscribe("layoutUI", controller);
-    this.requestUpdate();
+    this._layoutUIController = this.subscriber.bind(
+      "layoutUI",
+      this._layoutUIController,
+      controller,
+    );
   }
 
   /**
@@ -233,11 +233,11 @@ export class NavigationQuickAccess extends LitElement {
   public set quickAccessController(
     controller: QuickAccessController | undefined,
   ) {
-    if (this._quickAccessController === controller) return;
-
-    this._quickAccessController = controller;
-    this.subscriber.subscribe("quickAccess", controller);
-    this.requestUpdate();
+    this._quickAccessController = this.subscriber.bind(
+      "quickAccess",
+      this._quickAccessController,
+      controller,
+    );
   }
 
   /**
@@ -258,11 +258,11 @@ export class NavigationQuickAccess extends LitElement {
    */
   @consume({ context: taskListContext, subscribe: true })
   public set taskListController(controller: TaskListController | undefined) {
-    if (this._taskListController === controller) return;
-
-    this._taskListController = controller;
-    this.subscriber.subscribe("taskList", controller);
-    this.requestUpdate();
+    this._taskListController = this.subscriber.bind(
+      "taskList",
+      this._taskListController,
+      controller,
+    );
   }
 
   /**

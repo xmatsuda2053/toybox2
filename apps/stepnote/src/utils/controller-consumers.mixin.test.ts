@@ -17,6 +17,10 @@ import type { TaskController } from "@/controllers/task.controller";
  * 3. WithTaskController Mixin
  *    - taskController の getter / setter が提供されること
  *    - taskController 設定時に subscriber.bind が呼び出され、値が保持されること
+ * 4. コントローラー解除・再設定時の動作
+ *    - 4-1. labelsController に undefined を再設定した際、既存の購読が解除されること
+ *    - 4-2. taskController に undefined を再設定した際、既存の購読が解除されること
+ *    - 4-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
  */
 
 describe("controller-consumers.mixin", () => {
@@ -62,6 +66,56 @@ describe("controller-consumers.mixin", () => {
 
       el.taskController = mockTaskCtrl;
       expect(el.taskController).toBe(mockTaskCtrl);
+    });
+  });
+
+  describe("4. コントローラー解除・再設定時の動作", () => {
+    class DummyConsumerElement extends WithTaskController(
+      WithLabelsController(SubscriberElement),
+    ) {}
+
+    it("4-1. labelsController に undefined を再設定した際、既存の購読が解除されること", () => {
+      const el = new DummyConsumerElement();
+      const unsubMock = vi.fn();
+      const mockLabelsCtrl = {
+        subscribe: vi.fn().mockReturnValue(unsubMock),
+      } as unknown as LabelsController;
+
+      el.labelsController = mockLabelsCtrl;
+      expect(mockLabelsCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      el.labelsController = undefined;
+      expect(el.labelsController).toBeUndefined();
+      expect(unsubMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("4-2. taskController に undefined を再設定した際、既存の購読が解除されること", () => {
+      const el = new DummyConsumerElement();
+      const unsubMock = vi.fn();
+      const mockTaskCtrl = {
+        subscribe: vi.fn().mockReturnValue(unsubMock),
+      } as unknown as TaskController;
+
+      el.taskController = mockTaskCtrl;
+      expect(mockTaskCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      el.taskController = undefined;
+      expect(el.taskController).toBeUndefined();
+      expect(unsubMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("4-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと", () => {
+      const el = new DummyConsumerElement();
+      const mockLabelsCtrl = {
+        subscribe: vi.fn(),
+      } as unknown as LabelsController;
+
+      el.labelsController = mockLabelsCtrl;
+      expect(mockLabelsCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      // 同一インスタンスを再代入
+      el.labelsController = mockLabelsCtrl;
+      expect(mockLabelsCtrl.subscribe).toHaveBeenCalledTimes(1);
     });
   });
 });
