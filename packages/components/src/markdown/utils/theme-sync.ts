@@ -105,3 +105,24 @@ export function observeThemeChanges(
 
   return () => observer.disconnect();
 }
+
+/**
+ * 対象のホスト要素にダークモード／ライトモードの属性（data-theme）およびクラス（wa-dark / wa-light）を同期する
+ *
+ * @param element 対象要素
+ * @param isDark ダークモード有効フラグ
+ */
+export function syncHostTheme(element: HTMLElement, isDark: boolean): void {
+  const targetTheme = isDark ? "dark" : "light";
+
+  if (element.getAttribute("data-theme") !== targetTheme) {
+    element.setAttribute("data-theme", targetTheme);
+  }
+  if (isDark) {
+    element.classList.add("wa-dark");
+    element.classList.remove("wa-light");
+  } else {
+    element.classList.remove("wa-dark");
+    element.classList.add("wa-light");
+  }
+}

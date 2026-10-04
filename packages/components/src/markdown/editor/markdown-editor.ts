@@ -30,7 +30,16 @@ import {
 } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { detectIsDarkMode, observeThemeChanges } from "../utils/theme-sync.js";
+import {
+  detectIsDarkMode,
+  observeThemeChanges,
+  syncHostTheme,
+} from "../utils/theme-sync.js";
+import {
+  getFallbackMarkdownText,
+  getLinePrefixForAction,
+  getSurroundingSyntax,
+} from "./markdown-syntax.utils.js";
 
 export type MarkdownActionType =
   | "heading"
@@ -134,19 +143,7 @@ export class MarkdownEditor extends LitElement {
    * ホスト要素のテーマ属性およびクラスを同期し、必要に応じてエディタを再構成する。
    */
   private syncTheme(reconfigureEditor = false): void {
-    const isDark = this.isDarkMode;
-    const targetTheme = isDark ? "dark" : "light";
-
-    if (this.getAttribute("data-theme") !== targetTheme) {
-      this.setAttribute("data-theme", targetTheme);
-    }
-    if (isDark) {
-      this.classList.add("wa-dark");
-      this.classList.remove("wa-light");
-    } else {
-      this.classList.remove("wa-dark");
-      this.classList.add("wa-light");
-    }
+    syncHostTheme(this, this.isDarkMode);
 
     if (reconfigureEditor && this.editorView) {
       this.reconfigureEditor();
@@ -268,41 +265,7 @@ export class MarkdownEditor extends LitElement {
     if (this.disabled) return;
 
     if (!this.editorView) {
-      // Node.js テスト環境または editorView 未初期化時のフォールバック処理
-      let inserted = "";
-      switch (action) {
-        case "bold":
-          inserted = this.value ? `**${this.value}**` : "**太字**";
-          break;
-        case "italic":
-          inserted = this.value ? `*${this.value}*` : "*斜体*";
-          break;
-        case "heading":
-          inserted = `### ${this.value || "見出し"}`;
-          break;
-        case "bullet-list":
-          inserted = `- ${this.value || "項目"}`;
-          break;
-        case "ordered-list":
-          inserted = `1. ${this.value || "項目"}`;
-          break;
-        case "task-list":
-          inserted = `- [ ] ${this.value || "タスク"}`;
-          break;
-        case "quote":
-          inserted = `> ${this.value || "引用文"}`;
-          break;
-        case "code":
-          inserted = this.value ? `\`${this.value}\`` : "`コード`";
-          break;
-        case "link":
-          inserted = `[${this.value || "リンク"}](url)`;
-          break;
-        case "table":
-          inserted = `${this.value ? this.value + "\n\n" : ""}| 列1 | 列2 | 列3 |\n| :--- | :--- | :--- |\n| 項目1 | 項目2 | 項目3 |\n`;
-          break;
-      }
-      this.value = inserted;
+      this.value = getFallbackMarkdownText(action, this.value);
       this.notifyChange(this.value);
       return;
     }
@@ -310,124 +273,32 @@ export class MarkdownEditor extends LitElement {
     const view = this.editorView;
     const state = view.state;
     const { from, to } = state.selection.main;
-    const selectedText = state.sliceDoc(from, to);
+    const linePrefix = getLinePrefixForAction(action);
 
-    let insertText = "";
-    let newAnchor = from;
-    let newHead = from;
-
-    switch (action) {
-      case "bold":
-        if (selectedText) {
-          insertText = `**${selectedText}**`;
-          newAnchor = from + 2;
-          newHead = to + 2;
-        } else {
-          insertText = "**太字**";
-          newAnchor = from + 2;
-          newHead = from + 4;
-        }
-        break;
-      case "italic":
-        if (selectedText) {
-          insertText = `*${selectedText}*`;
-          newAnchor = from + 1;
-          newHead = to + 1;
-        } else {
-          insertText = "*斜体*";
-          newAnchor = from + 1;
-          newHead = from + 3;
-        }
-        break;
-      case "heading": {
-        const line = state.doc.lineAt(from);
-        insertText = "### ";
-        view.dispatch({
-          changes: { from: line.from, to: line.from, insert: insertText },
-          selection: { anchor: from + insertText.length },
-        });
-        view.focus();
-        return;
-      }
-      case "bullet-list": {
-        const line = state.doc.lineAt(from);
-        insertText = "- ";
-        view.dispatch({
-          changes: { from: line.from, to: line.from, insert: insertText },
-          selection: { anchor: from + insertText.length },
-        });
-        view.focus();
-        return;
-      }
-      case "ordered-list": {
-        const line = state.doc.lineAt(from);
-        insertText = "1. ";
-        view.dispatch({
-          changes: { from: line.from, to: line.from, insert: insertText },
-          selection: { anchor: from + insertText.length },
-        });
-        view.focus();
-        return;
-      }
-      case "task-list": {
-        const line = state.doc.lineAt(from);
-        insertText = "- [ ] ";
-        view.dispatch({
-          changes: { from: line.from, to: line.from, insert: insertText },
-          selection: { anchor: from + insertText.length },
-        });
-        view.focus();
-        return;
-      }
-      case "quote": {
-        const line = state.doc.lineAt(from);
-        insertText = "> ";
-        view.dispatch({
-          changes: { from: line.from, to: line.from, insert: insertText },
-          selection: { anchor: from + insertText.length },
-        });
-        view.focus();
-        return;
-      }
-      case "code":
-        if (selectedText.includes("\n")) {
-          insertText = `\`\`\`\n${selectedText}\n\`\`\``;
-          newAnchor = from + 4;
-          newHead = to + 4;
-        } else if (selectedText) {
-          insertText = `\`${selectedText}\``;
-          newAnchor = from + 1;
-          newHead = to + 1;
-        } else {
-          insertText = "`コード`";
-          newAnchor = from + 1;
-          newHead = from + 4;
-        }
-        break;
-      case "link":
-        if (selectedText) {
-          insertText = `[${selectedText}](url)`;
-          newAnchor = to + 3;
-          newHead = to + 6;
-        } else {
-          insertText = "[リンク](url)";
-          newAnchor = from + 1;
-          newHead = from + 4;
-        }
-        break;
-      case "table": {
-        const prefix =
-          from > 0 && state.sliceDoc(from - 1, from) !== "\n" ? "\n\n" : "";
-        insertText = `${prefix}| 列1 | 列2 | 列3 |\n| :--- | :--- | :--- |\n| 項目1 | 項目2 | 項目3 |\n`;
-        newAnchor = from + insertText.length;
-        newHead = newAnchor;
-        break;
-      }
+    if (linePrefix !== null) {
+      const line = state.doc.lineAt(from);
+      view.dispatch({
+        changes: { from: line.from, to: line.from, insert: linePrefix },
+        selection: { anchor: from + linePrefix.length },
+      });
+      view.focus();
+      return;
     }
+
+    const selectedText = state.sliceDoc(from, to);
+    const isPrecededByNewline =
+      from === 0 || state.sliceDoc(from - 1, from) === "\n";
+    const { insertText, anchor, head } = getSurroundingSyntax(
+      action,
+      selectedText,
+      from,
+      to,
+      isPrecededByNewline,
+    );
 
     view.dispatch({
       changes: { from, to, insert: insertText },
-      selection: { anchor: newAnchor, head: newHead },
+      selection: { anchor, head },
     });
     view.focus();
   }

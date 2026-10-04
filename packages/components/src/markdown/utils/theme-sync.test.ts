@@ -11,23 +11,36 @@
  *   - 通常の親要素が存在する場合は parentElement を返すこと
  *   - ShadowRoot 内部の要素の場合は host 要素を返すこと
  *   - 祖先が存在しない場合は null を返すこと
+ * 4. ホスト要素のテーマ属性同期（syncHostTheme）
+ *   - ダークモード判定時に data-theme="dark" と wa-dark クラスを設定し wa-light を除去すること
+ *   - ライトモード判定時に data-theme="light" と wa-light クラスを設定し wa-dark を除去すること
  */
 
 import { describe, it, expect } from "vitest";
-import { detectIsDarkMode, getParentOrHost } from "./theme-sync.js";
+import { detectIsDarkMode, getParentOrHost, syncHostTheme } from "./theme-sync.js";
 
 function createMockElement(
   attrs: Record<string, string> = {},
   classes: string[] = [],
 ): any {
   let parent: any = null;
+  const classSet = new Set(classes);
   return {
     getAttribute(name: string) {
       return attrs[name] ?? null;
     },
+    setAttribute(name: string, value: string) {
+      attrs[name] = value;
+    },
     classList: {
       contains(name: string) {
-        return classes.includes(name);
+        return classSet.has(name);
+      },
+      add(name: string) {
+        classSet.add(name);
+      },
+      remove(name: string) {
+        classSet.delete(name);
       },
     },
     get parentElement() {
@@ -119,6 +132,26 @@ describe("detectIsDarkMode (theme-sync)", () => {
       };
 
       expect(getParentOrHost(root as any)).toBeNull();
+    });
+  });
+
+  describe("syncHostTheme (ホスト要素のテーマ属性同期)", () => {
+    it("ダークモード時は data-theme='dark' と wa-dark クラスを設定し wa-light を除去すること", () => {
+      const el = createMockElement({ "data-theme": "light" }, ["wa-light"]);
+      syncHostTheme(el, true);
+
+      expect(el.getAttribute("data-theme")).toBe("dark");
+      expect(el.classList.contains("wa-dark")).toBe(true);
+      expect(el.classList.contains("wa-light")).toBe(false);
+    });
+
+    it("ライトモード時は data-theme='light' と wa-light クラスを設定し wa-dark を除去すること", () => {
+      const el = createMockElement({ "data-theme": "dark" }, ["wa-dark"]);
+      syncHostTheme(el, false);
+
+      expect(el.getAttribute("data-theme")).toBe("light");
+      expect(el.classList.contains("wa-light")).toBe(true);
+      expect(el.classList.contains("wa-dark")).toBe(false);
     });
   });
 });
