@@ -128,11 +128,55 @@
             <datepicker-input id="date-disabled" value="2026-04-15" disabled></datepicker-input>
           </div>
         </section>
+
+        <!-- 11. Markdown Editor & Preview (Standard GFM) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">11. Markdown Editor & Preview (Standard GFM & Split View)</h2>
+          <p class="preview-card__desc">
+            CodeMirror 6 と unified パイプラインを統合したエディタ＆プレビュー。固定サイズ（height="380"）と自動伸縮（Auto-grow）の切り替え、左右スプリット表示、GFM（表、タスクリスト等）をテスト可能です。
+          </p>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-main" height="380" titleText="Task Summary & Notes Editor"></markdown-editor-preview>
+          </div>
+        </section>
+
+        <!-- 12. Plugin DI Extension Demo -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">12. Plugin DI Extension Demo (Open-Closed Principle)</h2>
+          <p class="preview-card__desc">
+            コアコードを改修せず、外部から remark プラグインおよびサニタイズスキーマ拡張を注入（DI）した実証デモ。独自記法「:badge[ステータス]:」がリアルタイムにカスタムタグとしてレンダリングされます。
+          </p>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-plugin-demo" height="360" titleText="Plugin DI Demonstration"></markdown-editor-preview>
+          </div>
+        </section>
+
+        <!-- 13. Empty State (Default Edit Mode & Split Disabled) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">13. Empty State Editor (Default Edit Mode & allowSplit=false)</h2>
+          <p class="preview-card__desc">
+            入力内容が空の場合は編集モード（edit）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
+          </p>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-empty-demo" height="280" titleText="New Note" allow-split="false"></markdown-editor-preview>
+          </div>
+        </section>
+
+        <!-- 14. Existing Content (Default Preview Mode & Split Disabled) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">14. Existing Content Note (Default Preview Mode & allowSplit=false)</h2>
+          <p class="preview-card__desc">
+            入力内容が存在する場合はプレビューモード（preview）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
+          </p>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-no-split-demo" height="320" titleText="Existing Meeting Note" allow-split="false"></markdown-editor-preview>
+          </div>
+        </section>
       </main>
 
       <section class="preview-console">
         <div class="preview-console__header">
-          <h2 class="preview-console__title">Event Monitor (search-input & datepicker-change)</h2>
+          <h2 class="preview-console__title">Event Monitor (search-input, datepicker-change, markdown-change, mode-change)</h2>
           <button id="clear-log" class="preview-console__clear-btn" type="button">Clear</button>
         </div>
         <div id="event-log" class="preview-console__log">コンポーネントに入力または日付を選択すると、ここにカスタムイベントが記録されます...</div>
