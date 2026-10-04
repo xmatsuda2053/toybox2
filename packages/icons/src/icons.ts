@@ -1,7 +1,8 @@
-﻿import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
+import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
 import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
+import bars_solid_full from "./assets/icons/bars-solid-full.svg?raw";
 import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
 import bold_solid_full from "./assets/icons/bold-solid-full.svg?raw";
 import bookmark_solid_full from "./assets/icons/bookmark-solid-full.svg?raw";
@@ -15,6 +16,7 @@ import circle_stop_solid_full from "./assets/icons/circle-stop-solid-full.svg?ra
 import code_solid_full from "./assets/icons/code-solid-full.svg?raw";
 import cubes_stacked_solid_full from "./assets/icons/cubes-stacked-solid-full.svg?raw";
 import display_solid_full from "./assets/icons/display-solid-full.svg?raw";
+import ellipsis_solid_full from "./assets/icons/ellipsis-solid-full.svg?raw";
 import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
@@ -47,6 +49,7 @@ export const icons: Record<string, string> = {
   "angle-right-solid-full": angle_right_solid_full,
   "angles-left-solid-full": angles_left_solid_full,
   "angles-right-solid-full": angles_right_solid_full,
+  "bars-solid-full": bars_solid_full,
   "blockquote-left": blockquote_left,
   "bold-solid-full": bold_solid_full,
   "bookmark-solid-full": bookmark_solid_full,
@@ -60,6 +63,7 @@ export const icons: Record<string, string> = {
   "code-solid-full": code_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
   "display-solid-full": display_solid_full,
+  "ellipsis-solid-full": ellipsis_solid_full,
   "ellipsis-vertical-solid-full": ellipsis_vertical_solid_full,
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,

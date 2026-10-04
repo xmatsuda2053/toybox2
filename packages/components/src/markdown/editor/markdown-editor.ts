@@ -429,6 +429,39 @@ export class MarkdownEditor extends LitElement {
   }
 
   /**
+   * 拡張機能などの構文テンプレートをエディタに挿入する。
+   *
+   * @param template 構文テンプレート (例: ":badge[ラベル]:")
+   */
+  public insertTemplate(template: string): void {
+    if (this.disabled) return;
+
+    if (!this.editorView) {
+      this.value = this.value ? `${this.value}\n${template}` : template;
+      this.notifyChange(this.value);
+      return;
+    }
+
+    const view = this.editorView;
+    const state = view.state;
+    const { from, to } = state.selection.main;
+    const selectedText = state.sliceDoc(from, to);
+
+    let insertText = template;
+    if (selectedText && /\[.*?\]/.test(template)) {
+      insertText = template.replace(/\[.*?\]/, `[${selectedText}]`);
+    }
+
+    const newAnchor = from + insertText.length;
+    view.dispatch({
+      changes: { from, to, insert: insertText },
+      selection: { anchor: newAnchor, head: newAnchor },
+    });
+    view.focus();
+  }
+
+
+  /**
    * テキスト変更カスタムイベントを発火する。
    */
   public notifyChange(newValue: string): void {

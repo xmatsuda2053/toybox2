@@ -23,6 +23,7 @@
 }
 
 .markdown-editor-preview {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -32,6 +33,8 @@
   border-radius: 6px;
   overflow: hidden;
   background-color: var(--stepnote-bg-surface, #ffffff);
+  container-type: inline-size;
+  container-name: editor-preview;
 }
 
 :host([data-theme="dark"]) .markdown-editor-preview,
@@ -42,6 +45,8 @@
 
 /* ツールバーヘッダー */
 .markdown-editor-preview__header {
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -49,6 +54,7 @@
   background-color: var(--stepnote-bg-secondary, #f8fafc);
   border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
   user-select: none;
+  gap: 8px;
 }
 
 :host([data-theme="dark"]) .markdown-editor-preview__header,
@@ -60,21 +66,8 @@
 .markdown-editor-preview__header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
   min-width: 0;
-  flex-wrap: wrap;
-}
-
-.markdown-editor-preview__title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--stepnote-text-secondary, #64748b);
-  white-space: nowrap;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__title,
-:host(.wa-dark) .markdown-editor-preview__title {
-  color: #8b949e !important;
+  flex: 1;
 }
 
 /* 書式ツールバー */
@@ -82,6 +75,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-wrap: nowrap;
 }
 
 .markdown-editor-preview__toolbar-btn {
@@ -136,6 +130,172 @@
 :host([data-theme="dark"]) .markdown-editor-preview__toolbar-separator,
 :host(.wa-dark) .markdown-editor-preview__toolbar-separator {
   background-color: #30363d !important;
+}
+
+/* 拡張機能ドロップダウンメニュー */
+.markdown-editor-preview__extension-menu-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.markdown-editor-preview__extension-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  min-width: 220px;
+  background-color: var(--stepnote-bg-surface, #ffffff);
+  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  flex-direction: column;
+
+  &--open {
+    display: flex;
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu,
+:host(.wa-dark) .markdown-editor-preview__extension-menu {
+  background-color: #1e2228 !important;
+  border-color: #30363d !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+.markdown-editor-preview__extension-menu-header {
+  padding: 6px 12px;
+  background-color: var(--stepnote-bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-header,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-header {
+  background-color: #21262d !important;
+  border-bottom-color: #30363d !important;
+}
+
+.markdown-editor-preview__extension-menu-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--stepnote-text-secondary, #64748b);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-title,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-title {
+  color: #8b949e !important;
+}
+
+.markdown-editor-preview__extension-menu-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.markdown-editor-preview__extension-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--stepnote-bg-tertiary, #f1f5f9);
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-item {
+  &:hover {
+    background-color: #2d333b !important;
+  }
+}
+
+.markdown-editor-preview__extension-menu-item-icon {
+  font-size: 16px;
+  color: var(--stepnote-accent, #3b82f6);
+  flex-shrink: 0;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item-icon,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-item-icon {
+  color: #58a6ff !important;
+}
+
+.markdown-editor-preview__extension-menu-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.markdown-editor-preview__extension-menu-item-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item-label,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-item-label {
+  color: #e6edf3 !important;
+}
+
+.markdown-editor-preview__extension-menu-item-syntax {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--stepnote-text-secondary, #64748b);
+  background-color: var(--stepnote-bg-secondary, #f1f5f9);
+  padding: 1px 4px;
+  border-radius: 3px;
+  align-self: flex-start;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item-syntax,
+:host(.wa-dark) .markdown-editor-preview__extension-menu-item-syntax {
+  color: #8b949e !important;
+  background-color: #21262d !important;
+}
+
+/* レスポンシブ用ミートボールメニュー（通常時は非表示、幅狭時に出現） */
+.markdown-editor-preview__toolbar-menu-separator--responsive {
+  display: none;
+}
+
+.markdown-editor-preview__extension-menu-container--responsive {
+  display: none;
+}
+
+/* メニュー内の二次的アクション（追加の書式）は通常時は非表示、幅狭時のみ表示 */
+.markdown-editor-preview__menu-section--secondary {
+  display: none;
+}
+
+/* コンテナクエリによる段階的ボタン集約（幅 520px 以下で二次的アクションをメニューへ退避） */
+@container editor-preview (max-width: 520px) {
+  .markdown-editor-preview__toolbar-item--secondary {
+    display: none !important;
+  }
+
+  .markdown-editor-preview__toolbar-menu-separator--responsive {
+    display: inline-block !important;
+  }
+
+  .markdown-editor-preview__extension-menu-container--responsive {
+    display: inline-flex !important;
+  }
+
+  .markdown-editor-preview__menu-section--secondary {
+    display: block;
+  }
 }
 
 .markdown-editor-preview__mode-group {
@@ -253,3 +413,262 @@
   flex: 1;
   width: 100%;
 }
+
+/* ヘッダー右側ボタングループ & ヘルプボタン */
+.markdown-editor-preview__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.markdown-editor-preview__help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 4px;
+  color: var(--stepnote-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+
+  wa-icon {
+    font-size: 18px;
+    width: 1.1em;
+    height: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.markdown-editor-preview__help-btn:hover {
+  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-btn,
+:host(.wa-dark) .markdown-editor-preview__help-btn {
+  color: #8b949e;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-btn:hover,
+:host(.wa-dark) .markdown-editor-preview__help-btn:hover {
+  background-color: #30363d !important;
+  color: #f0f6fc !important;
+}
+
+/* 構文ヘルプダイアログモーダル */
+.markdown-editor-preview__help-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.markdown-editor-preview__help-modal--open {
+  display: flex;
+}
+
+.markdown-editor-preview__help-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+.markdown-editor-preview__help-dialog {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  background-color: var(--stepnote-bg-surface, #ffffff);
+  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-dialog,
+:host(.wa-dark) .markdown-editor-preview__help-dialog {
+  background-color: #161b22 !important;
+  border-color: #30363d !important;
+  color: #f0f6fc !important;
+}
+
+.markdown-editor-preview__help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: var(--stepnote-bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-header,
+:host(.wa-dark) .markdown-editor-preview__help-header {
+  background-color: #21262d !important;
+  border-bottom-color: #30363d !important;
+}
+
+.markdown-editor-preview__help-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.markdown-editor-preview__help-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 4px;
+  color: var(--stepnote-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  wa-icon {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+    color: var(--stepnote-text-primary, #0f172a);
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-close-btn,
+:host(.wa-dark) .markdown-editor-preview__help-close-btn {
+  color: #8b949e;
+
+  &:hover {
+    background-color: #30363d !important;
+    color: #f0f6fc !important;
+  }
+}
+
+.markdown-editor-preview__help-content {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.markdown-editor-preview__help-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.markdown-editor-preview__help-subtitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--stepnote-text-secondary, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-subtitle,
+:host(.wa-dark) .markdown-editor-preview__help-subtitle {
+  color: #8b949e !important;
+}
+
+.markdown-editor-preview__help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.5;
+
+  th, td {
+    padding: 6px 10px;
+    border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    background-color: var(--stepnote-bg-secondary, #f8fafc);
+    font-weight: 600;
+    color: var(--stepnote-text-secondary, #64748b);
+  }
+
+  code {
+    font-family: monospace;
+    background-color: var(--stepnote-bg-secondary, #f1f5f9);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-table,
+:host(.wa-dark) .markdown-editor-preview__help-table {
+  th, td {
+    border-color: #30363d !important;
+  }
+
+  th {
+    background-color: #21262d !important;
+    color: #8b949e !important;
+  }
+
+  code {
+    background-color: #21262d !important;
+    color: #e6edf3 !important;
+  }
+}
+
+.markdown-editor-preview__help-insert-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--stepnote-border-subtle, #cbd5e1);
+  background-color: var(--stepnote-bg-surface, #ffffff);
+  color: var(--stepnote-accent, #3b82f6);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: var(--stepnote-accent, #3b82f6);
+    color: #ffffff;
+    border-color: var(--stepnote-accent, #3b82f6);
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__help-insert-btn,
+:host(.wa-dark) .markdown-editor-preview__help-insert-btn {
+  border-color: #30363d;
+  background-color: #21262d;
+  color: #58a6ff;
+
+  &:hover {
+    background-color: #1f6feb;
+    color: #ffffff;
+    border-color: #1f6feb;
+  }
+}
+
