@@ -7,10 +7,14 @@
  * 2. クラス名による判定
  *   - element 自身に "wa-dark" が残っていても、親要素に "wa-light" が指定されている場合は false を返すこと
  *   - 親要素に "wa-dark" が指定されている場合は true を返すこと
+ * 3. DOM / ShadowRoot 祖先要素の探索（getParentOrHost）
+ *   - 通常の親要素が存在する場合は parentElement を返すこと
+ *   - ShadowRoot 内部の要素の場合は host 要素を返すこと
+ *   - 祖先が存在しない場合は null を返すこと
  */
 
 import { describe, it, expect } from "vitest";
-import { detectIsDarkMode } from "./theme-sync.js";
+import { detectIsDarkMode, getParentOrHost } from "./theme-sync.js";
 
 function createMockElement(
   attrs: Record<string, string> = {},
@@ -82,5 +86,39 @@ describe("detectIsDarkMode (theme-sync)", () => {
     };
 
     expect(detectIsDarkMode(child as any)).toBe(true);
+  });
+
+  describe("getParentOrHost (DOM / ShadowRoot トラバース)", () => {
+    it("通常の親要素が存在する場合は parentElement を返すこと", () => {
+      const parent = createMockElement();
+      const child = createMockElement();
+      child.parentElement = parent;
+
+      expect(getParentOrHost(child)).toBe(parent);
+    });
+
+    it("ShadowRoot 内部の要素の場合は host 要素を返すこと", () => {
+      const host = createMockElement();
+      const shadowRoot = { host };
+      const child = {
+        parentElement: null,
+        getRootNode() {
+          return shadowRoot;
+        },
+      };
+
+      expect(getParentOrHost(child as any)).toBe(host);
+    });
+
+    it("祖先が存在しない要素（ルート）の場合は null を返すこと", () => {
+      const root = {
+        parentElement: null,
+        getRootNode() {
+          return root;
+        },
+      };
+
+      expect(getParentOrHost(root as any)).toBeNull();
+    });
   });
 });
