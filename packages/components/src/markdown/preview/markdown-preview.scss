@@ -27,6 +27,18 @@
   background-color: transparent;
 }
 
+/* 自動伸長（Auto-grow）モード */
+:host([auto-height]),
+.markdown-preview--auto-height {
+  height: auto;
+  overflow: visible;
+
+  &.markdown-preview {
+    height: auto;
+    overflow-y: visible;
+  }
+}
+
 .markdown-preview__body {
   box-sizing: border-box;
   min-width: 200px;

@@ -2,6 +2,7 @@ import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw"
 import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
+import arrows_up_down_solid_full from "./assets/icons/arrows-up-down-solid-full.svg?raw";
 import bars_solid_full from "./assets/icons/bars-solid-full.svg?raw";
 import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
 import bold_solid_full from "./assets/icons/bold-solid-full.svg?raw";
@@ -49,6 +50,7 @@ export const icons: Record<string, string> = {
   "angle-right-solid-full": angle_right_solid_full,
   "angles-left-solid-full": angles_left_solid_full,
   "angles-right-solid-full": angles_right_solid_full,
+  "arrows-up-down-solid-full": arrows_up_down_solid_full,
   "bars-solid-full": bars_solid_full,
   "blockquote-left": blockquote_left,
   "bold-solid-full": bold_solid_full,

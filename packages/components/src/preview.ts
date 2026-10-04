@@ -128,6 +128,11 @@ console.log(html);
     const customEvt = e as CustomEvent<{ mode: string }>;
     appendLog("markdown-main", "mode-change", customEvt.detail);
   });
+
+  markdownMain.addEventListener("height-mode-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ autoHeight: boolean }>;
+    appendLog("markdown-main", "height-mode-change", customEvt.detail);
+  });
 }
 
 // 12. 独自記法拡張パッケージ (Feature Extension) 実証デモ
@@ -157,6 +162,11 @@ if (markdownPluginDemo) {
   markdownPluginDemo.addEventListener("mode-change", (e: Event) => {
     const customEvt = e as CustomEvent<{ mode: string }>;
     appendLog("markdown-plugin-demo", "mode-change", customEvt.detail);
+  });
+
+  markdownPluginDemo.addEventListener("height-mode-change", (e: Event) => {
+    const customEvt = e as CustomEvent<{ autoHeight: boolean }>;
+    appendLog("markdown-plugin-demo", "height-mode-change", customEvt.detail);
   });
 }
 

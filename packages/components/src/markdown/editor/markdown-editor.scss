@@ -34,6 +34,28 @@
   background-color: inherit;
 }
 
+/* 自動伸長（Auto-grow）モード */
+:host([auto-height]),
+.markdown-editor--auto-height {
+  height: auto;
+  min-height: 200px;
+  overflow: visible;
+
+  .markdown-editor__container {
+    height: auto;
+    min-height: 200px;
+    overflow: visible;
+
+    .cm-editor {
+      height: auto;
+    }
+
+    .cm-scroller {
+      overflow: visible;
+    }
+  }
+}
+
 .markdown-editor__container {
   width: 100%;
   height: 100%;

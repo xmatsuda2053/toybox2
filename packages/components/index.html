@@ -133,10 +133,10 @@
         <section class="preview-card preview-card--full">
           <h2 class="preview-card__title">11. Markdown Editor & Preview (Standard GFM & Split View)</h2>
           <p class="preview-card__desc">
-            CodeMirror 6 と unified パイプラインを統合したエディタ＆プレビュー。左右スプリット表示、編集のみ、プレビューのみの表示切り替え、GFM（表、タスクリスト等）をテスト可能です。
+            CodeMirror 6 と unified パイプラインを統合したエディタ＆プレビュー。固定サイズ（height="380"）と自動伸縮（Auto-grow）の切り替え、左右スプリット表示、GFM（表、タスクリスト等）をテスト可能です。
           </p>
-          <div class="preview-card__component" style="height: 540px;">
-            <markdown-editor-preview id="markdown-main" titleText="Task Summary & Notes Editor"></markdown-editor-preview>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-main" height="380" titleText="Task Summary & Notes Editor"></markdown-editor-preview>
           </div>
         </section>
 
@@ -146,8 +146,8 @@
           <p class="preview-card__desc">
             コアコードを改修せず、外部から remark プラグインおよびサニタイズスキーマ拡張を注入（DI）した実証デモ。独自記法「:badge[ステータス]:」がリアルタイムにカスタムタグとしてレンダリングされます。
           </p>
-          <div class="preview-card__component" style="height: 420px;">
-            <markdown-editor-preview id="markdown-plugin-demo" titleText="Plugin DI Demonstration"></markdown-editor-preview>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-plugin-demo" height="360" titleText="Plugin DI Demonstration"></markdown-editor-preview>
           </div>
         </section>
 
@@ -157,8 +157,8 @@
           <p class="preview-card__desc">
             入力内容が空の場合は編集モード（edit）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
           </p>
-          <div class="preview-card__component" style="height: 360px;">
-            <markdown-editor-preview id="markdown-empty-demo" titleText="New Note" allow-split="false"></markdown-editor-preview>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-empty-demo" height="280" titleText="New Note" allow-split="false"></markdown-editor-preview>
           </div>
         </section>
 
@@ -168,8 +168,8 @@
           <p class="preview-card__desc">
             入力内容が存在する場合はプレビューモード（preview）をデフォルトとし、スプリットボタンを非表示（allowSplit=false）に制御したデモです。
           </p>
-          <div class="preview-card__component" style="height: 360px;">
-            <markdown-editor-preview id="markdown-no-split-demo" titleText="Existing Meeting Note" allow-split="false"></markdown-editor-preview>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-no-split-demo" height="320" titleText="Existing Meeting Note" allow-split="false"></markdown-editor-preview>
           </div>
         </section>
       </main>

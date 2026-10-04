@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
+import { LitElement, html, nothing, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import editorPreviewStyles from "./markdown-editor-preview.scss?inline";
 import type { Extension } from "@codemirror/state";
@@ -77,6 +77,37 @@ export class MarkdownEditorPreview extends LitElement {
   @property({ type: Object })
   public processorOptions?: MarkdownProcessorOptions;
 
+  /** 入力内容に応じた自動伸長（Auto-grow）モード */
+  @property({ type: Boolean, reflect: true, attribute: "auto-height" })
+  public autoHeight = false;
+
+  /** 高さモード切替ボタンの表示制御 */
+  @property({ type: Boolean, attribute: "allow-auto-height" })
+  public allowAutoHeight = true;
+
+  /** 固定サイズ表示時の高さ（例: "400px", "50vh", 500）。autoHeight 有効時は無効化 */
+  @property()
+  public height?: string | number;
+
+  /**
+   * 有効な固定高さを取得する（autoHeight 有効時は undefined）。
+   * 数値や単位なし文字列の場合は "px" を自動補完する。
+   */
+  public get effectiveHeight(): string | undefined {
+    if (this.autoHeight || this.height === undefined || this.height === null || this.height === "") {
+      return undefined;
+    }
+    if (typeof this.height === "number") {
+      return `${this.height}px`;
+    }
+    const trimmed = String(this.height).trim();
+    if (!trimmed) return undefined;
+    if (/^\d+(\.\d+)?$/.test(trimmed)) {
+      return `${trimmed}px`;
+    }
+    return trimmed;
+  }
+
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
   public extensions: MarkdownFeatureExtension[] = [];
@@ -100,6 +131,12 @@ export class MarkdownEditorPreview extends LitElement {
   /** 拡張機能ドロップダウンメニューの開閉状態 */
   @state()
   public isExtensionMenuOpen = false;
+
+  /** 高さモード切替トランジションアニメーション実行中フラグ */
+  @state()
+  public isTransitioning = false;
+
+  private transitionTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * 拡張機能の設定をマージした有効な MarkdownProcessorOptions を取得する。
@@ -199,6 +236,10 @@ export class MarkdownEditorPreview extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.disconnectThemeObserver?.();
+    if (this.transitionTimer) {
+      clearTimeout(this.transitionTimer);
+      this.transitionTimer = null;
+    }
     if (typeof window !== "undefined") {
       window.removeEventListener("keydown", this.handleGlobalKeydown);
       window.removeEventListener("click", this.handleGlobalClick);
@@ -210,6 +251,12 @@ export class MarkdownEditorPreview extends LitElement {
 
     if (changedProperties.has("value")) {
       this.previewValue = this.value;
+    }
+
+    if (changedProperties.has("height") || changedProperties.has("autoHeight")) {
+      if (this.style && !this.isTransitioning) {
+        this.style.height = this.effectiveHeight || "";
+      }
     }
   }
 
@@ -345,6 +392,112 @@ export class MarkdownEditorPreview extends LitElement {
    */
   public toggleHelp(open?: boolean): void {
     this.isHelpOpen = open ?? !this.isHelpOpen;
+  }
+
+  /**
+   * 高さモード（自動伸長 / 固定スクロール）を切り替える。
+   *
+   * @param force 指定した状態（省略時はトグル）
+   */
+  public toggleAutoHeight(force?: boolean): void {
+    const targetAutoHeight = force ?? !this.autoHeight;
+    if (this.autoHeight === targetAutoHeight) return;
+
+    if (this.transitionTimer) {
+      clearTimeout(this.transitionTimer);
+      this.transitionTimer = null;
+    }
+
+    const isBrowser =
+      typeof window !== "undefined" &&
+      typeof requestAnimationFrame !== "undefined" &&
+      typeof this.getBoundingClientRect === "function";
+
+    const prefersReducedMotion =
+      isBrowser &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+    // Node.js テスト環境またはアニメーション抑制設定時は即座に切り替え
+    if (!isBrowser || prefersReducedMotion) {
+      this.autoHeight = targetAutoHeight;
+      this.isTransitioning = false;
+      this.dispatchEvent(
+        new CustomEvent("height-mode-change", {
+          detail: { autoHeight: this.autoHeight },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+
+    const currentHeight = this.getBoundingClientRect().height;
+
+    // 高さ未計算または非表示の場合は即時切り替え
+    if (currentHeight <= 0) {
+      this.autoHeight = targetAutoHeight;
+      this.isTransitioning = false;
+      this.dispatchEvent(
+        new CustomEvent("height-mode-change", {
+          detail: { autoHeight: this.autoHeight },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+
+    this.isTransitioning = true;
+
+    if (targetAutoHeight) {
+      // 固定モード -> 自動伸長モードへの滑らかな伸縮アニメーション
+      this.style.height = `${currentHeight}px`;
+      this.autoHeight = true;
+
+      requestAnimationFrame(() => {
+        const container = this.renderRoot?.querySelector(
+          ".markdown-editor-preview",
+        ) as HTMLElement | null;
+        const naturalHeight = container ? container.scrollHeight : currentHeight;
+        const targetHeight = Math.max(naturalHeight, 240);
+
+        requestAnimationFrame(() => {
+          this.style.height = `${targetHeight}px`;
+
+          this.transitionTimer = setTimeout(() => {
+            if (this.autoHeight) {
+              this.style.height = "";
+            }
+            this.isTransitioning = false;
+            this.transitionTimer = null;
+          }, 400);
+        });
+      });
+    } else {
+      // 自動伸長モード -> 固定モードへの滑らかな縮小アニメーション
+      this.style.height = `${currentHeight}px`;
+      const targetFixed = this.effectiveHeight || "380px";
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.autoHeight = false;
+          this.style.height = targetFixed;
+
+          this.transitionTimer = setTimeout(() => {
+            this.isTransitioning = false;
+            this.transitionTimer = null;
+          }, 400);
+        });
+      });
+    }
+
+    this.dispatchEvent(
+      new CustomEvent("height-mode-change", {
+        detail: { autoHeight: targetAutoHeight },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   /**
@@ -708,6 +861,34 @@ export class MarkdownEditorPreview extends LitElement {
           ${this.mode !== "preview" ? this.renderToolbar() : ""}
         </div>
         <div class="markdown-editor-preview__header-right">
+          ${this.allowAutoHeight
+            ? html`
+                <button
+                  type="button"
+                  class="markdown-editor-preview__auto-height-btn ${this.autoHeight
+                    ? "markdown-editor-preview__auto-height-btn--active"
+                    : ""}"
+                  title=${this.autoHeight
+                    ? "固定サイズ表示に切り替え"
+                    : "高さを自動伸縮（コンテンツにフィット）"}
+                  aria-label=${this.autoHeight
+                    ? "固定サイズ表示に切り替え"
+                    : "高さを自動伸縮（コンテンツにフィット）"}
+                  aria-pressed=${this.autoHeight ? "true" : "false"}
+                  @click=${(e: Event) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleAutoHeight();
+                  }}
+                >
+                  <wa-icon
+                    library="my-icons"
+                    name="arrows-up-down-solid-full"
+                    label=${this.autoHeight ? "固定サイズ表示" : "自動伸縮"}
+                  ></wa-icon>
+                </button>
+              `
+            : ""}
           <button
             type="button"
             class="markdown-editor-preview__help-btn"
@@ -805,6 +986,8 @@ export class MarkdownEditorPreview extends LitElement {
             .themeMode=${this.currentTheme}
             .value=${this.value}
             .customExtensions=${this.effectiveEditorExtensions}
+            ?auto-height=${this.autoHeight}
+            .autoHeight=${this.autoHeight}
             @markdown-change=${this.onEditorInput}
           ></markdown-editor>
         </div>
@@ -815,6 +998,8 @@ export class MarkdownEditorPreview extends LitElement {
             data-theme=${this.currentTheme}
             .content=${this.previewValue}
             .processorOptions=${this.effectiveProcessorOptions}
+            ?auto-height=${this.autoHeight}
+            .autoHeight=${this.autoHeight}
           ></markdown-preview>
         </div>
       </div>
@@ -991,9 +1176,22 @@ export class MarkdownEditorPreview extends LitElement {
 
   override render() {
     const modeClass = `markdown-editor-preview--mode-${this.mode}`;
+    const autoHeightClass = this.autoHeight
+      ? "markdown-editor-preview--auto-height"
+      : "";
+    const animatingClass = this.isTransitioning
+      ? "markdown-editor-preview--animating"
+      : "";
+    const heightStyle =
+      this.effectiveHeight && !this.isTransitioning
+        ? `height: ${this.effectiveHeight};`
+        : "";
 
     return html`
-      <div class="markdown-editor-preview ${modeClass}">
+      <div
+        class="markdown-editor-preview ${modeClass} ${autoHeightClass} ${animatingClass}"
+        style=${heightStyle || nothing}
+      >
         ${this.renderHeader()}
         ${this.renderBody()}
         ${this.renderHelpModal()}

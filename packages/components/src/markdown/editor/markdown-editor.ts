@@ -62,6 +62,10 @@ export class MarkdownEditor extends LitElement {
   @property({ type: Boolean })
   public disabled = false;
 
+  /** 入力内容に応じた自動伸長（Auto-grow）モード */
+  @property({ type: Boolean, reflect: true, attribute: "auto-height" })
+  public autoHeight = false;
+
   /** テーマモード ("light" | "dark" | "auto") */
   @property({ type: String })
   public themeMode: "light" | "dark" | "auto" = "auto";
@@ -482,8 +486,12 @@ export class MarkdownEditor extends LitElement {
   }
 
   override render() {
+    const autoHeightClass = this.autoHeight
+      ? "markdown-editor--auto-height"
+      : "";
+
     return html`
-      <div class="markdown-editor">
+      <div class="markdown-editor ${autoHeightClass}">
         <div class="markdown-editor__container"></div>
       </div>
     `;

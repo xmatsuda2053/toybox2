@@ -476,5 +476,129 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(scssContent).toMatch(/@container[^{]*\{[\s\S]*?\.markdown-editor-preview__menu-section--secondary\s*\{[^}]*display:\s*(block|flex)/);
     });
   });
+
+  describe("コンテンツ連動型自動伸長（Auto-grow）モードおよび高さモード切替仕様", () => {
+    it("autoHeight プロパティがデフォルトで false であること", () => {
+      expect((element as any).autoHeight).toBe(false);
+    });
+
+    it("autoHeight が true の場合、コンポーネントルートに markdown-editor-preview--auto-height クラスが付与されること", () => {
+      (element as any).autoHeight = true;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("markdown-editor-preview--auto-height");
+    });
+
+    it("allowAutoHeight が true の場合、ヘッダーに高さモード切替ボタンがレンダリングされること", () => {
+      (element as any).allowAutoHeight = true;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
+      expect(htmlStr).toContain("arrows-up-down-solid-full");
+    });
+
+    it("allowAutoHeight が false の場合、ヘッダーに高さモード切替ボタンがレンダリングされないこと", () => {
+      (element as any).allowAutoHeight = false;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("markdown-editor-preview__auto-height-btn");
+    });
+
+    it("toggleAutoHeight() を実行すると autoHeight がトグルされ、height-mode-change イベントが発行されること", () => {
+      let emittedDetail: { autoHeight: boolean } | null = null;
+      element.addEventListener("height-mode-change", (e: Event) => {
+        emittedDetail = (e as CustomEvent<{ autoHeight: boolean }>).detail;
+      });
+
+      (element as any).toggleAutoHeight();
+      expect((element as any).autoHeight).toBe(true);
+      expect(emittedDetail).toEqual({ autoHeight: true });
+
+      (element as any).toggleAutoHeight();
+      expect((element as any).autoHeight).toBe(false);
+      expect(emittedDetail).toEqual({ autoHeight: false });
+    });
+
+    it("SCSS にて auto-height 有効時に height: auto かつ内部スクロール抑止（overflow: visible）となるスタイルが定義されていること", () => {
+      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain(".markdown-editor-preview--auto-height");
+      expect(scssContent).toMatch(/\.markdown-editor-preview--auto-height[\s\S]*?height:\s*auto/);
+    });
+  });
+
+  describe("固定高さ（height）プロパティ仕様", () => {
+    it("height プロパティが未指定の場合、デフォルトで undefined であり、render() に固定高さスタイルが含まれないこと", () => {
+      expect((element as any).height).toBeUndefined();
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("height:");
+    });
+
+    it("height=\"400px\" が設定された場合、render() のルート要素に height: 400px スタイルが適用されること", () => {
+      (element as any).height = "400px";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("height: 400px");
+      expect((element as any).effectiveHeight).toBe("400px");
+    });
+
+    it("height=500 または \"500\" のように数値/単位なし文字列が設定された場合、\"500px\" に正規化されてスタイルが適用されること", () => {
+      (element as any).height = 500;
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("height: 500px");
+      expect((element as any).effectiveHeight).toBe("500px");
+
+      (element as any).height = "600";
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("height: 600px");
+      expect((element as any).effectiveHeight).toBe("600px");
+    });
+
+    it("autoHeight=true の場合、height が設定されていても固定高さスタイルがクリアされ自動伸長が優先されること", () => {
+      (element as any).height = "400px";
+      (element as any).autoHeight = true;
+      let htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("height: 400px");
+      expect((element as any).effectiveHeight).toBeUndefined();
+
+      // autoHeight を false に戻すと元の固定サイズに復帰すること
+      (element as any).autoHeight = false;
+      htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("height: 400px");
+      expect((element as any).effectiveHeight).toBe("400px");
+    });
+  });
+
+  describe("サイズモード切替アニメーション（Smooth Transition）仕様", () => {
+    it("SCSS にて高さトランジション（transition: height）およびアニメーション中スタイル（.markdown-editor-preview--animating）が定義されていること", () => {
+      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain("markdown-editor-preview--animating");
+      expect(scssContent).toMatch(/transition:[\s\S]*?height/);
+    });
+
+    it("prefers-reduced-motion メディアクエリにおいてトランジションが無効化されること", () => {
+      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain("prefers-reduced-motion: reduce");
+      expect(scssContent).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?transition:\s*none/);
+    });
+
+    it("isTransitioning 状態が管理され、アニメーション中は .markdown-editor-preview--animating クラスがレンダリングされること", () => {
+      expect((element as any).isTransitioning).toBe(false);
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("markdown-editor-preview--animating");
+
+      (element as any).isTransitioning = true;
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("markdown-editor-preview--animating");
+    });
+  });
 });
+
 
