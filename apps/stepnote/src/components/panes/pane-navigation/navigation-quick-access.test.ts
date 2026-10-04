@@ -45,6 +45,10 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 5-1. コントローラー設定時に controller.subscribe が呼び出され、リスナーが登録されること
  *    - [x] 5-2. 登録されたリスナーが発火した際に requestUpdate が呼び出されること
  *    - [x] 5-3. disconnectedCallback 呼び出し時に購読解除関数が実行されること
+ *    - [x] 5-4. 同一の layoutUIController が再設定された場合、重複して subscribe が呼び出されないこと
+ *    - [x] 5-5. 同一の quickAccessController が再設定された場合、重複して subscribe が呼び出されないこと
+ *    - [x] 5-6. layoutUIController に undefined が設定された場合、購読解除関数が呼び出されること
+ *    - [x] 5-7. quickAccessController に undefined が設定された場合、購読解除関数が呼び出されること
  * 6. タスク件数の描画（Props連携）
  *    - [x] 6-1. taskCounts が設定されている場合、該当する5項目（ブックマーク、未分類、期限切れ、期限当日、期限間近）に件数テキスト（slot="end" の span.quick-access-counter）が正しくレンダリングされること
  *    - [x] 6-2. 件数が 0 または undefined の場合は件数要素（span.quick-access-counter）がレンダリングされないこと
@@ -58,6 +62,8 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 8-1. taskListController が設定されている場合、明示的な taskCounts プロパティ指定がなくても controller.quickAccessTaskCounts がバッジとしてレンダリングされること
  *    - [x] 8-2. taskListController の購読リスナーが発火した際に requestUpdate が呼び出されること
  *    - [x] 8-3. disconnectedCallback 呼び出し時に taskListController の購読解除関数が実行されること
+ *    - [x] 8-4. 同一の taskListController が再設定された場合、重複して subscribe が呼び出されないこと
+ *    - [x] 8-5. taskListController に undefined が設定された場合、購読解除関数が呼び出されること
  */
 
 describe("NavigationQuickAccess Component", () => {
@@ -327,6 +333,32 @@ describe("NavigationQuickAccess Component", () => {
       expect(layoutUIUnsubMock).toHaveBeenCalledTimes(1);
       expect(quickAccessUnsubMock).toHaveBeenCalledTimes(1);
     });
+
+    it("5-4. 同一の layoutUIController が再設定された場合、重複して subscribe が呼び出されないこと", () => {
+      expect(mockLayoutUIController.subscribe).toHaveBeenCalledTimes(1);
+      element.layoutUIController =
+        mockLayoutUIController as unknown as LayoutUIController;
+      expect(mockLayoutUIController.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("5-5. 同一の quickAccessController が再設定された場合、重複して subscribe が呼び出されないこと", () => {
+      expect(mockQuickAccessController.subscribe).toHaveBeenCalledTimes(1);
+      element.quickAccessController =
+        mockQuickAccessController as unknown as QuickAccessController;
+      expect(mockQuickAccessController.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("5-6. layoutUIController に undefined が設定された場合、購読解除関数が呼び出されること", () => {
+      element.layoutUIController = undefined;
+      expect(layoutUIUnsubMock).toHaveBeenCalledTimes(1);
+      expect(element.layoutUIController).toBeUndefined();
+    });
+
+    it("5-7. quickAccessController に undefined が設定された場合、購読解除関数が呼び出されること", () => {
+      element.quickAccessController = undefined;
+      expect(quickAccessUnsubMock).toHaveBeenCalledTimes(1);
+      expect(element.quickAccessController).toBeUndefined();
+    });
   });
 
   describe("6. タスク件数の描画（Props連携）", () => {
@@ -515,6 +547,26 @@ describe("NavigationQuickAccess Component", () => {
 
       element.disconnectedCallback();
       expect(taskListUnsubMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("8-4. 同一の taskListController が再設定された場合、重複して subscribe が呼び出されないこと", () => {
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+      expect(mockTaskListController.subscribe).toHaveBeenCalledTimes(1);
+
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+      expect(mockTaskListController.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("8-5. taskListController に undefined が設定された場合、購読解除関数が呼び出されること", () => {
+      element.taskListController =
+        mockTaskListController as unknown as TaskListController;
+      expect(mockTaskListController.subscribe).toHaveBeenCalledTimes(1);
+
+      element.taskListController = undefined;
+      expect(taskListUnsubMock).toHaveBeenCalledTimes(1);
+      expect(element.taskListController).toBeUndefined();
     });
   });
 });

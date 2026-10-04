@@ -6,7 +6,13 @@ import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
+/**
+ * Mixin 適用対象のコンストラクタ型定義。
+ * ※ TypeScript の Mixin 言語仕様（TS2545: A mixin class must have a constructor with a single rest parameter of type 'any[]'）
+ * に準拠するため、引数型には any[] が必須となります。
+ */
 export type LitElementConstructor<T = SubscriberElement> = new (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: any[]
 ) => T;
 

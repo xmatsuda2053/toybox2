@@ -31,11 +31,11 @@ export class ThemeSwitcher extends LitElement {
   @consume({ context: themeContext, subscribe: true })
   @property({ attribute: false })
   public set themeController(controller: ThemeController | undefined) {
-    if (this._themeController === controller) return;
-
-    this._themeController = controller;
-    this.subscriber.subscribe("theme", controller);
-    this.requestUpdate();
+    this._themeController = this.subscriber.bind(
+      "theme",
+      this._themeController,
+      controller,
+    );
   }
 
   public get themeController(): ThemeController | undefined {
