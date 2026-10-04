@@ -1,0 +1,118 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, Consolas, monospace;
+  color: var(--stepnote-text-primary, inherit);
+  background-color: var(--stepnote-bg-primary, #ffffff);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none !important;
+  }
+}
+
+:host([data-theme="dark"]),
+:host(.wa-dark) {
+  --stepnote-bg-primary: #0d1117;
+  --stepnote-text-primary: #c9d1d9;
+  background-color: #0d1117 !important;
+  color: #c9d1d9 !important;
+}
+
+.markdown-editor {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background-color: inherit;
+}
+
+.markdown-editor__container {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background-color: inherit;
+}
+
+/* CodeMirror 6 スタイル調整 */
+.markdown-editor__container .cm-editor {
+  height: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  background-color: inherit;
+  color: inherit;
+}
+
+.markdown-editor__container .cm-scroller {
+  overflow: auto;
+  font-family: inherit;
+  background-color: inherit;
+}
+
+.markdown-editor__container .cm-content {
+  padding: 12px 16px;
+  caret-color: var(--stepnote-accent, #3b82f6);
+  background-color: transparent !important;
+}
+
+/* 選択範囲・ドラッグ操作時の視覚スタイル */
+.markdown-editor__container .cm-selectionBackground,
+.markdown-editor__container .cm-selectionLayer .cm-selectionBackground {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.markdown-editor__container .cm-content ::selection {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.markdown-editor__container .cm-dropCursor {
+  border-left: 2px solid var(--stepnote-accent, #3b82f6) !important;
+}
+
+.markdown-editor__container .cm-gutters {
+  background-color: var(--stepnote-bg-secondary, #f8fafc);
+  color: var(--stepnote-text-secondary, #94a3b8);
+  border-right: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+}
+
+/* ダークモード対応 */
+:host([data-theme="dark"]) .markdown-editor__container .cm-gutters,
+:host(.wa-dark) .markdown-editor__container .cm-gutters {
+  background-color: #0d1117 !important;
+  color: #6e7681 !important;
+  border-right-color: #30363d !important;
+}
+
+:host([data-theme="dark"]) .markdown-editor__container .cm-editor,
+:host(.wa-dark) .markdown-editor__container .cm-editor {
+  background-color: #0d1117 !important;
+  color: #c9d1d9 !important;
+}
+
+:host([data-theme="dark"]) .markdown-editor__container .cm-selectionBackground,
+:host(.wa-dark) .markdown-editor__container .cm-selectionBackground,
+:host([data-theme="dark"]) .markdown-editor__container .cm-selectionLayer .cm-selectionBackground,
+:host(.wa-dark) .markdown-editor__container .cm-selectionLayer .cm-selectionBackground {
+  background-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+:host([data-theme="dark"]) .markdown-editor__container .cm-content ::selection,
+:host(.wa-dark) .markdown-editor__container .cm-content ::selection {
+  background-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+:host([data-theme="dark"]) .markdown-editor__container .cm-dropCursor,
+:host(.wa-dark) .markdown-editor__container .cm-dropCursor {
+  border-left: 2px solid var(--stepnote-accent, #38bdf8) !important;
+}

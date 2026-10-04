@@ -1,0 +1,255 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
+  color: var(--stepnote-text-primary, inherit);
+  background-color: var(--stepnote-bg-primary, transparent);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none !important;
+  }
+}
+
+:host([data-theme="dark"]),
+:host(.wa-dark) {
+  --stepnote-bg-surface: #0d1117;
+  --stepnote-bg-primary: #0d1117;
+  --stepnote-text-primary: #f0f6fc;
+}
+
+.markdown-editor-preview {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: var(--stepnote-bg-surface, #ffffff);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview,
+:host(.wa-dark) .markdown-editor-preview {
+  background-color: #0d1117 !important;
+  border-color: #30363d !important;
+}
+
+/* ツールバーヘッダー */
+.markdown-editor-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: var(--stepnote-bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  user-select: none;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__header,
+:host(.wa-dark) .markdown-editor-preview__header {
+  background-color: #161b22 !important;
+  border-bottom-color: #30363d !important;
+}
+
+.markdown-editor-preview__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.markdown-editor-preview__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--stepnote-text-secondary, #64748b);
+  white-space: nowrap;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__title,
+:host(.wa-dark) .markdown-editor-preview__title {
+  color: #8b949e !important;
+}
+
+/* 書式ツールバー */
+.markdown-editor-preview__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.markdown-editor-preview__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 4px;
+  color: var(--stepnote-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+
+  wa-icon {
+    font-size: 18px;
+    width: 1.1em;
+    height: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.markdown-editor-preview__toolbar-btn:hover {
+  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn,
+:host(.wa-dark) .markdown-editor-preview__toolbar-btn {
+  color: #8b949e;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn:hover,
+:host(.wa-dark) .markdown-editor-preview__toolbar-btn:hover {
+  background-color: #30363d !important;
+  color: #f0f6fc !important;
+}
+
+.markdown-editor-preview__toolbar-separator {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background-color: var(--stepnote-border-subtle, #e2e8f0);
+  margin: 0 4px;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__toolbar-separator,
+:host(.wa-dark) .markdown-editor-preview__toolbar-separator {
+  background-color: #30363d !important;
+}
+
+.markdown-editor-preview__mode-group {
+  display: flex;
+  gap: 4px;
+  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+  padding: 2px;
+  border-radius: 4px;
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__mode-group,
+:host(.wa-dark) .markdown-editor-preview__mode-group {
+  background-color: #21262d !important;
+}
+
+.markdown-editor-preview__mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  min-width: 32px;
+  min-height: 28px;
+  font-family: inherit;
+  border-radius: 4px;
+  color: var(--stepnote-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+
+  wa-icon {
+    font-size: 18px;
+    width: 1.1em;
+    height: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__mode-btn,
+:host(.wa-dark) .markdown-editor-preview__mode-btn {
+  color: #8b949e;
+}
+
+.markdown-editor-preview__mode-btn:hover {
+  color: var(--stepnote-text-primary, #0f172a);
+}
+
+.markdown-editor-preview__mode-btn--active {
+  background-color: var(--stepnote-bg-surface, #ffffff);
+  color: var(--stepnote-accent, #3b82f6) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview__mode-btn--active,
+:host(.wa-dark) .markdown-editor-preview__mode-btn--active {
+  background-color: #30363d !important;
+  color: #58a6ff !important;
+}
+
+/* メインコンテンツ領域 */
+.markdown-editor-preview__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.markdown-editor-preview__pane {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* スプリット表示 (左右 1:1) */
+.markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
+  flex: 1;
+  width: 50%;
+  border-right: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+}
+
+:host([data-theme="dark"]) .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor,
+:host(.wa-dark) .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
+  border-right-color: #30363d !important;
+}
+
+.markdown-editor-preview--mode-split .markdown-editor-preview__pane--preview {
+  flex: 1;
+  width: 50%;
+}
+
+/* エディタのみ表示 */
+.markdown-editor-preview--mode-edit .markdown-editor-preview__pane--editor {
+  flex: 1;
+  width: 100%;
+  border-right: none;
+}
+
+.markdown-editor-preview--mode-edit .markdown-editor-preview__pane--preview {
+  display: none !important;
+}
+
+/* プレビューのみ表示 */
+.markdown-editor-preview--mode-preview .markdown-editor-preview__pane--editor {
+  display: none !important;
+}
+
+.markdown-editor-preview--mode-preview .markdown-editor-preview__pane--preview {
+  flex: 1;
+  width: 100%;
+}
