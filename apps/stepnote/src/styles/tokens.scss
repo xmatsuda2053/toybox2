@@ -91,12 +91,10 @@
 }
 
 /* --------------------------------------------------------------------------
- * 2. Dark モード トークン (:root.wa-dark / [data-theme="dark"])
+ * 2. Dark モード トークン Mixin
+ * 手動 Dark テーマセレクタおよび OS 連動メディアクエリで共有されるトークン定義
  * -------------------------------------------------------------------------- */
-:root.wa-dark,
-:root[data-theme="dark"],
-.wa-dark,
-[data-theme="dark"] {
+@mixin dark-theme-tokens {
   /* Web Awesome 標準デザイントークン */
   --wa-color-surface-default: #2f323f;
   --wa-color-surface-border: #434857;
@@ -165,71 +163,21 @@
 }
 
 /* --------------------------------------------------------------------------
- * 3. OS ダークモード初期連動 (:root に明示的な light 指定がない場合のみ)
+ * 3. Dark モード セレクタ (:root.wa-dark / [data-theme="dark"])
+ * -------------------------------------------------------------------------- */
+:root.wa-dark,
+:root[data-theme="dark"],
+.wa-dark,
+[data-theme="dark"] {
+  @include dark-theme-tokens;
+}
+
+/* --------------------------------------------------------------------------
+ * 4. OS ダークモード初期連動 (:root に明示的な light 指定がない場合のみ)
  * -------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not(.wa-light):not([data-theme="light"]) {
-    --wa-color-surface-default: #2f323f;
-    --wa-color-surface-border: #434857;
-    --wa-color-text-normal: #e6edf3;
-    --wa-color-text-quiet: #9da7b3;
-    --wa-color-neutral-fill-quiet: #252833;
-    --wa-color-neutral-fill-normal: #484d5e;
-    --wa-color-neutral-fill-normal-hover: #1f212b;
-    --wa-color-neutral-on-normal: #ffffff;
-    --wa-color-mix-hover: #000000 20%;
-
-    --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
-    --quick-access-icon-uncategorized: #ffffff;
-    --quick-access-icon-overdue: var(--wa-color-danger-70, #e5534b);
-    --quick-access-icon-asap: var(--wa-color-yellow-70, #bf8700);
-    --quick-access-icon-upcoming: var(--wa-color-cyan-70, #3192aa);
-    --quick-access-icon-done: var(--wa-color-brand-70, #218bff);
-    --quick-access-icon-progress: var(--wa-color-success-70, #2da44e);
-    --quick-access-icon-pending: #ffffff;
-
-    --quick-access-icon-active-bookmark: var(--wa-color-indigo-70, #6366f1);
-    --quick-access-icon-active-uncategorized: #ffffff;
-    --quick-access-icon-active-overdue: var(--wa-color-danger-70, #e5534b);
-    --quick-access-icon-active-asap: var(--wa-color-yellow-70, #bf8700);
-    --quick-access-icon-active-upcoming: var(--wa-color-cyan-70, #3192aa);
-    --quick-access-icon-active-done: var(--wa-color-brand-70, #218bff);
-    --quick-access-icon-active-progress: var(--wa-color-success-70, #2da44e);
-    --quick-access-icon-active-pending: #ffffff;
-
-    --label-icon-color: var(--wa-color-brand-70, #218bff);
-    --label-icon-active-color: var(--wa-color-brand-70, #218bff);
-    --label-menu-trigger-color: #c9d1d9;
-    --label-menu-trigger-hover-color: #ffffff;
-    --label-menu-trigger-active-color: #ffffff;
-    --scrollbar-thumb-color: #434857;
-    --scrollbar-thumb-hover-color: #60677a;
-    --scrollbar-track-color: transparent;
-
-    /* ダイアログ・モーダル用サーフェストークン（OS 連動 Dark モード） */
-    --stepnote-dialog-bg: #1c2128;
-    --stepnote-dialog-border: #444c56;
-    --stepnote-dialog-shadow: 0 16px 36px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
-    --stepnote-dialog-title-color: #ffffff;
-    --stepnote-dialog-body-color: #f0f6fc;
-
-    /* フォーム入力コントロール用トークン（OS 連動 Dark モード） */
-    --stepnote-form-bg: #0d1117;
-    --stepnote-form-border: #444c56;
-    --stepnote-form-label-color: #e6edf3;
-    --stepnote-form-value-color: #ffffff;
-    --stepnote-form-placeholder-color: #768390;
-
-    /* ドロップダウンメニュー用トークン（OS 連動 Dark モード） */
-    --stepnote-dropdown-bg: #1c2128;
-    --stepnote-dropdown-border: #444c56;
-    --stepnote-dropdown-shadow: 0 12px 28px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
-    --stepnote-dropdown-color: #ffffff;
-    --stepnote-dropdown-item-hover-bg: #30363d;
-    --stepnote-dropdown-item-icon-color: #e6edf3;
-    --stepnote-dropdown-danger-color: #ff7b72;
+    @include dark-theme-tokens;
   }
 }
 
