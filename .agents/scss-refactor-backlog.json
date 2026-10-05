@@ -294,5 +294,36 @@
         "files_involved": 0
       }
     }
+  },
+  {
+    "id": "SCSS-011",
+    "target_file": "apps/stepnote/src/styles/dialog-common.scss, apps/stepnote/src/styles/tokens.scss",
+    "target_selector": "@mixin dialog-surface, @mixin dialog-dark-surface, wa-dropdown",
+    "category": "Tokenization",
+    "metrics": {
+      "hardcoded_colors": 40,
+      "files_involved": 4
+    },
+    "issue_summary": "ダイアログ・ドロップダウン共通サーフェスおよびフォームコントロールにおけるハードコードカラー（#1f2328, #ffffff, #d0d7de 等）のトークン集約",
+    "approach": "tokens.scss にダイアログ・ドロップダウン用セマンティックトークンを追加し、dialog-common.scss および navigation-labels.scss の直値を CSS カスタムプロパティ置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_at": "2026-10-05T21:25:02.428+09:00",
+      "pr_number": 0,
+      "metrics_after": {
+        "anti_pattern_errors": 0,
+        "build_size_kb": 1498.54,
+        "duplicated_lines": 253,
+        "clones": 31,
+        "duplicated_tokens": 1957
+      },
+      "issue_number": 160,
+      "regressions_detected": 0,
+      "commit_hash": "81532d7",
+      "tests_passed": 802
+    }
   }
 ]

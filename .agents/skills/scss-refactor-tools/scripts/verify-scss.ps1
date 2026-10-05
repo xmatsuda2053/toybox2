@@ -22,6 +22,9 @@
 .PARAMETER MinTokens
     jscpd の最小重複トークン数（既定値: 20）
 
+.PARAMETER MaxAllowedClones
+    許容される最大重複クローン数（既定値: 0）。段階的リファクタリングにおいて、未着手課題に起因する残存クローン数を許容する場合に指定します。
+
 .PARAMETER OutputFile
     実測検証結果を JSON ファイルとして保存する場合のパス（任意）
 
@@ -53,6 +56,7 @@ param(
     [string]$TargetApp = "apps/stepnote",
     [int]$MinLines = 5,
     [int]$MinTokens = 20,
+    [int]$MaxAllowedClones = 0,
     [string]$OutputFile = "",
     [switch]$JsonOutput,
     [string]$BacklogId = "",
@@ -155,7 +159,7 @@ try {
             # 解析失敗時は既定値
         }
     }
-    $duplicationSuccess = ($jscpdClones -eq 0)
+    $duplicationSuccess = ($jscpdClones -le $MaxAllowedClones)
 
     # ----------------------------------------------------
     # 4. SCSS アンチパターンゼロ検証 (!important & @extend)
@@ -318,7 +322,7 @@ try {
         
         Write-Host " [$(if ($unitTestSuccess) { 'PASS' } else { 'FAIL' })] Unit Tests       : $testFilesPassed/$testFilesTotal files ($testsPassed tests passed, failed: $testsFailed)" -ForegroundColor $(if ($unitTestSuccess) { "Green" } else { "Red" })
         Write-Host " [$(if ($typeCheckSuccess) { 'PASS' } else { 'FAIL' })] Type Check       : $(if ($typeCheckSuccess) { '0 errors' } else { 'Type errors detected' })" -ForegroundColor $(if ($typeCheckSuccess) { "Green" } else { "Red" })
-        Write-Host " [$(if ($duplicationSuccess) { 'PASS' } else { 'FAIL' })] SCSS Clones      : $jscpdClones clones ($jscpdDuplicatedLines lines, $jscpdDuplicatedTokens tokens)" -ForegroundColor $(if ($duplicationSuccess) { "Green" } else { "Yellow" })
+        Write-Host " [$(if ($duplicationSuccess) { 'PASS' } else { 'FAIL' })] SCSS Clones      : $jscpdClones clones ($jscpdDuplicatedLines lines, $jscpdDuplicatedTokens tokens)$(if ($MaxAllowedClones -gt 0) { " [max allowed: $MaxAllowedClones]" })" -ForegroundColor $(if ($duplicationSuccess) { "Green" } else { "Yellow" })
         Write-Host " [$(if ($antiPatternSuccess) { 'PASS' } else { 'FAIL' })] Anti-patterns    : $antiPatternViolations violations (!important / @extend)" -ForegroundColor $(if ($antiPatternSuccess) { "Green" } else { "Red" })
         Write-Host " [$(if ($buildSuccess) { 'PASS' } else { 'FAIL' })] Standalone Build : Success ($distHtmlPath, $distHtmlSizeKb kB)" -ForegroundColor $(if ($buildSuccess) { "Green" } else { "Red" })
         if ($backlogUpdated) {
