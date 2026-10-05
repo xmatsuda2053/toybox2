@@ -19,6 +19,13 @@ import * as fs from "node:fs";
  * - 3-2: .task-list-item__title に @include text-ellipsis が適用され、直書き省略スタイルが排除されていること
  * - 3-3: .task-list-item__label に @include text-ellipsis が適用され、直書き省略スタイルが排除されていること
  * - 3-4: .task-list-item の font-family にデザイントークン var(--wa-font-family-body) が適用されていること
+ *
+ * 【仕様 4: pane-common.scss のスクロール可能コンテンツ領域 Mixin】
+ * - 4-1: @mixin pane-scrollable-content が定義され、スクロール基本レイアウト、パディング、カスタムスクロールバーが指定されていること
+ *
+ * 【仕様 5: 各ペインにおける共通スクロール Mixin の適用】
+ * - 5-1: navigation-labels.scss の .labels__content に @include pane-scrollable-content が適用されていること
+ * - 5-2: pane-task-list.scss の &__list に @include pane-scrollable-content が適用されていること
  */
 describe("pane-common.scss および Task List スタイル標準化仕様", () => {
   const paneCommonScssPath = new URL("./pane-common.scss", import.meta.url);
@@ -28,6 +35,10 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
   );
   const taskListItemScssPath = new URL(
     "./pane-task-list/task-list-item.scss",
+    import.meta.url,
+  );
+  const navigationLabelsScssPath = new URL(
+    "./pane-navigation/navigation-labels.scss",
     import.meta.url,
   );
 
@@ -112,6 +123,43 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
       const rootBlock = scss.match(/\.task-list-item\s*\{[\s\S]*?\n\}/);
       expect(rootBlock).not.toBeNull();
       expect(rootBlock![0]).toContain("var(--wa-font-family-body)");
+    });
+  });
+
+  describe("4. pane-common.scss のスクロール可能コンテンツ領域 Mixin", () => {
+    it("仕様 4-1: @mixin pane-scrollable-content が定義され、スクロール基本レイアウト、パディング、カスタムスクロールバーが指定されていること", () => {
+      const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
+      expect(scss).toMatch(/@mixin\s+pane-scrollable-content\s*\{/);
+
+      const match = scss.match(
+        /@mixin\s+pane-scrollable-content\s*\{[\s\S]*?\n\}/,
+      );
+      expect(match).not.toBeNull();
+      const content = match![0];
+      expect(content).toMatch(/flex:\s*1;/);
+      expect(content).toMatch(/min-height:\s*0;/);
+      expect(content).toMatch(/overflow-y:\s*auto;/);
+      expect(content).toMatch(/scrollbar-gutter:\s*stable;/);
+      expect(content).toMatch(/padding-block:\s*6px;/);
+      expect(content).toContain("var(--wa-space-s");
+      expect(content).toContain("var(--wa-space-2xs");
+      expect(content).toContain("@include custom-scrollbar");
+    });
+  });
+
+  describe("5. 各ペインにおける共通スクロール Mixin の適用", () => {
+    it("仕様 5-1: navigation-labels.scss の .labels__content に @include pane-scrollable-content が適用されていること", () => {
+      const scss = fs.readFileSync(navigationLabelsScssPath, "utf-8");
+      const contentBlock = scss.match(/\.labels__content\s*\{[\s\S]*?\n\}/);
+      expect(contentBlock).not.toBeNull();
+      expect(contentBlock![0]).toContain("@include pane-scrollable-content");
+    });
+
+    it("仕様 5-2: pane-task-list.scss の &__list に @include pane-scrollable-content が適用されていること", () => {
+      const scss = fs.readFileSync(paneTaskListScssPath, "utf-8");
+      const listBlock = scss.match(/&__list\s*\{[\s\S]*?\n\}/);
+      expect(listBlock).not.toBeNull();
+      expect(listBlock![0]).toContain("@include pane-scrollable-content");
     });
   });
 });

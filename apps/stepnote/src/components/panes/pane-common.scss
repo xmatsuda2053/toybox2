@@ -53,3 +53,18 @@
 .icon-toggle-section {
   display: inline-block;
 }
+
+/**
+ * ペイン内スクロール可能コンテンツ領域 Mixin
+ * 各ペインのスクロールリスト要素に include して使用します。
+ */
+@mixin pane-scrollable-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-block: 6px;
+  padding-inline-start: var(--wa-space-s, 12px);
+  padding-inline-end: var(--wa-space-2xs, 6px);
+  @include custom-scrollbar;
+}

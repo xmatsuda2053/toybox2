@@ -63,16 +63,8 @@
   }
 
   &__list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    @include pane-scrollable-content;
     position: relative;
-    scrollbar-gutter: stable;
-    padding-block: 6px;
-    padding-inline-start: var(--wa-space-s, 12px);
-    padding-inline-end: var(--wa-space-2xs, 6px);
-
-    @include custom-scrollbar;
   }
 
   &__virtualizer {
