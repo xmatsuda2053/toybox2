@@ -440,10 +440,10 @@
     "status": "completed",
     "execution": {
       "issue_number": 168,
-      "pr_number": 0,
+      "pr_number": 169,
       "completed_at": "2026-10-05T22:36:20.656+09:00",
       "tests_passed": 813,
-      "commit_hash": "12b519c",
+      "commit_hash": "b969f57",
       "metrics_after": {
         "duplicated_tokens": 735,
         "duplicated_lines": 162,
