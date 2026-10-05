@@ -504,10 +504,10 @@
     "status": "completed",
     "execution": {
       "issue_number": 172,
-      "pr_number": 0,
+      "pr_number": 173,
       "completed_at": "2026-10-05T23:25:56.000+09:00",
       "tests_passed": 821,
-      "commit_hash": "ac1dbf8",
+      "commit_hash": "0e99df0",
       "metrics_after": {
         "duplicated_tokens": 354,
         "duplicated_lines": 74,
