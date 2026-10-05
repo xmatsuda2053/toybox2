@@ -212,33 +212,33 @@
    ドロップダウンメニューのスタイリング（Light既定）
    ========================================================================== */
 wa-dropdown {
-  --wa-color-text-normal: #1f2328;
-  --wa-color-neutral-fill-normal: #f6f8fa;
-  --wa-color-danger-on-quiet: #cf222e;
+  --wa-color-text-normal: var(--stepnote-dropdown-color);
+  --wa-color-neutral-fill-normal: var(--stepnote-dropdown-item-hover-bg);
+  --wa-color-danger-on-quiet: var(--stepnote-dropdown-danger-color);
 
   &::part(menu) {
-    background-color: #ffffff;
-    border: 1px solid #d0d7de;
+    background-color: var(--stepnote-dropdown-bg);
+    border: 1px solid var(--stepnote-dropdown-border);
     border-radius: var(--wa-border-radius-m, 6px);
-    box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
-    color: #1f2328;
+    box-shadow: var(--stepnote-dropdown-shadow);
+    color: var(--stepnote-dropdown-color);
   }
 }
 
 wa-dropdown-item {
-  color: #1f2328;
+  color: var(--stepnote-dropdown-color);
   font-size: var(--wa-font-size-sm);
 
   wa-icon {
-    color: #57606a;
+    color: var(--stepnote-dropdown-item-icon-color);
   }
 }
 
 wa-dropdown-item[variant="danger"] {
-  color: #cf222e;
+  color: var(--stepnote-dropdown-danger-color);
 
   wa-icon {
-    color: #cf222e;
+    color: var(--stepnote-dropdown-danger-color);
   }
 }
 
@@ -263,63 +263,24 @@ wa-dialog {
 
 .delete-dialog-message {
   font-size: var(--wa-font-size-m);
-  color: #1f2328;
+  color: var(--stepnote-dialog-body-color);
   line-height: 1.6;
   padding-block: var(--wa-space-s, 12px);
 
   strong {
-    color: #1f2328;
+    color: var(--stepnote-dialog-title-color);
     font-weight: 700;
   }
 }
 
 /* ==========================================================================
-   Dark モード時のダイアログ・ドロップダウン（独立サーフェス・高コントラスト）
+   Dark モード時のダイアログ（独立サーフェス・高コントラスト）
    ========================================================================== */
 @mixin dark-surface-theme {
-  wa-dropdown {
-    --wa-color-text-normal: #ffffff;
-    --wa-color-neutral-fill-normal: #30363d;
-    --wa-color-danger-on-quiet: #ff7b72;
-
-    &::part(menu) {
-      background-color: #1c2128;
-      border: 1px solid #444c56;
-      box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.8),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-    }
-  }
-
-  wa-dropdown-item {
-    color: #ffffff;
-
-    wa-icon {
-      color: #e6edf3;
-    }
-  }
-
-  wa-dropdown-item[variant="danger"] {
-    color: #ff7b72;
-
-    wa-icon {
-      color: #ff7b72;
-    }
-  }
-
   @include dialog-dark-surface;
 
   .dialog-field {
     @include dialog-field-dark-theme;
-  }
-
-  .delete-dialog-message {
-    color: #e6edf3;
-  }
-
-  .delete-dialog-message strong {
-    color: #ffffff;
   }
 }
 

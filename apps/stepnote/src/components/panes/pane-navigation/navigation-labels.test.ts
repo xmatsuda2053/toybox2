@@ -306,10 +306,10 @@ describe("NavigationLabels Component", () => {
         "utf-8",
       );
       expect(scssContent).toContain("prefers-color-scheme: dark");
-      expect(scssContent).toContain("#ffffff");
+      expect(scssContent).toContain("--stepnote-dropdown-color");
     });
 
-    it("6-4. Dark モード時に共通 Mixin（@include dialog-dark-surface）が適用され、独立サーフェス（#1c2128）および枠線（border）が集約定義されていること", () => {
+    it("6-4. Dark モード時に共通 Mixin（@include dialog-dark-surface）が適用され、独立サーフェストークンおよび枠線が集約定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
@@ -319,8 +319,8 @@ describe("NavigationLabels Component", () => {
         new URL("../../../styles/dialog-common.scss", import.meta.url),
         "utf-8",
       );
-      expect(dialogCommonContent).toContain("#1c2128");
-      expect(dialogCommonContent).toContain("#444c56");
+      expect(dialogCommonContent).toContain("var(--stepnote-dialog-bg)");
+      expect(dialogCommonContent).toContain("var(--stepnote-dialog-border)");
       expect(dialogCommonContent).toContain("box-shadow");
     });
 
@@ -340,7 +340,7 @@ describe("NavigationLabels Component", () => {
       expect(dialogCommonContent).toContain("part(textarea)");
     });
 
-    it("6-6. Dark モード時にドロップダウンメニューの文字色（#ffffff）および独立サーフェス背景色（#1c2128）が定義されていること", () => {
+    it("6-6. Dark モード時にドロップダウンメニューの文字色および独立サーフェス背景色トークンが定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
@@ -348,7 +348,7 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).toContain("wa-dropdown");
       expect(scssContent).toContain("wa-dropdown-item");
       expect(scssContent).toContain("--wa-color-danger-on-quiet");
-      expect(scssContent).toContain("#ff7b72");
+      expect(scssContent).toContain("--stepnote-dropdown-danger-color");
     });
 
     it("6-7. メニュートリガーボタン（labels__btn-menu）の Dark モード用高コントラストカラーおよびアクティブ時スタイルが定義されていること", () => {
