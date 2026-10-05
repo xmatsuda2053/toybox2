@@ -32,6 +32,11 @@ import * as fs from "node:fs";
  * - 6-2: navigation-labels.scss の先頭に @include pane-host-layout が適用されていること
  * - 6-3: pane-task-list.scss の先頭に @include pane-host-layout が適用されていること
  * - 6-4: pane-menu.scss の先頭に @include pane-host-layout が適用されていること
+ *
+ * 【仕様 7: SCSS-017: ペイン右境界線共通 Mixin (@mixin pane-border-right) およびアイテムリセット統一】
+ * - 7-1: pane-common.scss に @mixin pane-border-right が定義され、境界線（border-right）およびテーマ切替トランジションが指定されていること
+ * - 7-2: app-root.scss で pane-common.scss がインポートされ、各ペインに @include pane-border-right が適用されていること
+ * - 7-3: task-list-item.scss に @include box-sizing-reset が適用されていること
  */
 describe("pane-common.scss および Task List スタイル標準化仕様", () => {
   const paneCommonScssPath = new URL("./pane-common.scss", import.meta.url);
@@ -203,5 +208,33 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
       expect(scss).toContain("@include pane-host-layout");
     });
   });
+
+  describe("7. SCSS-017: ペイン右境界線共通 Mixin (@mixin pane-border-right) およびアイテムリセット統一", () => {
+    const appRootScssPath = new URL("../../app-root.scss", import.meta.url);
+
+    it("仕様 7-1: pane-common.scss に @mixin pane-border-right が定義され、境界線（border-right）およびテーマ切替トランジションが指定されていること", () => {
+      const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
+      expect(scss).toMatch(/@mixin\s+pane-border-right\s*\{/);
+
+      const block = scss.match(/@mixin\s+pane-border-right\s*\{[\s\S]*?\n\}/);
+      expect(block).not.toBeNull();
+      const content = block![0];
+      expect(content).toContain("border-right:");
+      expect(content).toContain("var(--wa-color-surface-border)");
+      expect(content).toContain("@include theme-transition;");
+    });
+
+    it("仕様 7-2: app-root.scss で pane-common.scss がインポートされ、各ペインに @include pane-border-right が適用されていること", () => {
+      const scss = fs.readFileSync(appRootScssPath, "utf-8");
+      expect(scss).toMatch(/@use\s+["'].*pane-common\.scss["']/);
+      expect(scss).toContain("@include pane-border-right;");
+    });
+
+    it("仕様 7-3: task-list-item.scss に @include box-sizing-reset が適用されていること", () => {
+      const scss = fs.readFileSync(taskListItemScssPath, "utf-8");
+      expect(scss).toContain("@include box-sizing-reset;");
+    });
+  });
 });
+
 

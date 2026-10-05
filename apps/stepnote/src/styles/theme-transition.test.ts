@@ -73,33 +73,28 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
     });
 
     it("app-root.scss の各ペインにテーマ切替トランジションが適用されていること", () => {
+      const paneTransitionPattern =
+        /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition|@include\s+pane-border-right)/;
+
       const paneMenuMatch = appRootScss.match(/\.pane-menu\s*\{[\s\S]*?\}/);
       expect(paneMenuMatch).not.toBeNull();
-      expect(paneMenuMatch![0]).toMatch(
-        /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
-      );
+      expect(paneMenuMatch![0]).toMatch(paneTransitionPattern);
 
       const paneNavMatch = appRootScss.match(
         /\.pane-navigation\s*\{[\s\S]*?\}/,
       );
       expect(paneNavMatch).not.toBeNull();
-      expect(paneNavMatch![0]).toMatch(
-        /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
-      );
+      expect(paneNavMatch![0]).toMatch(paneTransitionPattern);
 
       const paneTaskMatch = appRootScss.match(/\.pane-task\s*\{[\s\S]*?\}/);
       expect(paneTaskMatch).not.toBeNull();
-      expect(paneTaskMatch![0]).toMatch(
-        /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
-      );
+      expect(paneTaskMatch![0]).toMatch(paneTransitionPattern);
 
       const paneJournalMatch = appRootScss.match(
         /\.pane-journal\s*\{[\s\S]*?\}/,
       );
       expect(paneJournalMatch).not.toBeNull();
-      expect(paneJournalMatch![0]).toMatch(
-        /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition)/,
-      );
+      expect(paneJournalMatch![0]).toMatch(paneTransitionPattern);
     });
 
     it("app-root.scss の pane-collapsible において開閉アニメーションとテーマ切替トランジション（background-color, color, border-color）が両立されていること", () => {

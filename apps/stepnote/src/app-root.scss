@@ -1,5 +1,6 @@
 @use "./styles/tokens.scss";
 @use "./styles/mixins.scss" as *;
+@use "./components/panes/pane-common.scss" as *;
 
 @include box-sizing-reset;
 
@@ -78,9 +79,7 @@
   width: var(--stepnote-pane-menu-width);
   flex-shrink: 0;
   overflow: hidden;
-  border-right: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
-  @include theme-transition;
+  @include pane-border-right;
 }
 
 /* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
@@ -88,9 +87,7 @@
   --pane-target-width: var(--stepnote-pane-navigation-width);
   display: flex;
   flex-direction: column;
-  border-right: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
-  @include theme-transition;
+  @include pane-border-right;
 }
 
 /* フラットなセレクタ（ルール7準拠） */
@@ -107,9 +104,7 @@
 .pane-task-list {
   --pane-target-width: var(--stepnote-pane-task-list-width);
   overflow-y: auto;
-  border-right: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
-  @include theme-transition;
+  @include pane-border-right;
 }
 
 /* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */
@@ -117,9 +112,7 @@
   flex: 1 1 0%;
   min-width: 0;
   overflow-y: auto;
-  border-right: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
-  @include theme-transition;
+  @include pane-border-right;
 }
 
 /* 5. Journal (第5ペイン): Task と均等分割 (1:1) */

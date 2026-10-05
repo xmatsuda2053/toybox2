@@ -87,3 +87,14 @@
   }
 }
 
+/**
+ * ペイン右境界線共通 Mixin
+ * 各ペイン間の境界線（border-right）およびテーマ切替トランジションを一括適用します。
+ */
+@mixin pane-border-right {
+  border-right: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  @include theme-transition;
+}
+
+

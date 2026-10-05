@@ -485,5 +485,37 @@
       },
       "regressions_detected": 0
     }
+  },
+  {
+    "id": "SCSS-017",
+    "target_file": "apps/stepnote/src/components/panes/pane-common.scss",
+    "target_selector": "@mixin pane-border-right",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 28,
+      "duplicated_tokens": 174,
+      "files_involved": 3
+    },
+    "issue_summary": "ペイン右境界線定義およびアイテムリセットの共通Mixin集約",
+    "approach": "pane-common.scss に @mixin pane-border-right を新設して app-root.scss 内の各ペイン境界線を置換し、task-list-item.scss の box-sizing を @include box-sizing-reset に統一",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "issue_number": 172,
+      "pr_number": 0,
+      "completed_at": "2026-10-05T23:25:56.000+09:00",
+      "tests_passed": 821,
+      "commit_hash": "ac1dbf8",
+      "metrics_after": {
+        "duplicated_tokens": 354,
+        "duplicated_lines": 74,
+        "anti_pattern_errors": 0,
+        "clones": 11,
+        "build_size_kb": 1496.3
+      },
+      "regressions_detected": 0
+    }
   }
 ]
