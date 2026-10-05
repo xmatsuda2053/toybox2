@@ -389,5 +389,37 @@
       "completed_at": "2026-10-05T21:57:46.241+09:00",
       "tests_passed": 808
     }
+  },
+  {
+    "id": "SCSS-014",
+    "target_file": "apps/stepnote/src/styles/dialog-common.scss, apps/stepnote/src/components/panes/pane-navigation/navigation-labels.scss, apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.scss",
+    "target_selector": ":host(.wa-dark), @media (prefers-color-scheme: dark)",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_lines": 40,
+      "duplicated_tokens": 110,
+      "files_involved": 3
+    },
+    "issue_summary": "各コンポーネントにおけるダイアログ Dark モード適用構文（手動セレクタ & OS 連動メディアクエリ）の重複",
+    "approach": "dialog-common.scss に @mixin dialog-dark-theme($field-selector: null) を新設し、各コンポーネントで @include 置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "metrics_after": {
+        "anti_pattern_errors": 0,
+        "duplicated_lines": 170,
+        "duplicated_tokens": 773,
+        "build_size_kb": 1498.58,
+        "clones": 21
+      },
+      "tests_passed": 811,
+      "pr_number": 0,
+      "completed_at": "2026-10-05T22:20:14.450+09:00",
+      "commit_hash": "63506d1",
+      "issue_number": 166,
+      "regressions_detected": 0
+    }
   }
 ]

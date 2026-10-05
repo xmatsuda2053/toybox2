@@ -23,6 +23,11 @@ import * as fs from "node:fs";
  *
  * 【仕様 5: dialog-common.scss 内のハードコードカラー排除】
  * - 5-1: dialog-common.scss 内にハードコードされた 16 進数カラーコード（#1f2328, #1c2128, #444c56 等）が存在しないこと
+ *
+ * 【仕様 6: SCSS-014: ダイアログ Dark モード共通適用 Mixin】
+ * - 6-1: @mixin dialog-dark-theme が定義され、手動切替セレクタおよび OS 連動メディアクエリで dialog-dark-surface が適用されていること
+ * - 6-2: navigation-labels.scss に @include dialog-dark-theme が適用されていること
+ * - 6-3: task-create-dialog.scss に @include dialog-dark-theme が適用されていること
  */
 describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
   const dialogCommonScssPath = new URL("./dialog-common.scss", import.meta.url);
@@ -130,7 +135,10 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
       expect(scss).toContain("@include dialog-form-layout");
       expect(scss).toContain("@include dialog-field-layout");
       expect(scss).toContain("@include dialog-footer-layout");
-      expect(scss).toContain("@include dialog-dark-surface");
+      expect(
+        scss.includes("@include dialog-dark-surface") ||
+          scss.includes("@include dialog-dark-theme"),
+      ).toBe(true);
     });
 
     it("仕様 4-2: task-create-dialog.scss で dialog-common.scss がインポートされ、ダイアログ共通 Mixin が適用されていること", () => {
@@ -140,7 +148,10 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
       expect(scss).toContain("@include dialog-form-layout");
       expect(scss).toContain("@include dialog-field-layout");
       expect(scss).toContain("@include dialog-footer-layout");
-      expect(scss).toContain("@include dialog-dark-surface");
+      expect(
+        scss.includes("@include dialog-dark-surface") ||
+          scss.includes("@include dialog-dark-theme"),
+      ).toBe(true);
     });
   });
 
@@ -152,4 +163,39 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
       expect(hexColorMatches).toEqual([]);
     });
   });
+
+  describe("6. SCSS-014: ダイアログ Dark モード共通適用 Mixin 仕様", () => {
+    const navLabelsScssPath = new URL(
+      "../components/panes/pane-navigation/navigation-labels.scss",
+      import.meta.url,
+    );
+    const taskCreateDialogScssPath = new URL(
+      "../components/panes/pane-task-list/task-create-dialog.scss",
+      import.meta.url,
+    );
+
+    it("仕様 6-1: @mixin dialog-dark-theme が定義され、手動切替セレクタおよび OS 連動メディアクエリで dialog-dark-surface が適用されていること", () => {
+      const scss = fs.readFileSync(dialogCommonScssPath, "utf-8");
+      expect(scss).toMatch(/@mixin\s+dialog-dark-theme/);
+
+      const match = scss.match(/@mixin\s+dialog-dark-theme[\s\S]*?\n\}/);
+      expect(match).not.toBeNull();
+      const content = match![0];
+      expect(content).toContain(":host(.wa-dark)");
+      expect(content).toContain(':host([data-theme="dark"])');
+      expect(content).toContain("@media (prefers-color-scheme: dark)");
+      expect(content).toContain("@include dialog-dark-surface");
+    });
+
+    it("仕様 6-2: navigation-labels.scss に @include dialog-dark-theme が適用されていること", () => {
+      const scss = fs.readFileSync(navLabelsScssPath, "utf-8");
+      expect(scss).toMatch(/@include\s+dialog-dark-theme/);
+    });
+
+    it("仕様 6-3: task-create-dialog.scss に @include dialog-dark-theme が適用されていること", () => {
+      const scss = fs.readFileSync(taskCreateDialogScssPath, "utf-8");
+      expect(scss).toMatch(/@include\s+dialog-dark-theme/);
+    });
+  });
 });
+

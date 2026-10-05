@@ -305,16 +305,27 @@ describe("NavigationLabels Component", () => {
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("prefers-color-scheme: dark");
+      const dialogCommonContent = fs.readFileSync(
+        new URL("../../../styles/dialog-common.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(
+        scssContent.includes("prefers-color-scheme: dark") ||
+          (scssContent.includes("@include dialog-dark-theme") &&
+            dialogCommonContent.includes("prefers-color-scheme: dark")),
+      ).toBe(true);
       expect(scssContent).toContain("--stepnote-dropdown-color");
     });
 
-    it("6-4. Dark モード時に共通 Mixin（@include dialog-dark-surface）が適用され、独立サーフェストークンおよび枠線が集約定義されていること", () => {
+    it("6-4. Dark モード時に共通 Mixin（@include dialog-dark-theme または @include dialog-dark-surface）が適用され、独立サーフェストークンおよび枠線が集約定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("@include dialog-dark-surface");
+      expect(
+        scssContent.includes("@include dialog-dark-theme") ||
+          scssContent.includes("@include dialog-dark-surface"),
+      ).toBe(true);
       const dialogCommonContent = fs.readFileSync(
         new URL("../../../styles/dialog-common.scss", import.meta.url),
         "utf-8",
@@ -324,13 +335,16 @@ describe("NavigationLabels Component", () => {
       expect(dialogCommonContent).toContain("box-shadow");
     });
 
-    it("6-5. 入力文字色（value-color / #ffffff）が共通 Mixin（dialog-field-layout / dialog-field-dark-theme）を通じて定義されていること", () => {
+    it("6-5. 入力文字色（value-color / #ffffff）が共通 Mixin（dialog-field-layout / dialog-dark-theme）を通じて定義されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
       expect(scssContent).toContain("@include dialog-field-layout");
-      expect(scssContent).toContain("@include dialog-field-dark-theme");
+      expect(
+        scssContent.includes("@include dialog-dark-theme") ||
+          scssContent.includes("@include dialog-field-dark-theme"),
+      ).toBe(true);
       const dialogCommonContent = fs.readFileSync(
         new URL("../../../styles/dialog-common.scss", import.meta.url),
         "utf-8",

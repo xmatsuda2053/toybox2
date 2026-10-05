@@ -117,3 +117,31 @@
 @mixin dialog-field-dark-theme {
   @include dialog-field-layout;
 }
+
+/**
+ * 7. ダイアログ Dark モード適用 Mixin（手動切替 & OS 連動メディアクエリ）
+ * コンポーネントの :host レベルで include して、Dark モード時のダイアログサーフェスおよびフォームスタイルを一括適用します。
+ */
+@mixin dialog-dark-theme($field-selector: null) {
+  :host(.wa-dark),
+  :host([data-theme="dark"]) {
+    @include dialog-dark-surface;
+    @if $field-selector {
+      #{$field-selector} {
+        @include dialog-field-dark-theme;
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :host(:not(.wa-light):not([data-theme="light"])) {
+      @include dialog-dark-surface;
+      @if $field-selector {
+        #{$field-selector} {
+          @include dialog-field-dark-theme;
+        }
+      }
+    }
+  }
+}
+
