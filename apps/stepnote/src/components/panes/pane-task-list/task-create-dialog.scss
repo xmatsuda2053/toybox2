@@ -3,15 +3,12 @@
 @use "../../../styles/dialog-common.scss" as *;
 @use "../pane-common.scss" as *;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@include box-sizing-reset;
 
 :host {
   display: block;
 }
+
 
 /* ==========================================================================
    Task Create Dialog スタイル（Light 既定）

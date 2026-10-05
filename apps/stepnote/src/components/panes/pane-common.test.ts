@@ -26,6 +26,12 @@ import * as fs from "node:fs";
  * 【仕様 5: 各ペインにおける共通スクロール Mixin の適用】
  * - 5-1: navigation-labels.scss の .labels__content に @include pane-scrollable-content が適用されていること
  * - 5-2: pane-task-list.scss の &__list に @include pane-scrollable-content が適用されていること
+ *
+ * 【仕様 6: SCSS-016: ペインコンポーネント基底レイアウト Mixin (@mixin pane-host-layout)】
+ * - 6-1: pane-common.scss に @mixin pane-host-layout が定義され、box-sizing リセットおよび :host の基本レイアウトが指定されていること
+ * - 6-2: navigation-labels.scss の先頭に @include pane-host-layout が適用されていること
+ * - 6-3: pane-task-list.scss の先頭に @include pane-host-layout が適用されていること
+ * - 6-4: pane-menu.scss の先頭に @include pane-host-layout が適用されていること
  */
 describe("pane-common.scss および Task List スタイル標準化仕様", () => {
   const paneCommonScssPath = new URL("./pane-common.scss", import.meta.url);
@@ -162,4 +168,40 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
       expect(listBlock![0]).toContain("@include pane-scrollable-content");
     });
   });
+
+  describe("6. SCSS-016: ペインコンポーネント基底レイアウト Mixin (@mixin pane-host-layout)", () => {
+    const paneMenuScssPath = new URL("./pane-menu/pane-menu.scss", import.meta.url);
+
+    it("仕様 6-1: pane-common.scss に @mixin pane-host-layout が定義され、box-sizing リセットおよび :host の基本レイアウトが指定されていること", () => {
+      const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
+      expect(scss).toMatch(/@mixin\s+pane-host-layout\s*\{/);
+
+      const block = scss.match(/@mixin\s+pane-host-layout\s*\{[\s\S]*?\n\}/);
+      expect(block).not.toBeNull();
+      const content = block![0];
+      expect(content).toContain("box-sizing-reset");
+      expect(content).toContain(":host");
+      expect(content).toMatch(/display:\s*flex;/);
+      expect(content).toMatch(/flex-direction:\s*column;/);
+      expect(content).toMatch(/width:\s*100%;/);
+      expect(content).toMatch(/height:\s*100%;/);
+      expect(content).toMatch(/overflow:\s*hidden;/);
+    });
+
+    it("仕様 6-2: navigation-labels.scss の先頭に @include pane-host-layout が適用されていること", () => {
+      const scss = fs.readFileSync(navigationLabelsScssPath, "utf-8");
+      expect(scss).toContain("@include pane-host-layout");
+    });
+
+    it("仕様 6-3: pane-task-list.scss の先頭に @include pane-host-layout が適用されていること", () => {
+      const scss = fs.readFileSync(paneTaskListScssPath, "utf-8");
+      expect(scss).toContain("@include pane-host-layout");
+    });
+
+    it("仕様 6-4: pane-menu.scss の先頭に @include pane-host-layout が適用されていること", () => {
+      const scss = fs.readFileSync(paneMenuScssPath, "utf-8");
+      expect(scss).toContain("@include pane-host-layout");
+    });
+  });
 });
+
