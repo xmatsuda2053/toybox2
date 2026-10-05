@@ -453,5 +453,37 @@
       },
       "regressions_detected": 0
     }
+  },
+  {
+    "id": "SCSS-016",
+    "target_file": "apps/stepnote/src/components/panes/pane-common.scss",
+    "target_selector": "@mixin pane-host-layout",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 35,
+      "duplicated_tokens": 150,
+      "files_involved": 5
+    },
+    "issue_summary": "各ペインコンポーネント先頭の基底レイアウト重複（box-sizing / :host）の共通Mixin集約",
+    "approach": "mixins.scss に @mixin box-sizing-reset、pane-common.scss に @mixin pane-host-layout を新設し、各コンポーネント先頭の重複を置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "issue_number": 170,
+      "pr_number": 0,
+      "completed_at": "2026-10-05T22:51:21.000+09:00",
+      "tests_passed": 818,
+      "commit_hash": "de2f02f",
+      "metrics_after": {
+        "duplicated_tokens": 528,
+        "duplicated_lines": 103,
+        "anti_pattern_errors": 0,
+        "clones": 15,
+        "build_size_kb": 1495.68
+      },
+      "regressions_detected": 0
+    }
   }
 ]

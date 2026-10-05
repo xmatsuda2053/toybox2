@@ -1,11 +1,8 @@
 @use "./styles/tokens.scss";
 @use "./styles/mixins.scss" as *;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@include box-sizing-reset;
+
 
 :host {
   display: block;

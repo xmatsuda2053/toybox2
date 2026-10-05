@@ -1,22 +1,15 @@
 @use "../../../styles/tokens.scss";
 @use "../../../styles/mixins.scss" as *;
+@use "../pane-common.scss" as *;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@include pane-host-layout;
 
 :host {
-  display: flex;
-  flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  height: 100%;
   padding: var(--wa-space-xs, 8px) 0;
-  box-sizing: border-box;
-  overflow: hidden;
 }
+
 
 .pane-menu__primary,
 .pane-menu__secondary {

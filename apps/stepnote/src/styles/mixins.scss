@@ -54,3 +54,13 @@
   }
 }
 
+/* Shadow DOM 内の box-sizing リセット */
+@mixin box-sizing-reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+
+

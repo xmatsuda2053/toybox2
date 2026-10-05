@@ -8,6 +8,7 @@ import * as fs from "node:fs";
  * 仕様 2: @mixin custom-scrollbar にモダン標準プロパティ（scrollbar-width, scrollbar-color）が定義されていること
  * 仕様 3: @mixin custom-scrollbar に WebKit 系スタイリング（幅 6px、トラック、角丸 2px のサム、ホバー色）が定義されていること
  * 仕様 4: 既存レイアウト Mixin（flex-center, flex-between, text-ellipsis, theme-transition）が維持されていること
+ * 仕様 5: @mixin box-sizing-reset が定義され、*, *::before, *::after の box-sizing: border-box が設定されていること
  */
 describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
   const mixinsScss = fs.readFileSync(
@@ -54,4 +55,17 @@ describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
       expect(mixinsScss).toMatch(/@mixin\s+theme-transition\s*\{/);
     });
   });
+
+  describe("3. SCSS-016: Box-sizing リセット Mixin (@mixin box-sizing-reset)", () => {
+    it("仕様 5: mixins.scss に @mixin box-sizing-reset が定義され、*, *::before, *::after の box-sizing: border-box が設定されていること", () => {
+      expect(mixinsScss).toMatch(/@mixin\s+box-sizing-reset\s*\{/);
+
+      const block = mixinsScss.match(/@mixin\s+box-sizing-reset\s*\{[\s\S]*?\n\}/);
+      expect(block).not.toBeNull();
+      expect(block![0]).toContain("box-sizing: border-box;");
+      expect(block![0]).toContain("*::before");
+      expect(block![0]).toContain("*::after");
+    });
+  });
 });
+

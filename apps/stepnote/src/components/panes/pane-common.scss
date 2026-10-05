@@ -68,3 +68,22 @@
   padding-inline-end: var(--wa-space-2xs, 6px);
   @include custom-scrollbar;
 }
+
+/**
+ * ペインコンポーネント基底レイアウト Mixin
+ * 各ペインコンポーネントのルートに include して、Shadow DOM 内の box-sizing リセット
+ * および :host の基底 Flexbox / サイズ制約を一括適用します。
+ */
+@mixin pane-host-layout {
+  @include box-sizing-reset;
+
+  :host {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+}
+
