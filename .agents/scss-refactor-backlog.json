@@ -472,10 +472,10 @@
     "status": "completed",
     "execution": {
       "issue_number": 170,
-      "pr_number": 0,
+      "pr_number": 171,
       "completed_at": "2026-10-05T22:51:21.000+09:00",
       "tests_passed": 818,
-      "commit_hash": "de2f02f",
+      "commit_hash": "f2014ed",
       "metrics_after": {
         "duplicated_tokens": 528,
         "duplicated_lines": 103,
