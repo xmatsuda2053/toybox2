@@ -44,21 +44,4 @@ wa-dialog {
 /* ==========================================================================
    Dark モード時のダイアログ（独立サーフェス・高コントラスト）
    ========================================================================== */
-@mixin dark-task-dialog {
-  @include dialog-dark-surface;
-
-  .task-create-dialog__field {
-    @include dialog-field-dark-theme;
-  }
-}
-
-:host(.wa-dark),
-:host([data-theme="dark"]) {
-  @include dark-task-dialog;
-}
-
-@media (prefers-color-scheme: dark) {
-  :host(:not(.wa-light):not([data-theme="light"])) {
-    @include dark-task-dialog;
-  }
-}
+@include dialog-dark-theme(".task-create-dialog__field");
