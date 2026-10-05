@@ -357,5 +357,37 @@
       "completed_at": "2026-10-05T21:41:05.066+09:00",
       "tests_passed": 805
     }
+  },
+  {
+    "id": "SCSS-013",
+    "target_file": "apps/stepnote/src/styles/tokens.scss",
+    "target_selector": ":root.wa-dark, @media (prefers-color-scheme: dark)",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_lines": 64,
+      "duplicated_tokens": 700,
+      "files_involved": 1
+    },
+    "issue_summary": "tokens.scss における Dark テーマと OS 連動メディアクエリ間の同一トークン定義重複",
+    "approach": "tokens.scss に @mixin dark-theme-tokens を定義し、手動切替セレクタおよび OS 連動セレクタで @include 集約",
+    "scope": "app",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "metrics_after": {
+        "clones": 22,
+        "duplicated_lines": 176,
+        "build_size_kb": 1498.58,
+        "duplicated_tokens": 815,
+        "anti_pattern_errors": 0
+      },
+      "commit_hash": "560ada3",
+      "regressions_detected": 0,
+      "issue_number": 164,
+      "pr_number": 0,
+      "completed_at": "2026-10-05T21:57:46.241+09:00",
+      "tests_passed": 808
+    }
   }
 ]

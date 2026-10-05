@@ -25,6 +25,9 @@ import * as fs from "node:fs";
  * 仕様 19: Light モードにダイアログ・フォーム・ドロップダウン用トークンが定義されていること
  * 仕様 20: Dark モードにダイアログ・フォーム・ドロップダウン用トークンが定義されていること
  * 仕様 21: OS 連動ダークモードにも同様にダイアログ・フォーム・ドロップダウン用トークンが定義されていること
+ * 仕様 22: @mixin dark-theme-tokens が定義され、ダークテーマ用全トークンが集約されていること（SCSS-013）
+ * 仕様 23: 手動 Dark テーマセレクタに @include dark-theme-tokens が適用されていること（SCSS-013）
+ * 仕様 24: OS 連動ダークモードセレクタに @include dark-theme-tokens が適用されていること（SCSS-013）
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -148,135 +151,150 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
   });
 
   describe("Dark モードの基調色定義", () => {
+    const darkBlock = extractBlock(
+      tokensScss,
+      /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
+    );
+    const mixinBlock = extractBlock(
+      tokensScss,
+      /@mixin\s+dark-theme-tokens/,
+    );
+    const resolvedDarkBlock = darkBlock.includes("@include dark-theme-tokens")
+      ? mixinBlock
+      : darkBlock;
+
     it("Dark モードの背景色（--wa-color-surface-default）に過度なコントラストを緩和する #2f323f が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-surface-default:\s*#2f323f;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-surface-default:\s*#2f323f;/);
     });
 
     it("Dark モードのボーダー色（--wa-color-surface-border）に背景と同化しない #434857 が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-surface-border:\s*#434857;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-surface-border:\s*#434857;/);
     });
 
     it("Dark モードの控えめテキスト色（--wa-color-text-quiet）にコントラストを確保した #9da7b3 が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
     });
 
     it("Dark モードのスクロールバーサム色（--scrollbar-thumb-color）にボーダーと調和する #434857 が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
+      expect(resolvedDarkBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
     });
 
     it("Dark モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に背景と同化しない #484d5e が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
     });
 
     it("Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #252833 が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
     });
 
     it("Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に高コントラストな純白 #ffffff が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
     });
 
     it("Dark モードのアクティブボタンホバー混色（--wa-color-mix-hover）に暗く沈み込ませる #000000 20% が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
+      expect(resolvedDarkBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
     });
 
     it("Dark モードのアクティブボタンホバー背景色（--wa-color-neutral-fill-normal-hover）に基調色より暗い #1f212b が定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(
+      expect(resolvedDarkBlock).toMatch(
         /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
       );
     });
 
     it("Dark モードにダイアログ・フォーム・ドロップダウン用セマンティックトークンが定義されていること", () => {
-      const darkBlock = extractBlock(
-        tokensScss,
-        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
-      );
-      expect(darkBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
-      expect(darkBlock).toMatch(/--stepnote-dialog-border:\s*#444c56;/);
-      expect(darkBlock).toMatch(/--stepnote-dialog-title-color:\s*#ffffff;/);
-      expect(darkBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
-      expect(darkBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
-      expect(darkBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
-      expect(darkBlock).toMatch(/--stepnote-form-label-color:\s*#e6edf3;/);
-      expect(darkBlock).toMatch(/--stepnote-form-value-color:\s*#ffffff;/);
-      expect(darkBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-color:\s*#ffffff;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*#e6edf3;/);
-      expect(darkBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-border:\s*#444c56;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-title-color:\s*#ffffff;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-label-color:\s*#e6edf3;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-value-color:\s*#ffffff;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-color:\s*#ffffff;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*#e6edf3;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
     });
   });
 
   describe("OS 連動ダークモードの基調色定義", () => {
+    const mediaBlock = extractBlock(
+      tokensScss,
+      /@media\s*\(prefers-color-scheme:\s*dark\)/,
+    );
+    const mixinBlock = extractBlock(
+      tokensScss,
+      /@mixin\s+dark-theme-tokens/,
+    );
+    const resolvedMediaBlock = mediaBlock.includes("@include dark-theme-tokens")
+      ? mixinBlock
+      : mediaBlock;
+
     it("OS 連動ダークモード（@media (prefers-color-scheme: dark)）にも同一の各トークン値が定義されていること", () => {
+      expect(resolvedMediaBlock).toMatch(/--wa-color-surface-default:\s*#2f323f;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-surface-border:\s*#434857;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
+      expect(resolvedMediaBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
+      expect(resolvedMediaBlock).toMatch(
+        /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
+      );
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-border:\s*#444c56;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-title-color:\s*#ffffff;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-label-color:\s*#e6edf3;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-value-color:\s*#ffffff;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-color:\s*#ffffff;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*#e6edf3;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
+    });
+  });
+
+  describe("SCSS-013: ダークテーマ共通トークン Mixin（@mixin dark-theme-tokens）仕様", () => {
+    it("仕様 22: @mixin dark-theme-tokens が定義され、ダークテーマ用全トークンが集約されていること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).not.toBe("");
+      expect(mixinBlock).toMatch(/--wa-color-surface-default:\s*#2f323f;/);
+      expect(mixinBlock).toMatch(/--wa-color-surface-border:\s*#434857;/);
+      expect(mixinBlock).toMatch(/--wa-color-text-normal:\s*#e6edf3;/);
+      expect(mixinBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
+      expect(mixinBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
+      expect(mixinBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
+      expect(mixinBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
+    });
+
+    it("仕様 23: 手動 Dark テーマセレクタに @include dark-theme-tokens が適用されていること", () => {
+      const darkBlock = extractBlock(
+        tokensScss,
+        /:root\.wa-dark\s*,\s*:root\[data-theme="dark"\]/,
+      );
+      expect(darkBlock).toMatch(/@include\s+dark-theme-tokens;/);
+    });
+
+    it("仕様 24: OS 連動ダークモードセレクタに @include dark-theme-tokens が適用されていること", () => {
       const mediaBlock = extractBlock(
         tokensScss,
         /@media\s*\(prefers-color-scheme:\s*dark\)/,
       );
-      expect(mediaBlock).toMatch(/--wa-color-surface-default:\s*#2f323f;/);
-      expect(mediaBlock).toMatch(/--wa-color-surface-border:\s*#434857;/);
-      expect(mediaBlock).toMatch(/--wa-color-text-quiet:\s*#9da7b3;/);
-      expect(mediaBlock).toMatch(/--scrollbar-thumb-color:\s*#434857;/);
-      expect(mediaBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
-      expect(mediaBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
-      expect(mediaBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
-      expect(mediaBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
-      expect(mediaBlock).toMatch(
-        /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
-      );
-      expect(mediaBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
-      expect(mediaBlock).toMatch(/--stepnote-dialog-border:\s*#444c56;/);
-      expect(mediaBlock).toMatch(/--stepnote-dialog-title-color:\s*#ffffff;/);
-      expect(mediaBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
-      expect(mediaBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
-      expect(mediaBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
-      expect(mediaBlock).toMatch(/--stepnote-form-label-color:\s*#e6edf3;/);
-      expect(mediaBlock).toMatch(/--stepnote-form-value-color:\s*#ffffff;/);
-      expect(mediaBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-color:\s*#ffffff;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*#e6edf3;/);
-      expect(mediaBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
+      expect(mediaBlock).toMatch(/@include\s+dark-theme-tokens;/);
     });
   });
 });
+
