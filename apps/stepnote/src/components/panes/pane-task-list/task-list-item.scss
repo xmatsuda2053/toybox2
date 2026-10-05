@@ -8,11 +8,8 @@
   padding-bottom: 4px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@include box-sizing-reset;
+
 
 @media (prefers-reduced-motion: reduce) {
   :host,
@@ -121,10 +118,8 @@
   line-height: 1;
   transition: var(--stepnote-transition-theme);
 
-  &:hover {
-    .task-list-item__bookmark-icon {
-      color: var(--quick-access-icon-active-bookmark, #4f46e5);
-    }
+  &:hover .task-list-item__bookmark-icon {
+    color: var(--quick-access-icon-active-bookmark, #4f46e5);
   }
 }
 
