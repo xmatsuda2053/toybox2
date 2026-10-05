@@ -469,12 +469,14 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
   });
 
   describe("12. スクロールバー仕様（SCSS-008: custom-scrollbar Mixin 連携）", () => {
-    it("12-1. .pane-task-list__list に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
+    it("12-1. .pane-task-list__list に共通 Mixin（@include pane-scrollable-content または @include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./pane-task-list.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("@include custom-scrollbar");
+      expect(scssContent).toMatch(
+        /@include\s+(pane-scrollable-content|custom-scrollbar)/,
+      );
       expect(scssContent).not.toContain("scrollbar-width: thin");
       expect(scssContent).not.toContain("&::-webkit-scrollbar {");
     });

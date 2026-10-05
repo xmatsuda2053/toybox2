@@ -53,18 +53,10 @@
 }
 
 .labels__content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  @include pane-scrollable-content;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-block: 6px;
-  padding-inline-start: var(--wa-space-s, 12px);
-  padding-inline-end: var(--wa-space-2xs, 6px);
-
-  @include custom-scrollbar;
 }
 
 /* ラベルボタン共通スタイル（Quick Access ボタン同等のスタイル再現） */

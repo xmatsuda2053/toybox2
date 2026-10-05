@@ -325,5 +325,37 @@
       "commit_hash": "81532d7",
       "tests_passed": 802
     }
+  },
+  {
+    "id": "SCSS-012",
+    "target_file": "apps/stepnote/src/components/panes/pane-common.scss, apps/stepnote/src/components/panes/pane-navigation/navigation-labels.scss, apps/stepnote/src/components/panes/pane-task-list/pane-task-list.scss",
+    "target_selector": ".labels__content, .pane-task-list__content",
+    "category": "PatternDuplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "duplicated_tokens": 56,
+      "files_involved": 3
+    },
+    "issue_summary": "Navigation Labels と Task List 間におけるスクロール可能コンテンツ領域レイアウト（flex, scrollbar-gutter, custom-scrollbar）の重複",
+    "approach": "pane-common.scss に @mixin pane-scrollable-content を新設し、各コンポーネントで @include 置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "issue_number": 162,
+      "pr_number": 0,
+      "regressions_detected": 0,
+      "commit_hash": "00f15c6",
+      "metrics_after": {
+        "duplicated_tokens": 1901,
+        "anti_pattern_errors": 0,
+        "clones": 30,
+        "build_size_kb": 1498.58,
+        "duplicated_lines": 246
+      },
+      "completed_at": "2026-10-05T21:41:05.066+09:00",
+      "tests_passed": 805
+    }
   }
 ]

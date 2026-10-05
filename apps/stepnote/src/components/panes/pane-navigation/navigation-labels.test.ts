@@ -374,12 +374,20 @@ describe("NavigationLabels Component", () => {
       expect(scssContent).not.toMatch(/margin-bottom:\s*var\(--wa-space-3xs/);
     });
 
-    it("7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable が定義されていること", () => {
+    it("7-1. .labels__content にスクロールバー領域を常時確保する scrollbar-gutter: stable（または pane-scrollable-content Mixin）が適用されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("scrollbar-gutter: stable");
+      const paneCommonContent = fs.readFileSync(
+        new URL("../pane-common.scss", import.meta.url),
+        "utf-8",
+      );
+      const hasScrollbarGutter =
+        scssContent.includes("scrollbar-gutter: stable") ||
+        (scssContent.includes("@include pane-scrollable-content") &&
+          paneCommonContent.includes("scrollbar-gutter: stable"));
+      expect(hasScrollbarGutter).toBe(true);
     });
 
     it("7-2. スクロールバーのサム色・トラック色が Light/Dark テーマ別 CSS 変数として定義され、custom-scrollbar Mixin で参照されていること", () => {
@@ -398,12 +406,14 @@ describe("NavigationLabels Component", () => {
       expect(tokensContent).toContain("#434857");
     });
 
-    it("7-3. .labels__content に共通 Mixin（@include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
+    it("7-3. .labels__content に共通 Mixin（@include pane-scrollable-content または @include custom-scrollbar）が適用され、スクロールバーの直書きスタイルが排除されていること", () => {
       const scssContent = fs.readFileSync(
         new URL("./navigation-labels.scss", import.meta.url),
         "utf-8",
       );
-      expect(scssContent).toContain("@include custom-scrollbar");
+      expect(scssContent).toMatch(
+        /@include\s+(pane-scrollable-content|custom-scrollbar)/,
+      );
       expect(scssContent).not.toContain("scrollbar-width: thin");
       expect(scssContent).not.toContain("&::-webkit-scrollbar {");
     });
