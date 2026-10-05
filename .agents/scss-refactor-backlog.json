@@ -416,9 +416,41 @@
       },
       "tests_passed": 811,
       "pr_number": 0,
-      "completed_at": "2026-10-05T22:20:14.450+09:00",
+      "completed_at": "2026-10-05T22:20:14.45+09:00",
       "commit_hash": "63506d1",
       "issue_number": 166,
+      "regressions_detected": 0
+    }
+  },
+  {
+    "id": "SCSS-015",
+    "target_file": "apps/stepnote/src/styles/dialog-common.scss",
+    "target_selector": "@mixin dialog-dark-theme",
+    "category": "AntiPattern",
+    "metrics": {
+      "duplicated_lines": 0,
+      "duplicated_tokens": 0,
+      "files_involved": 1
+    },
+    "issue_summary": "dialog-dark-theme Mixin におけるメディアクエリ・セレクタ・条件分岐の多重ネスト警告（深度3〜5）の解消",
+    "approach": "セレクタを並列フラット展開し、すべてのネスト深度を2階層以下に抑制してアンチパターン警告を完全解消",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "issue_number": 168,
+      "pr_number": 0,
+      "completed_at": "2026-10-05T22:36:20.656+09:00",
+      "tests_passed": 813,
+      "commit_hash": "12b519c",
+      "metrics_after": {
+        "duplicated_tokens": 735,
+        "duplicated_lines": 162,
+        "anti_pattern_errors": 0,
+        "clones": 20,
+        "build_size_kb": 1495.07
+      },
       "regressions_detected": 0
     }
   }

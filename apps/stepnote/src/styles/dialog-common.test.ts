@@ -28,6 +28,10 @@ import * as fs from "node:fs";
  * - 6-1: @mixin dialog-dark-theme が定義され、手動切替セレクタおよび OS 連動メディアクエリで dialog-dark-surface が適用されていること
  * - 6-2: navigation-labels.scss に @include dialog-dark-theme が適用されていること
  * - 6-3: task-create-dialog.scss に @include dialog-dark-theme が適用されていること
+ *
+ * 【仕様 7: SCSS-015: dialog-dark-theme Mixin のセレクタ多重ネスト解消とフラット展開仕様】
+ * - 7-1: @mixin dialog-dark-theme 内で :host セレクタ配下に子セレクタがネストされていないこと
+ * - 7-2: dialog-common.scss 内でネスト深度が 2 階層以下に保たれ、アンチパターン警告が発生しないこと
  */
 describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
   const dialogCommonScssPath = new URL("./dialog-common.scss", import.meta.url);
@@ -195,6 +199,43 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
     it("仕様 6-3: task-create-dialog.scss に @include dialog-dark-theme が適用されていること", () => {
       const scss = fs.readFileSync(taskCreateDialogScssPath, "utf-8");
       expect(scss).toMatch(/@include\s+dialog-dark-theme/);
+    });
+  });
+
+  describe("7. SCSS-015: dialog-dark-theme Mixin のセレクタ多重ネスト解消とフラット展開仕様", () => {
+    it("仕様 7-1: @mixin dialog-dark-theme 内で :host セレクタ配下に子セレクタがネストされていないこと", () => {
+      const scss = fs.readFileSync(dialogCommonScssPath, "utf-8");
+      const match = scss.match(/@mixin\s+dialog-dark-theme[\s\S]*?\n\}/);
+      expect(match).not.toBeNull();
+      const content = match![0];
+      // :host のブロック内部にさらにセレクタ（波括弧）がネストされていないことを検証
+      expect(content).not.toMatch(/:host[^{]*\{[^}]*\{/);
+    });
+
+    it("仕様 7-2: dialog-common.scss 内でネスト深度が 2 階層以下に保たれ、アンチパターン警告が発生しないこと", () => {
+      const scss = fs.readFileSync(dialogCommonScssPath, "utf-8");
+      const lines = scss.split("\n");
+      let nesting = 0;
+      let deepNestingViolations = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+        if (
+          trimmed.startsWith("//") ||
+          trimmed.startsWith("/*") ||
+          trimmed.startsWith("*")
+        ) {
+          continue;
+        }
+        const open = (lines[i].match(/\{/g) || []).length;
+        const close = (lines[i].match(/\}/g) || []).length;
+        nesting += open - close;
+        if (nesting > 2 && open > 0) {
+          deepNestingViolations++;
+        }
+      }
+
+      expect(deepNestingViolations).toBe(0);
     });
   });
 });
