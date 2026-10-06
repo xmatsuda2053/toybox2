@@ -7,6 +7,17 @@
   --log-bg: #0f172a;
   --log-text: #38bdf8;
   --log-border: #1e293b;
+
+  /* Markdown プレビュー用デザイントークン（Light モード） */
+  --stepnote-markdown-text: var(--text-main);
+  --stepnote-markdown-table-row-bg-even: #f1f5f9;
+  --stepnote-markdown-table-border: var(--card-border);
+  --stepnote-markdown-pre-bg: #f1f5f9;
+  --stepnote-markdown-code-bg: rgba(175, 184, 193, 0.2);
+  --stepnote-markdown-blockquote-bg: #f8fafc;
+  --stepnote-markdown-blockquote-border: var(--card-border);
+  --stepnote-markdown-blockquote-text: var(--text-muted);
+  --stepnote-markdown-checkbox-accent: #0969da;
 }
 
 :root.wa-dark,
@@ -19,6 +30,17 @@
   --log-bg: #030712;
   --log-text: #7dd3fc;
   --log-border: #1f2937;
+
+  /* Markdown プレビュー用デザイントークン（Dark モード） */
+  --stepnote-markdown-text: var(--text-main);
+  --stepnote-markdown-table-row-bg-even: #161b22;
+  --stepnote-markdown-table-border: var(--card-border);
+  --stepnote-markdown-pre-bg: #161b22;
+  --stepnote-markdown-code-bg: rgba(110, 118, 129, 0.4);
+  --stepnote-markdown-blockquote-bg: #0d1117;
+  --stepnote-markdown-blockquote-border: var(--card-border);
+  --stepnote-markdown-blockquote-text: var(--text-muted);
+  --stepnote-markdown-checkbox-accent: #218bff;
 }
 
 body {
