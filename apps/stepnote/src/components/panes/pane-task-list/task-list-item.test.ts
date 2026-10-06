@@ -37,6 +37,7 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 5-3. 垂直ディバイダー（.task-list-item__divider）に選択時でも視認可能なカラー（--wa-color-text-quiet）と高さが定義されていること
  *    - 5-4. task-list-item.scss に !important 宣言が一切含まれていないこと
  *    - 5-5. ブックマークアイコンのアクティブ状態に !important を用いずカラーが定義されていること
+ *    - 5-6. 基本色（ボーダー、サーフェス、テキスト、ニュートラル背景、ホバー色）に直値カラーフォールバックが含まれず、セマンティックトークン（var(--wa-color-*)）が指定されていること
  */
 describe("TaskListItem Component", () => {
   let element: TaskListItem;
@@ -290,6 +291,38 @@ describe("TaskListItem Component", () => {
       expect(content).not.toMatch(
         /\.task-list-item__bookmark-icon--active\s*\{[^}]*!important/,
       );
+    });
+
+    it("5-6. 基本色（ボーダー、サーフェス、テキスト、ニュートラル背景、ホバー色）に直値カラーフォールバックが含まれず、セマンティックトークン（var(--wa-color-*)）が指定されていること", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+
+      // 基本色直値がフォールバックとして残存していないこと
+      const rawBasicColors = [
+        "#d0d7de",
+        "#f1f2f3",
+        "#1f2328",
+        "#e2e5e8",
+        "#d8dce0",
+        "#c2c7cd",
+        "#57606a",
+      ];
+      for (const col of rawBasicColors) {
+        expect(content).not.toContain(col);
+      }
+
+      // セマンティックトークンが正しく指定されていること
+      expect(content).toMatch(/border:\s*1px solid var\(--wa-color-surface-border\);/);
+      expect(content).toMatch(/background-color:\s*var\(--wa-color-surface-default\);/);
+      expect(content).toMatch(/color:\s*var\(--wa-color-text-normal\);/);
+      expect(content).toMatch(/background-color:\s*var\(--wa-color-neutral-fill-quiet\);/);
+      expect(content).toMatch(/background-color:\s*var\(--wa-color-neutral-fill-normal\);/);
+      expect(content).toMatch(/background-color:\s*var\(--wa-color-neutral-fill-normal-hover\);/);
+      expect(content).toMatch(/color:\s*var\(--wa-color-text-quiet\);/);
     });
   });
 

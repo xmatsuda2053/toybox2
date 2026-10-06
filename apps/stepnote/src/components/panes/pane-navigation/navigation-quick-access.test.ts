@@ -58,6 +58,7 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること
  *    - [x] 7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  *    - [x] 7-4. 廃止された旧クラス名（quick-access-btn、quick-access-counter等）がHTMLテンプレートおよびSCSSに一切残存していないこと
+ *    - [ ] 7-5. カウンターバッジ（.quick-access__count）のテキストカラーに直値 #ffffff が残存せず、セマンティックトークン（var(--stepnote-color-white)）が指定されていること
  * 8. TaskListController 連動によるタスク件数の自動取得（Context連携）
  *    - [x] 8-1. taskListController が設定されている場合、明示的な taskCounts プロパティ指定がなくても controller.quickAccessTaskCounts がバッジとしてレンダリングされること
  *    - [x] 8-2. taskListController の購読リスナーが発火した際に requestUpdate が呼び出されること
@@ -492,6 +493,17 @@ describe("NavigationQuickAccess Component", () => {
       for (const cls of obsoleteClasses) {
         expect(scssContent).not.toContain(`.${cls}`);
       }
+    });
+
+    it("7-5. カウンターバッジ（.quick-access__counter）のテキストカラーに直値 #ffffff が残存せず、セマンティックトークン（var(--stepnote-color-white)）が指定されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).not.toContain("color: #ffffff;");
+      expect(scssContent).toMatch(
+        /\.quick-access__counter\s*\{[^}]*color:\s*var\(--stepnote-color-white\);/,
+      );
     });
   });
 
