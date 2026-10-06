@@ -141,12 +141,11 @@ $types-active: (
   padding-inline: 5px;
   border-radius: 9999px;
   background-color: var(--wa-color-brand-50, #0969da);
-  color: #ffffff;
+  color: var(--stepnote-color-white);
   box-sizing: border-box;
 
   .is-active & {
     background-color: var(--wa-color-brand-60, #218bff);
-    color: #ffffff;
   }
 }
 
