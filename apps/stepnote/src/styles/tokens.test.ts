@@ -40,6 +40,8 @@ import * as fs from "node:fs";
  * 仕様 34: Light モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること
  * 仕様 35: Dark モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること
  * 仕様 36: ドロップダウンの Danger カラーおよびホバー背景がセマンティックトークンを参照していること
+ * 仕様 37: Light モードに Markdown プレビュー用セマンティックトークンが定義されていること
+ * 仕様 38: Dark モード（@mixin dark-theme-tokens）に Markdown プレビュー用セマンティックトークンが定義されていること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -446,7 +448,54 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(mixinBlock).toMatch(/--stepnote-form-border:\s*var\(--stepnote-dialog-border\);/);
       expect(mixinBlock).toMatch(/--stepnote-dropdown-border:\s*var\(--stepnote-dialog-border\);/);
     });
+
+    it("仕様 37: Light モードに Markdown プレビュー用セマンティックトークンが定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--stepnote-markdown-text:\s*var\(--wa-color-text-normal\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-table-row-bg-even:\s*var\(--stepnote-form-bg\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-table-border:\s*var\(--wa-color-surface-border\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-pre-bg:\s*var\(--stepnote-form-bg\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-code-bg:\s*rgba\(175,\s*184,\s*193,\s*0\.2\);/);
+    });
+
+    it("仕様 38: Dark モード（@mixin dark-theme-tokens）に Markdown プレビュー用セマンティックトークンが定義されていること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--stepnote-markdown-text:\s*var\(--wa-color-text-normal\);/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-table-row-bg-even:\s*#161b22;/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-table-border:\s*var\(--stepnote-dialog-border\);/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-pre-bg:\s*#161b22;/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-code-bg:\s*rgba\(110,\s*118,\s*129,\s*0\.4\);/);
+    });
+
+    it("仕様 39: Light モードに blockquote および checkbox 用セマンティックトークンが定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--stepnote-markdown-blockquote-bg:\s*var\(--stepnote-form-bg\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-blockquote-border:\s*var\(--wa-color-surface-border\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-blockquote-text:\s*var\(--wa-color-text-quiet\);/);
+      expect(lightBlock).toMatch(/--stepnote-markdown-checkbox-accent:\s*var\(--wa-color-brand-60,\s*#0969da\);/);
+    });
+
+    it("仕様 40: Dark モード（@mixin dark-theme-tokens）に blockquote および checkbox 用セマンティックトークンが定義されていること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--stepnote-markdown-blockquote-bg:\s*#161b22;/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-blockquote-border:\s*var\(--stepnote-dialog-border\);/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-blockquote-text:\s*var\(--wa-color-text-quiet\);/);
+      expect(mixinBlock).toMatch(/--stepnote-markdown-checkbox-accent:\s*var\(--wa-color-brand-70,\s*#218bff\);/);
+    });
   });
 });
+
 
 

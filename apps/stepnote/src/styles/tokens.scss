@@ -95,6 +95,17 @@
   --stepnote-dropdown-item-hover-bg: var(--stepnote-form-bg);
   --stepnote-dropdown-item-icon-color: var(--wa-color-text-quiet);
   --stepnote-dropdown-danger-color: var(--quick-access-icon-overdue);
+
+  /* Markdown プレビュー用デザイントークン（Light モード） */
+  --stepnote-markdown-text: var(--wa-color-text-normal);
+  --stepnote-markdown-table-row-bg-even: var(--stepnote-form-bg);
+  --stepnote-markdown-table-border: var(--wa-color-surface-border);
+  --stepnote-markdown-pre-bg: var(--stepnote-form-bg);
+  --stepnote-markdown-code-bg: rgba(175, 184, 193, 0.2);
+  --stepnote-markdown-blockquote-bg: var(--stepnote-form-bg);
+  --stepnote-markdown-blockquote-border: var(--wa-color-surface-border);
+  --stepnote-markdown-blockquote-text: var(--wa-color-text-quiet);
+  --stepnote-markdown-checkbox-accent: var(--wa-color-brand-60, #0969da);
 }
 
 /* --------------------------------------------------------------------------
@@ -171,6 +182,17 @@
   --stepnote-dropdown-item-hover-bg: #30363d;
   --stepnote-dropdown-item-icon-color: var(--wa-color-text-normal);
   --stepnote-dropdown-danger-color: var(--wa-color-danger-70, #ff7b72);
+
+  /* Markdown プレビュー用デザイントークン（Dark モード） */
+  --stepnote-markdown-text: var(--wa-color-text-normal);
+  --stepnote-markdown-table-row-bg-even: #161b22;
+  --stepnote-markdown-table-border: var(--stepnote-dialog-border);
+  --stepnote-markdown-pre-bg: #161b22;
+  --stepnote-markdown-code-bg: rgba(110, 118, 129, 0.4);
+  --stepnote-markdown-blockquote-bg: #161b22;
+  --stepnote-markdown-blockquote-border: var(--stepnote-dialog-border);
+  --stepnote-markdown-blockquote-text: var(--wa-color-text-quiet);
+  --stepnote-markdown-checkbox-accent: var(--wa-color-brand-70, #218bff);
 }
 
 /* --------------------------------------------------------------------------
