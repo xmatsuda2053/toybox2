@@ -30,6 +30,9 @@ import * as fs from "node:fs";
  * 仕様 24: OS 連動ダークモードセレクタに @include dark-theme-tokens が適用されていること（SCSS-013）
  * 仕様 25: メニュートリガーおよびスクロールバーサム色が基底セマンティックトークンを参照していること
  * 仕様 26: 共通トークンとして純白テキスト・アイコン用トークン（--stepnote-color-white）が定義されていること
+ * 仕様 27: Quick Access アクティブ時アイコンカラーが通常時アイコン変数を参照していること（直値重複の排除）
+ * 仕様 28: Labels アクティブ時アイコンカラーが通常時変数を参照していること
+ * 仕様 29: 未分類・開始待ちアイコン色がセマンティックトークン（--wa-color-text-normal / --stepnote-color-white）を参照していること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -320,6 +323,61 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
         /@media\s*\(prefers-color-scheme:\s*dark\)/,
       );
       expect(mediaBlock).toMatch(/@include\s+dark-theme-tokens;/);
+    });
+  });
+
+  describe("Phase 2: アクセント・状態カラーのセマンティック集約仕様", () => {
+    it("仕様 27: Light モードの Quick Access アクティブ時アイコンカラーが通常時アイコン変数を参照していること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--quick-access-icon-active-bookmark:\s*var\(--quick-access-icon-bookmark\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-active-overdue:\s*var\(--quick-access-icon-overdue\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-active-asap:\s*var\(--quick-access-icon-asap\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-active-upcoming:\s*var\(--quick-access-icon-upcoming\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-active-done:\s*var\(--quick-access-icon-done\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-active-progress:\s*var\(--quick-access-icon-progress\);/);
+    });
+
+    it("仕様 28: Light モードの Labels アクティブ時アイコンカラーが通常時変数を参照していること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--label-icon-active-color:\s*var\(--label-icon-color\);/);
+    });
+
+    it("仕様 29: Light モードの未分類・開始待ちアイコン色がセマンティックトークンを参照していること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--quick-access-icon-uncategorized:\s*var\(--wa-color-text-normal\);/);
+      expect(lightBlock).toMatch(/--quick-access-icon-pending:\s*var\(--wa-color-text-normal\);/);
+    });
+
+    it("仕様 30: Dark モード（@mixin dark-theme-tokens）の Quick Access アクティブ時アイコンカラーが通常時アイコン変数を参照していること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-bookmark:\s*var\(--quick-access-icon-bookmark\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-overdue:\s*var\(--quick-access-icon-overdue\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-asap:\s*var\(--quick-access-icon-asap\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-upcoming:\s*var\(--quick-access-icon-upcoming\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-done:\s*var\(--quick-access-icon-done\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-active-progress:\s*var\(--quick-access-icon-progress\);/);
+      expect(mixinBlock).toMatch(/--label-icon-active-color:\s*var\(--label-icon-color\);/);
+    });
+
+    it("仕様 31: Dark モードの未分類・開始待ちアイコン色が純白セマンティックトークンを参照していること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--quick-access-icon-uncategorized:\s*var\(--stepnote-color-white\);/);
+      expect(mixinBlock).toMatch(/--quick-access-icon-pending:\s*var\(--stepnote-color-white\);/);
     });
   });
 });

@@ -42,8 +42,8 @@
 
 .task-list-item--selected {
   background-color: var(--wa-color-neutral-fill-normal);
-  border-color: var(--wa-color-brand-60, #0969da);
-  border-left: 3px solid var(--wa-color-brand-60, #0969da);
+  border-color: var(--wa-color-brand-60);
+  border-left: 3px solid var(--wa-color-brand-60);
   padding-left: calc(var(--wa-space-xs, 8px) - 2px);
 
   &:hover {
@@ -82,15 +82,15 @@
 }
 
 .task-list-item__status-icon--pending {
-  color: var(--quick-access-icon-pending, #000000);
+  color: var(--quick-access-icon-pending);
 }
 
 .task-list-item__status-icon--progress {
-  color: var(--quick-access-icon-progress, #1a7f37);
+  color: var(--quick-access-icon-progress);
 }
 
 .task-list-item__status-icon--done {
-  color: var(--quick-access-icon-done, #0969da);
+  color: var(--quick-access-icon-done);
 }
 
 .task-list-item__title {
@@ -119,7 +119,7 @@
   transition: var(--stepnote-transition-theme);
 
   &:hover .task-list-item__bookmark-icon {
-    color: var(--quick-access-icon-active-bookmark, #4f46e5);
+    color: var(--quick-access-icon-active-bookmark);
   }
 }
 
@@ -132,7 +132,7 @@
 }
 
 .task-list-item__bookmark-icon--active {
-  color: var(--quick-access-icon-active-bookmark, #4f46e5);
+  color: var(--quick-access-icon-active-bookmark);
 }
 
 .task-list-item__due-date {
@@ -149,15 +149,15 @@
 }
 
 .task-list-item__due-icon--overdue {
-  color: var(--quick-access-icon-overdue, #cf222e);
+  color: var(--quick-access-icon-overdue);
 }
 
 .task-list-item__due-icon--asap {
-  color: var(--quick-access-icon-asap, #9a6700);
+  color: var(--quick-access-icon-asap);
 }
 
 .task-list-item__due-icon--upcoming {
-  color: var(--quick-access-icon-upcoming, #1b7c83);
+  color: var(--quick-access-icon-upcoming);
 }
 
 .task-list-item__issues-progress {

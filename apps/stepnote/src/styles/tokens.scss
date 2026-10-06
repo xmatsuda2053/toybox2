@@ -41,27 +41,27 @@
 
   /* Quick Access アイコンカラー（Light モード: 60系 / 黒） */
   --quick-access-icon-bookmark: var(--wa-color-indigo-60, #4f46e5);
-  --quick-access-icon-uncategorized: #000000;
+  --quick-access-icon-uncategorized: var(--wa-color-text-normal);
   --quick-access-icon-overdue: var(--wa-color-danger-60, #cf222e);
   --quick-access-icon-asap: var(--wa-color-yellow-60, #9a6700);
   --quick-access-icon-upcoming: var(--wa-color-cyan-60, #1b7c83);
   --quick-access-icon-done: var(--wa-color-brand-60, #0969da);
   --quick-access-icon-progress: var(--wa-color-success-60, #1a7f37);
-  --quick-access-icon-pending: #000000;
+  --quick-access-icon-pending: var(--wa-color-text-normal);
 
   /* Quick Access アイコンカラー（Light モード・アクティブ時: 通常時と同一色を維持） */
-  --quick-access-icon-active-bookmark: var(--wa-color-indigo-60, #4f46e5);
-  --quick-access-icon-active-uncategorized: #000000;
-  --quick-access-icon-active-overdue: var(--wa-color-danger-60, #cf222e);
-  --quick-access-icon-active-asap: var(--wa-color-yellow-60, #9a6700);
-  --quick-access-icon-active-upcoming: var(--wa-color-cyan-60, #1b7c83);
-  --quick-access-icon-active-done: var(--wa-color-brand-60, #0969da);
-  --quick-access-icon-active-progress: var(--wa-color-success-60, #1a7f37);
-  --quick-access-icon-active-pending: #000000;
+  --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
+  --quick-access-icon-active-uncategorized: var(--quick-access-icon-uncategorized);
+  --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
+  --quick-access-icon-active-asap: var(--quick-access-icon-asap);
+  --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
+  --quick-access-icon-active-done: var(--quick-access-icon-done);
+  --quick-access-icon-active-progress: var(--quick-access-icon-progress);
+  --quick-access-icon-active-pending: var(--quick-access-icon-pending);
 
   /* Labels アイコンカラー・メニュートリガー・スクロールバー（Light モード） */
   --label-icon-color: var(--wa-color-brand-60, #0969da);
-  --label-icon-active-color: var(--wa-color-brand-60, #0969da);
+  --label-icon-active-color: var(--label-icon-color);
   --label-menu-trigger-color: var(--wa-color-text-quiet);
   --label-menu-trigger-hover-color: var(--wa-color-text-normal);
   --label-menu-trigger-active-color: var(--wa-color-text-normal);
@@ -111,27 +111,27 @@
 
   /* Quick Access アイコンカラー（Dark モード: 70系 / 白） */
   --quick-access-icon-bookmark: var(--wa-color-indigo-70, #6366f1);
-  --quick-access-icon-uncategorized: #ffffff;
+  --quick-access-icon-uncategorized: var(--stepnote-color-white);
   --quick-access-icon-overdue: var(--wa-color-danger-70, #e5534b);
   --quick-access-icon-asap: var(--wa-color-yellow-70, #bf8700);
   --quick-access-icon-upcoming: var(--wa-color-cyan-70, #3192aa);
   --quick-access-icon-done: var(--wa-color-brand-70, #218bff);
   --quick-access-icon-progress: var(--wa-color-success-70, #2da44e);
-  --quick-access-icon-pending: #ffffff;
+  --quick-access-icon-pending: var(--stepnote-color-white);
 
   /* Quick Access アイコンカラー（Dark モード・アクティブ時: 通常時と同一色を維持） */
-  --quick-access-icon-active-bookmark: var(--wa-color-indigo-70, #6366f1);
-  --quick-access-icon-active-uncategorized: #ffffff;
-  --quick-access-icon-active-overdue: var(--wa-color-danger-70, #e5534b);
-  --quick-access-icon-active-asap: var(--wa-color-yellow-70, #bf8700);
-  --quick-access-icon-active-upcoming: var(--wa-color-cyan-70, #3192aa);
-  --quick-access-icon-active-done: var(--wa-color-brand-70, #218bff);
-  --quick-access-icon-active-progress: var(--wa-color-success-70, #2da44e);
-  --quick-access-icon-active-pending: #ffffff;
+  --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
+  --quick-access-icon-active-uncategorized: var(--quick-access-icon-uncategorized);
+  --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
+  --quick-access-icon-active-asap: var(--quick-access-icon-asap);
+  --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
+  --quick-access-icon-active-done: var(--quick-access-icon-done);
+  --quick-access-icon-active-progress: var(--quick-access-icon-progress);
+  --quick-access-icon-active-pending: var(--quick-access-icon-pending);
 
   /* Labels アイコンカラー・メニュートリガー・スクロールバー（Dark モード） */
   --label-icon-color: var(--wa-color-brand-70, #218bff);
-  --label-icon-active-color: var(--wa-color-brand-70, #218bff);
+  --label-icon-active-color: var(--label-icon-color);
   --label-menu-trigger-color: #c9d1d9;
   --label-menu-trigger-hover-color: var(--wa-color-neutral-on-normal);
   --label-menu-trigger-active-color: var(--wa-color-neutral-on-normal);
