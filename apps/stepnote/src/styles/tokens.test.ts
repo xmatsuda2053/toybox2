@@ -13,7 +13,7 @@ import * as fs from "node:fs";
  * 仕様 7: Dark モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に背景と同化しない #484d5e が定義されていること
  * 仕様 8: Dark モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #252833 が定義されていること
  * 仕様 9: Light モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に引き締まった漆黒 #0d1117 が定義されていること
- * 仕様 10: Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に高コントラストな純白 #ffffff が定義されていること
+ * 仕様 10: Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に純白トークン（var(--stepnote-color-white)）が定義されていること
  * 仕様 11: OS 連動ダークモード（@media (prefers-color-scheme: dark)）にも調整後の各トークン値が定義されていること
  * 仕様 12: Light モードの通常ボタンホバー背景色（--wa-color-neutral-fill-quiet）に基調色より暗い #e2e5e8 が定義されていること
  * 仕様 13: Light モードのアクティブボタン背景色（--wa-color-neutral-fill-normal）に通常ホバー色（#e2e5e8）より濃い #d8dce0 が定義されていること
@@ -33,6 +33,13 @@ import * as fs from "node:fs";
  * 仕様 27: Quick Access アクティブ時アイコンカラーが通常時アイコン変数を参照していること（直値重複の排除）
  * 仕様 28: Labels アクティブ時アイコンカラーが通常時変数を参照していること
  * 仕様 29: 未分類・開始待ちアイコン色がセマンティックトークン（--wa-color-text-normal / --stepnote-color-white）を参照していること
+ * 仕様 30: Dark モードの Quick Access アクティブ時アイコンカラーが通常時アイコン変数を参照していること
+ * 仕様 31: Dark モードの未分類・開始待ちアイコン色が純白セマンティックトークンを参照していること
+ * 仕様 32: Light モードのダイアログ・ドロップダウン背景が純白トークン（var(--stepnote-color-white)）を参照していること
+ * 仕様 33: Dark モード（@mixin dark-theme-tokens）の neutral-on-normal が純白トークン（var(--stepnote-color-white)）を参照していること
+ * 仕様 34: Light モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること
+ * 仕様 35: Dark モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること
+ * 仕様 36: ドロップダウンの Danger カラーおよびホバー背景がセマンティックトークンを参照していること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -137,7 +144,7 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
         tokensScss,
         /:root[\s\S]*?\[data-theme="light"\]/,
       );
-      expect(lightBlock).toMatch(/--stepnote-dialog-bg:\s*#ffffff;/);
+      expect(lightBlock).toMatch(/--stepnote-dialog-bg:\s*var\(--stepnote-color-white\);/);
       expect(lightBlock).toMatch(/--stepnote-dialog-border:\s*var\(--wa-color-surface-border\);/);
       expect(lightBlock).toMatch(/--stepnote-dialog-title-color:\s*var\(--wa-color-text-normal\);/);
       expect(lightBlock).toMatch(/--stepnote-dialog-body-color:\s*var\(--wa-color-text-normal\);/);
@@ -146,12 +153,12 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(lightBlock).toMatch(/--stepnote-form-label-color:\s*var\(--wa-color-text-normal\);/);
       expect(lightBlock).toMatch(/--stepnote-form-value-color:\s*var\(--wa-color-text-normal\);/);
       expect(lightBlock).toMatch(/--stepnote-form-placeholder-color:\s*#8c959f;/);
-      expect(lightBlock).toMatch(/--stepnote-dropdown-bg:\s*#ffffff;/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-color-white\);/);
       expect(lightBlock).toMatch(/--stepnote-dropdown-border:\s*var\(--wa-color-surface-border\);/);
       expect(lightBlock).toMatch(/--stepnote-dropdown-color:\s*var\(--wa-color-text-normal\);/);
-      expect(lightBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#f6f8fa;/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*var\(--stepnote-form-bg\);/);
       expect(lightBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*var\(--wa-color-text-quiet\);/);
-      expect(lightBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#cf222e;/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-danger-color:\s*var\(--quick-access-icon-overdue\);/);
     });
 
     it("Light モードのメニュートリガーおよびスクロールバーサム色が基底セマンティックトークンを参照していること", () => {
@@ -211,8 +218,8 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
     });
 
-    it("Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に高コントラストな純白 #ffffff が定義されていること", () => {
-      expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+    it("Dark モードのアクティブボタン文字色（--wa-color-neutral-on-normal）に純白トークンが定義されていること", () => {
+      expect(resolvedDarkBlock).toMatch(/--wa-color-neutral-on-normal:\s*var\(--stepnote-color-white\);/);
     });
 
     it("Dark モードのアクティブボタンホバー混色（--wa-color-mix-hover）に暗く沈み込ませる #000000 20% が定義されていること", () => {
@@ -231,16 +238,16 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-title-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
-      expect(resolvedDarkBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-form-border:\s*var\(--stepnote-dialog-border\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-form-label-color:\s*var\(--wa-color-text-normal\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-form-value-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
-      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
-      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-dialog-bg\);/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-border:\s*var\(--stepnote-dialog-border\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
       expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*var\(--wa-color-text-normal\);/);
-      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
+      expect(resolvedDarkBlock).toMatch(/--stepnote-dropdown-danger-color:\s*var\(--wa-color-danger-70,\s*#ff7b72\);/);
     });
 
     it("Dark モードのメニュートリガーが基底セマンティックトークンを参照していること", () => {
@@ -269,7 +276,7 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(resolvedMediaBlock).toMatch(/--scrollbar-thumb-color:\s*var\(--wa-color-surface-border\);/);
       expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-fill-normal:\s*#484d5e;/);
       expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-fill-quiet:\s*#252833;/);
-      expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-on-normal:\s*#ffffff;/);
+      expect(resolvedMediaBlock).toMatch(/--wa-color-neutral-on-normal:\s*var\(--stepnote-color-white\);/);
       expect(resolvedMediaBlock).toMatch(/--wa-color-mix-hover:\s*#000000 20%;/);
       expect(resolvedMediaBlock).toMatch(
         /--wa-color-neutral-fill-normal-hover:\s*#1f212b;/,
@@ -279,16 +286,16 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-title-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-dialog-body-color:\s*#f0f6fc;/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
-      expect(resolvedMediaBlock).toMatch(/--stepnote-form-border:\s*#444c56;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-form-border:\s*var\(--stepnote-dialog-border\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-form-label-color:\s*var\(--wa-color-text-normal\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-form-value-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-form-placeholder-color:\s*#768390;/);
-      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
-      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-border:\s*#444c56;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-dialog-bg\);/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-border:\s*var\(--stepnote-dialog-border\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-color:\s*var\(--wa-color-neutral-on-normal\);/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*#30363d;/);
       expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-item-icon-color:\s*var\(--wa-color-text-normal\);/);
-      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-danger-color:\s*#ff7b72;/);
+      expect(resolvedMediaBlock).toMatch(/--stepnote-dropdown-danger-color:\s*var\(--wa-color-danger-70,\s*#ff7b72\);/);
     });
   });
 
@@ -306,7 +313,7 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(mixinBlock).toMatch(/--scrollbar-thumb-color:\s*var\(--wa-color-surface-border\);/);
       expect(mixinBlock).toMatch(/--stepnote-dialog-bg:\s*#1c2128;/);
       expect(mixinBlock).toMatch(/--stepnote-form-bg:\s*#0d1117;/);
-      expect(mixinBlock).toMatch(/--stepnote-dropdown-bg:\s*#1c2128;/);
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-dialog-bg\);/);
     });
 
     it("仕様 23: 手動 Dark テーマセレクタに @include dark-theme-tokens が適用されていること", () => {
@@ -380,5 +387,66 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(mixinBlock).toMatch(/--quick-access-icon-pending:\s*var\(--stepnote-color-white\);/);
     });
   });
+
+  describe("Phase 3: 半透明シャドウ・残余カラーのセマンティック集約仕様", () => {
+    it("仕様 32: Light モードのダイアログ・ドロップダウン背景が純白トークン（var(--stepnote-color-white)）を参照していること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--stepnote-dialog-bg:\s*var\(--stepnote-color-white\);/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-color-white\);/);
+    });
+
+    it("仕様 33: Dark モード（@mixin dark-theme-tokens）の neutral-on-normal が純白トークンを参照していること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--wa-color-neutral-on-normal:\s*var\(--stepnote-color-white\);/);
+    });
+
+    it("仕様 34: Light モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      expect(lightBlock).toMatch(/--stepnote-shadow-dialog:\s*0 12px 28px rgba\(140, 149, 159, 0\.3\);/);
+      expect(lightBlock).toMatch(/--stepnote-shadow-dropdown:\s*0 8px 24px rgba\(140, 149, 159, 0\.2\);/);
+      expect(lightBlock).toMatch(/--stepnote-dialog-shadow:\s*var\(--stepnote-shadow-dialog\);/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-shadow:\s*var\(--stepnote-shadow-dropdown\);/);
+    });
+
+    it("仕様 35: Dark モードにエレベーションシャドウトークン（--stepnote-shadow-dialog / --stepnote-shadow-dropdown）が定義され、参照されていること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      expect(mixinBlock).toMatch(/--stepnote-shadow-dialog:\s*0 16px 36px rgba\(0, 0, 0, 0\.8\),\s*0 0 0 1px rgba\(255, 255, 255, 0\.08\);/);
+      expect(mixinBlock).toMatch(/--stepnote-shadow-dropdown:\s*0 12px 28px rgba\(0, 0, 0, 0\.8\),\s*0 0 0 1px rgba\(255, 255, 255, 0\.08\);/);
+      expect(mixinBlock).toMatch(/--stepnote-dialog-shadow:\s*var\(--stepnote-shadow-dialog\);/);
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-shadow:\s*var\(--stepnote-shadow-dropdown\);/);
+    });
+
+    it("仕様 36: ドロップダウンの Danger カラーおよびホバー背景がセマンティックトークンを参照していること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      // Light モード
+      expect(lightBlock).toMatch(/--stepnote-dropdown-danger-color:\s*var\(--quick-access-icon-overdue\);/);
+      expect(lightBlock).toMatch(/--stepnote-dropdown-item-hover-bg:\s*var\(--stepnote-form-bg\);/);
+      // Dark モード
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-danger-color:\s*var\(--wa-color-danger-70,\s*#ff7b72\);/);
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-bg:\s*var\(--stepnote-dialog-bg\);/);
+      expect(mixinBlock).toMatch(/--stepnote-form-border:\s*var\(--stepnote-dialog-border\);/);
+      expect(mixinBlock).toMatch(/--stepnote-dropdown-border:\s*var\(--stepnote-dialog-border\);/);
+    });
+  });
 });
+
 

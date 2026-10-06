@@ -69,10 +69,14 @@
   --scrollbar-thumb-hover-color: #8c959f;
   --scrollbar-track-color: transparent;
 
+  /* エレベーション・シャドウトークン（Light モード） */
+  --stepnote-shadow-dialog: 0 12px 28px rgba(140, 149, 159, 0.3);
+  --stepnote-shadow-dropdown: 0 8px 24px rgba(140, 149, 159, 0.2);
+
   /* ダイアログ・モーダル用サーフェストークン（Light モード） */
-  --stepnote-dialog-bg: #ffffff;
+  --stepnote-dialog-bg: var(--stepnote-color-white);
   --stepnote-dialog-border: var(--wa-color-surface-border);
-  --stepnote-dialog-shadow: 0 12px 28px rgba(140, 149, 159, 0.3);
+  --stepnote-dialog-shadow: var(--stepnote-shadow-dialog);
   --stepnote-dialog-title-color: var(--wa-color-text-normal);
   --stepnote-dialog-body-color: var(--wa-color-text-normal);
 
@@ -84,13 +88,13 @@
   --stepnote-form-placeholder-color: #8c959f;
 
   /* ドロップダウンメニュー用トークン（Light モード） */
-  --stepnote-dropdown-bg: #ffffff;
+  --stepnote-dropdown-bg: var(--stepnote-color-white);
   --stepnote-dropdown-border: var(--wa-color-surface-border);
-  --stepnote-dropdown-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+  --stepnote-dropdown-shadow: var(--stepnote-shadow-dropdown);
   --stepnote-dropdown-color: var(--wa-color-text-normal);
-  --stepnote-dropdown-item-hover-bg: #f6f8fa;
+  --stepnote-dropdown-item-hover-bg: var(--stepnote-form-bg);
   --stepnote-dropdown-item-icon-color: var(--wa-color-text-quiet);
-  --stepnote-dropdown-danger-color: #cf222e;
+  --stepnote-dropdown-danger-color: var(--quick-access-icon-overdue);
 }
 
 /* --------------------------------------------------------------------------
@@ -106,7 +110,7 @@
   --wa-color-neutral-fill-quiet: #252833;
   --wa-color-neutral-fill-normal: #484d5e;
   --wa-color-neutral-fill-normal-hover: #1f212b;
-  --wa-color-neutral-on-normal: #ffffff;
+  --wa-color-neutral-on-normal: var(--stepnote-color-white);
   --wa-color-mix-hover: #000000 20%;
 
   /* Quick Access アイコンカラー（Dark モード: 70系 / 白） */
@@ -139,30 +143,34 @@
   --scrollbar-thumb-hover-color: #60677a;
   --scrollbar-track-color: transparent;
 
+  /* エレベーション・シャドウトークン（Dark モード） */
+  --stepnote-shadow-dialog: 0 16px 36px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+  --stepnote-shadow-dropdown: 0 12px 28px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+
   /* ダイアログ・モーダル用サーフェストークン（Dark モード） */
   --stepnote-dialog-bg: #1c2128;
   --stepnote-dialog-border: #444c56;
-  --stepnote-dialog-shadow: 0 16px 36px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+  --stepnote-dialog-shadow: var(--stepnote-shadow-dialog);
   --stepnote-dialog-title-color: var(--wa-color-neutral-on-normal);
   --stepnote-dialog-body-color: #f0f6fc;
 
   /* フォーム入力コントロール用トークン（Dark モード） */
   --stepnote-form-bg: #0d1117;
-  --stepnote-form-border: #444c56;
+  --stepnote-form-border: var(--stepnote-dialog-border);
   --stepnote-form-label-color: var(--wa-color-text-normal);
   --stepnote-form-value-color: var(--wa-color-neutral-on-normal);
   --stepnote-form-placeholder-color: #768390;
 
   /* ドロップダウンメニュー用トークン（Dark モード） */
-  --stepnote-dropdown-bg: #1c2128;
-  --stepnote-dropdown-border: #444c56;
-  --stepnote-dropdown-shadow: 0 12px 28px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+  --stepnote-dropdown-bg: var(--stepnote-dialog-bg);
+  --stepnote-dropdown-border: var(--stepnote-dialog-border);
+  --stepnote-dropdown-shadow: var(--stepnote-shadow-dropdown);
   --stepnote-dropdown-color: var(--wa-color-neutral-on-normal);
   --stepnote-dropdown-item-hover-bg: #30363d;
   --stepnote-dropdown-item-icon-color: var(--wa-color-text-normal);
-  --stepnote-dropdown-danger-color: #ff7b72;
+  --stepnote-dropdown-danger-color: var(--wa-color-danger-70, #ff7b72);
 }
 
 /* --------------------------------------------------------------------------
