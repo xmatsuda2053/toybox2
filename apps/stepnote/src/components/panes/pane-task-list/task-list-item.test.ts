@@ -38,6 +38,8 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 5-4. task-list-item.scss に !important 宣言が一切含まれていないこと
  *    - 5-5. ブックマークアイコンのアクティブ状態に !important を用いずカラーが定義されていること
  *    - 5-6. 基本色（ボーダー、サーフェス、テキスト、ニュートラル背景、ホバー色）に直値カラーフォールバックが含まれず、セマンティックトークン（var(--wa-color-*)）が指定されていること
+ *    - 5-7. 状態アイコン・ブックマーク・期限アイコン・選択境界線において、アクセント・状態カラーのフォールバック直値が一切含まれず、セマンティックトークンで定義されていること
+ *    - 5-8. task-list-item.scss 全体においてハードコードされたカラーコード（#[0-9a-fA-F]{3,8}, rgba(...)）が 0 件（完全ゼロ）であること
  */
 describe("TaskListItem Component", () => {
   let element: TaskListItem;
@@ -323,6 +325,51 @@ describe("TaskListItem Component", () => {
       expect(content).toMatch(/background-color:\s*var\(--wa-color-neutral-fill-normal\);/);
       expect(content).toMatch(/background-color:\s*var\(--wa-color-neutral-fill-normal-hover\);/);
       expect(content).toMatch(/color:\s*var\(--wa-color-text-quiet\);/);
+    });
+
+    it("5-7. 状態アイコン・ブックマーク・期限アイコン・選択境界線において、アクセント・状態カラーのフォールバック直値が一切含まれず、セマンティックトークンで定義されていること", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+
+      // アクセント・状態カラー直値がフォールバックとして残存していないこと
+      const rawAccentColors = [
+        "#0969da",
+        "#000000",
+        "#1a7f37",
+        "#4f46e5",
+        "#cf222e",
+        "#9a6700",
+        "#1b7c83",
+      ];
+      for (const col of rawAccentColors) {
+        expect(content).not.toContain(col);
+      }
+
+      // セマンティックトークンが正しく指定されていること
+      expect(content).toMatch(/border-color:\s*var\(--wa-color-brand-60\);/);
+      expect(content).toMatch(/border-left:\s*3px solid var\(--wa-color-brand-60\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-pending\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-progress\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-done\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-active-bookmark\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-overdue\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-asap\);/);
+      expect(content).toMatch(/color:\s*var\(--quick-access-icon-upcoming\);/);
+    });
+
+    it("5-8. task-list-item.scss 全体においてハードコードされたカラーコード（#[0-9a-fA-F]{3,8}, rgba(...)）が 0 件（完全ゼロ）であること", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+      const colorMatches = content.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^\)]+\)|hsla?\([^\)]+\))/g);
+      expect(colorMatches).toBeNull();
     });
   });
 

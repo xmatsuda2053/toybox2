@@ -58,7 +58,9 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 7-2. SCSSスタイルシートにおいて簡易BEMセレクタ（.quick-access__*）が定義されていること
  *    - [x] 7-3. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  *    - [x] 7-4. 廃止された旧クラス名（quick-access-btn、quick-access-counter等）がHTMLテンプレートおよびSCSSに一切残存していないこと
- *    - [ ] 7-5. カウンターバッジ（.quick-access__count）のテキストカラーに直値 #ffffff が残存せず、セマンティックトークン（var(--stepnote-color-white)）が指定されていること
+ *    - [x] 7-5. カウンターバッジ（.quick-access__counter）のテキストカラーに直値 #ffffff が残存せず、セマンティックトークン（var(--stepnote-color-white)）が指定されていること
+ *    - [ ] 7-6. カウンターバッジ（.quick-access__counter）の背景色において、ブランドカラーのフォールバック直値が残存せず、セマンティックトークンで定義されていること
+ *    - [ ] 7-7. navigation-quick-access.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
  * 8. TaskListController 連動によるタスク件数の自動取得（Context連携）
  *    - [x] 8-1. taskListController が設定されている場合、明示的な taskCounts プロパティ指定がなくても controller.quickAccessTaskCounts がバッジとしてレンダリングされること
  *    - [x] 8-2. taskListController の購読リスナーが発火した際に requestUpdate が呼び出されること
@@ -504,6 +506,26 @@ describe("NavigationQuickAccess Component", () => {
       expect(scssContent).toMatch(
         /\.quick-access__counter\s*\{[^}]*color:\s*var\(--stepnote-color-white\);/,
       );
+    });
+
+    it("7-6. カウンターバッジ（.quick-access__counter）の背景色において、ブランドカラーのフォールバック直値（#0969da, #218bff）が残存せず、セマンティックトークンで定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).not.toContain("#0969da");
+      expect(scssContent).not.toContain("#218bff");
+      expect(scssContent).toMatch(/background-color:\s*var\(--wa-color-brand-50\);/);
+      expect(scssContent).toMatch(/background-color:\s*var\(--wa-color-brand-60\);/);
+    });
+
+    it("7-7. navigation-quick-access.scss 全体においてハードコードされたカラーコード（#[0-9a-fA-F]{3,8}, rgba(...)）が 0 件（完全ゼロ）であること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+      const colorMatches = scssContent.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^\)]+\)|hsla?\([^\)]+\))/g);
+      expect(colorMatches).toBeNull();
     });
   });
 
