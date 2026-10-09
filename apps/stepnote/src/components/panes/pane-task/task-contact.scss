@@ -1,0 +1,79 @@
+@use "../../../styles/mixins.scss" as *;
+
+:host {
+  display: block;
+  width: 100%;
+  @include theme-transition;
+}
+
+.task-contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s);
+  @include theme-transition;
+}
+
+.task-contact__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wa-space-xs) var(--wa-space-s);
+  background-color: var(--wa-color-surface-subtle);
+  border: 1px dashed var(--wa-color-border-subtle);
+  border-radius: var(--wa-border-radius-m);
+  @include theme-transition;
+}
+
+.task-contact__empty-text {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-quiet);
+}
+
+.task-contact__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs);
+}
+
+.task-contact__row {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  border-bottom: 1px solid var(--wa-color-border-subtle);
+  @include theme-transition;
+}
+
+.task-contact__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-2xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.task-contact__label {
+  font-size: var(--wa-font-size-2xs);
+  color: var(--wa-color-text-quiet);
+}
+
+.task-contact__input {
+  width: 100%;
+}
+
+.task-contact__input-icon {
+  color: var(--stepnote-text-secondary, var(--wa-color-text-quiet));
+  font-size: var(--wa-font-size-s, 13px);
+  @include theme-transition;
+}
+
+.task-contact__btn-remove {
+  cursor: pointer;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-m, 16px);
+  flex-shrink: 0;
+  @include theme-transition;
+
+  &:hover {
+    color: var(--quick-access-icon-overdue);
+  }
+}

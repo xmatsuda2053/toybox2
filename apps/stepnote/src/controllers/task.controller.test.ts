@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
 import { TaskController } from "./task.controller.js";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskRepository } from "@/repositories/task.repository.js";
 import type { CreateTaskInput } from "@/types";
 
 /**
@@ -17,6 +18,11 @@ class FakeTaskRepository {
 
   async getById(id: number): Promise<TaskRecord | undefined> {
     const item = this.data.find((t) => t.id === id);
+    return item ? { ...item } : undefined;
+  }
+
+  async getSelected(): Promise<TaskRecord | undefined> {
+    const item = this.data.find((t) => t.selected === true);
     return item ? { ...item } : undefined;
   }
 
@@ -66,6 +72,7 @@ const createMockHost = () => {
  *    - [x] 1-2. taskId 未指定時、state は undefined となり、requestUpdate() が呼ばれること
  *    - [x] 1-3. 存在しない taskId が指定された場合、state および taskId は undefined となること
  *    - [x] 1-4. hasTask ゲッターは、タスクが存在する場合に true、存在しない場合に false を返すこと
+ *    - [x] 1-5. taskId 未指定で Repository 内に選択中（selected: true）のタスクが存在する場合、初期化時に自動取得されて state に保持され、taskId が設定されること
  *
  * 2. タスクID変更・リフレッシュ (Change Target Task & Refresh)
  *    - [x] 2-1. setTaskId(id) で別のタスクIDを指定した際、対象タスクが再取得されて state が更新され、requestUpdate() が呼ばれること
@@ -172,6 +179,22 @@ describe("TaskController (Single Task TDD)", () => {
       );
       await emptyController.initialized;
       expect(emptyController.hasTask).toBe(false);
+    });
+
+    it("1-5. taskId 未指定で Repository 内に選択中（selected: true）のタスクが存在する場合、初期化時に自動取得されて state に保持され、taskId が設定されること", async () => {
+      const repoWithSelected = new FakeTaskRepository([
+        { ...testTasks[0], selected: false },
+        { ...testTasks[1], selected: true },
+      ]);
+      controller = new TaskController(
+        mockHost.host,
+        repoWithSelected as unknown as TaskRepository,
+      );
+      await controller.initialized;
+
+      expect(controller.state).toEqual({ ...testTasks[1], selected: true });
+      expect(controller.taskId).toBe(2);
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
   });
 

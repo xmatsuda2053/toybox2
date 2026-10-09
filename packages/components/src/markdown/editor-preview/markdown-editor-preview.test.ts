@@ -25,7 +25,7 @@
  *   - スプリット: table-columns-solid-full、編集: markdown-brands-solid-full、プレビュー: html5-brands-solid-full
  *   - 各ボタンにアクセシビリティ用の aria-label および title が設定されていること
  * 8. アイコンボタンのスタイルと視認性
- *   - モード切替アイコンボタンの wa-icon のサイズが視認性向上のため 18px 以上に設定されていること
+ *   - モード切替アイコンボタンの wa-icon のサイズがコンパクト設計のため 15px 以上に設定されていること
  * 9. 書式ツールバーのレンダリングとアクション
  *   - split モードまたは edit モード時、ヘッダーに書式ツールバー（太字、見出し、リスト、テーブル等）がレンダリングされること
  *   - 各ツールバーボタンに適切な wa-icon が配置されていること
@@ -62,9 +62,38 @@
  *   - renderHelpBasicTable() により基本記法チートシートテーブルが描画されること
  *   - renderHelpExtensionTable() により拡張機能テーブルが描画されること
  *   - commitHeightMode() により高さモードの確定と height-mode-change イベントが単一箇所で発火されること
+ * 15. 拡張配列およびプロセッサオプションの参照安定性（メモ化・不要な再描画防止）
+ *   - extensions および customExtensions が変更されない限り、effectiveEditorExtensions は同一の配列参照を返すこと
+ *   - extensions および processorOptions が変更されない限り、effectiveProcessorOptions は同一のオブジェクト参照を返すこと
+ * 16. テーマモード制御（themeMode）と視覚スタイルの保護
+ *   - themeMode プロパティが指定された場合、指定されたテーマが優先されること
+ *   - SCSS において :host([data-theme="dark"]) の背景色が透明に設定され、角丸の遮蔽を防止すること
+ * 17. 高さモード（auto-height）における領域フィットと伸縮保護
+ *   - auto-height モード時、内部コンテナおよび body が親要素の flex: 1 / min-height: 100% を尊重し、領域末尾まで伸長可能であること
+ * 18. サイズ制御モードのトグルとボタンタイトル・アイコン（固定表示／全表示）
+ *   - autoHeight=false の時、トグルボタンの title と aria-label が「全表示」、アイコンが expand-solid-full であること
+ *   - autoHeight=true の時、トグルボタンの title と aria-label が「固定表示」、アイコンが compress-solid-full であること
+ *   - コンテンツ展開モード時、:host([auto-height]) が height: auto となりコンテンツ高さに追従すること
+ * 19. 全表示（コンテンツ展開）モードにおけるヘッダーの sticky スクロール追従仕様
+ *   - SCSS においてコンテンツ展開モード時（:host([auto-height]) または .markdown-editor-preview--auto-height）、親コンテナの overflow: visible が指定され、外側スクロールコンテナへの sticky 伝播が有効であること
+ *   - SCSS においてコンテンツ展開モード時、.markdown-editor-preview__header に対し position: sticky; top: 0; が指定されていること
+ *   - SCSS においてヘッダー上部に角丸（border-top-left-radius / border-top-right-radius）が指定され、視覚的完全性が維持されていること
+ * 20. ヘッダーボタンのコンパクト設計およびコンテナクエリ閾値仕様
+ *   - SCSS において .markdown-editor-preview__toolbar-btn の min-width / min-height が 24px、アイコンフォントサイズが 15px にコンパクト化されていること
+ *   - SCSS において .markdown-editor-preview__mode-btn の min-height が 24px にコンパクト化されていること
+ *   - SCSS においてコンテナクエリ閾値が @container editor-preview (max-width: 430px) に最適化されていること
+ * 21. ヘッダー右端のエディタ操作メニューおよびドロップダウン仕様
+ *   - ヘッダー右端にエディタ操作メニューボタン（.markdown-editor-preview__action-menu-btn）がレンダリングされること
+ *   - メニューボタンのアイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
+ *   - ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン」の順に配置されていること
+ *   - 初期状態でアクションメニューが閉じていること
+ *   - toggleActionMenu() によりアクションメニューの開閉がトグルされること
+ *   - アクションメニュー内に「構文ヘルプ」項目（question-solid-full）が含まれ、選択時にヘルプモーダルが開いてメニューが閉じること
+ *   - Escape キー押下や外部クリックによりアクションメニューが閉じること
  */
 
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { MarkdownEditorPreview } from "./markdown-editor-preview.js";
@@ -213,7 +242,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("アイコンボタンのスタイルと視認性", () => {
-    it("モード切替ボタン内の wa-icon のサイズが視認性向上のため 18px 以上に設定されていること", () => {
+    it("モード切替ボタン内の wa-icon のサイズがコンパクト設計のため 15px 以上に設定されていること", () => {
       const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       const match = scssContent.match(
@@ -221,7 +250,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       );
       expect(match).not.toBeNull();
       const fontSize = parseInt(match![1], 10);
-      expect(fontSize).toBeGreaterThanOrEqual(18);
+      expect(fontSize).toBeGreaterThanOrEqual(15);
     });
   });
 
@@ -347,11 +376,11 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("構文ヘルプのレンダリングとダイアログ開閉・独自タグ一覧", () => {
-    it("ヘッダーのモード切替ボタングループの左隣にヘルプボタンが描画されること", () => {
+    it("エディタ操作メニュー内に構文ヘルプ項目が描画されること", () => {
       const htmlStr = flattenTemplate(element.render());
 
       expect(htmlStr).toContain('name="question-solid-full"');
-      expect(htmlStr).toContain('title="構文ヘルプ"');
+      expect(htmlStr).toContain("構文ヘルプ");
     });
 
     it("初期状態では構文ヘルプダイアログが非表示であること", () => {
@@ -504,7 +533,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       const htmlStr = flattenTemplate(element.render());
 
       expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
-      expect(htmlStr).toContain("arrows-up-down-solid-full");
+      expect(htmlStr).toContain("expand-solid-full");
     });
 
     it("allowAutoHeight が false の場合、ヘッダーに高さモード切替ボタンがレンダリングされないこと", () => {
@@ -644,10 +673,12 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
     });
 
-    it("renderHelpButton() により構文ヘルプボタンが描画されること", () => {
-      const result = (element as any).renderHelpButton();
+    it("renderActionMenu() によりエディタ操作メニューが描画され、構文ヘルプ項目が含まれること", () => {
+      const result = (element as any).renderActionMenu();
       const htmlStr = flattenTemplate(result);
-      expect(htmlStr).toContain("markdown-editor-preview__help-btn");
+      expect(htmlStr).toContain("markdown-editor-preview__action-menu-btn");
+      expect(htmlStr).toContain("bars-solid-full");
+      expect(htmlStr).toContain("構文ヘルプ");
     });
 
     it("renderModeSwitchTabs() によりモード切替タブグループが描画されること", () => {
@@ -685,6 +716,209 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(element.autoHeight).toBe(true);
       expect((element as any).isTransitioning).toBe(false);
       expect(eventDetail).toEqual({ autoHeight: true });
+    });
+  });
+
+  describe("15. 拡張配列およびプロセッサオプションの参照安定性（メモ化・不要な再描画防止）", () => {
+    it("extensions および customExtensions が変更されない限り、effectiveEditorExtensions は同一の配列参照を返すこと", () => {
+      const first = element.effectiveEditorExtensions;
+      const second = element.effectiveEditorExtensions;
+      expect(first).toBe(second);
+    });
+
+    it("extensions および processorOptions が変更されない限り、effectiveProcessorOptions は同一のオブジェクト参照を返すこと", () => {
+      const first = element.effectiveProcessorOptions;
+      const second = element.effectiveProcessorOptions;
+      expect(first).toBe(second);
+    });
+  });
+
+  describe("16. テーマモード制御（themeMode）と視覚スタイルの保護", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("themeMode='dark' が指定された場合、currentTheme が 'dark' となりホスト属性が更新されること", () => {
+      element.themeMode = "dark";
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.currentTheme).toBe("dark");
+      expect(element.getAttribute("data-theme")).toBe("dark");
+    });
+
+    it("themeMode='light' が指定された場合、currentTheme が 'light' となりホスト属性が更新されること", () => {
+      element.themeMode = "light";
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.currentTheme).toBe("light");
+      expect(element.getAttribute("data-theme")).toBe("light");
+    });
+
+    it("SCSS において :host([data-theme='dark']) に不透明な黒背景色が設定されず、transparent であること", () => {
+      const darkHostMatch = scssContent.match(/:host\(\[data-theme="dark"\]\)[^{]*\{([^}]+)\}/);
+      if (darkHostMatch) {
+        expect(darkHostMatch[1]).not.toMatch(/background-color:\s*#[0-9a-fA-F]+/);
+      }
+      expect(scssContent).toMatch(/:host\s*\{[^}]*background-color:\s*transparent/);
+    });
+  });
+
+  describe("17. デフォルト表示（親要素フィットモード）における領域フィット", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it(":host が display: flex を持ち、親要素からのフレックス伸長を受け入れられること", () => {
+      expect(scssContent).toMatch(/:host\s*\{[^}]*display:\s*flex;/);
+      expect(scssContent).toMatch(/:host\s*\{[^}]*flex-direction:\s*column;/);
+    });
+
+    it("デフォルト表示時、:host、内部コンテナおよび body が flex: 1 を保持し領域末尾まで伸長すること", () => {
+      expect(scssContent).toMatch(/:host\s*\{[^}]*flex:\s*1;/);
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__body\s*\{[^}]*flex:\s*1;/,
+      );
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__pane\s*\{[^}]*flex:\s*1;/,
+      );
+    });
+  });
+
+  describe("18. サイズ制御モードのトグルとボタンタイトル・アイコン（固定表示／全表示）", () => {
+    it("autoHeight=false（親要素フィットモード）の時、トグルボタンの title と aria-label が「全表示」、アイコンが expand-solid-full であること", () => {
+      element.autoHeight = false;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/title=["']全表示["']/);
+      expect(htmlStr).toMatch(/aria-label=["']全表示["']/);
+      expect(htmlStr).toContain("expand-solid-full");
+    });
+
+    it("autoHeight=true（コンテンツ展開モード）の時、トグルボタンの title と aria-label が「固定表示」、アイコンが compress-solid-full であること", () => {
+      element.autoHeight = true;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/title=["']固定表示["']/);
+      expect(htmlStr).toMatch(/aria-label=["']固定表示["']/);
+      expect(htmlStr).toContain("compress-solid-full");
+    });
+
+    it("コンテンツ展開モード時（方針A）、:host([auto-height]) が height: auto かつ flex: none となりコンテンツ高さに追従すること", () => {
+      const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(/:host\(\[auto-height\]\)[^{]*\{[^}]*height:\s*auto;/);
+      expect(scssContent).toMatch(/:host\(\[auto-height\]\)[^{]*\{[^}]*flex:\s*none;/);
+    });
+  });
+
+  describe("19. 全表示（コンテンツ展開）モードにおけるヘッダーの sticky スクロール追従仕様", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("コンテンツ展開モード時、親コンテナに overflow: visible が指定され外側スクロールコンテナへの sticky 伝播が有効であること", () => {
+      expect(scssContent).toMatch(
+        /:host\(\[auto-height\]\)[\s\S]*?overflow:\s*visible;|\.markdown-editor-preview--auto-height[\s\S]*?overflow:\s*visible;/,
+      );
+    });
+
+    it("コンテンツ展開モード時、.markdown-editor-preview__header に対し position: sticky; top: 0; が指定されていること", () => {
+      expect(scssContent).toMatch(
+        /position:\s*sticky;[\s\S]*?top:\s*0;/,
+      );
+    });
+
+    it("ヘッダー上部に角丸（border-top-left-radius / border-top-right-radius）が指定され、視覚的完全性が維持されていること", () => {
+      expect(scssContent).toMatch(/border-top-left-radius:\s*\d+px;/);
+      expect(scssContent).toMatch(/border-top-right-radius:\s*\d+px;/);
+    });
+  });
+
+  describe("20. ヘッダーボタンのコンパクト設計およびコンテナクエリ閾値仕様", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("ツールバーボタンの最小幅・高さが 24px、アイコンが 15px にコンパクト化されていること", () => {
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__toolbar-btn\s*\{[^}]*min-width:\s*24px;/,
+      );
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__toolbar-btn\s*\{[^}]*min-height:\s*24px;/,
+      );
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__toolbar-btn[\s\S]*?wa-icon\s*\{[^}]*font-size:\s*15px;/,
+      );
+    });
+
+    it("モード切替ボタンの最小高さが 24px、最小幅が 26px にコンパクト化されていること", () => {
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__mode-btn\s*\{[^}]*min-width:\s*26px;/,
+      );
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__mode-btn\s*\{[^}]*min-height:\s*24px;/,
+      );
+    });
+
+    it("コンテナクエリの閾値が 430px に最適化されていること", () => {
+      expect(scssContent).toMatch(/@container\s+editor-preview\s*\(\s*max-width:\s*430px\s*\)/);
+    });
+  });
+
+  describe("21. ヘッダー右端のエディタ操作メニューおよびドロップダウン仕様", () => {
+    it("ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン」の順に配置されていること", () => {
+      element.allowAutoHeight = true;
+      const htmlStr = flattenTemplate(element.render());
+      const autoHeightIdx = htmlStr.indexOf("markdown-editor-preview__auto-height-btn");
+      const modeGroupIdx = htmlStr.indexOf("markdown-editor-preview__mode-group");
+      const actionMenuIdx = htmlStr.indexOf("markdown-editor-preview__action-menu-btn");
+
+      expect(autoHeightIdx).toBeGreaterThan(-1);
+      expect(modeGroupIdx).toBeGreaterThan(-1);
+      expect(actionMenuIdx).toBeGreaterThan(-1);
+      expect(autoHeightIdx).toBeLessThan(modeGroupIdx);
+      expect(modeGroupIdx).toBeLessThan(actionMenuIdx);
+    });
+
+    it("メニューボタンのアイコンが bars-solid-full であり、title と aria-label が設定されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("markdown-editor-preview__action-menu-btn");
+      expect(htmlStr).toContain("bars-solid-full");
+      expect(htmlStr).toMatch(/title=["']エディタメニュー["']/);
+      expect(htmlStr).toMatch(/aria-label=["']エディタメニュー["']/);
+    });
+
+    it("初期状態で isActionMenuOpen が false であり、ドロップダウンが開いていないこと", () => {
+      expect((element as any).isActionMenuOpen).toBe(false);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("markdown-editor-preview__action-menu--open");
+    });
+
+    it("toggleActionMenu() により isActionMenuOpen がトグルされること", () => {
+      (element as any).toggleActionMenu(true);
+      expect((element as any).isActionMenuOpen).toBe(true);
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("markdown-editor-preview__action-menu--open");
+
+      (element as any).toggleActionMenu(false);
+      expect((element as any).isActionMenuOpen).toBe(false);
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("markdown-editor-preview__action-menu--open");
+    });
+
+    it("メニュー内の構文ヘルプ項目をクリックすると、toggleHelp(true) が呼び出されメニューが閉じること", () => {
+      (element as any).toggleActionMenu(true);
+      let helpOpened = false;
+      element.toggleHelp = (open?: boolean) => {
+        helpOpened = open ?? true;
+      };
+
+      (element as any).handleMenuHelpAction();
+      expect(helpOpened).toBe(true);
+      expect((element as any).isActionMenuOpen).toBe(false);
+    });
+
+    it("Escape キー押下により開いているアクションメニューが閉じること", () => {
+      (element as any).toggleActionMenu(true);
+      expect((element as any).isActionMenuOpen).toBe(true);
+
+      (element as any).handleGlobalKeydown({ key: "Escape" } as any);
+
+      expect((element as any).isActionMenuOpen).toBe(false);
     });
   });
 });

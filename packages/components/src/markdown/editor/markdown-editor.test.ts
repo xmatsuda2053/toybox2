@@ -19,11 +19,16 @@
  *   - 選択範囲ハイライト (.cm-selectionBackground) に明瞭な背景色が指定されていること
  *   - ドラッグ時のドロップカーソル (.cm-dropCursor) に視認性の高いボーダーが指定されていること
  *   - ダークモード用の選択範囲ハイライトおよびドロップカーソルが指定されていること
+ * 7. 拡張機能・プロパティ変更時の再構成制御とエディタ保護
+ *   - customExtensions に要素が同一の別配列インスタンスが設定された場合、再構成処理（reconfigureEditor）が呼び出されないこと
+ *   - isDarkMode が変化しない themeMode 変更時、再構成処理（reconfigureEditor）が呼び出されないこと
+ * 8. 複数回のテーマ切り替え時の整合性保護
+ *   - themeMode が dark -> light -> dark と切り替わった際、各変更でホスト属性と再構成が同期して実行されること
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { MarkdownEditor } from "./markdown-editor.js";
 import { EditorView } from "@codemirror/view";
 
@@ -117,6 +122,68 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
 
     it("ダークモード用の選択範囲ハイライトおよびドロップカーソルが指定されていること", () => {
       expect(scssContent).toMatch(/rgba\(56,\s*189,\s*248/);
+    });
+  });
+
+  type TestableMarkdownEditor = Omit<MarkdownEditor, "editorView"> & {
+    editorView?: { destroy: () => void; dispatch: () => void };
+    reconfigureEditor: () => void;
+    classList: DOMTokenList;
+  };
+
+  describe("7. 拡張機能・プロパティ変更時の再構成制御とエディタ保護", () => {
+    it("customExtensions に要素が同一の別配列インスタンスが設定された場合、再構成処理がスキップされること", () => {
+      const dummyExt = EditorView.theme({});
+      editor.customExtensions = [dummyExt];
+      const testable = editor as unknown as TestableMarkdownEditor;
+      testable.classList = { add: vi.fn(), remove: vi.fn(), contains: vi.fn() } as unknown as DOMTokenList;
+      testable.editorView = { destroy: vi.fn(), dispatch: vi.fn() };
+      const reconfigureSpy = vi.spyOn(testable, "reconfigureEditor");
+
+      editor.customExtensions = [dummyExt];
+      const changedProps = new Map([["customExtensions", [dummyExt]]]);
+      editor.updated(changedProps);
+
+      expect(reconfigureSpy).not.toHaveBeenCalled();
+    });
+
+    it("isDarkMode が変化しない themeMode 変更時、再構成処理がスキップされること", () => {
+      editor.themeMode = "light";
+      const testable = editor as unknown as TestableMarkdownEditor;
+      testable.classList = { add: vi.fn(), remove: vi.fn(), contains: vi.fn() } as unknown as DOMTokenList;
+      testable.editorView = { destroy: vi.fn(), dispatch: vi.fn() };
+      const reconfigureSpy = vi.spyOn(testable, "reconfigureEditor");
+
+      const changedProps = new Map([["themeMode", "light"]]);
+      editor.updated(changedProps);
+
+      expect(reconfigureSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("8. 複数回のテーマ切り替え時の整合性保護", () => {
+
+    it("themeMode が dark -> light -> dark と切り替わった際、ホスト属性と再構成が正常に同期されること", () => {
+      editor.themeMode = "dark";
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const classSet = new Set<string>();
+      testable.classList = {
+        add: vi.fn((c: string) => classSet.add(c)),
+        remove: vi.fn((c: string) => classSet.delete(c)),
+        contains: vi.fn((c: string) => classSet.has(c)),
+      } as unknown as DOMTokenList;
+      testable.editorView = { destroy: vi.fn(), dispatch: vi.fn() };
+      const reconfigureSpy = vi.spyOn(testable, "reconfigureEditor");
+
+      // 1. dark -> light
+      editor.themeMode = "light";
+      editor.updated(new Map([["themeMode", "dark"]]));
+      expect(reconfigureSpy).toHaveBeenCalledTimes(1);
+
+      // 2. light -> dark
+      editor.themeMode = "dark";
+      editor.updated(new Map([["themeMode", "light"]]));
+      expect(reconfigureSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

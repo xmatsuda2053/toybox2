@@ -25,6 +25,7 @@ let isDark =
   window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 function applyTheme(): void {
+  const currentTheme = isDark ? "dark" : "light";
   if (isDark) {
     root.classList.add("wa-dark");
     root.setAttribute("data-theme", "dark");
@@ -34,6 +35,11 @@ function applyTheme(): void {
     root.setAttribute("data-theme", "light");
     if (themeToggleBtn) themeToggleBtn.textContent = "🌙 Dark Mode";
   }
+
+  const previews = document.querySelectorAll<MarkdownEditorPreview>("markdown-editor-preview");
+  previews.forEach((preview) => {
+    preview.themeMode = currentTheme;
+  });
 }
 
 applyTheme();

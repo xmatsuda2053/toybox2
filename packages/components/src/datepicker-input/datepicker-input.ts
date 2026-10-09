@@ -342,11 +342,37 @@ export class DatePickerInput extends LitElement {
    * 入力欄を描画する
    */
   private renderInput(): HTMLTemplateResult {
+    const icon = html`
+      <wa-icon
+        slot="start"
+        class="datepicker-input__icon"
+        library="my-icons"
+        name="calendar-solid-full"
+      ></wa-icon>
+    `;
+
+    if (this.label) {
+      return html`
+        <wa-input
+          id="input-date"
+          exportparts="form-control-label, label, input"
+          label=${this.label}
+          ?required=${this.required}
+          size=${normalizeWaSize(this.size)}
+          .value=${this.getDisplayValue()}
+          placeholder=${this.placeholder}
+          ?disabled=${this.disabled}
+          readonly
+        >
+          ${icon}
+        </wa-input>
+      `;
+    }
+
     return html`
       <wa-input
         id="input-date"
         exportparts="form-control-label, label, input"
-        label=${this.label ?? ""}
         ?required=${this.required}
         size=${normalizeWaSize(this.size)}
         .value=${this.getDisplayValue()}
@@ -354,12 +380,7 @@ export class DatePickerInput extends LitElement {
         ?disabled=${this.disabled}
         readonly
       >
-        <wa-icon
-          slot="start"
-          class="datepicker-input__icon"
-          library="my-icons"
-          name="calendar-solid-full"
-        ></wa-icon>
+        ${icon}
       </wa-input>
     `;
   }

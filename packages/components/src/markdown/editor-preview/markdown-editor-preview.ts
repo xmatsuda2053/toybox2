@@ -62,6 +62,57 @@ const BASIC_MARKDOWN_HELP_ROWS = [
 ];
 
 /**
+ * 拡張機能設定をマージした MarkdownProcessorOptions を生成する純粋関数
+ */
+function computeEffectiveProcessorOptions(
+  baseOptions: MarkdownProcessorOptions | undefined,
+  extensions: readonly MarkdownFeatureExtension[],
+): MarkdownProcessorOptions {
+  const options = baseOptions || {};
+  const extRemarkPlugins = extensions.flatMap(
+    (e) => e.processor?.remarkPlugins || [],
+  );
+  const extRehypePlugins = extensions.flatMap(
+    (e) => e.processor?.rehypePlugins || [],
+  );
+  const extSanitizers = extensions
+    .map((e) => e.processor?.sanitizeSchemaModifier)
+    .filter((fn): fn is NonNullable<typeof fn> => typeof fn === "function");
+
+  let sanitizeSchemaModifier = options.sanitizeSchemaModifier;
+  if (extSanitizers.length > 0) {
+    sanitizeSchemaModifier = (schema) => {
+      let current = options.sanitizeSchemaModifier
+        ? options.sanitizeSchemaModifier(schema)
+        : schema;
+      for (const modifier of extSanitizers) {
+        current = modifier(current);
+      }
+      return current;
+    };
+  }
+
+  return {
+    remarkPlugins: [...(options.remarkPlugins || []), ...extRemarkPlugins],
+    rehypePlugins: [...(options.rehypePlugins || []), ...extRehypePlugins],
+    sanitizeSchemaModifier,
+  };
+}
+
+/**
+ * 拡張機能設定をマージした CodeMirror 拡張機能リストを生成する純粋関数
+ */
+function computeEffectiveEditorExtensions(
+  customExtensions: readonly Extension[],
+  extensions: readonly MarkdownFeatureExtension[],
+): Extension[] {
+  const extEditorExtensions = extensions.flatMap(
+    (e) => e.editorExtensions || [],
+  );
+  return [...customExtensions, ...extEditorExtensions];
+}
+
+/**
  * 統合 Markdown エディタ＆プレビューコンポーネント (<markdown-editor-preview>)
  *
  * エディタ (<markdown-editor>) とプレビュー (<markdown-preview>) を内包し、
@@ -122,6 +173,10 @@ export class MarkdownEditorPreview extends LitElement {
   @property({ type: Object })
   public processorOptions?: MarkdownProcessorOptions;
 
+  /** テーマモード ("light" | "dark" | "auto") */
+  @property({ type: String, attribute: "theme-mode" })
+  public themeMode: "light" | "dark" | "auto" = "auto";
+
   /** 入力内容に応じた自動伸長（Auto-grow）モード */
   @property({ type: Boolean, reflect: true, attribute: "auto-height" })
   public autoHeight = false;
@@ -177,64 +232,60 @@ export class MarkdownEditorPreview extends LitElement {
   @state()
   public isExtensionMenuOpen = false;
 
+  /** エディタ操作メニュー（右端ドロップダウン）の開閉状態 */
+  @state()
+  public isActionMenuOpen = false;
+
   /** 高さモード切替トランジションアニメーション実行中フラグ */
   @state()
   public isTransitioning = false;
 
   private transitionTimer: ReturnType<typeof setTimeout> | null = null;
+  private cachedProcessorOptions?: MarkdownProcessorOptions;
+  private lastProcessorOptionsSource?: MarkdownProcessorOptions;
+  private lastExtensionsForProcessor?: readonly MarkdownFeatureExtension[];
+  private cachedEditorExtensions?: Extension[];
+  private lastCustomExtensions?: readonly Extension[];
+  private lastExtensionsForEditor?: readonly MarkdownFeatureExtension[];
 
   /**
    * 拡張機能の設定をマージした有効な MarkdownProcessorOptions を取得する。
    */
   public get effectiveProcessorOptions(): MarkdownProcessorOptions {
-    const baseOptions = this.processorOptions || {};
-    const extRemarkPlugins = this.extensions.flatMap(
-      (e) => e.processor?.remarkPlugins || [],
-    );
-    const extRehypePlugins = this.extensions.flatMap(
-      (e) => e.processor?.rehypePlugins || [],
-    );
-    const extSanitizers = this.extensions
-      .map((e) => e.processor?.sanitizeSchemaModifier)
-      .filter((fn): fn is NonNullable<typeof fn> => typeof fn === "function");
-
-    const remarkPlugins = [
-      ...(baseOptions.remarkPlugins || []),
-      ...extRemarkPlugins,
-    ];
-    const rehypePlugins = [
-      ...(baseOptions.rehypePlugins || []),
-      ...extRehypePlugins,
-    ];
-
-    let sanitizeSchemaModifier = baseOptions.sanitizeSchemaModifier;
-    if (extSanitizers.length > 0) {
-      sanitizeSchemaModifier = (schema) => {
-        let current = baseOptions.sanitizeSchemaModifier
-          ? baseOptions.sanitizeSchemaModifier(schema)
-          : schema;
-        for (const modifier of extSanitizers) {
-          current = modifier(current);
-        }
-        return current;
-      };
+    if (
+      this.cachedProcessorOptions &&
+      this.lastProcessorOptionsSource === this.processorOptions &&
+      this.lastExtensionsForProcessor === this.extensions
+    ) {
+      return this.cachedProcessorOptions;
     }
-
-    return {
-      remarkPlugins,
-      rehypePlugins,
-      sanitizeSchemaModifier,
-    };
+    this.lastProcessorOptionsSource = this.processorOptions;
+    this.lastExtensionsForProcessor = this.extensions;
+    this.cachedProcessorOptions = computeEffectiveProcessorOptions(
+      this.processorOptions,
+      this.extensions,
+    );
+    return this.cachedProcessorOptions;
   }
 
   /**
    * 拡張機能の設定をマージした有効な CodeMirror 拡張機能リストを取得する。
    */
   public get effectiveEditorExtensions(): Extension[] {
-    const extEditorExtensions = this.extensions.flatMap(
-      (e) => e.editorExtensions || [],
+    if (
+      this.cachedEditorExtensions &&
+      this.lastCustomExtensions === this.customExtensions &&
+      this.lastExtensionsForEditor === this.extensions
+    ) {
+      return this.cachedEditorExtensions;
+    }
+    this.lastCustomExtensions = this.customExtensions;
+    this.lastExtensionsForEditor = this.extensions;
+    this.cachedEditorExtensions = computeEffectiveEditorExtensions(
+      this.customExtensions,
+      this.extensions,
     );
-    return [...this.customExtensions, ...extEditorExtensions];
+    return this.cachedEditorExtensions;
   }
 
   private disconnectThemeObserver?: () => void;
@@ -251,17 +302,31 @@ export class MarkdownEditorPreview extends LitElement {
       if (this.isExtensionMenuOpen) {
         this.toggleExtensionMenu(false);
       }
+      if (this.isActionMenuOpen) {
+        this.toggleActionMenu(false);
+      }
     }
   };
 
   private handleGlobalClick = (e: MouseEvent): void => {
-    if (!this.isExtensionMenuOpen) return;
     const path = e.composedPath();
-    const menuContainer = this.renderRoot?.querySelector(
-      ".markdown-editor-preview__extension-menu-container",
-    );
-    if (menuContainer && !path.includes(menuContainer)) {
-      this.toggleExtensionMenu(false);
+
+    if (this.isExtensionMenuOpen) {
+      const extContainer = this.renderRoot?.querySelector(
+        ".markdown-editor-preview__extension-menu-container",
+      );
+      if (extContainer && !path.includes(extContainer)) {
+        this.toggleExtensionMenu(false);
+      }
+    }
+
+    if (this.isActionMenuOpen) {
+      const actionContainer = this.renderRoot?.querySelector(
+        ".markdown-editor-preview__action-menu-container",
+      );
+      if (actionContainer && !path.includes(actionContainer)) {
+        this.toggleActionMenu(false);
+      }
     }
   };
 
@@ -272,6 +337,7 @@ export class MarkdownEditorPreview extends LitElement {
     this.disconnectThemeObserver = observeThemeChanges(() => {
       this.syncTheme();
     });
+    this.addEventListener("keydown", this.handleGlobalKeydown);
     if (typeof window !== "undefined") {
       window.addEventListener("keydown", this.handleGlobalKeydown);
       window.addEventListener("click", this.handleGlobalClick);
@@ -285,6 +351,7 @@ export class MarkdownEditorPreview extends LitElement {
       clearTimeout(this.transitionTimer);
       this.transitionTimer = null;
     }
+    this.removeEventListener("keydown", this.handleGlobalKeydown);
     if (typeof window !== "undefined") {
       window.removeEventListener("keydown", this.handleGlobalKeydown);
       window.removeEventListener("click", this.handleGlobalClick);
@@ -296,6 +363,10 @@ export class MarkdownEditorPreview extends LitElement {
 
     if (changedProperties.has("value")) {
       this.previewValue = this.value;
+    }
+
+    if (changedProperties.has("themeMode")) {
+      this.syncTheme();
     }
 
     if (changedProperties.has("height") || changedProperties.has("autoHeight")) {
@@ -319,8 +390,15 @@ export class MarkdownEditorPreview extends LitElement {
   /**
    * ホスト要素および子コンポーネントのテーマを同期する。
    */
-  private syncTheme(): void {
-    const isDark = detectIsDarkMode(this);
+  public syncTheme(): void {
+    let isDark: boolean;
+    if (this.themeMode === "dark") {
+      isDark = true;
+    } else if (this.themeMode === "light") {
+      isDark = false;
+    } else {
+      isDark = detectIsDarkMode(this);
+    }
     this.currentTheme = isDark ? "dark" : "light";
     syncHostTheme(this, isDark);
   }
@@ -457,7 +535,7 @@ export class MarkdownEditorPreview extends LitElement {
         ".markdown-editor-preview",
       ) as HTMLElement | null;
       const naturalHeight = container ? container.scrollHeight : currentHeight;
-      const targetHeight = Math.max(naturalHeight, 240);
+      const targetHeight = Math.max(naturalHeight, currentHeight, 240);
 
       requestAnimationFrame(() => {
         this.style.height = `${targetHeight}px`;
@@ -478,7 +556,7 @@ export class MarkdownEditorPreview extends LitElement {
    */
   private animateToFixedHeight(currentHeight: number): void {
     this.style.height = `${currentHeight}px`;
-    const targetFixed = this.effectiveHeight || "380px";
+    const targetFixed = this.effectiveHeight || "100%";
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -486,6 +564,9 @@ export class MarkdownEditorPreview extends LitElement {
         this.style.height = targetFixed;
 
         this.transitionTimer = setTimeout(() => {
+          if (!this.effectiveHeight) {
+            this.style.height = "";
+          }
           this.isTransitioning = false;
           this.transitionTimer = null;
         }, 400);
@@ -567,6 +648,23 @@ export class MarkdownEditorPreview extends LitElement {
    */
   public toggleExtensionMenu(open?: boolean): void {
     this.isExtensionMenuOpen = open ?? !this.isExtensionMenuOpen;
+  }
+
+  /**
+   * エディタ操作メニュー（右端ドロップダウン）の開閉を切り替える。
+   *
+   * @param open 指定した開閉状態（省略時はトグル）
+   */
+  public toggleActionMenu(open?: boolean): void {
+    this.isActionMenuOpen = open ?? !this.isActionMenuOpen;
+  }
+
+  /**
+   * エディタメニュー内から構文ヘルプモーダルを開き、メニューを閉じる。
+   */
+  public handleMenuHelpAction(): void {
+    this.toggleActionMenu(false);
+    this.toggleHelp(true);
   }
 
   /**
@@ -793,12 +891,8 @@ export class MarkdownEditorPreview extends LitElement {
         class="markdown-editor-preview__auto-height-btn ${this.autoHeight
           ? "markdown-editor-preview__auto-height-btn--active"
           : ""}"
-        title=${this.autoHeight
-          ? "固定サイズ表示に切り替え"
-          : "高さを自動伸縮（コンテンツにフィット）"}
-        aria-label=${this.autoHeight
-          ? "固定サイズ表示に切り替え"
-          : "高さを自動伸縮（コンテンツにフィット）"}
+        title="${this.autoHeight ? "固定表示" : "全表示"}"
+        aria-label="${this.autoHeight ? "固定表示" : "全表示"}"
         aria-pressed=${this.autoHeight ? "true" : "false"}
         @click=${(e: Event) => {
           e.preventDefault();
@@ -808,37 +902,13 @@ export class MarkdownEditorPreview extends LitElement {
       >
         <wa-icon
           library="my-icons"
-          name="arrows-up-down-solid-full"
-          label=${this.autoHeight ? "固定サイズ表示" : "自動伸縮"}
+          name=${this.autoHeight ? "compress-solid-full" : "expand-solid-full"}
+          label=${this.autoHeight ? "固定表示" : "全表示"}
         ></wa-icon>
       </button>
     `;
   }
 
-  /**
-   * 構文ヘルプボタンを描画する。
-   */
-  private renderHelpButton() {
-    return html`
-      <button
-        type="button"
-        class="markdown-editor-preview__help-btn"
-        title="構文ヘルプ"
-        aria-label="構文ヘルプ"
-        @click=${(e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.toggleHelp();
-        }}
-      >
-        <wa-icon
-          library="my-icons"
-          name="question-solid-full"
-          label="構文ヘルプ"
-        ></wa-icon>
-      </button>
-    `;
-  }
 
   /**
    * スプリットモード切替タブボタンを描画する。
@@ -903,6 +973,60 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * エディタ操作メニュー（最右端ドロップダウン）を描画する。
+   */
+  private renderActionMenu() {
+    return html`
+      <div class="markdown-editor-preview__action-menu-container">
+        <button
+          type="button"
+          class="markdown-editor-preview__action-menu-btn ${this.isActionMenuOpen
+            ? "markdown-editor-preview__action-menu-btn--active"
+            : ""}"
+          title="エディタメニュー"
+          aria-label="エディタメニュー"
+          aria-expanded=${this.isActionMenuOpen ? "true" : "false"}
+          @click=${(e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleActionMenu();
+          }}
+        >
+          <wa-icon
+            library="my-icons"
+            name="bars-solid-full"
+            label="エディタメニュー"
+          ></wa-icon>
+        </button>
+        <div
+          class="markdown-editor-preview__action-menu ${this.isActionMenuOpen
+            ? "markdown-editor-preview__action-menu--open"
+            : ""}"
+          role="menu"
+        >
+          <div class="markdown-editor-preview__action-menu-list">
+            <button
+              type="button"
+              class="markdown-editor-preview__action-menu-item"
+              role="menuitem"
+              @click=${() => this.handleMenuHelpAction()}
+            >
+              <wa-icon
+                library="my-icons"
+                name="question-solid-full"
+                class="markdown-editor-preview__action-menu-item-icon"
+              ></wa-icon>
+              <span class="markdown-editor-preview__action-menu-item-label"
+                >構文ヘルプ</span
+              >
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * ツールバーヘッダーを描画する。
    */
   private renderHeader() {
@@ -913,8 +1037,8 @@ export class MarkdownEditorPreview extends LitElement {
         </div>
         <div class="markdown-editor-preview__header-right">
           ${this.renderAutoHeightButton()}
-          ${this.renderHelpButton()}
           ${this.renderModeSwitchTabs()}
+          ${this.renderActionMenu()}
         </div>
       </header>
     `;

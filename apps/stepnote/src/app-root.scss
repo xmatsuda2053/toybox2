@@ -74,7 +74,7 @@
   @include theme-transition;
 }
 
-/* 1. Menu (最左ペイン): 固定サイズ 50px */
+/* 1. Menu (最左ペイン): 固定サイズ 45px */
 .pane-menu {
   width: var(--stepnote-pane-menu-width);
   flex-shrink: 0;
@@ -82,7 +82,7 @@
   @include pane-border-right;
 }
 
-/* 2. Navigation (第2ペイン): 固定サイズ 260px・上下2分割 */
+/* 2. Navigation (第2ペイン): 固定サイズ 220px・上下2分割 */
 .pane-navigation {
   --pane-target-width: var(--stepnote-pane-navigation-width);
   display: flex;
@@ -100,7 +100,7 @@
   overflow-y: auto;
 }
 
-/* 3. Task List (第3ペイン): 固定サイズ 310px・垂直スクロール */
+/* 3. Task List (第3ペイン): 固定サイズ 260px・垂直スクロール */
 .pane-task-list {
   --pane-target-width: var(--stepnote-pane-task-list-width);
   overflow-y: auto;

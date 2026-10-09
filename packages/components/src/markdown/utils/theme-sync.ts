@@ -115,14 +115,16 @@ export function observeThemeChanges(
 export function syncHostTheme(element: HTMLElement, isDark: boolean): void {
   const targetTheme = isDark ? "dark" : "light";
 
-  if (element.getAttribute("data-theme") !== targetTheme) {
+  if (typeof element.getAttribute === "function" && element.getAttribute("data-theme") !== targetTheme) {
     element.setAttribute("data-theme", targetTheme);
   }
-  if (isDark) {
-    element.classList.add("wa-dark");
-    element.classList.remove("wa-light");
-  } else {
-    element.classList.remove("wa-dark");
-    element.classList.add("wa-light");
+  if (element.classList) {
+    if (isDark) {
+      element.classList.add("wa-dark");
+      element.classList.remove("wa-light");
+    } else {
+      element.classList.remove("wa-dark");
+      element.classList.add("wa-light");
+    }
   }
 }

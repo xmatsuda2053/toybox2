@@ -28,13 +28,13 @@
   /* StepNote アプリケーション固有レイアウトトークン */
   --stepnote-header-height: 30px;
   --stepnote-footer-height: 30px;
-  --stepnote-pane-menu-width: 50px;
-  --stepnote-pane-navigation-width: 260px;
-  --stepnote-pane-task-list-width: 310px;
+  --stepnote-pane-menu-width: 45px;
+  --stepnote-pane-navigation-width: 220px;
+  --stepnote-pane-task-list-width: 255px;
 
   /* テーマ切り替えトランジショントークン */
-  --stepnote-transition-theme: background-color 0.2s ease, color 0.2s ease,
-    border-color 0.2s ease;
+  --stepnote-transition-theme:
+    background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 
   /* 純白テキスト・アイコン用共通トークン */
   --stepnote-color-white: #ffffff;
@@ -51,7 +51,9 @@
 
   /* Quick Access アイコンカラー（Light モード・アクティブ時: 通常時と同一色を維持） */
   --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
-  --quick-access-icon-active-uncategorized: var(--quick-access-icon-uncategorized);
+  --quick-access-icon-active-uncategorized: var(
+    --quick-access-icon-uncategorized
+  );
   --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
   --quick-access-icon-active-asap: var(--quick-access-icon-asap);
   --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
@@ -136,7 +138,9 @@
 
   /* Quick Access アイコンカラー（Dark モード・アクティブ時: 通常時と同一色を維持） */
   --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
-  --quick-access-icon-active-uncategorized: var(--quick-access-icon-uncategorized);
+  --quick-access-icon-active-uncategorized: var(
+    --quick-access-icon-uncategorized
+  );
   --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
   --quick-access-icon-active-asap: var(--quick-access-icon-asap);
   --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
@@ -155,10 +159,10 @@
   --scrollbar-track-color: transparent;
 
   /* エレベーション・シャドウトークン（Dark モード） */
-  --stepnote-shadow-dialog: 0 16px 36px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
-  --stepnote-shadow-dropdown: 0 12px 28px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+  --stepnote-shadow-dialog:
+    0 16px 36px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --stepnote-shadow-dropdown:
+    0 12px 28px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
   /* ダイアログ・モーダル用サーフェストークン（Dark モード） */
   --stepnote-dialog-bg: #1c2128;
