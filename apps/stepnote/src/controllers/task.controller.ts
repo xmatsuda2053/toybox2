@@ -36,9 +36,18 @@ export class TaskController extends BaseTaskScopeController<
 
   /**
    * 選択中タスクの単一レコードをDBから取得し、変更を全購読者へ通知する。
+   * taskId が未指定の場合は、DB上で選択状態（selected: true）のタスクを自動復元する。
    */
   protected async loadState(): Promise<void> {
     if (this._taskId === undefined) {
+      const selectedTask = await this.repository.getSelected();
+      if (selectedTask && selectedTask.id !== undefined) {
+        this._taskId = selectedTask.id;
+        this._state = { ...selectedTask };
+        this.notify();
+        return;
+      }
+
       this._state = undefined;
       this.notify();
       return;
@@ -53,6 +62,24 @@ export class TaskController extends BaseTaskScopeController<
     }
 
     this.notify();
+  }
+
+  /**
+   * 対象とするタスクIDを変更し、データを再ロードする。
+   * undefined が指定された場合は明示的な選択解除として状態をクリアする。
+   *
+   * @param {(number | undefined)} id
+   * @return {*} {Promise<void>}
+   * @memberof TaskController
+   */
+  public override setTaskId = async (id: number | undefined): Promise<void> => {
+    this._taskId = id;
+    if (id === undefined) {
+      this._state = undefined;
+      this.notify();
+      return;
+    }
+    await this.loadState();
   };
 
   /**

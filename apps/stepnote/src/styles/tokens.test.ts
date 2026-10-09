@@ -42,6 +42,9 @@ import * as fs from "node:fs";
  * 仕様 36: ドロップダウンの Danger カラーおよびホバー背景がセマンティックトークンを参照していること
  * 仕様 37: Light モードに Markdown プレビュー用セマンティックトークンが定義されていること
  * 仕様 38: Dark モード（@mixin dark-theme-tokens）に Markdown プレビュー用セマンティックトークンが定義されていること
+ * 仕様 39: Light モードに blockquote および checkbox 用セマンティックトークンが定義されていること
+ * 仕様 40: Dark モード（@mixin dark-theme-tokens）に blockquote および checkbox 用セマンティックトークンが定義されていること
+ * 仕様 41: ペイン幅トークン（--stepnote-pane-menu-width: 45px / --stepnote-pane-navigation-width: 220px / --stepnote-pane-task-list-width: 255px）が定義されていること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -493,6 +496,12 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(mixinBlock).toMatch(/--stepnote-markdown-blockquote-border:\s*var\(--stepnote-dialog-border\);/);
       expect(mixinBlock).toMatch(/--stepnote-markdown-blockquote-text:\s*var\(--wa-color-text-quiet\);/);
       expect(mixinBlock).toMatch(/--stepnote-markdown-checkbox-accent:\s*var\(--wa-color-brand-70,\s*#218bff\);/);
+    });
+
+    it("仕様 41: ペイン幅トークン（--stepnote-pane-menu-width: 45px / --stepnote-pane-navigation-width: 220px / --stepnote-pane-task-list-width: 255px）が定義されていること", () => {
+      expect(tokensScss).toMatch(/--stepnote-pane-menu-width:\s*45px;/);
+      expect(tokensScss).toMatch(/--stepnote-pane-navigation-width:\s*220px;/);
+      expect(tokensScss).toMatch(/--stepnote-pane-task-list-width:\s*255px;/);
     });
   });
 });

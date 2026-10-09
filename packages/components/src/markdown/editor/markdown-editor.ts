@@ -13,7 +13,11 @@ import {
   highlightActiveLine,
   keymap,
 } from "@codemirror/view";
-import { EditorState, type Extension } from "@codemirror/state";
+import {
+  EditorState,
+  Compartment,
+  type Extension,
+} from "@codemirror/state";
 import {
   defaultKeymap,
   history,
@@ -40,6 +44,18 @@ import {
   getLinePrefixForAction,
   getSurroundingSyntax,
 } from "./markdown-syntax.utils.js";
+
+/**
+ * 拡張機能リストの浅い等価性（同一性または同等の要素並び）を検証する純粋関数
+ */
+function areExtensionsEqual(
+  a?: readonly Extension[],
+  b?: readonly Extension[],
+): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  return a.every((item, i) => item === b[i]);
+}
 
 export type MarkdownActionType =
   | "heading"
@@ -88,12 +104,18 @@ export class MarkdownEditor extends LitElement {
 
   private editorView?: EditorView;
   private disconnectThemeObserver?: () => void;
+  private themeCompartment = new Compartment();
+  private disabledCompartment = new Compartment();
+  private customExtensionsCompartment = new Compartment();
+  private lastAppliedDarkMode = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
     this.syncTheme(false);
     this.disconnectThemeObserver = observeThemeChanges(() => {
-      this.syncTheme(true);
+      if (this.isDarkMode !== this.lastAppliedDarkMode) {
+        this.syncTheme(true);
+      }
     });
   }
 
@@ -113,12 +135,30 @@ export class MarkdownEditor extends LitElement {
       }
     }
 
-    if (
-      (changedProperties.has("themeMode") ||
-        changedProperties.has("customExtensions") ||
-        changedProperties.has("disabled")) &&
-      this.editorView
-    ) {
+    this.handleDynamicReconfigure(changedProperties);
+  }
+
+  /**
+   * テーマや拡張機能の変更を検知し、実質的な差分がある場合のみ再構成を実行する。
+   */
+  private handleDynamicReconfigure(changedProperties: PropertyValues): void {
+    if (!this.editorView) return;
+
+    const prevExtensions = changedProperties.get("customExtensions") as
+      | Extension[]
+      | undefined;
+    const extensionsChanged =
+      changedProperties.has("customExtensions") &&
+      !areExtensionsEqual(prevExtensions, this.customExtensions);
+
+    const themeChanged =
+      (changedProperties.has("themeMode") &&
+        this.themeMode !== changedProperties.get("themeMode")) ||
+      this.isDarkMode !== this.lastAppliedDarkMode;
+
+    const disabledChanged = changedProperties.has("disabled");
+
+    if (themeChanged || extensionsChanged || disabledChanged) {
       this.syncTheme(true);
     }
   }
@@ -147,6 +187,8 @@ export class MarkdownEditor extends LitElement {
 
     if (reconfigureEditor && this.editorView) {
       this.reconfigureEditor();
+    } else {
+      this.lastAppliedDarkMode = this.isDarkMode;
     }
   }
 
@@ -154,7 +196,8 @@ export class MarkdownEditor extends LitElement {
    * CodeMirror 拡張機能のリストを組み立てる。
    */
   private buildExtensions(): Extension[] {
-    const extensions: Extension[] = [
+    this.lastAppliedDarkMode = this.isDarkMode;
+    return [
       lineNumbers(),
       highlightActiveLineGutter(),
       highlightSpecialChars(),
@@ -184,23 +227,12 @@ export class MarkdownEditor extends LitElement {
           this.notifyChange(newValue);
         }
       }),
+      this.disabledCompartment.of(
+        this.disabled ? EditorState.readOnly.of(true) : [],
+      ),
+      this.themeCompartment.of(this.isDarkMode ? oneDark : []),
+      this.customExtensionsCompartment.of(this.customExtensions || []),
     ];
-
-    if (this.disabled) {
-      extensions.push(EditorState.readOnly.of(true));
-    }
-
-    // テーマ設定: ダークモード判定時に oneDark を適用
-    if (this.isDarkMode) {
-      extensions.push(oneDark);
-    }
-
-    // 外部から注入された拡張機能 (DI)
-    if (this.customExtensions && this.customExtensions.length > 0) {
-      extensions.push(...this.customExtensions);
-    }
-
-    return extensions;
   }
 
   /**
@@ -224,11 +256,24 @@ export class MarkdownEditor extends LitElement {
   }
 
   /**
-   * 拡張機能の設定変更をエディタビューへ再適用する。
+   * 拡張機能・テーマ設定の変更を Compartment 経由でエディタビューへ動的に再適用する。
+   * エディタインスタンスを破棄（destroy）しないため、カーソル位置・履歴・フォーカスが保護される。
    */
   private reconfigureEditor(): void {
     if (!this.editorView) return;
-    this.initEditor();
+
+    this.lastAppliedDarkMode = this.isDarkMode;
+    this.editorView.dispatch({
+      effects: [
+        this.themeCompartment.reconfigure(this.isDarkMode ? oneDark : []),
+        this.disabledCompartment.reconfigure(
+          this.disabled ? EditorState.readOnly.of(true) : [],
+        ),
+        this.customExtensionsCompartment.reconfigure(
+          this.customExtensions || [],
+        ),
+      ],
+    });
   }
 
   /**

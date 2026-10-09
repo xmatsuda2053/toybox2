@@ -181,7 +181,7 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       const rootBlockMatch = scssContent.match(/\.pane-task-list\s*\{[\s\S]*?\n\}/);
       expect(rootBlockMatch).not.toBeNull();
-      expect(rootBlockMatch![0]).toMatch(/min-width:\s*(?:var\(--stepnote-pane-task-list-width[^)]*\)|310px)/);
+      expect(rootBlockMatch![0]).toMatch(/min-width:\s*(?:var\(--stepnote-pane-task-list-width[^)]*\)|260px)/);
     });
   });
 

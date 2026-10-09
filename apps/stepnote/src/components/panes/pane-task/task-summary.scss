@@ -1,0 +1,129 @@
+@use "../../../styles/mixins.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  @include theme-transition;
+}
+
+.task-summary {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 100%;
+  gap: var(--wa-space-m);
+  @include theme-transition;
+}
+
+.task-summary--content-expand {
+  height: auto;
+  min-height: 100%;
+
+  .task-summary__field--description {
+    flex: none;
+    height: auto;
+  }
+
+  .task-summary__description {
+    flex: none;
+    height: auto;
+  }
+}
+
+.task-summary--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--wa-space-xl);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+}
+
+.task-summary__field {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--wa-space-s);
+  width: 100%;
+
+  &--description {
+    flex-direction: column;
+    flex: 1;
+    min-height: 240px;
+  }
+}
+
+.task-summary__label {
+  width: 64px;
+  min-width: 64px;
+  flex-shrink: 0;
+  padding-top: var(--wa-space-xs, 12px);
+  font-size: var(--wa-font-size-s);
+  font-weight: var(--wa-font-weight-semibold);
+  color: var(--wa-color-text-quiet);
+}
+
+.task-summary__label--contacts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-summary__btn-add-contact {
+  cursor: pointer;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-m, 16px);
+  flex-shrink: 0;
+  @include theme-transition;
+
+  &:hover {
+    color: var(--label-icon-color);
+  }
+}
+
+.task-summary__control {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-summary__name-input {
+  width: 100%;
+}
+
+.task-summary__name-due-icon {
+  font-size: var(--wa-font-size-m);
+  display: inline-flex;
+  align-items: center;
+
+  &--overdue {
+    color: var(--quick-access-icon-overdue);
+  }
+
+  &--asap {
+    color: var(--quick-access-icon-asap);
+  }
+
+  &--upcoming {
+    color: var(--quick-access-icon-upcoming);
+  }
+}
+
+.task-summary__due-date {
+  width: 100%;
+}
+
+.task-summary__contacts {
+  width: 100%;
+}
+
+.task-summary__description {
+  flex: 1;
+  min-height: 240px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}

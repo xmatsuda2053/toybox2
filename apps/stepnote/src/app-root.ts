@@ -27,6 +27,7 @@ import "@/components/panes/pane-menu/pane-menu.js";
 import "@/components/panes/pane-navigation/navigation-quick-access.js";
 import "@/components/panes/pane-navigation/navigation-labels.js";
 import "@/components/panes/pane-task-list/pane-task-list.js";
+import "@/components/panes/pane-task/pane-task.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -205,7 +206,7 @@ export class AppRoot extends LitElement {
   ): HTMLTemplateResult {
     return html`
       <div class="panes-container">
-        <!-- 1. Menu ペイン (最左ペイン: 固定 50px) -->
+        <!-- 1. Menu ペイン (最左ペイン: 固定 45px) -->
         <pane-menu
           class="pane-menu"
           data-theme=${resolvedTheme}
@@ -232,7 +233,9 @@ export class AppRoot extends LitElement {
         ></pane-task-list>
 
         <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
-        <main class="pane-task">task</main>
+        <main class="pane-task">
+          <pane-task data-theme=${resolvedTheme}></pane-task>
+        </main>
 
         <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
         <aside class="pane-journal">journal</aside>

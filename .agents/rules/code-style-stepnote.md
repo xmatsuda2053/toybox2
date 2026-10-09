@@ -38,16 +38,16 @@ trigger: always_on
   - Header と Footer の間の領域を占有（`flex: 1; min-height: 0;`）し、左から **「Menu」「Navigation」「Task List」「Task」「Journal」** の5ペインを横並び（Row）で配置する。
 
   - **1. Menu（最左ペイン）**:
-    - `width` は固定サイズ（50px）とする。
+    - `width` は固定サイズ（45px）とする。
     - アイコンボタン等による主要ビュー切り替えや各種機能メニューを配置する。
   - **2. Navigation（第2ペイン）**:
-    - `width` は固定サイズ（260px）とする。
+    - `width` は固定サイズ（220px）とする。
     - 内部を上下2分割で構成する。
       - **上部（Quick Access）**: 制御ボタンによる開閉（トグル折りたたみ）が可能。
       - **下部（Labels）**: `overflow` 発生時は垂直スクロール。
     - 制御ボタンにより、Navigation エリア全体の表示・非表示を切り替え可能とする。
   - **3. Task List（第3ペイン）**:
-    - `width` は固定サイズ（310px）とする。
+    - `width` は固定サイズ（260px）とする。
     - `overflow` 発生時は垂直スクロール。
     - 制御ボタンにより、Task List エリアの表示・非表示を切り替え可能とする。
   - **4. Task（第4ペイン: タスク管理）**:

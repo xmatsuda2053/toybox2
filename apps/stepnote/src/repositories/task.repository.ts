@@ -40,6 +40,16 @@ export class TaskRepository extends BaseRepository<TaskRecord> {
   };
 
   /**
+   * 現在選択状態（selected: true）のタスクを取得する。
+   *
+   * @return {*} {Promise<TaskRecord | undefined>}
+   * @memberof TaskRepository
+   */
+  public getSelected = async (): Promise<TaskRecord | undefined> => {
+    return await this.table.filter((task) => task.selected === true).first();
+  };
+
+  /**
    * 指定した会計年度に合致するタスク一覧を取得する。
    *
    * @param {number} fiscalYear 会計年度

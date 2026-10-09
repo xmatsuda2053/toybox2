@@ -23,6 +23,8 @@ import { TaskRepository } from "@/repositories/task.repository";
  *    - [x] 3-1. 指定したIDのタスクを選択状態（selected: true）に更新できること
  *    - [x] 3-2. 別のタスクを選択した際、前回選択されていたタスクの selected が false に解除されること（単一選択制御）
  *    - [x] 3-3. すべてのタスクの選択状態を解除できること（clearSelection）
+ *    - [x] 3-4. 選択状態（selected: true）のタスクを取得できること（getSelected）
+ *    - [x] 3-5. 選択状態のタスクが存在しない場合は undefined を返すこと
  *
  * 4. 年度による絞り込み (getByFiscalYear)
  *    - [x] 4-1. 指定した年度に合致するタスクのみを取得できること
@@ -330,6 +332,59 @@ describe("TaskRepository Tests", () => {
       const result: TaskRecord[] = await repository.getAll();
       expect(result.length).toBe(2);
       expect(result.every((t) => t.selected === false)).toBe(true);
+    });
+
+    it("3-4. 選択状態（selected: true）のタスクを取得できること（getSelected）", async () => {
+      const task1: Omit<TaskRecord, "id"> = {
+        name: "Task 1",
+        statusCode: 0,
+        dueDate: new Date("2026-06-01"),
+        contacts: [],
+        description: "Task 1 Description",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      };
+      const task2: Omit<TaskRecord, "id"> = {
+        name: "Task 2",
+        statusCode: 5,
+        dueDate: new Date("2026-06-02"),
+        contacts: [],
+        description: "Task 2 Description",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: true,
+      };
+
+      await repository.add(task1);
+      const id2 = await repository.add(task2);
+
+      const selected = await repository.getSelected();
+      expect(selected).toBeDefined();
+      expect(selected?.id).toBe(id2);
+      expect(selected?.name).toBe("Task 2");
+      expect(selected?.selected).toBe(true);
+    });
+
+    it("3-5. 選択状態のタスクが存在しない場合は undefined を返すこと", async () => {
+      const task1: Omit<TaskRecord, "id"> = {
+        name: "Task 1",
+        statusCode: 0,
+        dueDate: new Date("2026-06-01"),
+        contacts: [],
+        description: "Task 1 Description",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      };
+
+      await repository.add(task1);
+
+      const selected = await repository.getSelected();
+      expect(selected).toBeUndefined();
     });
   });
 

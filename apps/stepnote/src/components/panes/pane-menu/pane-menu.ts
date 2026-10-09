@@ -8,7 +8,7 @@ import paneMenuStyles from "./pane-menu.scss?inline";
 /**
  * Menu ペインコンポーネント (PaneMenu)
  *
- * 画面最左端（幅 50px 固定）のメニュー領域を担当する。
+ * 画面最左端（幅 45px 固定）のメニュー領域を担当する。
  * 上部（menu-primary）にサイドパネル開閉トグルボタン等の主要操作群、
  * 下部（menu-secondary）に将来の補助機能メニュー群を配置する。
  *

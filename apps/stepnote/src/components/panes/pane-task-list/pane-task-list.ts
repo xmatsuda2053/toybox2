@@ -29,7 +29,7 @@ import paneTaskListStyles from "./pane-task-list.scss?inline";
 /**
  * Task List ペインコンポーネント (PaneTaskList)
  *
- * 画面第3ペイン（幅 310px 固定）のタスク一覧領域を担当する。
+ * 画面第3ペイン（幅 260px 固定）のタスク一覧領域を担当する。
  * ヘッダ部（タイトル・年度指定・追加）、検索部（search-input）、リスト部（lit-virtualizer）
  * の3つの領域で構成される。
  *

@@ -23,6 +23,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 2-6. 当月以外の日付セルに当月外修飾子（datepicker-calendar__cell--other-month）が付与されること
  *    - 2-7. label プロパティが wa-input の label 属性へ反映されること
  *    - 2-8. required プロパティが wa-input の required 属性へ反映されること
+ *    - 2-9. label プロパティが未指定の場合、wa-input に label 属性が付与されず、空ラベルによる上部余白が発生しないこと
  *
  * 3. カレンダーナビゲーション操作（Navigation Handling）
  *    - 3-1. 前月操作（handlePrevMonth）により表示年月が1ヶ月前へ更新されること
@@ -40,6 +41,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 5-1. SCSSスタイルシートが存在し、ルートブロック .datepicker-input および .datepicker-calendar の簡易BEMセレクタが定義されていること
  *    - 5-2. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）
  *    - 5-3. SCSSスタイルシートにおいてセレクタの深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
+ *    - 5-4. SCSSスタイルシートにおいて :host の display が block に設定され、インラインブロックによる不要な上部余白が抑止されていること
  */
 
 describe("DatePickerInput Component", () => {
@@ -157,6 +159,14 @@ describe("DatePickerInput Component", () => {
       rendered = flattenTemplate(element.render());
       expect(rendered).not.toContain("required");
     });
+
+    it("2-9. label プロパティが未指定の場合、wa-input に label 属性が付与されず、空ラベルによる上部余白が発生しないこと", () => {
+      element.label = undefined;
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).not.toContain('label=""');
+      expect(rendered).not.toContain("label=''");
+      expect(rendered).not.toMatch(/<wa-input[^>]*\blabel=/);
+    });
   });
 
   describe("3. カレンダーナビゲーション操作（Navigation Handling）", () => {
@@ -273,6 +283,13 @@ describe("DatePickerInput Component", () => {
         }
       }
       expect(maxNestingOnSelector).toBeLessThanOrEqual(2);
+    });
+
+    it("5-4. SCSSスタイルシートにおいて :host の display が block に設定され、インラインブロックによる不要な上部余白が抑止されていること", () => {
+      const scssPath = new URL("./datepicker-input.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(/:host\s*\{[^}]*\bdisplay:\s*block;/);
+      expect(scssContent).not.toMatch(/:host\s*\{[^}]*\bdisplay:\s*inline-block;/);
     });
   });
 
