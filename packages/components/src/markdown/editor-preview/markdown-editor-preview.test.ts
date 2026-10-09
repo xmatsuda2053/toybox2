@@ -89,6 +89,8 @@
  *   - 初期状態でアクションメニューが閉じていること
  *   - toggleActionMenu() によりアクションメニューの開閉がトグルされること
  *   - アクションメニュー内に「構文ヘルプ」項目（question-solid-full）が含まれ、選択時にヘルプモーダルが開いてメニューが閉じること
+ *   - アクションメニュー内に「コピー」項目（copy-solid-full）が含まれ、選択時にクリップボードへコピーされてメニューが閉じること
+ *   - アクションメニュー内に「整形」項目（wand-magic-sparkles等）が含まれ、選択時にフォーマッターが実行されてメニューが閉じること
  *   - Escape キー押下や外部クリックによりアクションメニューが閉じること
  */
 
@@ -243,7 +245,10 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
   describe("アイコンボタンのスタイルと視認性", () => {
     it("モード切替ボタン内の wa-icon のサイズがコンパクト設計のため 15px 以上に設定されていること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       const match = scssContent.match(
         /\.markdown-editor-preview__mode-btn\s*\{[\s\S]*?wa-icon\s*\{[^}]*font-size:\s*(\d+)px/,
@@ -333,7 +338,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("初期状態では拡張機能ドロップダウンメニューが非表示であること", () => {
       expect(element.isExtensionMenuOpen).toBe(false);
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview__extension-menu--open");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__extension-menu--open",
+      );
     });
 
     it("toggleExtensionMenu() により拡張機能ドロップダウンメニューの開閉がトグルされること", () => {
@@ -343,12 +350,16 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.toggleExtensionMenu(true);
       expect(element.isExtensionMenuOpen).toBe(true);
       let htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("markdown-editor-preview__extension-menu--open");
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu--open",
+      );
 
       element.toggleExtensionMenu(false);
       expect(element.isExtensionMenuOpen).toBe(false);
       htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview__extension-menu--open");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__extension-menu--open",
+      );
     });
 
     it("拡張機能メニュー内に登録された各機能のラベル・アイコン・構文が表示されること", () => {
@@ -386,7 +397,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("初期状態では構文ヘルプダイアログが非表示であること", () => {
       expect(element.isHelpOpen).toBe(false);
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview__help-modal--open");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__help-modal--open",
+      );
     });
 
     it("toggleHelp() により構文ヘルプダイアログの開閉がトグルされること", () => {
@@ -427,7 +440,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.setMode("edit");
       const htmlStr = flattenTemplate(element.render());
 
-      expect(htmlStr).toContain("markdown-editor-preview__toolbar-item--secondary");
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__toolbar-item--secondary",
+      );
     });
 
     it("ドロップダウンメニュー内に追加の書式セクションがレンダリングされること", () => {
@@ -455,11 +470,16 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("SCSS にコンテナクエリ @container が定義され、狭幅時に二次的アクションが非表示となるスタイルが存在すること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
       expect(scssContent).toContain("@container");
-      expect(scssContent).toContain(".markdown-editor-preview__toolbar-item--secondary");
+      expect(scssContent).toContain(
+        ".markdown-editor-preview__toolbar-item--secondary",
+      );
     });
   });
 
@@ -476,43 +496,70 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("SCSS で header-left に overflow-x: auto が設定されておらず、ヘッダー外へのドロップダウン展開が阻害されないこと", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
       // .markdown-editor-preview__header-left のブロック内に overflow-x: auto が含まれていないこと
-      const headerLeftBlock = scssContent.match(/\.markdown-editor-preview__header-left\s*\{[^}]*\}/s)?.[0] || "";
+      const headerLeftBlock =
+        scssContent.match(
+          /\.markdown-editor-preview__header-left\s*\{[^}]*\}/s,
+        )?.[0] || "";
       expect(headerLeftBlock).not.toContain("overflow-x: auto");
       expect(headerLeftBlock).not.toContain("overflow: auto");
       expect(headerLeftBlock).not.toContain("overflow: hidden");
     });
 
     it("SCSS で header に position: relative と z-index が設定され、エディタペインより前面にドロップダウンが描画されること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
-      const headerBlock = scssContent.match(/\.markdown-editor-preview__header\s*\{[^}]*\}/s)?.[0] || "";
+      const headerBlock =
+        scssContent.match(
+          /\.markdown-editor-preview__header\s*\{[^}]*\}/s,
+        )?.[0] || "";
       expect(headerBlock).toContain("position: relative");
       expect(headerBlock).toContain("z-index");
     });
 
     it("SCSS で extension-menu が left: 0 で前面展開され、左側のはみ出しクリップを防止すること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
-      const menuBlock = scssContent.match(/\.markdown-editor-preview__extension-menu\s*\{[^}]*\}/s)?.[0] || "";
+      const menuBlock =
+        scssContent.match(
+          /\.markdown-editor-preview__extension-menu\s*\{[^}]*\}/s,
+        )?.[0] || "";
       expect(menuBlock).toContain("left: 0");
       expect(menuBlock).toContain("z-index: 1000");
     });
 
     it("SCSS で追加の書式セクションが通常幅時は非表示となり、狭幅コンテナクエリ内で表示されること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
-      expect(scssContent).toContain(".markdown-editor-preview__menu-section--secondary");
+      expect(scssContent).toContain(
+        ".markdown-editor-preview__menu-section--secondary",
+      );
       // 通常時は非表示
-      expect(scssContent).toMatch(/\.markdown-editor-preview__menu-section--secondary\s*\{[^}]*display:\s*none/s);
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__menu-section--secondary\s*\{[^}]*display:\s*none/s,
+      );
       // コンテナクエリ内で表示
-      expect(scssContent).toMatch(/@container[^{]*\{[\s\S]*?\.markdown-editor-preview__menu-section--secondary\s*\{[^}]*display:\s*(block|flex)/);
+      expect(scssContent).toMatch(
+        /@container[^{]*\{[\s\S]*?\.markdown-editor-preview__menu-section--secondary\s*\{[^}]*display:\s*(block|flex)/,
+      );
     });
   });
 
@@ -559,11 +606,16 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("SCSS にて auto-height 有効時に height: auto かつ内部スクロール抑止（overflow: visible）となるスタイルが定義されていること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
       expect(scssContent).toContain(".markdown-editor-preview--auto-height");
-      expect(scssContent).toMatch(/\.markdown-editor-preview--auto-height[\s\S]*?height:\s*auto/);
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview--auto-height[\s\S]*?height:\s*auto/,
+      );
     });
   });
 
@@ -574,7 +626,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).not.toContain("height:");
     });
 
-    it("height=\"400px\" が設定された場合、render() のルート要素に height: 400px スタイルが適用されること", () => {
+    it('height="400px" が設定された場合、render() のルート要素に height: 400px スタイルが適用されること', () => {
       (element as any).height = "400px";
       const htmlStr = flattenTemplate(element.render());
 
@@ -582,7 +634,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect((element as any).effectiveHeight).toBe("400px");
     });
 
-    it("height=500 または \"500\" のように数値/単位なし文字列が設定された場合、\"500px\" に正規化されてスタイルが適用されること", () => {
+    it('height=500 または "500" のように数値/単位なし文字列が設定された場合、"500px" に正規化されてスタイルが適用されること', () => {
       (element as any).height = 500;
       let htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("height: 500px");
@@ -613,7 +665,10 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
   describe("サイズモード切替アニメーション（Smooth Transition）仕様", () => {
     it("SCSS にて高さトランジション（transition: height）およびアニメーション中スタイル（.markdown-editor-preview--animating）が定義されていること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
       expect(scssContent).toContain("markdown-editor-preview--animating");
@@ -621,11 +676,16 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("prefers-reduced-motion メディアクエリにおいてトランジションが無効化されること", () => {
-      const scssPath = new URL("./markdown-editor-preview.scss", import.meta.url);
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
       const scssContent = fs.readFileSync(scssPath, "utf-8");
 
       expect(scssContent).toContain("prefers-reduced-motion: reduce");
-      expect(scssContent).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?transition:\s*none/);
+      expect(scssContent).toMatch(
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?transition:\s*none/,
+      );
     });
 
     it("isTransitioning 状態が管理され、アニメーション中は .markdown-editor-preview--animating クラスがレンダリングされること", () => {
@@ -662,7 +722,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("renderExtensionMenu() によりミートボールボタンおよび拡張ドロップダウンが描画されること", () => {
       const result = (element as any).renderExtensionMenu();
       const htmlStr = flattenTemplate(result);
-      expect(htmlStr).toContain("markdown-editor-preview__toolbar-btn--extension-menu");
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__toolbar-btn--extension-menu",
+      );
       expect(htmlStr).toContain("markdown-editor-preview__extension-menu");
     });
 
@@ -754,11 +816,17 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("SCSS において :host([data-theme='dark']) に不透明な黒背景色が設定されず、transparent であること", () => {
-      const darkHostMatch = scssContent.match(/:host\(\[data-theme="dark"\]\)[^{]*\{([^}]+)\}/);
+      const darkHostMatch = scssContent.match(
+        /:host\(\[data-theme="dark"\]\)[^{]*\{([^}]+)\}/,
+      );
       if (darkHostMatch) {
-        expect(darkHostMatch[1]).not.toMatch(/background-color:\s*#[0-9a-fA-F]+/);
+        expect(darkHostMatch[1]).not.toMatch(
+          /background-color:\s*#[0-9a-fA-F]+/,
+        );
       }
-      expect(scssContent).toMatch(/:host\s*\{[^}]*background-color:\s*transparent/);
+      expect(scssContent).toMatch(
+        /:host\s*\{[^}]*background-color:\s*transparent/,
+      );
     });
   });
 
@@ -802,8 +870,12 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("コンテンツ展開モード時（方針A）、:host([auto-height]) が height: auto かつ flex: none となりコンテンツ高さに追従すること", () => {
       const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
       const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toMatch(/:host\(\[auto-height\]\)[^{]*\{[^}]*height:\s*auto;/);
-      expect(scssContent).toMatch(/:host\(\[auto-height\]\)[^{]*\{[^}]*flex:\s*none;/);
+      expect(scssContent).toMatch(
+        /:host\(\[auto-height\]\)[^{]*\{[^}]*height:\s*auto;/,
+      );
+      expect(scssContent).toMatch(
+        /:host\(\[auto-height\]\)[^{]*\{[^}]*flex:\s*none;/,
+      );
     });
   });
 
@@ -818,9 +890,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("コンテンツ展開モード時、.markdown-editor-preview__header に対し position: sticky; top: 0; が指定されていること", () => {
-      expect(scssContent).toMatch(
-        /position:\s*sticky;[\s\S]*?top:\s*0;/,
-      );
+      expect(scssContent).toMatch(/position:\s*sticky;[\s\S]*?top:\s*0;/);
     });
 
     it("ヘッダー上部に角丸（border-top-left-radius / border-top-right-radius）が指定され、視覚的完全性が維持されていること", () => {
@@ -855,7 +925,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("コンテナクエリの閾値が 430px に最適化されていること", () => {
-      expect(scssContent).toMatch(/@container\s+editor-preview\s*\(\s*max-width:\s*430px\s*\)/);
+      expect(scssContent).toMatch(
+        /@container\s+editor-preview\s*\(\s*max-width:\s*430px\s*\)/,
+      );
     });
   });
 
@@ -863,9 +935,15 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン」の順に配置されていること", () => {
       element.allowAutoHeight = true;
       const htmlStr = flattenTemplate(element.render());
-      const autoHeightIdx = htmlStr.indexOf("markdown-editor-preview__auto-height-btn");
-      const modeGroupIdx = htmlStr.indexOf("markdown-editor-preview__mode-group");
-      const actionMenuIdx = htmlStr.indexOf("markdown-editor-preview__action-menu-btn");
+      const autoHeightIdx = htmlStr.indexOf(
+        "markdown-editor-preview__auto-height-btn",
+      );
+      const modeGroupIdx = htmlStr.indexOf(
+        "markdown-editor-preview__mode-group",
+      );
+      const actionMenuIdx = htmlStr.indexOf(
+        "markdown-editor-preview__action-menu-btn",
+      );
 
       expect(autoHeightIdx).toBeGreaterThan(-1);
       expect(modeGroupIdx).toBeGreaterThan(-1);
@@ -885,7 +963,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("初期状態で isActionMenuOpen が false であり、ドロップダウンが開いていないこと", () => {
       expect((element as any).isActionMenuOpen).toBe(false);
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview__action-menu--open");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__action-menu--open",
+      );
     });
 
     it("toggleActionMenu() により isActionMenuOpen がトグルされること", () => {
@@ -897,7 +977,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       (element as any).toggleActionMenu(false);
       expect((element as any).isActionMenuOpen).toBe(false);
       htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview__action-menu--open");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__action-menu--open",
+      );
     });
 
     it("メニュー内の構文ヘルプ項目をクリックすると、toggleHelp(true) が呼び出されメニューが閉じること", () => {
@@ -920,7 +1002,58 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect((element as any).isActionMenuOpen).toBe(false);
     });
+
+    interface TestableActionMenuPreview extends MarkdownEditorPreview {
+      isActionMenuOpen: boolean;
+    }
+
+    it("メニュー内の「コピー」ボタンをクリックすると、value がクリップボードにコピーされメニューが閉じること", async () => {
+      element.value = "# コピー対象テキスト";
+      element.toggleActionMenu(true);
+
+      let copiedText = "";
+      const originalClipboard = globalThis.navigator?.clipboard;
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      try {
+        let copyEventFired = false;
+        element.addEventListener("markdown-copy", (e: Event) => {
+          copyEventFired = true;
+          expect((e as CustomEvent<{ value: string }>).detail.value).toBe(
+            "# コピー対象テキスト",
+          );
+        });
+
+        await element.handleMenuCopyAction();
+
+        expect(copiedText).toBe("# コピー対象テキスト");
+        expect(copyEventFired).toBe(true);
+        expect(
+          (element as unknown as TestableActionMenuPreview).isActionMenuOpen,
+        ).toBe(false);
+      } finally {
+        if (originalClipboard) {
+          Object.assign(globalThis.navigator, { clipboard: originalClipboard });
+        }
+      }
+    });
+
+    it("メニュー内の「整形」ボタンをクリックすると、フォーマッターが実行されて value が更新されメニューが閉じること", async () => {
+      element.value = "#  未整形タイトル \n\n\n\n本文段落  ";
+      element.toggleActionMenu(true);
+
+      await element.handleMenuFormatAction();
+
+      expect(element.value.trim()).toBe("# 未整形タイトル\n\n本文段落");
+      expect(
+        (element as unknown as TestableActionMenuPreview).isActionMenuOpen,
+      ).toBe(false);
+    });
   });
 });
-
-

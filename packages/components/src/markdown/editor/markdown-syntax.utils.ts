@@ -217,3 +217,27 @@ export function getSurroundingSyntax(
   }
 }
 
+/**
+ * 複数行テキストに対し、指定されたアクションのリストプレフィックスを行単位で適用する純粋関数
+ *
+ * @param action Markdown アクション種別
+ * @param text 複数行テキスト
+ * @returns リストプレフィックス適用後のテキスト
+ */
+export function applyMultiLineListPrefix(
+  action: MarkdownActionType,
+  text: string,
+): string {
+  const prefix = getLinePrefixForAction(action);
+  if (!prefix) return text;
+
+  const lines = text.split("\n");
+  return lines
+    .map((line) => {
+      if (line.trim() === "") return line;
+      return `${prefix}${line}`;
+    })
+    .join("\n");
+}
+
+

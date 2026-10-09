@@ -10,6 +10,8 @@ import type {
   SanitizeSchema,
 } from "../types.js";
 
+import { normalizeMarkdownLinksWithSpaces } from "../utils/link-normalizer.js";
+
 /**
  * GFM 構文（チェックボックス、テーブル等）を安全に許可するための拡張サニタイズベーススキーマ
  */
@@ -26,6 +28,17 @@ export const baseMarkdownSanitizeSchema: SanitizeSchema = {
     "th",
     "td",
   ],
+  protocols: {
+    ...defaultSchema.protocols,
+    href: [
+      ...((defaultSchema.protocols && defaultSchema.protocols.href) || [
+        "http",
+        "https",
+        "mailto",
+      ]),
+      "file",
+    ],
+  },
   attributes: {
     ...defaultSchema.attributes,
     input: [
@@ -72,7 +85,8 @@ export function createMarkdownProcessor(
 
   return {
     async process(markdown: string): Promise<string> {
-      const vfile = await processor.process(markdown);
+      const normalizedMarkdown = normalizeMarkdownLinksWithSpaces(markdown);
+      const vfile = await processor.process(normalizedMarkdown);
       return String(vfile);
     },
     get internalProcessor() {

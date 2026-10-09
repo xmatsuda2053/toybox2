@@ -19,10 +19,12 @@
  *   - 選択範囲ハイライト (.cm-selectionBackground) に明瞭な背景色が指定されていること
  *   - ドラッグ時のドロップカーソル (.cm-dropCursor) に視認性の高いボーダーが指定されていること
  *   - ダークモード用の選択範囲ハイライトおよびドロップカーソルが指定されていること
- * 7. 拡張機能・プロパティ変更時の再構成制御とエディタ保護
+ * 7. エディタのフォントスタイル定義 (Monospace Font)
+ *   - :host に Windows 標準の等幅フォント（Consolas, Cascadia, BIZ UDGothic, monospace 等）が指定されていること
+ * 8. 拡張機能・プロパティ変更時の再構成制御とエディタ保護
  *   - customExtensions に要素が同一の別配列インスタンスが設定された場合、再構成処理（reconfigureEditor）が呼び出されないこと
  *   - isDarkMode が変化しない themeMode 変更時、再構成処理（reconfigureEditor）が呼び出されないこと
- * 8. 複数回のテーマ切り替え時の整合性保護
+ * 9. 複数回のテーマ切り替え時の整合性保護
  *   - themeMode が dark -> light -> dark と切り替わった際、各変更でホスト属性と再構成が同期して実行されること
  */
 
@@ -125,13 +127,25 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     });
   });
 
+  describe("7. エディタのフォントスタイル定義 (Monospace Font)", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it(":host に Windows 標準の等幅フォント（Consolas, Cascadia, BIZ UDGothic, monospace 等）が指定されていること", () => {
+      expect(scssContent).toMatch(/font-family:\s*[^;]*Consolas/);
+      expect(scssContent).toMatch(/font-family:\s*[^;]*monospace/);
+      expect(scssContent).toMatch(/font-family:\s*[^;]*['"]?BIZ UDGothic['"]?/);
+      expect(scssContent).not.toMatch(/font-family:\s*['"]?Segoe UI/);
+    });
+  });
+
   type TestableMarkdownEditor = Omit<MarkdownEditor, "editorView"> & {
     editorView?: { destroy: () => void; dispatch: () => void };
     reconfigureEditor: () => void;
     classList: DOMTokenList;
   };
 
-  describe("7. 拡張機能・プロパティ変更時の再構成制御とエディタ保護", () => {
+  describe("8. 拡張機能・プロパティ変更時の再構成制御とエディタ保護", () => {
     it("customExtensions に要素が同一の別配列インスタンスが設定された場合、再構成処理がスキップされること", () => {
       const dummyExt = EditorView.theme({});
       editor.customExtensions = [dummyExt];
@@ -161,7 +175,7 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     });
   });
 
-  describe("8. 複数回のテーマ切り替え時の整合性保護", () => {
+  describe("9. 複数回のテーマ切り替え時の整合性保護", () => {
 
     it("themeMode が dark -> light -> dark と切り替わった際、ホスト属性と再構成が正常に同期されること", () => {
       editor.themeMode = "dark";

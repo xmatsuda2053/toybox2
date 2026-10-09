@@ -13,6 +13,11 @@
  *   - code: 単行文字列はインライン、改行を含む文字列はブロックコードとして囲むこと
  *   - link: 選択文字列がある場合は URL 位置、ない場合は表示テキスト位置を選択状態にすること
  *   - table: 直前の改行有無に応じたプレフィックス付与とカーソル移動を行うこと
+ * 4. 複数行リストプレフィックス適用 (applyMultiLineListPrefix)
+ *   - bullet-list: 複数行テキストの各行頭に '- ' を付与すること
+ *   - task-list: 複数行テキストの各行頭に '- [ ] ' を付与すること
+ *   - ordered-list: 複数行テキストの各行頭に '1. ' を付与すること
+ *   - 途中の空行はスキップしてプレフィックスを付与しないこと
  */
 
 import { describe, it, expect } from "vitest";
@@ -20,6 +25,7 @@ import {
   getFallbackMarkdownText,
   getLinePrefixForAction,
   getSurroundingSyntax,
+  applyMultiLineListPrefix,
 } from "./markdown-syntax.utils.js";
 
 describe("markdown-syntax.utils", () => {
@@ -104,4 +110,31 @@ describe("markdown-syntax.utils", () => {
       expect(result.anchor).toBe(10 + result.insertText.length);
     });
   });
+
+  describe("applyMultiLineListPrefix (複数行リストプレフィックス適用)", () => {
+    it("bullet-list: 複数行テキストの各行頭に '- ' を付与すること", () => {
+      const input = "りんご\nみかん\nバナナ";
+      const result = applyMultiLineListPrefix("bullet-list", input);
+      expect(result).toBe("- りんご\n- みかん\n- バナナ");
+    });
+
+    it("task-list: 複数行テキストの各行頭に '- [ ] ' を付与すること", () => {
+      const input = "タスク1\nタスク2";
+      const result = applyMultiLineListPrefix("task-list", input);
+      expect(result).toBe("- [ ] タスク1\n- [ ] タスク2");
+    });
+
+    it("ordered-list: 複数行テキストの各行頭に '1. ' を付与すること", () => {
+      const input = "ステップA\nステップB\nステップC";
+      const result = applyMultiLineListPrefix("ordered-list", input);
+      expect(result).toBe("1. ステップA\n1. ステップB\n1. ステップC");
+    });
+
+    it("途中の空行はスキップしてプレフィックスを付与しないこと", () => {
+      const input = "項目1\n\n項目2";
+      const result = applyMultiLineListPrefix("bullet-list", input);
+      expect(result).toBe("- 項目1\n\n- 項目2");
+    });
+  });
 });
+
