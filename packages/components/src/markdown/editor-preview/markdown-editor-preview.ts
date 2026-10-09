@@ -7,12 +7,17 @@ import type {
   MarkdownFeatureExtension,
 } from "../types.js";
 import { debounce } from "@shared/utils";
-import { detectIsDarkMode, observeThemeChanges, syncHostTheme } from "../utils/theme-sync.js";
+import {
+  detectIsDarkMode,
+  observeThemeChanges,
+  syncHostTheme,
+} from "../utils/theme-sync.js";
 import {
   MarkdownEditor,
   type MarkdownActionType,
 } from "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
+import { formatMarkdown } from "../formatter/markdown-formatter.js";
 
 export type MarkdownDisplayMode = "split" | "edit" | "preview";
 
@@ -25,12 +30,20 @@ interface ToolbarButtonDef {
 const BASIC_TOOLBAR_BUTTONS: readonly ToolbarButtonDef[] = [
   { action: "heading", icon: "heading-solid-full", label: "見出し" },
   { action: "bold", icon: "bold-solid-full", label: "太字" },
-  { action: "bullet-list", icon: "list-ul-solid-full", label: "箇条書きリスト" },
+  {
+    action: "bullet-list",
+    icon: "list-ul-solid-full",
+    label: "箇条書きリスト",
+  },
   { action: "task-list", icon: "list-check-solid-full", label: "タスクリスト" },
 ];
 
 const SECONDARY_TOOLBAR_BUTTONS: readonly ToolbarButtonDef[] = [
-  { action: "ordered-list", icon: "list-ol-solid-full", label: "番号付きリスト" },
+  {
+    action: "ordered-list",
+    icon: "list-ol-solid-full",
+    label: "番号付きリスト",
+  },
   { action: "quote", icon: "blockquote-left", label: "引用" },
   { action: "code", icon: "code-solid-full", label: "コード" },
   { action: "link", icon: "link-solid-full", label: "リンク" },
@@ -194,7 +207,12 @@ export class MarkdownEditorPreview extends LitElement {
    * 数値や単位なし文字列の場合は "px" を自動補完する。
    */
   public get effectiveHeight(): string | undefined {
-    if (this.autoHeight || this.height === undefined || this.height === null || this.height === "") {
+    if (
+      this.autoHeight ||
+      this.height === undefined ||
+      this.height === null ||
+      this.height === ""
+    ) {
       return undefined;
     }
     if (typeof this.height === "number") {
@@ -369,7 +387,10 @@ export class MarkdownEditorPreview extends LitElement {
       this.syncTheme();
     }
 
-    if (changedProperties.has("height") || changedProperties.has("autoHeight")) {
+    if (
+      changedProperties.has("height") ||
+      changedProperties.has("autoHeight")
+    ) {
       if (this.style && !this.isTransitioning) {
         this.style.height = this.effectiveHeight || "";
       }
@@ -577,7 +598,10 @@ export class MarkdownEditorPreview extends LitElement {
   /**
    * 高さモード切替時の滑らかな伸縮アニメーションを実行する。
    */
-  private animateHeightTransition(currentHeight: number, targetAutoHeight: boolean): void {
+  private animateHeightTransition(
+    currentHeight: number,
+    targetAutoHeight: boolean,
+  ): void {
     this.isTransitioning = true;
     if (targetAutoHeight) {
       this.animateToAutoHeight(currentHeight);
@@ -668,6 +692,33 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * エディタメニュー内から Markdown の Raw データをクリップボードへコピーし、メニューを閉じる。
+   */
+  public async handleMenuCopyAction(): Promise<void> {
+    this.toggleActionMenu(false);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(this.value);
+    }
+    this.dispatchEvent(
+      new CustomEvent("markdown-copy", {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * エディタメニュー内から Markdown フォーマッターを実行し、テキストを更新してメニューを閉じる。
+   */
+  public async handleMenuFormatAction(): Promise<void> {
+    this.toggleActionMenu(false);
+    const formatted = await formatMarkdown(this.value);
+    this.setValue(formatted);
+    this.handleEditorChange(formatted);
+  }
+
+  /**
    * 拡張機能メニュー項目を選択・挿入し、メニューを閉じる。
    *
    * @param ext 拡張機能定義
@@ -699,7 +750,11 @@ export class MarkdownEditorPreview extends LitElement {
         aria-label="${btn.label}"
         @click=${() => this.handleToolbarAction(btn.action)}
       >
-        <wa-icon library="my-icons" name="${btn.icon}" label="${btn.label}"></wa-icon>
+        <wa-icon
+          library="my-icons"
+          name="${btn.icon}"
+          label="${btn.label}"
+        ></wa-icon>
       </button>
     `;
 
@@ -722,13 +777,19 @@ export class MarkdownEditorPreview extends LitElement {
         aria-label="${btn.label}"
         @click=${() => this.handleToolbarAction(btn.action)}
       >
-        <wa-icon library="my-icons" name="${btn.icon}" label="${btn.label}"></wa-icon>
+        <wa-icon
+          library="my-icons"
+          name="${btn.icon}"
+          label="${btn.label}"
+        ></wa-icon>
       </button>
     `;
 
     return html`
       ${SECONDARY_TOOLBAR_BUTTONS.slice(0, 2).map(renderSecondaryBtn)}
-      <span class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"></span>
+      <span
+        class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"
+      ></span>
       ${SECONDARY_TOOLBAR_BUTTONS.slice(2).map(renderSecondaryBtn)}
     `;
   }
@@ -738,9 +799,13 @@ export class MarkdownEditorPreview extends LitElement {
    */
   private renderMenuSecondaryActions() {
     return html`
-      <div class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary">
+      <div
+        class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary"
+      >
         <div class="markdown-editor-preview__extension-menu-header">
-          <span class="markdown-editor-preview__extension-menu-title">追加の書式</span>
+          <span class="markdown-editor-preview__extension-menu-title"
+            >追加の書式</span
+          >
         </div>
         <div class="markdown-editor-preview__extension-menu-list">
           ${SECONDARY_TOOLBAR_BUTTONS.map(
@@ -756,7 +821,9 @@ export class MarkdownEditorPreview extends LitElement {
                   name="${btn.icon}"
                   class="markdown-editor-preview__extension-menu-item-icon"
                 ></wa-icon>
-                <span class="markdown-editor-preview__extension-menu-item-label">${btn.label}</span>
+                <span class="markdown-editor-preview__extension-menu-item-label"
+                  >${btn.label}</span
+                >
               </button>
             `,
           )}
@@ -790,11 +857,8 @@ export class MarkdownEditorPreview extends LitElement {
                 name=${ext.toolbarItem?.icon || "tag-solid-full"}
                 class="markdown-editor-preview__extension-menu-item-icon"
               ></wa-icon>
-              <div
-                class="markdown-editor-preview__extension-menu-item-body"
-              >
-                <span
-                  class="markdown-editor-preview__extension-menu-item-label"
+              <div class="markdown-editor-preview__extension-menu-item-body">
+                <span class="markdown-editor-preview__extension-menu-item-label"
                   >${ext.label}</span
                 >
                 <code
@@ -813,9 +877,10 @@ export class MarkdownEditorPreview extends LitElement {
    * 拡張機能ドロップダウンメニューコンテナを描画する。
    */
   private renderExtensionMenu() {
-    const containerClass = this.extensions.length > 0
-      ? ""
-      : "markdown-editor-preview__extension-menu-container--responsive";
+    const containerClass =
+      this.extensions.length > 0
+        ? ""
+        : "markdown-editor-preview__extension-menu-container--responsive";
 
     return html`
       <div
@@ -823,7 +888,8 @@ export class MarkdownEditorPreview extends LitElement {
       >
         <button
           type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu ${this.isExtensionMenuOpen
+          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu ${this
+            .isExtensionMenuOpen
             ? "markdown-editor-preview__toolbar-btn--active"
             : ""}"
           title="拡張機能"
@@ -839,14 +905,14 @@ export class MarkdownEditorPreview extends LitElement {
           ></wa-icon>
         </button>
         <div
-          class="markdown-editor-preview__extension-menu ${this.isExtensionMenuOpen
+          class="markdown-editor-preview__extension-menu ${this
+            .isExtensionMenuOpen
             ? "markdown-editor-preview__extension-menu--open"
             : ""}"
           role="menu"
           aria-label="拡張機能メニュー"
         >
-          ${this.renderMenuSecondaryActions()}
-          ${this.renderMenuExtensions()}
+          ${this.renderMenuSecondaryActions()} ${this.renderMenuExtensions()}
         </div>
       </div>
     `;
@@ -856,9 +922,10 @@ export class MarkdownEditorPreview extends LitElement {
    * Markdown 書式ツールバーを描画する。
    */
   private renderToolbar() {
-    const separatorClass = this.extensions.length > 0
-      ? ""
-      : "markdown-editor-preview__toolbar-menu-separator--responsive";
+    const separatorClass =
+      this.extensions.length > 0
+        ? ""
+        : "markdown-editor-preview__toolbar-menu-separator--responsive";
 
     return html`
       <div
@@ -909,13 +976,13 @@ export class MarkdownEditorPreview extends LitElement {
     `;
   }
 
-
   /**
    * スプリットモード切替タブボタンを描画する。
    */
   private renderSplitTabButton() {
     if (!this.allowSplit) return "";
-    const activeClass = this.mode === "split" ? "markdown-editor-preview__mode-btn--active" : "";
+    const activeClass =
+      this.mode === "split" ? "markdown-editor-preview__mode-btn--active" : "";
 
     return html`
       <button
@@ -973,6 +1040,59 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * エディタ操作メニューの各アクション項目を描画する。
+   */
+  private renderActionMenuItems() {
+    return html`
+      <button
+        type="button"
+        class="markdown-editor-preview__action-menu-item"
+        role="menuitem"
+        @click=${() => this.handleMenuCopyAction()}
+      >
+        <wa-icon
+          library="my-icons"
+          name="copy-solid-full"
+          class="markdown-editor-preview__action-menu-item-icon"
+        ></wa-icon>
+        <span class="markdown-editor-preview__action-menu-item-label">
+          コピー
+        </span>
+      </button>
+      <button
+        type="button"
+        class="markdown-editor-preview__action-menu-item"
+        role="menuitem"
+        @click=${() => this.handleMenuFormatAction()}
+      >
+        <wa-icon
+          library="my-icons"
+          name="wand-magic-sparkles-solid-full"
+          class="markdown-editor-preview__action-menu-item-icon"
+        ></wa-icon>
+        <span class="markdown-editor-preview__action-menu-item-label">
+          整形
+        </span>
+      </button>
+      <button
+        type="button"
+        class="markdown-editor-preview__action-menu-item"
+        role="menuitem"
+        @click=${() => this.handleMenuHelpAction()}
+      >
+        <wa-icon
+          library="my-icons"
+          name="question-solid-full"
+          class="markdown-editor-preview__action-menu-item-icon"
+        ></wa-icon>
+        <span class="markdown-editor-preview__action-menu-item-label"
+          >構文ヘルプ</span
+        >
+      </button>
+    `;
+  }
+
+  /**
    * エディタ操作メニュー（最右端ドロップダウン）を描画する。
    */
   private renderActionMenu() {
@@ -980,7 +1100,8 @@ export class MarkdownEditorPreview extends LitElement {
       <div class="markdown-editor-preview__action-menu-container">
         <button
           type="button"
-          class="markdown-editor-preview__action-menu-btn ${this.isActionMenuOpen
+          class="markdown-editor-preview__action-menu-btn ${this
+            .isActionMenuOpen
             ? "markdown-editor-preview__action-menu-btn--active"
             : ""}"
           title="エディタメニュー"
@@ -1005,21 +1126,7 @@ export class MarkdownEditorPreview extends LitElement {
           role="menu"
         >
           <div class="markdown-editor-preview__action-menu-list">
-            <button
-              type="button"
-              class="markdown-editor-preview__action-menu-item"
-              role="menuitem"
-              @click=${() => this.handleMenuHelpAction()}
-            >
-              <wa-icon
-                library="my-icons"
-                name="question-solid-full"
-                class="markdown-editor-preview__action-menu-item-icon"
-              ></wa-icon>
-              <span class="markdown-editor-preview__action-menu-item-label"
-                >構文ヘルプ</span
-              >
-            </button>
+            ${this.renderActionMenuItems()}
           </div>
         </div>
       </div>
@@ -1036,8 +1143,7 @@ export class MarkdownEditorPreview extends LitElement {
           ${this.mode !== "preview" ? this.renderToolbar() : ""}
         </div>
         <div class="markdown-editor-preview__header-right">
-          ${this.renderAutoHeightButton()}
-          ${this.renderModeSwitchTabs()}
+          ${this.renderAutoHeightButton()} ${this.renderModeSwitchTabs()}
           ${this.renderActionMenu()}
         </div>
       </header>
@@ -1197,7 +1303,9 @@ export class MarkdownEditorPreview extends LitElement {
           @click=${(e: Event) => e.stopPropagation()}
         >
           <header class="markdown-editor-preview__help-header">
-            <h3 class="markdown-editor-preview__help-title">Markdown 構文ヘルプ</h3>
+            <h3 class="markdown-editor-preview__help-title">
+              Markdown 構文ヘルプ
+            </h3>
             <button
               type="button"
               class="markdown-editor-preview__help-close-btn"
@@ -1213,8 +1321,7 @@ export class MarkdownEditorPreview extends LitElement {
             </button>
           </header>
           <div class="markdown-editor-preview__help-content">
-            ${this.renderHelpExtensionTable()}
-            ${this.renderHelpBasicTable()}
+            ${this.renderHelpExtensionTable()} ${this.renderHelpBasicTable()}
           </div>
         </div>
       </div>
@@ -1239,9 +1346,7 @@ export class MarkdownEditorPreview extends LitElement {
         class="markdown-editor-preview ${modeClass} ${autoHeightClass} ${animatingClass}"
         style=${heightStyle || nothing}
       >
-        ${this.renderHeader()}
-        ${this.renderBody()}
-        ${this.renderHelpModal()}
+        ${this.renderHeader()} ${this.renderBody()} ${this.renderHelpModal()}
       </div>
     `;
   }

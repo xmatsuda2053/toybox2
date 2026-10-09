@@ -103,6 +103,18 @@ describe("MarkdownProcessor", () => {
       expect(html).toContain('<a href="https://example.com"');
       expect(html).toContain(">https://example.com</a>");
     });
+
+    it("URL の途中にスペースが含まれるリンク記法が正しく a タグに変換され href が保持されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown = "[ドキュメント](file:///C:/My Documents/report.pdf)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain("<a");
+      expect(html).toContain("file:///C:/My");
+      expect(html).toContain("report.pdf");
+      expect(html).toContain(">ドキュメント</a>");
+    });
   });
 
   describe("セキュリティとサニタイズ（XSS防御）", () => {

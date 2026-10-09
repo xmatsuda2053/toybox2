@@ -31,6 +31,11 @@
  *   - input[type='checkbox'] の accent-color がセマンティックトークンを参照していること
  * 14. blockquote の背景色・左ボーダー・文字色
  *   - blockquote がエディタ・ビュアーと同化せず、セマンティックトークンによる背景色・ボーダー・文字色を持つこと
+ * 15. リンククリック時のURLクリップボードコピー
+ *   - a タグクリック時にブラウザの画面遷移が抑止（preventDefault）されること
+ *   - a タグの href がクリップボードにコピーされること
+ *   - href に %20 が含まれる場合はデコードされてスペースとしてコピーされること
+ *   - link-copy カスタムイベントが URL とともに発火すること
  */
 
 import * as fs from "node:fs";
@@ -201,4 +206,78 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       expect(scssContent).toMatch(/blockquote[\s\S]*?color:\s*var\(--stepnote-markdown-blockquote-text\)/);
     });
   });
+
+  describe("15. リンククリック時のURLクリップボードコピー", () => {
+    it("a タグクリック時に preventDefault され、デコードされた URL がクリップボードにコピーされること", async () => {
+      let copiedText = "";
+      const originalClipboard = globalThis.navigator?.clipboard;
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      try {
+        let preventDefaultCalled = false;
+        let eventDetail: { url: string } | null = null;
+        element.addEventListener("link-copy", (e: Event) => {
+          eventDetail = (e as CustomEvent<{ url: string }>).detail;
+        });
+
+        // リンククリックハンドラを実行
+        const mockAnchor = {
+          tagName: "A",
+          getAttribute: (name: string) => (name === "href" ? "https://example.com/foo%20bar" : null),
+          closest: (selector: string) => (selector === "a" ? mockAnchor : null),
+        };
+        const mockEvent = {
+          target: mockAnchor,
+          preventDefault: () => {
+            preventDefaultCalled = true;
+          },
+          composedPath: () => [mockAnchor],
+        };
+
+        element.handleContentClick?.(mockEvent as unknown as MouseEvent);
+
+        expect(preventDefaultCalled).toBe(true);
+        expect(copiedText).toBe("https://example.com/foo bar");
+        expect(eventDetail).toEqual({ url: "https://example.com/foo bar" });
+      } finally {
+        if (originalClipboard) {
+          Object.assign(globalThis.navigator, { clipboard: originalClipboard });
+        }
+      }
+    });
+
+    it("URL にスペースが含まれている場合も末尾まで正確にデコード・コピーされること", async () => {
+      let copiedText = "";
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      const mockAnchor = {
+        tagName: "A",
+        getAttribute: (name: string) =>
+          name === "href" ? "file:///C:/Users/name/My%20Documents/test%20folder/file.txt" : null,
+        closest: (selector: string) => (selector === "a" ? mockAnchor : null),
+      };
+      const mockEvent = {
+        target: mockAnchor,
+        preventDefault: () => {},
+        composedPath: () => [mockAnchor],
+      };
+
+      element.handleContentClick?.(mockEvent as unknown as MouseEvent);
+
+      expect(copiedText).toBe("file:///C:/Users/name/My Documents/test folder/file.txt");
+    });
+  });
 });
+

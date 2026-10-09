@@ -40,6 +40,7 @@ import {
   syncHostTheme,
 } from "../utils/theme-sync.js";
 import {
+  applyMultiLineListPrefix,
   getFallbackMarkdownText,
   getLinePrefixForAction,
   getSurroundingSyntax,
@@ -302,6 +303,48 @@ export class MarkdownEditor extends LitElement {
   }
 
   /**
+   * 行頭プレフィックスを単行または複数行にディスパッチする。
+   */
+  private dispatchLinePrefix(
+    view: EditorView,
+    from: number,
+    to: number,
+    linePrefix: string,
+  ): void {
+    const state = view.state;
+    const startLine = state.doc.lineAt(from);
+    const endLine = state.doc.lineAt(to);
+
+    if (startLine.number === endLine.number) {
+      view.dispatch({
+        changes: { from: startLine.from, to: startLine.from, insert: linePrefix },
+        selection: { anchor: from + linePrefix.length },
+      });
+      view.focus();
+      return;
+    }
+
+    const changes: { from: number; to: number; insert: string }[] = [];
+    let insertedCount = 0;
+    for (let i = startLine.number; i <= endLine.number; i++) {
+      const line = state.doc.line(i);
+      if (line.text.trim().length > 0) {
+        changes.push({ from: line.from, to: line.from, insert: linePrefix });
+        insertedCount++;
+      }
+    }
+
+    view.dispatch({
+      changes,
+      selection: {
+        anchor: from + linePrefix.length,
+        head: to + insertedCount * linePrefix.length,
+      },
+    });
+    view.focus();
+  }
+
+  /**
    * 指定された構文アクションに基づいて Markdown テキストを挿入または選択範囲をラップする。
    *
    * @param action Markdown アクション種別
@@ -310,7 +353,15 @@ export class MarkdownEditor extends LitElement {
     if (this.disabled) return;
 
     if (!this.editorView) {
-      this.value = getFallbackMarkdownText(action, this.value);
+      const isList =
+        action === "bullet-list" ||
+        action === "ordered-list" ||
+        action === "task-list";
+      if (this.value && this.value.includes("\n") && isList) {
+        this.value = applyMultiLineListPrefix(action, this.value);
+      } else {
+        this.value = getFallbackMarkdownText(action, this.value);
+      }
       this.notifyChange(this.value);
       return;
     }
@@ -321,12 +372,7 @@ export class MarkdownEditor extends LitElement {
     const linePrefix = getLinePrefixForAction(action);
 
     if (linePrefix !== null) {
-      const line = state.doc.lineAt(from);
-      view.dispatch({
-        changes: { from: line.from, to: line.from, insert: linePrefix },
-        selection: { anchor: from + linePrefix.length },
-      });
-      view.focus();
+      this.dispatchLinePrefix(view, from, to, linePrefix);
       return;
     }
 

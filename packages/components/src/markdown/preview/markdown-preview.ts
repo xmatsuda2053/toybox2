@@ -139,6 +139,43 @@ export class MarkdownPreview extends LitElement {
     }
   }
 
+  /**
+   * プレビュー領域内のクリックイベントを処理する。
+   * リンククリック時はページ遷移を抑止し、URL をデコードしてクリップボードへコピーする。
+   */
+  public handleContentClick = (e: MouseEvent): void => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    const anchor = target.closest ? target.closest("a") : null;
+    if (!anchor) return;
+
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+
+    e.preventDefault?.();
+    e.stopPropagation?.();
+
+    let decodedUrl: string;
+    try {
+      decodedUrl = decodeURI(href);
+    } catch {
+      decodedUrl = href;
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      void navigator.clipboard.writeText(decodedUrl);
+    }
+
+    this.dispatchEvent(
+      new CustomEvent("link-copy", {
+        detail: { url: decodedUrl },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
   override render() {
     const isDark =
       this.getAttribute?.("data-theme") === "dark" ||
@@ -156,6 +193,7 @@ export class MarkdownPreview extends LitElement {
           ? html`<div
               class="markdown-preview__body markdown-body"
               data-theme="${currentTheme}"
+              @click=${this.handleContentClick}
             >
               ${unsafeHTML(this.renderedHtml)}
             </div>`
