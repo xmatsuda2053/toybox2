@@ -481,5 +481,23 @@ describe("PaneTaskList Component (Phase 1: Layout & Structure)", () => {
       expect(scssContent).not.toContain("&::-webkit-scrollbar {");
     });
   });
+
+  describe("13. TaskListItem への Issue 件数バインド", () => {
+    it("13-1. renderTaskItem 呼び出し時に taskListController.getTaskIssueCount から件数がバインドされること", () => {
+      const fakeTaskListController = {
+        state: [{ id: 10, name: "テストタスク", fiscalYear: 2026 }],
+        getTaskIssueCount: vi.fn().mockReturnValue({ done: 3, total: 5 }),
+        subscribe: vi.fn(() => vi.fn()),
+      };
+      element.taskListController = fakeTaskListController as any;
+
+      const htmlStr = flattenTemplate(
+        element.renderTaskItem(fakeTaskListController.state[0] as any),
+      );
+      expect(fakeTaskListController.getTaskIssueCount).toHaveBeenCalledWith(10);
+      expect(htmlStr).toContain(".issuesDone=3");
+      expect(htmlStr).toContain(".issuesTotal=5");
+    });
+  });
 });
 

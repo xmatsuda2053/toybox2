@@ -368,7 +368,7 @@ describe("TaskListItem Component", () => {
           ? scssPath.slice(1)
           : scssPath;
       const content = fs.readFileSync(normalizedPath, "utf-8");
-      const colorMatches = content.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^\)]+\)|hsla?\([^\)]+\))/g);
+      const colorMatches = content.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
       expect(colorMatches).toBeNull();
     });
   });

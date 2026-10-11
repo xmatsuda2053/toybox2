@@ -1,5 +1,6 @@
 import type { ReactiveControllerHost } from "lit";
 import type { TaskRepository } from "@/repositories/task.repository";
+import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { CreateTaskInput, Summary, Property, TaskStatusCode } from "@/types";
 import { BaseTaskScopeController } from "./base-reactive.controller";
@@ -15,12 +16,16 @@ export class TaskController extends BaseTaskScopeController<
   TaskRepository,
   TaskRecord | undefined
 > {
+  private issuesRepository?: IssuesRepository;
+
   constructor(
     host: ReactiveControllerHost,
     repository: TaskRepository,
     taskId?: number,
+    issuesRepository?: IssuesRepository,
   ) {
     super(host, repository, undefined, taskId);
+    this.issuesRepository = issuesRepository;
   }
 
   /**
@@ -158,7 +163,23 @@ export class TaskController extends BaseTaskScopeController<
   };
 
   /**
+   * 対象タスクが完了（ステータス 9）可能かどうかを判定する。
+   * 未完了（statusCode !== 9）の Issue が存在する場合は false を返す。
+   *
+   * @return {*}  {Promise<boolean>}
+   * @memberof TaskController
+   */
+  public canCompleteTask = async (): Promise<boolean> => {
+    if (this._taskId === undefined || !this.issuesRepository) {
+      return true;
+    }
+    const issues = await this.issuesRepository.getByTaskId(this._taskId);
+    return !issues.some((issue) => issue.statusCode !== 9);
+  };
+
+  /**
    * 対象タスクのステータスコードを更新する。
+   * 完了（statusCode: 9）に更新する場合、未完了の Issue が残っていれば更新を防止する。
    *
    * @param {TaskStatusCode} statusCode
    * @return {*}  {Promise<void>}
@@ -167,6 +188,12 @@ export class TaskController extends BaseTaskScopeController<
   public updateStatus = async (
     statusCode: TaskStatusCode,
   ): Promise<void> => {
+    if (statusCode === 9) {
+      const canComplete = await this.canCompleteTask();
+      if (!canComplete) {
+        return;
+      }
+    }
     await this.updateTask({ statusCode });
   };
 

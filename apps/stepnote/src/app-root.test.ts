@@ -64,6 +64,12 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 6-2. ドロップダウン内にシステム、ライト、ダークの各選択項目（wa-dropdown-item）がレンダリングされること
  *    - [x] 6-3. 現在選択中のテーマに応じたアイコン名およびラベルが正しく設定されること
  *    - [x] 6-4. handleThemeSelect によりテーマが切り替えられ、アイコン表示が更新されること
+ *
+ * 【AppRoot Controller 状態連携仕様 (Phase 7)】
+ * 7. issuesController と taskListController / taskController の状態連携
+ *    - [x] 7-1. issuesController の通知契機で taskListController.refresh が呼び出され、Task List の件数集計が同期されること
+ *    - [x] 7-2. issuesController の通知契機で taskController.refresh が呼び出され、親タスクの完了可否状態が同期されること
+ *    - [ ] 7-3. taskController の通知契機で taskListController.refresh が呼び出され、親タスクのステータス変更等が Task List に同期されること
  */
 
 /**
@@ -257,5 +263,47 @@ describe("AppRoot Header Theme Switcher 配置仕様 (Phase 4)", () => {
     });
   });
 });
+
+describe("AppRoot Controller 状態連携仕様", () => {
+  const appRoot = sharedAppRoot;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("7-1. issuesController の通知契機で taskListController.refresh が呼び出され、Task List の件数集計が同期されること", async () => {
+    const taskListRefreshSpy = vi
+      .spyOn(appRoot.taskListController, "refresh")
+      .mockResolvedValue(undefined);
+
+    appRoot.setupControllerSubscriptions();
+    await appRoot.issuesController.refresh();
+
+    expect(taskListRefreshSpy).toHaveBeenCalled();
+  });
+
+  it("7-2. issuesController の通知契機で taskController.refresh が呼び出され、親タスクの完了可否状態が同期されること", async () => {
+    const taskRefreshSpy = vi
+      .spyOn(appRoot.taskController, "refresh")
+      .mockResolvedValue(undefined);
+
+    appRoot.setupControllerSubscriptions();
+    await appRoot.issuesController.refresh();
+
+    expect(taskRefreshSpy).toHaveBeenCalled();
+  });
+
+  it("7-3. taskController の通知契機で taskListController.refresh が呼び出され、親タスクのステータス変更等が Task List に同期されること", async () => {
+    const taskListRefreshSpy = vi
+      .spyOn(appRoot.taskListController, "refresh")
+      .mockResolvedValue(undefined);
+
+    appRoot.setupControllerSubscriptions();
+    await appRoot.taskController.refresh();
+
+    expect(taskListRefreshSpy).toHaveBeenCalled();
+  });
+});
+
 
 

@@ -172,6 +172,50 @@ export class TaskListQuery {
   ): QuickAccessTaskCounts {
     return calculateQuickAccessTaskCounts(tasks);
   }
+
+  /**
+   * 指定した会計年度に属するタスクを対象に、各タスクに紐づく Issue の完了件数と総件数を集計して取得する。
+   *
+   * @param {number} fiscalYear 対象会計年度
+   * @return {*}  {Promise<Map<number, TaskIssueCount>>} タスクIDごとの集計Map
+   * @memberof TaskListQuery
+   */
+  public async getTaskIssueCounts(
+    fiscalYear: number,
+  ): Promise<Map<number, TaskIssueCount>> {
+    const tasks = await this.db.tasks
+      .where("fiscalYear")
+      .equals(fiscalYear)
+      .toArray();
+
+    const countsMap = new Map<number, TaskIssueCount>();
+    for (const task of tasks) {
+      if (task.id !== undefined) {
+        countsMap.set(task.id, { done: 0, total: 0 });
+      }
+    }
+
+    const issues = await this.db.issues.toArray();
+    for (const issue of issues) {
+      const current = countsMap.get(issue.taskId);
+      if (current) {
+        current.total += 1;
+        if (issue.statusCode === 9) {
+          current.done += 1;
+        }
+      }
+    }
+
+    return countsMap;
+  }
+}
+
+/**
+ * タスクごとの Issue 集計件数情報
+ */
+export interface TaskIssueCount {
+  done: number;
+  total: number;
 }
 
 interface DueAlertCounts {

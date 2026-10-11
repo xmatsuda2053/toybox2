@@ -1,9 +1,10 @@
 import { LitElement } from "lit";
 import { property } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import { labelsContext, taskContext } from "@/contexts/index.js";
+import { labelsContext, taskContext, issuesContext } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
+import type { IssuesController } from "@/controllers/issues.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -87,4 +88,35 @@ export function WithTaskController<T extends LitElementConstructor>(Base: T) {
     }
   }
   return TaskConsumerClass;
+}
+
+/**
+ * IssuesController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける issuesController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithIssuesController<T extends LitElementConstructor>(Base: T) {
+  class IssuesConsumerClass extends Base {
+    private _issuesController?: IssuesController;
+
+    /** 課題（サブタスク）管理コントローラー */
+    public get issuesController(): IssuesController | undefined {
+      return this._issuesController;
+    }
+
+    @consume({ context: issuesContext, subscribe: true })
+    @property({ attribute: false })
+    public set issuesController(controller: IssuesController | undefined) {
+      this._issuesController = this.subscriber.bind(
+        "issues",
+        this._issuesController,
+        controller,
+      );
+    }
+  }
+  return IssuesConsumerClass;
 }
