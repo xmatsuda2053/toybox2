@@ -5,6 +5,7 @@ import type { TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
 import {
   type TaskListQuery,
+  type TaskIssueCount,
   calculateQuickAccessTaskCounts,
 } from "@/db/queries/task-list.query";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
@@ -31,6 +32,7 @@ export class TaskListController extends BaseDataController<
   private _quickAccess?: Partial<QuickAccessRecord>;
   private _query?: TaskListQuery;
   private _quickAccessTaskCounts: QuickAccessTaskCounts = {};
+  private _taskIssueCounts: Map<number, TaskIssueCount> = new Map();
 
   /**
    * 現在選択中の会計年度
@@ -123,6 +125,8 @@ export class TaskListController extends BaseDataController<
       });
       this._quickAccessTaskCounts =
         await this._query.getQuickAccessTaskCounts(this._fiscalYear);
+      this._taskIssueCounts =
+        await this._query.getTaskIssueCounts(this._fiscalYear);
       this.notify();
       return;
     }
@@ -131,6 +135,17 @@ export class TaskListController extends BaseDataController<
     this._state = this.filterTasksInMemory(tasks);
     this._quickAccessTaskCounts = calculateQuickAccessTaskCounts(tasks);
     this.notify();
+  }
+
+  /**
+   * 指定したタスクIDの Issue 進捗件数（完了数・総数）を取得する。
+   *
+   * @param {number} taskId 対象タスクID
+   * @return {TaskIssueCount} 進捗件数
+   * @memberof TaskListController
+   */
+  public getTaskIssueCount(taskId: number): TaskIssueCount {
+    return this._taskIssueCounts.get(taskId) ?? { done: 0, total: 0 };
   }
 
   /**

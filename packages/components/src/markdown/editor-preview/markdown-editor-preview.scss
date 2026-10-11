@@ -62,19 +62,19 @@
 .markdown-editor-preview--auto-height {
   flex: none;
   height: auto;
-  min-height: 240px;
+  min-height: 400px;
   overflow: visible;
 
   .markdown-editor-preview__body {
     flex: none;
     height: auto;
-    min-height: 200px;
+    min-height: 400px;
   }
 
   .markdown-editor-preview__pane {
     flex: none;
     height: auto;
-    min-height: 200px;
+    min-height: 400px;
     overflow: visible;
   }
 }

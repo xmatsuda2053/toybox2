@@ -96,6 +96,10 @@ const createMockHost = () => {
  *    - 10-2. setFiscalYear で年度を切り替えた際、切り替え先年度の集計件数に quickAccessTaskCounts が更新されること
  *    - 10-3. 検索キーワードやラベルフィルタ、QuickAccess フィルタを適用しても、quickAccessTaskCounts は年度全体の件数を維持すること
  *    - 10-4. toggleBookmark 実行時にタスクのブックマーク状態が更新され、quickAccessTaskCounts.bookmark が再集計されること
+ *
+ * 11. 各タスクの Issue 集計件数（Task Issue Counts）
+ *    - 11-1. query 指定時、getTaskIssueCount(taskId) で該当タスクの Issue 進捗（done, total）が返ること
+ *    - 11-2. 集計情報が存在しないタスクIDの場合、{ done: 0, total: 0 } が返ること
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -574,6 +578,43 @@ describe("TaskListController (TDD)", () => {
       // sampleTasks[0]（id: 1, bookmark: false）をブックマーク
       await controller.toggleBookmark(1, false);
       expect(controller.quickAccessTaskCounts.bookmark).toBe(2);
+    });
+  });
+
+  describe("11. 各タスクの Issue 集計件数（Task Issue Counts）", () => {
+    it("11-1. query 指定時、getTaskIssueCount(taskId) で該当タスクの Issue 進捗（done, total）が返ること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockResolvedValue(sampleTasks),
+        getQuickAccessTaskCounts: vi.fn().mockResolvedValue({}),
+        getTaskIssueCounts: vi.fn().mockResolvedValue(
+          new Map([
+            [1, { done: 2, total: 3 }],
+            [2, { done: 1, total: 1 }],
+          ]),
+        ),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as any,
+        currentYear,
+        fakeQuery as any,
+      );
+      await controller.initialized;
+
+      expect(controller.getTaskIssueCount(1)).toEqual({ done: 2, total: 3 });
+      expect(controller.getTaskIssueCount(2)).toEqual({ done: 1, total: 1 });
+    });
+
+    it("11-2. 集計情報が存在しないタスクIDの場合、{ done: 0, total: 0 } が返ること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+
+      expect(controller.getTaskIssueCount(999)).toEqual({ done: 0, total: 0 });
     });
   });
 });

@@ -40,6 +40,15 @@ import {
  *    - 4-4. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限当日（isAsap）の件数が正しく集計され、完了タスクは除外されること
  *    - 4-5. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限間近（isWithinAnyDaysBefore 3日以内）の件数が正しく集計され、完了タスクは除外されること
  *    - 4-6. 異なる年度のタスクが混在する場合、指定した年度のタスクのみが集計対象となること
+ *
+ * 5. QuickAccess タスク件数の純粋関数集計（calculateQuickAccessTaskCounts）
+ *    - 5-1. 未完了タスクの期限日判定が正しく反映されること
+ *    - 5-2. bookmark および未分類がステータスに関わらず正確に集計されること
+ *
+ * 6. Issues 件数の集計機能（getTaskIssueCounts）
+ *    - 6-1. 指定会計年度のタスクに紐づく Issue の完了件数（done）と総件数（total）をタスクIDごとの Map で取得できること
+ *    - 6-2. Issue が存在しないタスクは { done: 0, total: 0 } が返ること
+ *    - 6-3. 異なる会計年度のタスクに紐づく Issue は集計に含まれないこと
  */
 describe("TaskListQuery Tests", () => {
   let query: TaskListQuery;
@@ -1001,6 +1010,106 @@ describe("TaskListQuery Tests", () => {
       );
       expect(counts.bookmark).toBe(2);
       expect(counts.uncategorized).toBe(2);
+    });
+  });
+
+  describe("6. Issues 件数の集計機能（getTaskIssueCounts）", () => {
+    it("6-1. 指定会計年度のタスクに紐づく Issue の完了件数（done）と総件数（total）をタスクIDごとの Map で取得できること", async () => {
+      const task1Id = await db.tasks.add({
+        name: "タスク1",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      const task2Id = await db.tasks.add({
+        name: "タスク2",
+        statusCode: 5,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      // task1 に 2件のIssue（1件完了、1件未完了）
+      await db.issues.add({
+        taskId: task1Id,
+        statusCode: 9,
+        title: "完了Issue",
+        value: "",
+        dueDate: futureDate,
+      });
+      await db.issues.add({
+        taskId: task1Id,
+        statusCode: 0,
+        title: "未完了Issue",
+        value: "",
+        dueDate: futureDate,
+      });
+
+      // task2 に 1件のIssue（完了）
+      await db.issues.add({
+        taskId: task2Id,
+        statusCode: 9,
+        title: "完了Issue2",
+        value: "",
+        dueDate: futureDate,
+      });
+
+      const countsMap = await query.getTaskIssueCounts(2026);
+
+      expect(countsMap.get(task1Id)).toEqual({ done: 1, total: 2 });
+      expect(countsMap.get(task2Id)).toEqual({ done: 1, total: 1 });
+    });
+
+    it("6-2. Issue が存在しないタスクは { done: 0, total: 0 } が返ること", async () => {
+      const task3Id = await db.tasks.add({
+        name: "タスク3",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      const countsMap = await query.getTaskIssueCounts(2026);
+      expect(countsMap.get(task3Id)).toEqual({ done: 0, total: 0 });
+    });
+
+    it("6-3. 異なる会計年度のタスクに紐づく Issue は集計に含まれないこと", async () => {
+      const otherYearTaskId = await db.tasks.add({
+        name: "前年度タスク",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2025,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      await db.issues.add({
+        taskId: otherYearTaskId,
+        statusCode: 9,
+        title: "前年度Issue",
+        value: "",
+        dueDate: futureDate,
+      });
+
+      const countsMap = await query.getTaskIssueCounts(2026);
+      expect(countsMap.has(otherYearTaskId)).toBe(false);
     });
   });
 });

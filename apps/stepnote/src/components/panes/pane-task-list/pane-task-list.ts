@@ -21,6 +21,7 @@ import type { QuickAccessController } from "@/controllers/quick-access.controlle
 import {
   SubscriberElement,
   WithTaskController,
+  WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
 import "./task-create-dialog.js";
 import "./task-list-item.js";
@@ -35,10 +36,12 @@ import paneTaskListStyles from "./pane-task-list.scss?inline";
  *
  * @export
  * @class PaneTaskList
- * @extends {WithTaskController(SubscriberElement)}
+ * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
  */
 @customElement("pane-task-list")
-export class PaneTaskList extends WithTaskController(SubscriberElement) {
+export class PaneTaskList extends WithIssuesController(
+  WithTaskController(SubscriberElement),
+) {
   public static styles = unsafeCSS(paneTaskListStyles);
 
   private _taskListController?: TaskListController;
@@ -444,6 +447,28 @@ export class PaneTaskList extends WithTaskController(SubscriberElement) {
   };
 
   /**
+   * 単一タスクアイテムの描画
+   */
+  public renderTaskItem = (task: TaskRecord): HTMLTemplateResult => {
+    const counts =
+      task.id !== undefined && this.taskListController
+        ? this.taskListController.getTaskIssueCount(task.id)
+        : { done: 0, total: 0 };
+    return html`
+      <task-list-item
+        class="pane-task-list__item"
+        data-task-id=${task.id ?? ""}
+        .task=${task}
+        .labelName=${this.getLabelName(task.labelId)}
+        .issuesDone=${counts.done}
+        .issuesTotal=${counts.total}
+        @task-select=${this.handleTaskSelect}
+        @bookmark-toggle=${this.handleBookmarkToggle}
+      ></task-list-item>
+    `;
+  };
+
+  /**
    * リスト部（仮想スクロールまたは空状態）を描画する
    */
   private renderList(): HTMLTemplateResult {
@@ -461,18 +486,7 @@ export class PaneTaskList extends WithTaskController(SubscriberElement) {
         <lit-virtualizer
           class="pane-task-list__virtualizer"
           .items=${tasks}
-          .renderItem=${(task: TaskRecord) => html`
-            <task-list-item
-              class="pane-task-list__item"
-              data-task-id=${task.id ?? ""}
-              .task=${task}
-              .labelName=${this.getLabelName(task.labelId)}
-              .issuesDone=${0}
-              .issuesTotal=${0}
-              @task-select=${this.handleTaskSelect}
-              @bookmark-toggle=${this.handleBookmarkToggle}
-            ></task-list-item>
-          `}
+          .renderItem=${this.renderTaskItem}
         ></lit-virtualizer>
       </div>
     `;

@@ -9,8 +9,10 @@ import {
 import {
   SubscriberElement,
   WithTaskController,
+  WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
 import "./task-summary.js";
+import "./task-issues.js";
 import styles from "./pane-task.scss?inline";
 
 /**
@@ -39,10 +41,12 @@ const STATUS_TYPE_MAP: Record<TaskStatusCode, string> = {
  *
  * @export
  * @class PaneTask
- * @extends {WithTaskController(SubscriberElement)}
+ * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
  */
 @customElement("pane-task")
-export class PaneTask extends WithTaskController(SubscriberElement) {
+export class PaneTask extends WithIssuesController(
+  WithTaskController(SubscriberElement),
+) {
   public static styles = unsafeCSS(styles);
 
   /**
@@ -53,6 +57,25 @@ export class PaneTask extends WithTaskController(SubscriberElement) {
 
   @state()
   public activeTab: string = "summary";
+
+  @state()
+  public canComplete: boolean = true;
+
+  override willUpdate(changedProperties: Map<string, unknown>): void {
+    super.willUpdate(changedProperties);
+    void this.updateCanComplete();
+  }
+
+  /**
+   * 完了可否状態を更新する
+   */
+  public updateCanComplete = async (): Promise<void> => {
+    if (this.taskController?.canCompleteTask) {
+      this.canComplete = await this.taskController.canCompleteTask();
+    } else {
+      this.canComplete = true;
+    }
+  };
 
   /**
    * IDとタスク名のクリップボードコピーハンドラー
@@ -128,12 +151,20 @@ export class PaneTask extends WithTaskController(SubscriberElement) {
     status: (typeof TASK_STATUS_LIST)[number],
     currentCode: TaskStatusCode,
   ): HTMLTemplateResult {
-    return html`
+    const isDoneOption = status.code === 9;
+    const isDisabled = isDoneOption && !this.canComplete;
+
+    const item = html`
       <wa-dropdown-item
         value=${String(status.code)}
         type="checkbox"
         ?checked=${status.code === currentCode}
-        @click=${() => this.handleSelectStatus(status.code)}
+        ?disabled=${isDisabled}
+        @click=${() => {
+          if (!isDisabled) {
+            this.handleSelectStatus(status.code);
+          }
+        }}
       >
         <wa-icon
           slot="icon"
@@ -144,6 +175,17 @@ export class PaneTask extends WithTaskController(SubscriberElement) {
         ${status.labelJa}
       </wa-dropdown-item>
     `;
+
+    if (isDisabled) {
+      return html`
+        <wa-tooltip placement="left" trigger="hover">
+          <span slot="content">未完了のIssueが存在するため完了にできません</span>
+          ${item}
+        </wa-tooltip>
+      `;
+    }
+
+    return item;
   }
 
   /**
@@ -195,7 +237,8 @@ export class PaneTask extends WithTaskController(SubscriberElement) {
   private renderHeader(): HTMLTemplateResult {
     return html`
       <div class="pane-task__header">
-        ${this.renderHeaderLeft()} ${this.renderStatusDropdown()}
+        ${this.renderHeaderLeft()}
+        ${this.activeTab === "summary" ? this.renderStatusDropdown() : null}
       </div>
     `;
   }
@@ -219,9 +262,7 @@ export class PaneTask extends WithTaskController(SubscriberElement) {
         </wa-tab-panel>
 
         <wa-tab-panel name="issues" class="pane-task__tab-panel">
-          <div class="pane-task__placeholder">
-            <span>Issues タブは準備中です</span>
-          </div>
+          <task-issues .theme=${this.theme}></task-issues>
         </wa-tab-panel>
 
         <wa-tab-panel name="property" class="pane-task__tab-panel">

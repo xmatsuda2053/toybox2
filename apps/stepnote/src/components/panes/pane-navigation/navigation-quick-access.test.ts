@@ -524,7 +524,7 @@ describe("NavigationQuickAccess Component", () => {
         new URL("./navigation-quick-access.scss", import.meta.url),
         "utf-8",
       );
-      const colorMatches = scssContent.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^\)]+\)|hsla?\([^\)]+\))/g);
+      const colorMatches = scssContent.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
       expect(colorMatches).toBeNull();
     });
   });

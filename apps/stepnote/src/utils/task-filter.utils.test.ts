@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
-import type { TaskRecord } from "@/db/models/task.model";
+import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
 import {
   matchesDueDateFilter,
   matchesStatusFilter,
   applyQuickAccessFilter,
   sortTasksByDueDateAndName,
+  sortIssuesByDueDateAndTitle,
 } from "./task-filter.utils";
 
 /**
@@ -28,6 +29,9 @@ import {
  * 4. sortTasksByDueDateAndName
  *    - 期限日（dueDate）の昇順で正しくソートされること
  *    - 期限日が同一の場合、タスク名の日本語五十音順で正しくソートされること
+ * 5. sortIssuesByDueDateAndTitle
+ *    - 期限日（dueDate）の昇順で正しくソートされること
+ *    - 期限日が同一の場合、Issueタイトルの日本語五十音順で正しくソートされること
  */
 
 describe("task-filter.utils", () => {
@@ -210,6 +214,53 @@ describe("task-filter.utils", () => {
       ];
       const sorted = sortTasksByDueDateAndName(tasks);
       expect(sorted.map((t) => t.id)).toEqual([2, 3, 1]);
+    });
+  });
+
+  describe("sortIssuesByDueDateAndTitle", () => {
+    const createDummyIssue = (
+      overrides: Partial<IssueRecord> = {},
+    ): IssueRecord => ({
+      id: 1,
+      taskId: 1,
+      statusCode: 0,
+      title: "テストIssue",
+      value: "",
+      dueDate: new Date("2026-10-15T00:00:00.000Z"),
+      ...overrides,
+    });
+
+    it("期限日（dueDate）の昇順で正しくソートされること", () => {
+      const issues = [
+        createDummyIssue({
+          id: 1,
+          dueDate: new Date("2026-10-20T00:00:00.000Z"),
+          title: "Issue A",
+        }),
+        createDummyIssue({
+          id: 2,
+          dueDate: new Date("2026-10-10T00:00:00.000Z"),
+          title: "Issue B",
+        }),
+        createDummyIssue({
+          id: 3,
+          dueDate: new Date("2026-10-15T00:00:00.000Z"),
+          title: "Issue C",
+        }),
+      ];
+      const sorted = sortIssuesByDueDateAndTitle(issues);
+      expect(sorted.map((i) => i.id)).toEqual([2, 3, 1]);
+    });
+
+    it("期限日が同一の場合、Issueタイトルの日本語五十音順で正しくソートされること", () => {
+      const sameDueDate = new Date("2026-10-15T00:00:00.000Z");
+      const issues = [
+        createDummyIssue({ id: 1, dueDate: sameDueDate, title: "さとう" }),
+        createDummyIssue({ id: 2, dueDate: sameDueDate, title: "あさひ" }),
+        createDummyIssue({ id: 3, dueDate: sameDueDate, title: "かとう" }),
+      ];
+      const sorted = sortIssuesByDueDateAndTitle(issues);
+      expect(sorted.map((i) => i.id)).toEqual([2, 3, 1]);
     });
   });
 });

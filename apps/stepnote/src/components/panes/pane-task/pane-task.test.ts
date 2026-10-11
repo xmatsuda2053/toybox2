@@ -54,6 +54,7 @@ describe("PaneTask Component", () => {
   let mockTaskController: {
     state: TaskRecord | undefined;
     hasTask: boolean;
+    canCompleteTask: ReturnType<typeof vi.fn>;
     updateStatus: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
@@ -77,6 +78,7 @@ describe("PaneTask Component", () => {
     mockTaskController = {
       state: { ...baseTask },
       hasTask: true,
+      canCompleteTask: vi.fn().mockResolvedValue(true),
       updateStatus: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(unsubscribeMock),
     };
@@ -177,6 +179,35 @@ describe("PaneTask Component", () => {
         /<wa-button[^>]*class="[^"]*pane-task__status[^"]*"[^>]*\bwith-caret\b/,
       );
     });
+
+    it("2-7. Summaryタブ選択時のみステータス変更UI（.pane-task__status）が表示され、IssuesおよびPropertyタブ選択時は非表示になること", () => {
+      element.activeTab = "summary";
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("pane-task__status");
+
+      element.activeTab = "issues";
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("pane-task__status");
+
+      element.activeTab = "property";
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("pane-task__status");
+    });
+
+    it("2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となりツールチップが表示されること", async () => {
+      mockTaskController.canCompleteTask.mockResolvedValue(false);
+      element.canComplete = false;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+      expect(htmlStr).toContain("未完了のIssueが存在するため完了にできません");
+    });
+
+    it("2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならないこと", async () => {
+      mockTaskController.canCompleteTask.mockResolvedValue(true);
+      element.canComplete = true;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+    });
   });
 
   describe("3. タブ領域（wa-tab-group）の描画", () => {
@@ -196,9 +227,9 @@ describe("PaneTask Component", () => {
       expect(htmlStr).toContain("task-summary");
     });
 
-    it("3-3. issues パネル内に「Issues タブは準備中です」プレースホルダーが表示されること", () => {
+    it("3-3. issues パネル内に task-issues コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("Issues タブは準備中です");
+      expect(htmlStr).toContain("task-issues");
     });
 
     it("3-4. property パネル内に「Property タブは準備中です」プレースホルダーが表示されること", () => {

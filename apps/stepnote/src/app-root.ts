@@ -68,13 +68,19 @@ export class AppRoot extends LitElement {
 
     // 1. Controller インスタンスの生成と初期化
     const taskRepository = new TaskRepository();
+    const issuesRepository = new IssuesRepository();
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
       this,
       new QuickAccessRepository(),
     );
     this.labelsController = new LabelsController(this, new LabelsRepository());
-    this.taskController = new TaskController(this, taskRepository);
+    this.taskController = new TaskController(
+      this,
+      taskRepository,
+      undefined,
+      issuesRepository,
+    );
     this.taskListController = new TaskListController(
       this,
       taskRepository,
@@ -83,7 +89,7 @@ export class AppRoot extends LitElement {
     );
     this.logsController = new LogsController(this, new LogsRepository());
     this.notesController = new NotesController(this, new NotesRepository());
-    this.issuesController = new IssuesController(this, new IssuesRepository());
+    this.issuesController = new IssuesController(this, issuesRepository);
     this.themeController = new ThemeController(this);
 
     // 2. @lit/context Provider による Context 配給の登録
@@ -151,6 +157,33 @@ export class AppRoot extends LitElement {
     this.syncThemeToHost();
     this.themeController.subscribe(() => {
       this.syncThemeToHost();
+    });
+    this.setupControllerSubscriptions();
+  }
+
+  /**
+   * 各 Controller 間の状態変更イベントの購読と連携を設定する。
+   */
+  public setupControllerSubscriptions(): void {
+    this.taskController.subscribe(async () => {
+      const currentTaskId = this.taskController.state?.id;
+      if (this.issuesController.taskId !== currentTaskId) {
+        this.issuesController.setTaskId(currentTaskId);
+      }
+      if (this.logsController.taskId !== currentTaskId) {
+        this.logsController.setTaskId(currentTaskId);
+      }
+      if (this.notesController.taskId !== currentTaskId) {
+        this.notesController.setTaskId(currentTaskId);
+      }
+      await this.taskListController.refresh();
+    });
+
+    this.issuesController.subscribe(async () => {
+      await Promise.all([
+        this.taskListController.refresh(),
+        this.taskController.refresh(),
+      ]);
     });
   }
 

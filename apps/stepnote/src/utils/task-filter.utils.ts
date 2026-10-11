@@ -1,5 +1,5 @@
 import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
-import type { TaskRecord } from "@/db/models/task.model";
+import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
 
 /**
@@ -79,5 +79,29 @@ export function sortTasksByDueDateAndName(tasks: TaskRecord[]): TaskRecord[] {
         : new Date(b.dueDate).getTime();
     const timeDiff = aTime - bTime;
     return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
+  });
+}
+
+/**
+ * Issue（課題）一覧を期限日昇順、タイトル五十音順でソートする。
+ * 元の配列を変更せず、新しいソート済み配列を返す。
+ *
+ * @param {readonly IssueRecord[]} issues ソート対象のIssue配列
+ * @return {IssueRecord[]} ソート後のIssue配列
+ */
+export function sortIssuesByDueDateAndTitle(
+  issues: readonly IssueRecord[],
+): IssueRecord[] {
+  return [...issues].sort((a, b) => {
+    const aTime =
+      a.dueDate instanceof Date
+        ? a.dueDate.getTime()
+        : new Date(a.dueDate).getTime();
+    const bTime =
+      b.dueDate instanceof Date
+        ? b.dueDate.getTime()
+        : new Date(b.dueDate).getTime();
+    const timeDiff = aTime - bTime;
+    return timeDiff !== 0 ? timeDiff : a.title.localeCompare(b.title, "ja");
   });
 }

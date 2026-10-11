@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
 import { TaskController } from "./task.controller.js";
-import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TaskRepository } from "@/repositories/task.repository.js";
 import type { CreateTaskInput } from "@/types";
 
@@ -47,6 +47,23 @@ class FakeTaskRepository {
     if (index !== -1) {
       this.data.splice(index, 1);
     }
+  }
+}
+
+/**
+ * IssuesRepository の Mock
+ */
+class FakeIssuesRepository {
+  public data: IssueRecord[];
+
+  constructor(data: IssueRecord[] = []) {
+    this.data = data.map((item) => ({ ...item }));
+  }
+
+  async getByTaskId(taskId: number): Promise<IssueRecord[]> {
+    return this.data
+      .filter((item) => item.taskId === taskId)
+      .map((item) => ({ ...item }));
   }
 }
 
@@ -99,6 +116,12 @@ const createMockHost = () => {
  *
  * 6. 状態購読（subscribe）の検証
  *    - [x] 6-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
+ *
+ * 7. 未完了 Issue に基づくタスク完了制御 (Task Completion Control by Issues)
+ *    - [ ] 7-1. issuesRepository 未指定時、canCompleteTask は true を返し、updateStatus(9) は通常通り完了に更新できること
+ *    - [ ] 7-2. 未完了の Issue（statusCode !== 9）が存在する場合、canCompleteTask は false を返し、updateStatus(9) はステータスを更新せず何もしないこと
+ *    - [ ] 7-3. すべての Issue が完了（statusCode === 9）または Issue が 0 件の場合、canCompleteTask は true を返し、updateStatus(9) で正常にステータス 9 に更新できること
+ *    - [ ] 7-4. 未完了の Issue が存在する場合でも、完了以外のステータス（0 や 5）への更新は許可されること
  */
 describe("TaskController (Single Task TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -433,6 +456,84 @@ describe("TaskController (Single Task TDD)", () => {
       // 解除後は状態変更があってもリスナーが発火しないこと
       await controller.updateSummary({ name: "購読解除後更新" });
       expect(listenerMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("7. 未完了 Issue に基づくタスク完了制御 (Task Completion Control by Issues)", () => {
+    let fakeIssuesRepository: FakeIssuesRepository;
+
+    beforeEach(async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(testTasks);
+      fakeIssuesRepository = new FakeIssuesRepository([
+        {
+          id: 1,
+          taskId: 1,
+          statusCode: 0,
+          title: "サブタスク1",
+          value: "内容1",
+          dueDate: new Date("2026-04-10"),
+        },
+        {
+          id: 2,
+          taskId: 1,
+          statusCode: 9,
+          title: "サブタスク2",
+          value: "内容2",
+          dueDate: new Date("2026-04-12"),
+        },
+      ]);
+      controller = new TaskController(
+        mockHost.host,
+        fakeRepository as any,
+        1,
+        fakeIssuesRepository as any,
+      );
+      await controller.initialized;
+      mockHost.requestUpdateMock.mockClear();
+    });
+
+    it("7-1. issuesRepository 未指定時、canCompleteTask は true を返し、updateStatus(9) は通常通り完了に更新できること", async () => {
+      const noIssuesController = new TaskController(
+        mockHost.host,
+        fakeRepository as any,
+        1,
+      );
+      await noIssuesController.initialized;
+
+      const canComplete = await noIssuesController.canCompleteTask();
+      expect(canComplete).toBe(true);
+
+      await noIssuesController.updateStatus(9);
+      expect(noIssuesController.state?.statusCode).toBe(9);
+    });
+
+    it("7-2. 未完了の Issue（statusCode !== 9）が存在する場合、canCompleteTask は false を返し、updateStatus(9) はステータスを更新せず何もしないこと", async () => {
+      const canComplete = await controller.canCompleteTask();
+      expect(canComplete).toBe(false);
+
+      await controller.updateStatus(9);
+      // 未完了Issueがあるため statusCode は 0 のまま維持されること
+      expect(controller.state?.statusCode).toBe(0);
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("7-3. すべての Issue が完了（statusCode === 9）または Issue が 0 件の場合、canCompleteTask は true を返し、updateStatus(9) で正常にステータス 9 に更新できること", async () => {
+      // 未完了の Issue 1 を完了（9）に更新
+      fakeIssuesRepository.data[0].statusCode = 9;
+
+      const canComplete = await controller.canCompleteTask();
+      expect(canComplete).toBe(true);
+
+      await controller.updateStatus(9);
+      expect(controller.state?.statusCode).toBe(9);
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+    });
+
+    it("7-4. 未完了の Issue が存在する場合でも、完了以外のステータス（0 や 5）への更新は許可されること", async () => {
+      await controller.updateStatus(5);
+      expect(controller.state?.statusCode).toBe(5);
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
   });
 });
