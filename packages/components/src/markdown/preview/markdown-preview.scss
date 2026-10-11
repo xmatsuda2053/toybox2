@@ -119,3 +119,38 @@
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* soft ダークスタイル (StepNote 調 - 案A: ペイン背景適合) */
+:host([data-theme="dark"][dark-theme="soft"]),
+:host(.wa-dark[dark-theme="soft"]) {
+  --stepnote-markdown-text: var(--wa-color-text-normal);
+  --stepnote-markdown-table-row-bg-even: var(--wa-color-neutral-fill-quiet);
+  --stepnote-markdown-table-border: var(--wa-color-surface-border);
+  --stepnote-markdown-pre-bg: var(--wa-color-neutral-fill-quiet);
+  --stepnote-markdown-code-bg: var(--wa-color-neutral-fill-quiet);
+  --stepnote-markdown-blockquote-bg: var(--wa-color-neutral-fill-quiet);
+  --stepnote-markdown-blockquote-border: var(--wa-color-surface-border);
+  --stepnote-markdown-blockquote-text: var(--wa-color-text-quiet);
+  --stepnote-markdown-checkbox-accent: var(--wa-color-brand-70);
+
+  .markdown-preview__body.markdown-body {
+    color: var(--wa-color-text-normal);
+
+    h1,
+    h2 {
+      border-bottom-color: var(--wa-color-surface-border);
+    }
+
+    hr {
+      background-color: var(--wa-color-surface-border);
+    }
+
+    a {
+      color: var(--wa-color-brand-70);
+    }
+
+    pre {
+      border: 1px solid var(--wa-color-surface-border);
+    }
+  }
+}

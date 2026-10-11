@@ -26,6 +26,11 @@
  *   - isDarkMode が変化しない themeMode 変更時、再構成処理（reconfigureEditor）が呼び出されないこと
  * 9. 複数回のテーマ切り替え時の整合性保護
  *   - themeMode が dark -> light -> dark と切り替わった際、各変更でホスト属性と再構成が同期して実行されること
+ * 10. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
+ *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
+ *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
+ *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
+ *   - SCSS において :host([dark-theme='soft']) 用のスタイルが定義され、StepNote 調のエディタ・ガター配色が指定されていること
  */
 
 import * as fs from "node:fs";
@@ -198,6 +203,37 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
       editor.themeMode = "dark";
       editor.updated(new Map([["themeMode", "light"]]));
       expect(reconfigureSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("10. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること", () => {
+      expect(editor.darkTheme).toBe("contrast");
+      expect(editor.lightTheme).toBe("default");
+    });
+
+    it("darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること", () => {
+      editor.darkTheme = "soft";
+      editor.themeMode = "dark";
+      editor.requestUpdate();
+      editor.syncTheme();
+      expect(editor.getAttribute("dark-theme")).toBe("soft");
+    });
+
+    it("lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること", () => {
+      editor.lightTheme = "default";
+      editor.themeMode = "light";
+      editor.requestUpdate();
+      editor.syncTheme();
+      expect(editor.getAttribute("light-theme")).toBe("default");
+    });
+
+    it("SCSS において soft ダーク用のスタイルが定義され、StepNote 調のエディタ・ガター配色が指定されていること", () => {
+      expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
+      expect(scssContent).toMatch(/--stepnote-bg-primary:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
     });
   });
 });

@@ -144,3 +144,46 @@
 :host(.wa-dark) .markdown-editor__container .cm-dropCursor {
   border-left: 2px solid var(--stepnote-accent, #38bdf8) !important;
 }
+
+/* soft ダークスタイル (StepNote 調 - 案A: ペイン背景適合) */
+:host([data-theme="dark"][dark-theme="soft"]),
+:host(.wa-dark[dark-theme="soft"]) {
+  --stepnote-bg-primary: var(--wa-color-surface-default, #2f323f);
+  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
+  background-color: var(--wa-color-surface-default, #2f323f) !important;
+  color: var(--wa-color-text-normal, #e6edf3) !important;
+
+  .markdown-editor__container .cm-gutters {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    color: var(--wa-color-text-quiet, #9da7b3) !important;
+    border-right-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor__container .cm-editor {
+    background-color: var(--wa-color-surface-default, #2f323f) !important;
+    color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor__container .cm-activeLine {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+  }
+
+  .markdown-editor__container .cm-activeLineGutter {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor__container .cm-cursor {
+    border-left-color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor__container .cm-selectionBackground,
+  .markdown-editor__container .cm-selectionLayer .cm-selectionBackground,
+  .markdown-editor__container .cm-content ::selection {
+    background-color: rgba(33, 139, 255, 0.35) !important;
+  }
+
+  .markdown-editor__container .cm-dropCursor {
+    border-left: 2px solid var(--wa-color-brand-70, #218bff) !important;
+  }
+}

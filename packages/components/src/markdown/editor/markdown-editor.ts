@@ -38,7 +38,12 @@ import {
   detectIsDarkMode,
   observeThemeChanges,
   syncHostTheme,
+  syncHostThemeVariants,
 } from "../utils/theme-sync.js";
+import type {
+  MarkdownDarkThemeVariant,
+  MarkdownLightThemeVariant,
+} from "../types.js";
 import {
   applyMultiLineListPrefix,
   getFallbackMarkdownText,
@@ -95,6 +100,14 @@ export class MarkdownEditor extends LitElement {
   /** テーマモード ("light" | "dark" | "auto") */
   @property({ type: String })
   public themeMode: "light" | "dark" | "auto" = "auto";
+
+  /** ダークモードスタイル種別 ("contrast" | "soft") */
+  @property({ type: String, attribute: "dark-theme" })
+  public darkTheme: MarkdownDarkThemeVariant = "contrast";
+
+  /** ライトモードスタイル種別 ("default") */
+  @property({ type: String, attribute: "light-theme" })
+  public lightTheme: MarkdownLightThemeVariant = "default";
 
   /** 外部から注入する追加の CodeMirror 拡張 (Open-Closed Principle) */
   @property({ attribute: false })
@@ -157,9 +170,13 @@ export class MarkdownEditor extends LitElement {
         this.themeMode !== changedProperties.get("themeMode")) ||
       this.isDarkMode !== this.lastAppliedDarkMode;
 
+    const variantChanged =
+      changedProperties.has("darkTheme") ||
+      changedProperties.has("lightTheme");
+
     const disabledChanged = changedProperties.has("disabled");
 
-    if (themeChanged || extensionsChanged || disabledChanged) {
+    if (themeChanged || extensionsChanged || disabledChanged || variantChanged) {
       this.syncTheme(true);
     }
   }
@@ -183,8 +200,9 @@ export class MarkdownEditor extends LitElement {
   /**
    * ホスト要素のテーマ属性およびクラスを同期し、必要に応じてエディタを再構成する。
    */
-  private syncTheme(reconfigureEditor = false): void {
+  public syncTheme(reconfigureEditor = false): void {
     syncHostTheme(this, this.isDarkMode);
+    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
 
     if (reconfigureEditor && this.editorView) {
       this.reconfigureEditor();

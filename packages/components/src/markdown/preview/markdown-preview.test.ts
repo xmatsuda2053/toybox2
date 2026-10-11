@@ -36,6 +36,10 @@
  *   - a タグの href がクリップボードにコピーされること
  *   - href に %20 が含まれる場合はデコードされてスペースとしてコピーされること
  *   - link-copy カスタムイベントが URL とともに発火すること
+ * 16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
+ *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
+ *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
+ *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
  */
 
 import * as fs from "node:fs";
@@ -277,6 +281,29 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       element.handleContentClick?.(mockEvent as unknown as MouseEvent);
 
       expect(copiedText).toBe("file:///C:/Users/name/My Documents/test folder/file.txt");
+    });
+  });
+
+  describe("16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル", () => {
+    it("darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること", () => {
+      expect(element.darkTheme).toBe("contrast");
+      expect(element.lightTheme).toBe("default");
+    });
+
+    it("darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること", () => {
+      element.darkTheme = "soft";
+      element.setAttribute("data-theme", "dark");
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.getAttribute("dark-theme")).toBe("soft");
+    });
+
+    it("lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること", () => {
+      element.lightTheme = "default";
+      element.setAttribute("data-theme", "light");
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.getAttribute("light-theme")).toBe("default");
     });
   });
 });

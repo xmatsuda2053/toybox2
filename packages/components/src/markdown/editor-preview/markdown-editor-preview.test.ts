@@ -92,6 +92,12 @@
  *   - アクションメニュー内に「コピー」項目（copy-solid-full）が含まれ、選択時にクリップボードへコピーされてメニューが閉じること
  *   - アクションメニュー内に「整形」項目（wand-magic-sparkles等）が含まれ、選択時にフォーマッターが実行されてメニューが閉じること
  *   - Escape キー押下や外部クリックによりアクションメニューが閉じること
+ * 22. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
+ *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
+ *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
+ *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
+ *   - renderBody() において子要素（markdown-editor, markdown-preview）へ darkTheme と lightTheme がバインドされること
+ *   - SCSS において :host([dark-theme='soft']) 用のスタイルが定義され、StepNote 調のソフトダーク配色が指定されていること
  */
 
 import * as fs from "node:fs";
@@ -1054,6 +1060,50 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(
         (element as unknown as TestableActionMenuPreview).isActionMenuOpen,
       ).toBe(false);
+    });
+  });
+
+  describe("22. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること", () => {
+      expect(element.darkTheme).toBe("contrast");
+      expect(element.lightTheme).toBe("default");
+    });
+
+    it("darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること", () => {
+      element.darkTheme = "soft";
+      element.themeMode = "dark";
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.getAttribute("dark-theme")).toBe("soft");
+    });
+
+    it("lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること", () => {
+      element.lightTheme = "default";
+      element.themeMode = "light";
+      element.requestUpdate();
+      element.syncTheme();
+      expect(element.getAttribute("light-theme")).toBe("default");
+    });
+
+    it("renderBody() において子要素（markdown-editor, markdown-preview）へ darkTheme と lightTheme がバインドされること", () => {
+      element.darkTheme = "soft";
+      element.lightTheme = "default";
+      const bodyTemplate = (
+        element as unknown as { renderBody(): unknown }
+      ).renderBody();
+      const htmlStr = flattenTemplate(bodyTemplate);
+
+      expect(htmlStr).toContain("markdown-editor");
+      expect(htmlStr).toContain("markdown-preview");
+    });
+
+    it("SCSS において soft ダーク用のスタイルが定義され、StepNote 調のソフトダーク配色が指定されていること", () => {
+      expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
+      expect(scssContent).toMatch(/--stepnote-bg-surface:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
+      expect(scssContent).toMatch(/--stepnote-border-subtle:\s*var\(--wa-color-surface-border,\s*#434857\)/);
     });
   });
 });

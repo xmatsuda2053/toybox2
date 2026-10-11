@@ -874,3 +874,182 @@
     border-color: #1f6feb;
   }
 }
+
+/* ==========================================================================
+   soft ダークスタイル (StepNote 調)
+   ========================================================================== */
+:host([data-theme="dark"][dark-theme="soft"]),
+:host(.wa-dark[dark-theme="soft"]) {
+  --stepnote-bg-surface: var(--wa-color-surface-default, #2f323f);
+  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
+  --stepnote-border-subtle: var(--wa-color-surface-border, #434857);
+
+  .markdown-editor-preview {
+    background-color: var(--wa-color-surface-default, #2f323f) !important;
+    border-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__header {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__toolbar-btn {
+    color: var(--wa-color-text-quiet, #9da7b3);
+
+    &:hover {
+      color: #ffffff !important;
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+    }
+  }
+
+  .markdown-editor-preview__toolbar-separator {
+    background-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__extension-menu {
+    background-color: var(--stepnote-dialog-bg, #1c2128) !important;
+    border-color: var(--stepnote-dialog-border, #444c56) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-header {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-title {
+    color: var(--wa-color-text-quiet, #9da7b3) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-item:hover {
+    background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-item-icon {
+    color: var(--wa-color-brand-70, #218bff) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-item-label {
+    color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor-preview__extension-menu-item-syntax {
+    color: var(--wa-color-text-quiet, #9da7b3) !important;
+    background-color: var(--wa-color-neutral-fill-normal-hover, #1f212b) !important;
+  }
+
+  .markdown-editor-preview__mode-group {
+    background-color: var(--wa-color-neutral-fill-normal-hover, #1f212b) !important;
+  }
+
+  .markdown-editor-preview__mode-btn {
+    color: var(--wa-color-text-quiet, #9da7b3);
+
+    &--active {
+      color: var(--wa-color-brand-70, #218bff) !important;
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+    }
+  }
+
+  .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
+    border-right-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__auto-height-btn {
+    color: var(--wa-color-text-quiet, #9da7b3);
+
+    &:hover {
+      color: #ffffff !important;
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+    }
+
+    &--active {
+      color: var(--wa-color-brand-70, #218bff) !important;
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+    }
+  }
+
+  .markdown-editor-preview__action-menu-btn {
+    color: var(--wa-color-text-quiet, #9da7b3);
+
+    &:hover {
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e);
+      color: #ffffff;
+    }
+
+    &--active {
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e);
+      color: var(--wa-color-brand-70, #218bff);
+    }
+  }
+
+  .markdown-editor-preview__action-menu {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833);
+    border-color: var(--wa-color-surface-border, #434857);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .markdown-editor-preview__action-menu-item:hover {
+    background-color: var(--wa-color-neutral-fill-normal, #484d5e);
+  }
+
+  .markdown-editor-preview__action-menu-item-icon {
+    color: var(--wa-color-text-quiet, #9da7b3);
+  }
+
+  .markdown-editor-preview__action-menu-item-label {
+    color: var(--wa-color-text-normal, #e6edf3);
+  }
+
+  .markdown-editor-preview__help-dialog {
+    background-color: var(--wa-color-surface-default, #2f323f) !important;
+    border-color: var(--wa-color-surface-border, #434857) !important;
+    color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor-preview__help-header {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__help-close-btn {
+    color: var(--wa-color-text-quiet, #9da7b3);
+
+    &:hover {
+      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .markdown-editor-preview__help-subtitle {
+    color: var(--wa-color-text-quiet, #9da7b3) !important;
+  }
+
+  .markdown-editor-preview__help-table th,
+  .markdown-editor-preview__help-table td {
+    border-color: var(--wa-color-surface-border, #434857) !important;
+  }
+
+  .markdown-editor-preview__help-table th {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    color: var(--wa-color-text-quiet, #9da7b3) !important;
+  }
+
+  .markdown-editor-preview__help-table code {
+    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
+    color: var(--wa-color-text-normal, #e6edf3) !important;
+  }
+
+  .markdown-editor-preview__help-insert-btn {
+    border-color: var(--wa-color-surface-border, #434857);
+    background-color: var(--wa-color-neutral-fill-quiet, #252833);
+    color: var(--wa-color-brand-70, #218bff);
+
+    &:hover {
+      background-color: var(--wa-color-brand-70, #218bff);
+      color: #ffffff;
+      border-color: var(--wa-color-brand-70, #218bff);
+    }
+  }
+}

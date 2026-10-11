@@ -6,11 +6,14 @@ import { createMarkdownProcessor } from "../pipeline/markdown-processor.js";
 import type {
   IMarkdownProcessor,
   MarkdownProcessorOptions,
+  MarkdownDarkThemeVariant,
+  MarkdownLightThemeVariant,
 } from "../types.js";
 import {
   detectIsDarkMode,
   observeThemeChanges,
   syncHostTheme,
+  syncHostThemeVariants,
 } from "../utils/theme-sync.js";
 
 /**
@@ -26,6 +29,14 @@ export class MarkdownPreview extends LitElement {
   /** 表示対象の Markdown 文字列 */
   @property({ type: String })
   public content = "";
+
+  /** ダークモードスタイル種別 ("contrast" | "soft") */
+  @property({ type: String, attribute: "dark-theme" })
+  public darkTheme: MarkdownDarkThemeVariant = "contrast";
+
+  /** ライトモードスタイル種別 ("default") */
+  @property({ type: String, attribute: "light-theme" })
+  public lightTheme: MarkdownLightThemeVariant = "default";
 
   /** 入力内容に応じた自動伸長（Auto-grow）モード */
   @property({ type: Boolean, reflect: true, attribute: "auto-height" })
@@ -63,13 +74,21 @@ export class MarkdownPreview extends LitElement {
     this.disconnectThemeObserver?.();
   }
 
-  private syncTheme(): void {
+  public syncTheme(): void {
     const isDark = detectIsDarkMode(this);
     syncHostTheme(this, isDark);
+    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
   }
 
   override updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
+
+    if (
+      changedProperties.has("darkTheme") ||
+      changedProperties.has("lightTheme")
+    ) {
+      this.syncTheme();
+    }
 
     let needRebuildProcessor = false;
     let needReRender = false;
