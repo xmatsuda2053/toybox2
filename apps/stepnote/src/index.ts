@@ -1,21 +1,10 @@
 import "@awesome.me/webawesome/dist/styles/webawesome.css";
 import "./styles/tokens.scss";
-import "@awesome.me/webawesome/dist/components/icon/icon.js";
-import "@awesome.me/webawesome/dist/components/button/button.js";
-import "@awesome.me/webawesome/dist/components/divider/divider.js";
-import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
-import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
-import "@awesome.me/webawesome/dist/components/input/input.js";
-import "@awesome.me/webawesome/dist/components/textarea/textarea.js";
-import "@awesome.me/webawesome/dist/components/select/select.js";
-import "@awesome.me/webawesome/dist/components/option/option.js";
-import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
-import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
-import "@awesome.me/webawesome/dist/components/tab/tab.js";
-import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
-import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
+import { registerWebAwesome } from "./webawesome.js";
 import { registerIcons } from "@shared/icons";
 import "./app-root.js";
 
-// オフライン環境向けローカル SVG アイコン基盤の初期化登録
+// Web Awesome コンポーネント群およびローカル SVG アイコン基盤の初期化登録
+registerWebAwesome();
 registerIcons();
+

@@ -43,7 +43,7 @@ import { TaskCreateDialog } from "./task-create-dialog";
  *    - [x] 5-4. フォームフィールドのラベルに対する過剰な margin-bottom（var(--wa-space-3xs) 等）の上書きが存在せず、Web Awesome の標準マージン設計（0.5em）に準拠していること
  *
  * 6. Web Awesome コンポーネント登録の検証
- *    - [x] 6-1. アプリケーションエントリ（index.ts）で wa-select および wa-option がインポートされていること
+ *    - [x] 6-1. アプリケーションエントリ（index.ts）および登録基盤（webawesome.ts）で wa-select および wa-option が登録されていること
  */
 
 describe("TaskCreateDialog Component", () => {
@@ -351,12 +351,17 @@ describe("TaskCreateDialog Component", () => {
   });
 
   describe("6. Web Awesome コンポーネント登録の検証", () => {
-    it("6-1. アプリケーションエントリ（index.ts）で wa-select および wa-option がインポートされていること", () => {
+    it("6-1. アプリケーションエントリ（index.ts）および登録基盤（webawesome.ts）で wa-select および wa-option が登録されていること", () => {
       const indexPath = new URL("../../../index.ts", import.meta.url);
       expect(fs.existsSync(indexPath)).toBe(true);
       const indexContent = fs.readFileSync(indexPath, "utf-8");
-      expect(indexContent).toContain("components/select/select.js");
-      expect(indexContent).toContain("components/option/option.js");
+      expect(indexContent).toContain("webawesome");
+
+      const webawesomePath = new URL("../../../webawesome.ts", import.meta.url);
+      expect(fs.existsSync(webawesomePath)).toBe(true);
+      const webawesomeContent = fs.readFileSync(webawesomePath, "utf-8");
+      expect(webawesomeContent).toContain("components/select/select.js");
+      expect(webawesomeContent).toContain("components/option/option.js");
     });
   });
 });
