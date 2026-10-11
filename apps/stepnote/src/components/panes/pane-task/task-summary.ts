@@ -271,6 +271,7 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
           .value=${task?.description ?? ""}
           .mode=${this.descriptionMode}
           .themeMode=${themeMode}
+          .darkTheme=${"soft"}
           @markdown-change=${(e: CustomEvent<{ value: string }>) =>
             this.handleDescriptionChange(e.detail.value)}
           @height-mode-change=${this.handleHeightModeChange}

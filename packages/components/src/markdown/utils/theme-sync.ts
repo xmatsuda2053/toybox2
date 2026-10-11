@@ -128,3 +128,25 @@ export function syncHostTheme(element: HTMLElement, isDark: boolean): void {
     }
   }
 }
+
+/**
+ * 対象のホスト要素にテーマバリアント属性（dark-theme / light-theme）を同期する
+ *
+ * @param element 対象要素
+ * @param darkTheme ダークテーマバリアント（"contrast" | "soft"）
+ * @param lightTheme ライトテーマバリアント（"default"）
+ */
+export function syncHostThemeVariants(
+  element: HTMLElement,
+  darkTheme: string = "contrast",
+  lightTheme: string = "default",
+): void {
+  if (typeof element.setAttribute !== "function") return;
+
+  if (element.getAttribute("dark-theme") !== darkTheme) {
+    element.setAttribute("dark-theme", darkTheme);
+  }
+  if (element.getAttribute("light-theme") !== lightTheme) {
+    element.setAttribute("light-theme", lightTheme);
+  }
+}

@@ -5,12 +5,15 @@ import type { Extension } from "@codemirror/state";
 import type {
   MarkdownProcessorOptions,
   MarkdownFeatureExtension,
+  MarkdownDarkThemeVariant,
+  MarkdownLightThemeVariant,
 } from "../types.js";
 import { debounce } from "@shared/utils";
 import {
   detectIsDarkMode,
   observeThemeChanges,
   syncHostTheme,
+  syncHostThemeVariants,
 } from "../utils/theme-sync.js";
 import {
   MarkdownEditor,
@@ -189,6 +192,14 @@ export class MarkdownEditorPreview extends LitElement {
   /** テーマモード ("light" | "dark" | "auto") */
   @property({ type: String, attribute: "theme-mode" })
   public themeMode: "light" | "dark" | "auto" = "auto";
+
+  /** ダークモードスタイル種別 ("contrast" | "soft") */
+  @property({ type: String, attribute: "dark-theme" })
+  public darkTheme: MarkdownDarkThemeVariant = "contrast";
+
+  /** ライトモードスタイル種別 ("default") */
+  @property({ type: String, attribute: "light-theme" })
+  public lightTheme: MarkdownLightThemeVariant = "default";
 
   /** 入力内容に応じた自動伸長（Auto-grow）モード */
   @property({ type: Boolean, reflect: true, attribute: "auto-height" })
@@ -383,7 +394,11 @@ export class MarkdownEditorPreview extends LitElement {
       this.previewValue = this.value;
     }
 
-    if (changedProperties.has("themeMode")) {
+    if (
+      changedProperties.has("themeMode") ||
+      changedProperties.has("darkTheme") ||
+      changedProperties.has("lightTheme")
+    ) {
       this.syncTheme();
     }
 
@@ -422,6 +437,7 @@ export class MarkdownEditorPreview extends LitElement {
     }
     this.currentTheme = isDark ? "dark" : "light";
     syncHostTheme(this, isDark);
+    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
   }
 
   /**
@@ -1162,6 +1178,8 @@ export class MarkdownEditorPreview extends LitElement {
           <markdown-editor
             data-theme=${this.currentTheme}
             .themeMode=${this.currentTheme}
+            .darkTheme=${this.darkTheme}
+            .lightTheme=${this.lightTheme}
             .value=${this.value}
             .customExtensions=${this.effectiveEditorExtensions}
             ?auto-height=${this.autoHeight}
@@ -1174,6 +1192,8 @@ export class MarkdownEditorPreview extends LitElement {
         >
           <markdown-preview
             data-theme=${this.currentTheme}
+            .darkTheme=${this.darkTheme}
+            .lightTheme=${this.lightTheme}
             .content=${this.previewValue}
             .processorOptions=${this.effectiveProcessorOptions}
             ?auto-height=${this.autoHeight}

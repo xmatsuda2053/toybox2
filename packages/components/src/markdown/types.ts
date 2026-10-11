@@ -79,3 +79,16 @@ export interface MarkdownFeatureExtension {
   editorExtensions?: Extension[];
 }
 
+/**
+ * Markdown ダークモードスタイル種別（バリアント）
+ * - "contrast": 高コントラスト黒スタイル（GitHub Dark 調、デフォルト）
+ * - "soft": StepNote のトーンに調和するソフトダークスタイル
+ */
+export type MarkdownDarkThemeVariant = "contrast" | "soft";
+
+/**
+ * Markdown ライトモードスタイル種別（バリアント）
+ * - "default": 標準ライトスタイル（デフォルト）
+ */
+export type MarkdownLightThemeVariant = "default";
+

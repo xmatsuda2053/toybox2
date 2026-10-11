@@ -50,6 +50,7 @@ import { TaskSummary } from "./task-summary.js";
  *
  * 6. テーマの受容と markdown-editor-preview への伝播
  *    - 6-1. theme プロパティが設定された場合、markdown-editor-preview の themeMode に反映されること
+ *    - 6-2. markdown-editor-preview に .darkTheme='soft' が設定されていること
  *
  * 7. Markdown エディタのサイズ制御モード連携（親要素フィット / コンテンツ展開）
  *    - 7-1. 初期状態では isContentExpand=false であり、.task-summary--content-expand クラスが付与されないこと（親要素フィットモード）
@@ -360,6 +361,13 @@ describe("TaskSummary Component", () => {
       const result = element.render();
       const htmlStr = flattenTemplate(result);
       expect(htmlStr).toMatch(/\.themeMode=["']?dark["']?/);
+    });
+
+    it("6-2. markdown-editor-preview に .darkTheme='soft' が設定されていること", () => {
+      element.taskController = mockTaskController as unknown as TaskController;
+      const result = element.render();
+      const htmlStr = flattenTemplate(result);
+      expect(htmlStr).toMatch(/\.darkTheme=["']?soft["']?/);
     });
   });
 
