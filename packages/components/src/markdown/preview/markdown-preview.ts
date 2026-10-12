@@ -12,8 +12,7 @@ import type {
 import {
   detectIsDarkMode,
   observeThemeChanges,
-  syncHostTheme,
-  syncHostThemeVariants,
+  applyHostThemeSync,
 } from "../utils/theme-sync.js";
 
 /**
@@ -76,8 +75,7 @@ export class MarkdownPreview extends LitElement {
 
   public syncTheme(): void {
     const isDark = detectIsDarkMode(this);
-    syncHostTheme(this, isDark);
-    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
+    applyHostThemeSync(this, isDark, this.darkTheme, this.lightTheme);
   }
 
   override updated(changedProperties: PropertyValues): void {

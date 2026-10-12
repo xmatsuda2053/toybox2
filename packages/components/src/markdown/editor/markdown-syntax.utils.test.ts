@@ -13,7 +13,10 @@
  *   - code: 単行文字列はインライン、改行を含む文字列はブロックコードとして囲むこと
  *   - link: 選択文字列がある場合は URL 位置、ない場合は表示テキスト位置を選択状態にすること
  *   - table: 直前の改行有無に応じたプレフィックス付与とカーソル移動を行うこと
- * 4. 複数行リストプレフィックス適用 (applyMultiLineListPrefix)
+ * 4. 共通囲み構文デリミタ計算 (formatSurroundingDelimiter)
+ *   - 選択文字列がある場合、デリミタで囲み内側を選択状態とする結果を返すこと
+ *   - 選択文字列がない場合、既定テキストをデリミタで囲み選択状態とする結果を返すこと
+ * 5. 複数行リストプレフィックス適用 (applyMultiLineListPrefix)
  *   - bullet-list: 複数行テキストの各行頭に '- ' を付与すること
  *   - task-list: 複数行テキストの各行頭に '- [ ] ' を付与すること
  *   - ordered-list: 複数行テキストの各行頭に '1. ' を付与すること
@@ -25,6 +28,7 @@ import {
   getFallbackMarkdownText,
   getLinePrefixForAction,
   getSurroundingSyntax,
+  formatSurroundingDelimiter,
   applyMultiLineListPrefix,
 } from "./markdown-syntax.utils.js";
 
@@ -108,6 +112,29 @@ describe("markdown-syntax.utils", () => {
       const result = getSurroundingSyntax("table", "", 10, 10, false);
       expect(result.insertText.startsWith("\n\n")).toBe(true);
       expect(result.anchor).toBe(10 + result.insertText.length);
+    });
+  });
+
+  describe("formatSurroundingDelimiter (共通囲み構文デリミタ計算)", () => {
+    it("選択文字列がある場合、デリミタで囲み内側を選択状態とする結果を返すこと", () => {
+      const result = formatSurroundingDelimiter("sample", 5, 11, "**", "太字");
+      expect(result.insertText).toBe("**sample**");
+      expect(result.anchor).toBe(7); // 5 + 2
+      expect(result.head).toBe(13); // 11 + 2
+    });
+
+    it("選択文字列がない場合、既定テキストをデリミタで囲み選択状態とする結果を返すこと", () => {
+      const result = formatSurroundingDelimiter("", 10, 10, "*", "斜体");
+      expect(result.insertText).toBe("*斜体*");
+      expect(result.anchor).toBe(11); // 10 + 1
+      expect(result.head).toBe(13); // 10 + 1 + 2
+    });
+
+    it("打消し線（~~）などの複数文字デリミタでも正確にカーソル位置を計算すること", () => {
+      const result = formatSurroundingDelimiter("", 0, 0, "~~", "打消し");
+      expect(result.insertText).toBe("~~打消し~~");
+      expect(result.anchor).toBe(2);
+      expect(result.head).toBe(5);
     });
   });
 

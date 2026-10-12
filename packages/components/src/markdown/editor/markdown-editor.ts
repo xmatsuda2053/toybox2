@@ -35,10 +35,9 @@ import {
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
-  detectIsDarkMode,
   observeThemeChanges,
-  syncHostTheme,
-  syncHostThemeVariants,
+  resolveThemeMode,
+  applyHostThemeSync,
 } from "../utils/theme-sync.js";
 import type {
   MarkdownDarkThemeVariant,
@@ -192,17 +191,14 @@ export class MarkdownEditor extends LitElement {
    * 現在ダークモードが有効かどうかを取得する。
    */
   public get isDarkMode(): boolean {
-    if (this.themeMode === "dark") return true;
-    if (this.themeMode === "light") return false;
-    return detectIsDarkMode(this);
+    return resolveThemeMode(this.themeMode, this);
   }
 
   /**
    * ホスト要素のテーマ属性およびクラスを同期し、必要に応じてエディタを再構成する。
    */
   public syncTheme(reconfigureEditor = false): void {
-    syncHostTheme(this, this.isDarkMode);
-    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
+    applyHostThemeSync(this, this.isDarkMode, this.darkTheme, this.lightTheme);
 
     if (reconfigureEditor && this.editorView) {
       this.reconfigureEditor();
@@ -405,11 +401,7 @@ export class MarkdownEditor extends LitElement {
       isPrecededByNewline,
     );
 
-    view.dispatch({
-      changes: { from, to, insert: insertText },
-      selection: { anchor, head },
-    });
-    view.focus();
+    this.dispatchChangeAndFocus(view, from, to, insertText, { anchor, head });
   }
 
   /**
@@ -437,9 +429,25 @@ export class MarkdownEditor extends LitElement {
     }
 
     const newAnchor = from + insertText.length;
+    this.dispatchChangeAndFocus(view, from, to, insertText, {
+      anchor: newAnchor,
+      head: newAnchor,
+    });
+  }
+
+  /**
+   * 指定した範囲へのテキスト挿入と選択範囲更新を行い、フォーカスを当てる内部ヘルパー
+   */
+  private dispatchChangeAndFocus(
+    view: EditorView,
+    from: number,
+    to: number,
+    insert: string,
+    selection: { anchor: number; head?: number },
+  ): void {
     view.dispatch({
-      changes: { from, to, insert: insertText },
-      selection: { anchor: newAnchor, head: newAnchor },
+      changes: { from, to, insert },
+      selection,
     });
     view.focus();
   }

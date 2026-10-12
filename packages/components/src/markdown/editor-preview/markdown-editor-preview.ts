@@ -10,10 +10,9 @@ import type {
 } from "../types.js";
 import { debounce } from "@shared/utils";
 import {
-  detectIsDarkMode,
   observeThemeChanges,
-  syncHostTheme,
-  syncHostThemeVariants,
+  resolveThemeMode,
+  applyHostThemeSync,
 } from "../utils/theme-sync.js";
 import {
   MarkdownEditor,
@@ -427,17 +426,9 @@ export class MarkdownEditorPreview extends LitElement {
    * ホスト要素および子コンポーネントのテーマを同期する。
    */
   public syncTheme(): void {
-    let isDark: boolean;
-    if (this.themeMode === "dark") {
-      isDark = true;
-    } else if (this.themeMode === "light") {
-      isDark = false;
-    } else {
-      isDark = detectIsDarkMode(this);
-    }
+    const isDark = resolveThemeMode(this.themeMode, this);
     this.currentTheme = isDark ? "dark" : "light";
-    syncHostTheme(this, isDark);
-    syncHostThemeVariants(this, this.darkTheme, this.lightTheme);
+    applyHostThemeSync(this, isDark, this.darkTheme, this.lightTheme);
   }
 
   /**
@@ -577,13 +568,11 @@ export class MarkdownEditorPreview extends LitElement {
       requestAnimationFrame(() => {
         this.style.height = `${targetHeight}px`;
 
-        this.transitionTimer = setTimeout(() => {
+        this.completeHeightTransition(() => {
           if (this.autoHeight) {
             this.style.height = "";
           }
-          this.isTransitioning = false;
-          this.transitionTimer = null;
-        }, 400);
+        });
       });
     });
   }
@@ -600,15 +589,24 @@ export class MarkdownEditorPreview extends LitElement {
         this.autoHeight = false;
         this.style.height = targetFixed;
 
-        this.transitionTimer = setTimeout(() => {
+        this.completeHeightTransition(() => {
           if (!this.effectiveHeight) {
             this.style.height = "";
           }
-          this.isTransitioning = false;
-          this.transitionTimer = null;
-        }, 400);
+        });
       });
     });
+  }
+
+  /**
+   * 高さ変更アニメーション完了後のタイマークリアおよびスタイル復帰を行う内部ヘルパー
+   */
+  private completeHeightTransition(cleanupStyle?: () => void): void {
+    this.transitionTimer = setTimeout(() => {
+      cleanupStyle?.();
+      this.isTransitioning = false;
+      this.transitionTimer = null;
+    }, 400);
   }
 
   /**
@@ -755,13 +753,16 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
-   * ツールバーの主要書式アクションボタングループを描画する。
+   * ツールバーのアクションボタンを描画する内部ヘルパー
    */
-  private renderToolbarBasicActions() {
-    const renderBtn = (btn: ToolbarButtonDef) => html`
+  private renderToolbarButton(btn: ToolbarButtonDef, isSecondary = false) {
+    const secondaryClass = isSecondary
+      ? " markdown-editor-preview__toolbar-item--secondary"
+      : "";
+    return html`
       <button
         type="button"
-        class="markdown-editor-preview__toolbar-btn"
+        class="markdown-editor-preview__toolbar-btn${secondaryClass}"
         title="${btn.label}"
         aria-label="${btn.label}"
         @click=${() => this.handleToolbarAction(btn.action)}
@@ -773,11 +774,16 @@ export class MarkdownEditorPreview extends LitElement {
         ></wa-icon>
       </button>
     `;
+  }
 
+  /**
+   * ツールバーの主要書式アクションボタングループを描画する。
+   */
+  private renderToolbarBasicActions() {
     return html`
-      ${BASIC_TOOLBAR_BUTTONS.slice(0, 2).map(renderBtn)}
+      ${BASIC_TOOLBAR_BUTTONS.slice(0, 2).map((btn) => this.renderToolbarButton(btn))}
       <span class="markdown-editor-preview__toolbar-separator"></span>
-      ${BASIC_TOOLBAR_BUTTONS.slice(2).map(renderBtn)}
+      ${BASIC_TOOLBAR_BUTTONS.slice(2).map((btn) => this.renderToolbarButton(btn))}
     `;
   }
 
@@ -785,28 +791,12 @@ export class MarkdownEditorPreview extends LitElement {
    * ツールバーの二次的書式アクションボタングループを描画する。
    */
   private renderToolbarSecondaryActions() {
-    const renderSecondaryBtn = (btn: ToolbarButtonDef) => html`
-      <button
-        type="button"
-        class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-item--secondary"
-        title="${btn.label}"
-        aria-label="${btn.label}"
-        @click=${() => this.handleToolbarAction(btn.action)}
-      >
-        <wa-icon
-          library="my-icons"
-          name="${btn.icon}"
-          label="${btn.label}"
-        ></wa-icon>
-      </button>
-    `;
-
     return html`
-      ${SECONDARY_TOOLBAR_BUTTONS.slice(0, 2).map(renderSecondaryBtn)}
+      ${SECONDARY_TOOLBAR_BUTTONS.slice(0, 2).map((btn) => this.renderToolbarButton(btn, true))}
       <span
         class="markdown-editor-preview__toolbar-separator markdown-editor-preview__toolbar-item--secondary"
       ></span>
-      ${SECONDARY_TOOLBAR_BUTTONS.slice(2).map(renderSecondaryBtn)}
+      ${SECONDARY_TOOLBAR_BUTTONS.slice(2).map((btn) => this.renderToolbarButton(btn, true))}
     `;
   }
 
