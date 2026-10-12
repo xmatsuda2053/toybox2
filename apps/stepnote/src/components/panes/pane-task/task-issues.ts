@@ -13,6 +13,8 @@ import type { TaskStatusCode } from "@/types";
 import {
   TASK_STATUS_LIST,
   TASK_STATUS_MAP,
+  TASK_STATUS_ICON_MAP,
+  TASK_STATUS_TYPE_MAP,
 } from "@/constants/task-status.constants.js";
 import {
   SubscriberElement,
@@ -22,19 +24,6 @@ import {
 import { sortIssuesByDueDateAndTitle } from "@/utils/task-filter.utils.js";
 import styles from "./task-issues.scss?inline";
 
-/** ステータスコードに応じたアイコン定義マップ */
-const STATUS_ICON_MAP: Record<TaskStatusCode, string> = {
-  0: "circle-stop-solid-full",
-  5: "circle-play-solid-full",
-  9: "circle-check-solid-full",
-};
-
-/** ステータスコードに応じたタイプ名定義マップ */
-const STATUS_TYPE_MAP: Record<TaskStatusCode, string> = {
-  0: "pending",
-  5: "progress",
-  9: "done",
-};
 
 /**
  * サブタスク（Issues）タブコンポーネント (TaskIssues)
@@ -113,7 +102,7 @@ export class TaskIssues extends WithIssuesController(
     if (this.editingIssueId !== undefined) {
       await this.handleDeleteIssue(this.editingIssueId);
     }
-    this.isDeleteDialogOpen = false;
+    this.handleCloseDeleteDialog();
   };
 
   /** Markdown 表示モード変更ハンドラー */
@@ -329,27 +318,51 @@ export class TaskIssues extends WithIssuesController(
           name=${iconName}
           @click=${(e: MouseEvent) => e.stopPropagation()}
         ></wa-icon>
-        ${TASK_STATUS_LIST.map(
-          (status) => html`
-            <wa-dropdown-item
-              value=${String(status.code)}
-              type="checkbox"
-              ?checked=${status.code === issue.statusCode}
-            >
-              ${status.labelJa}
-            </wa-dropdown-item>
-          `,
-        )}
+        ${this.renderStatusDropdownOptions(issue.statusCode, false)}
       </wa-dropdown>
     `;
+  }
+
+  /**
+   * ステータスドロップダウンの選択肢を描画
+   */
+  private renderStatusDropdownOptions(
+    selectedCode: TaskStatusCode,
+    withIcon: boolean = false,
+  ): HTMLTemplateResult[] {
+    return TASK_STATUS_LIST.map(
+      (status) => html`
+        <wa-dropdown-item
+          value=${String(status.code)}
+          type="checkbox"
+          ?checked=${status.code === selectedCode}
+        >
+          ${withIcon
+            ? html`
+                <wa-icon
+                  slot="icon"
+                  library="my-icons"
+                  name=${TASK_STATUS_ICON_MAP[status.code]}
+                  class="task-issues__status-icon type-${TASK_STATUS_TYPE_MAP[
+                    status.code
+                  ]}"
+                ></wa-icon>
+              `
+            : null}
+          ${status.labelJa}
+        </wa-dropdown-item>
+      `,
+    );
   }
 
   /** 単一 Issue アイテムの描画 */
   private renderIssueItem(issue: IssueRecord): HTMLTemplateResult {
     const isDone = issue.statusCode === 9;
     const itemClass = `task-issues__item ${isDone ? "task-issues__item--completed" : ""}`;
-    const iconName = STATUS_ICON_MAP[issue.statusCode] ?? STATUS_ICON_MAP[0];
-    const typeName = STATUS_TYPE_MAP[issue.statusCode] ?? STATUS_TYPE_MAP[0];
+    const iconName =
+      TASK_STATUS_ICON_MAP[issue.statusCode] ?? TASK_STATUS_ICON_MAP[0];
+    const typeName =
+      TASK_STATUS_TYPE_MAP[issue.statusCode] ?? TASK_STATUS_TYPE_MAP[0];
     const dueStr = issue.dueDate
       ? format(new Date(issue.dueDate), "yyyy-MM-dd")
       : "";
@@ -459,25 +472,7 @@ export class TaskIssues extends WithIssuesController(
           currentIcon,
           currentType,
         )}
-        ${TASK_STATUS_LIST.map(
-          (status) => html`
-            <wa-dropdown-item
-              value=${String(status.code)}
-              type="checkbox"
-              ?checked=${status.code === statusCode}
-            >
-              <wa-icon
-                slot="icon"
-                library="my-icons"
-                name=${STATUS_ICON_MAP[status.code]}
-                class="task-issues__status-icon type-${STATUS_TYPE_MAP[
-                  status.code
-                ]}"
-              ></wa-icon>
-              ${status.labelJa}
-            </wa-dropdown-item>
-          `,
-        )}
+        ${this.renderStatusDropdownOptions(statusCode, true)}
         ${this.renderDropdownDeleteAction()}
       </wa-dropdown>
     `;
@@ -487,8 +482,10 @@ export class TaskIssues extends WithIssuesController(
   private renderDetailHeader(issue?: IssueRecord): HTMLTemplateResult {
     const statusCode = issue?.statusCode ?? this.draftStatusCode;
     const currentStatus = TASK_STATUS_MAP[statusCode] ?? TASK_STATUS_MAP[0];
-    const currentIcon = STATUS_ICON_MAP[statusCode] ?? STATUS_ICON_MAP[0];
-    const currentType = STATUS_TYPE_MAP[statusCode] ?? STATUS_TYPE_MAP[0];
+    const currentIcon =
+      TASK_STATUS_ICON_MAP[statusCode] ?? TASK_STATUS_ICON_MAP[0];
+    const currentType =
+      TASK_STATUS_TYPE_MAP[statusCode] ?? TASK_STATUS_TYPE_MAP[0];
 
     return html`
       <div class="task-issues__detail-header">
