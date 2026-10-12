@@ -209,18 +209,16 @@ export class TaskProperty extends WithLabelsController(
    */
   public render(): HTMLTemplateResult {
     const task = this.taskController?.state;
-    if (!task) {
-      return this.renderEmptyState();
-    }
-
-    return html`
-      <div class="task-property">
-        ${this.renderCreatedAtField(task)}
-        ${this.renderUpdatedAtField(task)}
-        ${this.renderFiscalYearField(task)}
-        ${this.renderLabelField(task)}
-      </div>
-    `;
+    return task
+      ? html`
+          <div class="task-property">
+            ${this.renderCreatedAtField(task)}
+            ${this.renderUpdatedAtField(task)}
+            ${this.renderFiscalYearField(task)}
+            ${this.renderLabelField(task)}
+          </div>
+        `
+      : this.renderEmptyState();
   }
 }
 

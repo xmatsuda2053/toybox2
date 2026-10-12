@@ -295,8 +295,7 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
    * メインレンダリング
    */
   public render(): HTMLTemplateResult {
-    const task = this.taskController?.state;
-    if (!task) {
+    if (!this.taskController?.state) {
       return this.renderEmptyState();
     }
 

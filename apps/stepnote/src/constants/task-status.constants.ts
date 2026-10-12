@@ -50,3 +50,28 @@ export const TASK_STATUS_LIST: readonly TaskStatusDefinition[] = [
   TASK_STATUS_MAP[TASK_STATUS_CODE.PROGRESS],
   TASK_STATUS_MAP[TASK_STATUS_CODE.DONE],
 ];
+
+/**
+ * ステータスコードに応じたアイコン定義マップ
+ *
+ * @constant
+ * @type {Record<TaskStatusCode, string>}
+ */
+export const TASK_STATUS_ICON_MAP: Record<TaskStatusCode, string> = {
+  [TASK_STATUS_CODE.PENDING]: "circle-stop-solid-full",
+  [TASK_STATUS_CODE.PROGRESS]: "circle-play-solid-full",
+  [TASK_STATUS_CODE.DONE]: "circle-check-solid-full",
+};
+
+/**
+ * ステータスコードに応じたタイプ名定義マップ
+ *
+ * @constant
+ * @type {Record<TaskStatusCode, string>}
+ */
+export const TASK_STATUS_TYPE_MAP: Record<TaskStatusCode, string> = {
+  [TASK_STATUS_CODE.PENDING]: "pending",
+  [TASK_STATUS_CODE.PROGRESS]: "progress",
+  [TASK_STATUS_CODE.DONE]: "done",
+};
+

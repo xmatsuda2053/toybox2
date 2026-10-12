@@ -5,6 +5,8 @@ import type { TaskStatusCode } from "@/types";
 import {
   TASK_STATUS_LIST,
   TASK_STATUS_MAP,
+  TASK_STATUS_ICON_MAP,
+  TASK_STATUS_TYPE_MAP,
 } from "@/constants/task-status.constants.js";
 import {
   SubscriberElement,
@@ -16,23 +18,6 @@ import "./task-issues.js";
 import "./task-property.js";
 import styles from "./pane-task.scss?inline";
 
-/**
- * ステータスコードに応じたアイコン定義マップ
- */
-const STATUS_ICON_MAP: Record<TaskStatusCode, string> = {
-  0: "circle-stop-solid-full",
-  5: "circle-play-solid-full",
-  9: "circle-check-solid-full",
-};
-
-/**
- * ステータスコードに応じたタイプ名定義マップ
- */
-const STATUS_TYPE_MAP: Record<TaskStatusCode, string> = {
-  0: "pending",
-  5: "progress",
-  9: "done",
-};
 
 /**
  * タスクエリア（第4ペイン）コンテナコンポーネント (PaneTask)
@@ -102,27 +87,32 @@ export class PaneTask extends WithIssuesController(
   };
 
   /**
+   * 削除確認ダイアログの開閉状態を設定
+   */
+  private setDeleteDialogOpen(open: boolean): void {
+    this.isDeleteDialogOpen = open;
+  }
+
+  /**
    * 削除確認ダイアログを開く
    */
   public handleOpenDeleteDialog = (): void => {
-    this.isDeleteDialogOpen = true;
+    this.setDeleteDialogOpen(true);
   };
 
   /**
    * 削除確認ダイアログを閉じる
    */
   public handleCloseDeleteDialog = (): void => {
-    this.isDeleteDialogOpen = false;
+    this.setDeleteDialogOpen(false);
   };
 
   /**
    * タスク削除の確定ハンドラー
    */
   public handleConfirmDelete = async (): Promise<void> => {
-    if (this.taskController) {
-      await this.taskController.deleteTask();
-    }
-    this.isDeleteDialogOpen = false;
+    await this.taskController?.deleteTask();
+    this.handleCloseDeleteDialog();
   };
 
   /**
@@ -208,8 +198,8 @@ export class PaneTask extends WithIssuesController(
         <wa-icon
           slot="icon"
           library="my-icons"
-          name=${STATUS_ICON_MAP[status.code]}
-          class="pane-task__status-icon type-${STATUS_TYPE_MAP[status.code]}"
+          name=${TASK_STATUS_ICON_MAP[status.code]}
+          class="pane-task__status-icon type-${TASK_STATUS_TYPE_MAP[status.code]}"
         ></wa-icon>
         ${status.labelJa}
       </wa-dropdown-item>
@@ -257,8 +247,10 @@ export class PaneTask extends WithIssuesController(
     const task = this.taskController?.state;
     const currentCode = (task?.statusCode ?? 0) as TaskStatusCode;
     const currentStatus = TASK_STATUS_MAP[currentCode] ?? TASK_STATUS_MAP[0];
-    const currentIcon = STATUS_ICON_MAP[currentCode] ?? STATUS_ICON_MAP[0];
-    const currentType = STATUS_TYPE_MAP[currentCode] ?? STATUS_TYPE_MAP[0];
+    const currentIcon =
+      TASK_STATUS_ICON_MAP[currentCode] ?? TASK_STATUS_ICON_MAP[0];
+    const currentType =
+      TASK_STATUS_TYPE_MAP[currentCode] ?? TASK_STATUS_TYPE_MAP[0];
 
     return html`
       <div class="pane-task__header-right">
