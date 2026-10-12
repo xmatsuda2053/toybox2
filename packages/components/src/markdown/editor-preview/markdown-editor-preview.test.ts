@@ -97,6 +97,11 @@
  *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
  *   - renderBody() において子要素（markdown-editor, markdown-preview）へ darkTheme と lightTheme がバインドされること
  *   - SCSS において :host([dark-theme='soft']) 用のスタイルが定義され、StepNote 調のソフトダーク配色が指定されていること
+ * 23. エディタ操作メニューの削除ボタン仕様
+ *   - showDeleteButton の初期値が false であること
+ *   - showDeleteButton が false の場合、削除項目および wa-divider がレンダリングされないこと
+ *   - showDeleteButton が true の場合、構文ヘルプの後に wa-divider と削除項目（variant="danger", value="delete", trash-can-solid-full, "削除"）がレンダリングされること
+ *   - handleActionMenuSelect() において value='delete' で markdown-delete イベント（detail: { value: string }）が発火すること
  */
 
 import * as fs from "node:fs";
@@ -1086,6 +1091,60 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
       expect(scssContent).toMatch(/--stepnote-bg-surface:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
       expect(scssContent).toMatch(/--stepnote-border-subtle:\s*var\(--wa-color-surface-border,\s*#434857\)/);
+    });
+  });
+
+  describe("23. エディタ操作メニューの削除ボタン仕様", () => {
+    it("showDeleteButton の初期値が false であること", () => {
+      expect(element.showDeleteButton).toBe(false);
+    });
+
+    it("showDeleteButton が false の場合、削除項目および wa-divider がレンダリングされないこと", () => {
+      element.showDeleteButton = false;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain(
+        '<wa-dropdown-item variant="danger" value="delete"',
+      );
+      expect(htmlStr).not.toContain("trash-can-solid-full");
+      expect(htmlStr).not.toContain("<wa-divider");
+    });
+
+    it("showDeleteButton が true の場合、構文ヘルプの後に wa-divider と削除項目がレンダリングされること", () => {
+      element.showDeleteButton = true;
+      const htmlStr = flattenTemplate(element.render());
+
+      const helpIdx = htmlStr.indexOf('value="help"');
+      const dividerIdx = htmlStr.indexOf("<wa-divider");
+      const deleteIdx = htmlStr.indexOf('value="delete"');
+
+      expect(helpIdx).toBeGreaterThan(-1);
+      expect(dividerIdx).toBeGreaterThan(-1);
+      expect(deleteIdx).toBeGreaterThan(-1);
+      expect(helpIdx).toBeLessThan(dividerIdx);
+      expect(dividerIdx).toBeLessThan(deleteIdx);
+
+      expect(htmlStr).toContain('variant="danger"');
+      expect(htmlStr).toContain("trash-can-solid-full");
+      expect(htmlStr).toContain("削除");
+    });
+
+    it("handleActionMenuSelect() において value='delete' で markdown-delete イベントが発火すること", async () => {
+      element.value = "# 削除対象の文書";
+      let deleteFired = false;
+      let deletePayload = "";
+
+      element.addEventListener("markdown-delete", (e: Event) => {
+        deleteFired = true;
+        deletePayload = (e as CustomEvent<{ value: string }>).detail.value;
+      });
+
+      const customEvt = new CustomEvent("wa-select", {
+        detail: { item: { value: "delete" } },
+      });
+      await element.handleActionMenuSelect(customEvt);
+
+      expect(deleteFired).toBe(true);
+      expect(deletePayload).toBe("# 削除対象の文書");
     });
   });
 });

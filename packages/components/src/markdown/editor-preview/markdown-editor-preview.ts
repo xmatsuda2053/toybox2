@@ -239,6 +239,10 @@ export class MarkdownEditorPreview extends LitElement {
     return trimmed;
   }
 
+  /** 削除ボタンの表示有無 */
+  @property({ type: Boolean, attribute: "show-delete-button" })
+  public showDeleteButton = false;
+
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
   public extensions: MarkdownFeatureExtension[] = [];
@@ -723,7 +727,22 @@ export class MarkdownEditorPreview extends LitElement {
       await this.handleMenuFormatAction();
     } else if (value === "help") {
       this.handleMenuHelpAction();
+    } else if (value === "delete") {
+      this.handleMenuDeleteAction();
     }
+  }
+
+  /**
+   * エディタメニュー内から削除アクションを実行し、markdown-delete イベントを発火する。
+   */
+  public handleMenuDeleteAction(): void {
+    this.dispatchEvent(
+      new CustomEvent("markdown-delete", {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   /**
@@ -1106,6 +1125,20 @@ export class MarkdownEditorPreview extends LitElement {
         ></wa-icon>
         構文ヘルプ
       </wa-dropdown-item>
+      ${this.showDeleteButton
+        ? html`
+            <wa-divider></wa-divider>
+            <wa-dropdown-item variant="danger" value="delete">
+              <wa-icon
+                slot="icon"
+                library="my-icons"
+                name="trash-can-solid-full"
+                class="markdown-editor-preview__action-menu-item-icon"
+              ></wa-icon>
+              削除
+            </wa-dropdown-item>
+          `
+        : nothing}
     `;
   }
 
