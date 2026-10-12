@@ -23,6 +23,20 @@ foreach ($file in $files) {
     $mapping += "  `"$name`": $varName,"
 }
 
+$aliases = @{
+    "circle-plus" = "circle_plus_solid_full"
+    "compress"    = "compress_solid_full"
+    "expand"      = "expand_solid_full"
+}
+
+foreach ($alias in $aliases.Keys | Sort-Object) {
+    $targetVar = $aliases[$alias]
+    $mapping += "  `"$alias`": $targetVar,"
+}
+
+# ソートして一貫性を保持
+$mapping = $mapping | Sort-Object
+
 $finalContent = @(
     $imports
     ""
