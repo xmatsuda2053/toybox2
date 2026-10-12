@@ -7,6 +7,7 @@ import type {
   MarkdownFeatureExtension,
   MarkdownDarkThemeVariant,
   MarkdownLightThemeVariant,
+  MarkdownEditorCommand,
 } from "../types.js";
 import { debounce } from "@shared/utils";
 import {
@@ -20,6 +21,9 @@ import {
 } from "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
 import { formatMarkdown } from "../formatter/markdown-formatter.js";
+import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
+import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
+import "@awesome.me/webawesome/dist/components/divider/divider.js";
 
 export type MarkdownDisplayMode = "split" | "edit" | "preview";
 
@@ -235,6 +239,14 @@ export class MarkdownEditorPreview extends LitElement {
     }
     return trimmed;
   }
+
+  /** 削除ボタンの表示有無 */
+  @property({ type: Boolean, attribute: "show-delete-button" })
+  public showDeleteButton = false;
+
+  /** カスタムコマンド定義リスト（最大10件、コマンド0〜コマンド9） */
+  @property({ type: Array })
+  public commands: readonly MarkdownEditorCommand[] = [];
 
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
@@ -694,7 +706,68 @@ export class MarkdownEditorPreview extends LitElement {
    * @param open 指定した開閉状態（省略時はトグル）
    */
   public toggleActionMenu(open?: boolean): void {
-    this.isActionMenuOpen = open ?? !this.isActionMenuOpen;
+    const dropdown = this.renderRoot?.querySelector<
+      HTMLElement & { open: boolean }
+    >(".markdown-editor-preview__action-menu-dropdown");
+    if (dropdown) {
+      dropdown.open = open ?? !dropdown.open;
+      this.isActionMenuOpen = dropdown.open;
+    } else {
+      this.isActionMenuOpen = open ?? !this.isActionMenuOpen;
+    }
+  }
+
+  /**
+   * エディタ操作メニュー内の項目選択イベントをハンドリングする。
+   *
+   * @param event wa-select カスタムイベント
+   */
+  public async handleActionMenuSelect(
+    event: CustomEvent<{ item: { value: string } }>,
+  ): Promise<void> {
+    const value = event.detail.item.value;
+    if (value === "copy") {
+      await this.handleMenuCopyAction();
+    } else if (value === "format") {
+      await this.handleMenuFormatAction();
+    } else if (value === "help") {
+      this.handleMenuHelpAction();
+    } else if (value === "delete") {
+      this.handleMenuDeleteAction();
+    } else if (value.startsWith("command:")) {
+      const index = parseInt(value.slice("command:".length), 10);
+      this.handleMenuCustomCommand(index);
+    }
+  }
+
+  /**
+   * 指定されたインデックスのカスタムコマンドを実行し、定義されたイベントを発火する。
+   *
+   * @param index コマンドインデックス (0〜9)
+   */
+  public handleMenuCustomCommand(index: number): void {
+    const cmd = this.commands[index];
+    if (!cmd) return;
+    this.dispatchEvent(
+      new CustomEvent(cmd.eventName, {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * エディタメニュー内から削除アクションを実行し、markdown-delete イベントを発火する。
+   */
+  public handleMenuDeleteAction(): void {
+    this.dispatchEvent(
+      new CustomEvent("markdown-delete", {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   /**
@@ -1046,55 +1119,91 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * カスタムコマンド（コマンド0〜9）のサブメニューを描画する。
+   */
+  private renderCommandSubmenu() {
+    const activeCommands = this.commands.slice(0, 10);
+    if (activeCommands.length === 0) return nothing;
+
+    return html`
+      <wa-dropdown-item>
+        <wa-icon
+          slot="icon"
+          library="my-icons"
+          name="terminal-solid-full"
+          class="markdown-editor-preview__action-menu-item-icon"
+        ></wa-icon>
+        コマンド
+        ${activeCommands.map(
+          (cmd, index) => html`
+            <wa-dropdown-item
+              slot="submenu"
+              value="command:${index}"
+            >
+              <wa-icon
+                slot="icon"
+                library="my-icons"
+                name="number-${index}-solid-full"
+                class="markdown-editor-preview__action-menu-item-icon"
+              ></wa-icon>
+              ${cmd.label}
+            </wa-dropdown-item>
+          `,
+        )}
+      </wa-dropdown-item>
+    `;
+  }
+
+  /**
    * エディタ操作メニューの各アクション項目を描画する。
    */
   private renderActionMenuItems() {
+    const hasExtendedActions =
+      this.commands.length > 0 || this.showDeleteButton;
+
     return html`
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuCopyAction()}
-      >
+      <wa-dropdown-item value="copy">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="copy-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label">
-          コピー
-        </span>
-      </button>
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuFormatAction()}
-      >
+        コピー
+      </wa-dropdown-item>
+      <wa-dropdown-item value="format">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="wand-magic-sparkles-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label">
-          整形
-        </span>
-      </button>
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuHelpAction()}
-      >
+        整形
+      </wa-dropdown-item>
+      <wa-dropdown-item value="help">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="question-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label"
-          >構文ヘルプ</span
-        >
-      </button>
+        構文ヘルプ
+      </wa-dropdown-item>
+      ${hasExtendedActions ? html`<wa-divider></wa-divider>` : nothing}
+      ${this.renderCommandSubmenu()}
+      ${this.showDeleteButton
+        ? html`
+            <wa-dropdown-item variant="danger" value="delete">
+              <wa-icon
+                slot="icon"
+                library="my-icons"
+                name="trash-solid-full"
+                class="markdown-editor-preview__action-menu-item-icon"
+              ></wa-icon>
+              削除
+            </wa-dropdown-item>
+          `
+        : nothing}
     `;
   }
 
@@ -1104,37 +1213,27 @@ export class MarkdownEditorPreview extends LitElement {
   private renderActionMenu() {
     return html`
       <div class="markdown-editor-preview__action-menu-container">
-        <button
-          type="button"
-          class="markdown-editor-preview__action-menu-btn ${this
-            .isActionMenuOpen
-            ? "markdown-editor-preview__action-menu-btn--active"
-            : ""}"
-          title="エディタメニュー"
-          aria-label="エディタメニュー"
-          aria-expanded=${this.isActionMenuOpen ? "true" : "false"}
-          @click=${(e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleActionMenu();
-          }}
+        <wa-dropdown
+          placement="bottom-end"
+          class="markdown-editor-preview__action-menu-dropdown"
+          @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
+            this.handleActionMenuSelect(e)}
         >
-          <wa-icon
-            library="my-icons"
-            name="bars-solid-full"
-            label="エディタメニュー"
-          ></wa-icon>
-        </button>
-        <div
-          class="markdown-editor-preview__action-menu ${this.isActionMenuOpen
-            ? "markdown-editor-preview__action-menu--open"
-            : ""}"
-          role="menu"
-        >
-          <div class="markdown-editor-preview__action-menu-list">
-            ${this.renderActionMenuItems()}
-          </div>
-        </div>
+          <button
+            slot="trigger"
+            type="button"
+            class="markdown-editor-preview__action-menu-btn"
+            title="エディタメニュー"
+            aria-label="エディタメニュー"
+          >
+            <wa-icon
+              library="my-icons"
+              name="bars-solid-full"
+              label="エディタメニュー"
+            ></wa-icon>
+          </button>
+          ${this.renderActionMenuItems()}
+        </wa-dropdown>
       </div>
     `;
   }

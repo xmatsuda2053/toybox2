@@ -40,6 +40,16 @@ import location_dot_solid_full from "./assets/icons/location-dot-solid-full.svg?
 import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
 import markdown_brands_solid_full from "./assets/icons/markdown-brands-solid-full.svg?raw";
 import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
+import number_0_solid_full from "./assets/icons/number-0-solid-full.svg?raw";
+import number_1_solid_full from "./assets/icons/number-1-solid-full.svg?raw";
+import number_2_solid_full from "./assets/icons/number-2-solid-full.svg?raw";
+import number_3_solid_full from "./assets/icons/number-3-solid-full.svg?raw";
+import number_4_solid_full from "./assets/icons/number-4-solid-full.svg?raw";
+import number_5_solid_full from "./assets/icons/number-5-solid-full.svg?raw";
+import number_6_solid_full from "./assets/icons/number-6-solid-full.svg?raw";
+import number_7_solid_full from "./assets/icons/number-7-solid-full.svg?raw";
+import number_8_solid_full from "./assets/icons/number-8-solid-full.svg?raw";
+import number_9_solid_full from "./assets/icons/number-9-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
 import phone_solid_full from "./assets/icons/phone-solid-full.svg?raw";
 import plus_solid_full from "./assets/icons/plus-solid-full.svg?raw";
@@ -49,6 +59,7 @@ import sun_solid_full from "./assets/icons/sun-solid-full.svg?raw";
 import table_columns_solid_full from "./assets/icons/table-columns-solid-full.svg?raw";
 import table_solid_full from "./assets/icons/table-solid-full.svg?raw";
 import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
+import terminal_solid_full from "./assets/icons/terminal-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
 import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation-solid-full.svg?raw";
 import user_solid_full from "./assets/icons/user-solid-full.svg?raw";
@@ -74,19 +85,19 @@ export const icons: Record<string, string> = {
   "chevron-right": chevron_right,
   "circle-check-solid-full": circle_check_solid_full,
   "circle-play-solid-full": circle_play_solid_full,
-  "circle-plus": circle_plus_solid_full,
   "circle-plus-solid-full": circle_plus_solid_full,
+  "circle-plus": circle_plus_solid_full,
   "circle-stop-solid-full": circle_stop_solid_full,
   "code-solid-full": code_solid_full,
-  compress: compress_solid_full,
   "compress-solid-full": compress_solid_full,
+  "compress": compress_solid_full,
   "copy-solid-full": copy_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
   "display-solid-full": display_solid_full,
   "ellipsis-solid-full": ellipsis_solid_full,
   "ellipsis-vertical-solid-full": ellipsis_vertical_solid_full,
-  expand: expand_solid_full,
   "expand-solid-full": expand_solid_full,
+  "expand": expand_solid_full,
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
@@ -101,6 +112,16 @@ export const icons: Record<string, string> = {
   "magnifying-glass-solid-full": magnifying_glass_solid_full,
   "markdown-brands-solid-full": markdown_brands_solid_full,
   "moon-solid-full": moon_solid_full,
+  "number-0-solid-full": number_0_solid_full,
+  "number-1-solid-full": number_1_solid_full,
+  "number-2-solid-full": number_2_solid_full,
+  "number-3-solid-full": number_3_solid_full,
+  "number-4-solid-full": number_4_solid_full,
+  "number-5-solid-full": number_5_solid_full,
+  "number-6-solid-full": number_6_solid_full,
+  "number-7-solid-full": number_7_solid_full,
+  "number-8-solid-full": number_8_solid_full,
+  "number-9-solid-full": number_9_solid_full,
   "pen-to-square-solid-full": pen_to_square_solid_full,
   "phone-solid-full": phone_solid_full,
   "plus-solid-full": plus_solid_full,
@@ -110,6 +131,7 @@ export const icons: Record<string, string> = {
   "table-columns-solid-full": table_columns_solid_full,
   "table-solid-full": table_solid_full,
   "tag-solid-full": tag_solid_full,
+  "terminal-solid-full": terminal_solid_full,
   "trash-solid-full": trash_solid_full,
   "triangle-exclamation-solid-full": triangle_exclamation_solid_full,
   "user-solid-full": user_solid_full,

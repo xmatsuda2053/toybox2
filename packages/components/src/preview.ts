@@ -6,6 +6,8 @@ import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/popover/popover.js";
 import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
+import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
+import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
 import { registerIcons } from "@shared/icons";
 import "./search-input/search-input";
 import "./datepicker-input/datepicker-input";
@@ -225,3 +227,52 @@ if (markdownNoSplitDemo) {
     appendLog("markdown-no-split-demo", "mode-change", customEvt.detail);
   });
 }
+
+// 15. Web アプリ連携デモ (削除ボタン & コマンド0〜9サブメニュー)
+const markdownActionsDemo = document.getElementById("markdown-actions-demo") as MarkdownEditorPreview | null;
+if (markdownActionsDemo) {
+  markdownActionsDemo.showDeleteButton = true;
+  markdownActionsDemo.commands = [
+    { label: "完了にして保存", eventName: "task-complete-save" },
+    { label: "課題へ昇格", eventName: "task-promote-issue" },
+    { label: "複製して新規作成", eventName: "task-duplicate" },
+    { label: "外部エクスポート", eventName: "task-export" },
+  ];
+
+  markdownActionsDemo.value = `### Web アプリケーション組み込みアクション実証
+ヘッダー右端のメニューボタン（ハンバーガーアイコン）をクリックすると、Web Awesome ドロップダウンが展開されます。
+
+1. **削除ボタン**: \`showDeleteButton = true\` により最下部に赤色（variant="danger"）で表示されます。クリックすると \`markdown-delete\` イベントが発火します。
+2. **コマンドサブメニュー**: \`commands\` プロパティで設定した4件のアクション（0〜3）が「コマンド」サブメニュー内に展開されます。固定アイコン（number-0〜3）と任意のラベルが表示され、クリック時に指定したカスタムイベントが発火します。
+`;
+
+  markdownActionsDemo.addEventListener("markdown-delete", (e: Event) => {
+    const customEvt = e as CustomEvent<{ value: string }>;
+    appendLog("markdown-actions-demo", "markdown-delete", {
+      valueLength: customEvt.detail.value.length,
+    });
+  });
+
+  const customEvents = [
+    "task-complete-save",
+    "task-promote-issue",
+    "task-duplicate",
+    "task-export",
+  ];
+  customEvents.forEach((eventName) => {
+    markdownActionsDemo.addEventListener(eventName, (e: Event) => {
+      const customEvt = e as CustomEvent<{ value: string }>;
+      appendLog("markdown-actions-demo", eventName, {
+        valueLength: customEvt.detail.value.length,
+      });
+    });
+  });
+
+  markdownActionsDemo.addEventListener("markdown-copy", (e: Event) => {
+    const customEvt = e as CustomEvent<{ value: string }>;
+    appendLog("markdown-actions-demo", "markdown-copy", {
+      valueSnippet: customEvt.detail.value.slice(0, 30),
+    });
+  });
+}
+

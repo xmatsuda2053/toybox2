@@ -172,11 +172,22 @@
             <markdown-editor-preview id="markdown-no-split-demo" height="320" titleText="Existing Meeting Note" allow-split="false"></markdown-editor-preview>
           </div>
         </section>
+
+        <!-- 15. Web App Integration (Delete Button & Commands 0-9) -->
+        <section class="preview-card preview-card--full">
+          <h2 class="preview-card__title">15. Web App Integration (Delete Button & Commands 0-9 Submenu)</h2>
+          <p class="preview-card__desc">
+            Web アプリケーション連携用の「削除ボタン」（show-delete-button）および「カスタムコマンド（0〜9）サブメニュー」（commands）の実装デモ。エディタ操作メニュー（右端アイコン）から「削除」または「コマンド」を実行すると、下部の Event Monitor にイベントが記録されます。
+          </p>
+          <div class="preview-card__component">
+            <markdown-editor-preview id="markdown-actions-demo" height="340" titleText="Task Detail with App Actions" show-delete-button></markdown-editor-preview>
+          </div>
+        </section>
       </main>
 
       <section class="preview-console">
         <div class="preview-console__header">
-          <h2 class="preview-console__title">Event Monitor (search-input, datepicker-change, markdown-change, mode-change)</h2>
+          <h2 class="preview-console__title">Event Monitor (markdown-delete, custom-commands, markdown-copy, search-input, etc.)</h2>
           <button id="clear-log" class="preview-console__clear-btn" type="button">Clear</button>
         </div>
         <div id="event-log" class="preview-console__log">コンポーネントに入力または日付を選択すると、ここにカスタムイベントが記録されます...</div>
