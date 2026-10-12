@@ -28,6 +28,7 @@ import "@/components/panes/pane-navigation/navigation-quick-access.js";
 import "@/components/panes/pane-navigation/navigation-labels.js";
 import "@/components/panes/pane-task-list/pane-task-list.js";
 import "@/components/panes/pane-task/pane-task.js";
+import "@/components/panes/pane-journal/pane-journal.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -271,7 +272,9 @@ export class AppRoot extends LitElement {
         </main>
 
         <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-        <aside class="pane-journal">journal</aside>
+        <aside class="pane-journal">
+          <pane-journal data-theme=${resolvedTheme}></pane-journal>
+        </aside>
       </div>
     `;
   }
