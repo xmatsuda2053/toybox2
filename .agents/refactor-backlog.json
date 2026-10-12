@@ -4018,5 +4018,933 @@
         "tokens": 0
       }
     }
+  },
+  {
+    "id": "REF-127",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.ts",
+    "target_symbol": "151-158",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 20
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/pane-task.ts とのコード重複 (8行, 20トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-labels.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-128",
+    "target_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.ts",
+    "target_symbol": "213-232",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 20,
+      "tokens": 32
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task-list/pane-task-list.ts とのコード重複 (20行, 32トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-navigation/navigation-quick-access.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-129",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.ts",
+    "target_symbol": "1-9",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 9,
+      "tokens": 31
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (9行, 31トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-130",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.ts",
+    "target_symbol": "2-8",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 25
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-summary.ts とのコード重複 (7行, 25トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-131",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.ts",
+    "target_symbol": "35-42",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 21
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/pane-task.ts とのコード重複 (8行, 21トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/task-create-dialog.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-132",
+    "target_file": "apps/stepnote/src/components/panes/pane-task-list/task-list-item.ts",
+    "target_symbol": "1-6",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 21
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-property.ts とのコード重複 (6行, 21トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task-list/task-list-item.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-133",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "3-10",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 23
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (8行, 23トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-134",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "17-47",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 31,
+      "tokens": 54
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (31行, 54トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-135",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "48-57",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 10,
+      "tokens": 37
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-property.ts とのコード重複 (10行, 37トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-136",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "50-60",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 36
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-summary.ts とのコード重複 (11行, 36トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-137",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "51-60",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 10,
+      "tokens": 32
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (10行, 32トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-138",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "101-122",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 22,
+      "tokens": 54
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (22行, 54トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-139",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "369-381",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 13,
+      "tokens": 34
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-property.ts とのコード重複 (13行, 34トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-140",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/pane-task.ts",
+    "target_symbol": "369-379",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 32
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-summary.ts とのコード重複 (11行, 32トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/pane-task.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-141",
+    "target_file": "apps/stepnote/src/components/panes/pane-task/task-issues.ts",
+    "target_symbol": "332-337",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 21
+    },
+    "issue_summary": "apps/stepnote/src/components/panes/pane-task/task-issues.ts とのコード重複 (6行, 21トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/pane-task/task-issues.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 11,
+      "completed_at": "2026-10-12T15:41:59+09:00",
+      "issue_number": 194,
+      "pr_number": 195,
+      "commit_hash": "03a866f",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-142",
+    "target_file": "apps/stepnote/src/db/queries/task-list.query.ts",
+    "target_symbol": "154-160",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 26
+    },
+    "issue_summary": "apps/stepnote/src/db/queries/task-list.query.ts とのコード重複 (7行, 26トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/db/queries/task-list.query.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 12,
+      "completed_at": "2026-10-12T15:57:56+09:00",
+      "issue_number": 196,
+      "pr_number": 197,
+      "commit_hash": "1da4e1c",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-143",
+    "target_file": "apps/stepnote/src/utils/task-filter.utils.ts",
+    "target_symbol": "71-81",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 85
+    },
+    "issue_summary": "apps/stepnote/src/utils/task-filter.utils.ts とのコード重複 (11行, 85トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/utils/task-filter.utils.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 12,
+      "completed_at": "2026-10-12T15:57:56+09:00",
+      "issue_number": 196,
+      "pr_number": 197,
+      "commit_hash": "1da4e1c",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1114,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-144",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "193-205",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 13,
+      "tokens": 57
+    },
+    "issue_summary": "packages/components/src/markdown/editor/markdown-editor.ts とのコード重複 (13行, 57トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-145",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "194-209",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 16,
+      "tokens": 69
+    },
+    "issue_summary": "packages/components/src/markdown/preview/markdown-preview.ts とのコード重複 (16行, 69トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-146",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "364-369",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 28
+    },
+    "issue_summary": "packages/components/src/markdown/preview/markdown-preview.ts とのコード重複 (6行, 28トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-147",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "399-405",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 22
+    },
+    "issue_summary": "packages/components/src/markdown/preview/markdown-preview.ts とのコード重複 (7行, 22トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-148",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "438-448",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 11,
+      "tokens": 22
+    },
+    "issue_summary": "packages/components/src/markdown/preview/markdown-preview.ts とのコード重複 (11行, 22トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-149",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "581-594",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 14,
+      "tokens": 36
+    },
+    "issue_summary": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts とのコード重複 (14行, 36トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-150",
+    "target_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts",
+    "target_symbol": "765-778",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 14,
+      "tokens": 32
+    },
+    "issue_summary": "packages/components/src/markdown/editor-preview/markdown-editor-preview.ts とのコード重複 (14行, 32トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-151",
+    "target_file": "packages/components/src/markdown/editor/markdown-editor.ts",
+    "target_symbol": "137-143",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 26
+    },
+    "issue_summary": "packages/components/src/markdown/preview/markdown-preview.ts とのコード重複 (7行, 26トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor/markdown-editor.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-152",
+    "target_file": "packages/components/src/markdown/editor/markdown-editor.ts",
+    "target_symbol": "383-390",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 40
+    },
+    "issue_summary": "packages/components/src/markdown/editor/markdown-editor.ts とのコード重複 (8行, 40トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor/markdown-editor.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-153",
+    "target_file": "packages/components/src/markdown/editor/markdown-syntax.utils.ts",
+    "target_symbol": "86-93",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 8,
+      "tokens": 26
+    },
+    "issue_summary": "packages/components/src/markdown/editor/markdown-syntax.utils.ts とのコード重複 (8行, 26トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor/markdown-syntax.utils.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-154",
+    "target_file": "packages/components/src/markdown/editor/markdown-syntax.utils.ts",
+    "target_symbol": "86-91",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 6,
+      "tokens": 20
+    },
+    "issue_summary": "packages/components/src/markdown/editor/markdown-syntax.utils.ts とのコード重複 (6行, 20トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor/markdown-syntax.utils.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
+  },
+  {
+    "id": "REF-155",
+    "target_file": "packages/components/src/markdown/editor/markdown-syntax.utils.ts",
+    "target_symbol": "112-118",
+    "category": "Duplication",
+    "metrics": {
+      "duplicated_lines": 7,
+      "tokens": 20
+    },
+    "issue_summary": "packages/components/src/markdown/editor/markdown-syntax.utils.ts とのコード重複 (7行, 20トークン)",
+    "approach": "共通関数またはユーティリティパッケージへのロジック抽出・共通化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "packages/components/src/markdown/editor/markdown-syntax.utils.test.ts",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 13,
+      "completed_at": "2026-10-12T16:31:00+09:00",
+      "issue_number": 198,
+      "pr_number": 199,
+      "commit_hash": "01cbab5",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1121,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   }
 ]
