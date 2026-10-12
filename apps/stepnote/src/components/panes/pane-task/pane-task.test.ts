@@ -21,12 +21,15 @@ import { PaneTask } from "./pane-task.js";
  *    - 2-4. ステータスUI（.pane-task__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library="my-icons"・slot="start" が設定されていること
  *    - 2-5. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること
  *    - 2-6. ステータス変更ボタン（.pane-task__status）に Caret 表示属性（with-caret）が設定されていること
+ *    - 2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること
+ *    - 2-11. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること
+ *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
  *
  * 3. タブ領域（wa-tab-group）の描画
  *    - 3-1. wa-tab-group 内に Summary, Issues, Property の順で3つのタブが存在すること
  *    - 3-2. summary パネル内に task-summary コンポーネントがレンダリングされること
- *    - 3-3. issues パネル内に「Issues タブは準備中です」プレースホルダーが表示されること
- *    - 3-4. property パネル内に「Property タブは準備中です」プレースホルダーが表示されること
+ *    - 3-3. issues パネル内に task-issues コンポーネントがレンダリングされること
+ *    - 3-4. property パネル内に task-property コンポーネントがレンダリングされること
  *    - 3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
  *
@@ -56,6 +59,7 @@ describe("PaneTask Component", () => {
     hasTask: boolean;
     canCompleteTask: ReturnType<typeof vi.fn>;
     updateStatus: ReturnType<typeof vi.fn>;
+    deleteTask: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
   let unsubscribeMock: ReturnType<typeof vi.fn>;
@@ -80,6 +84,7 @@ describe("PaneTask Component", () => {
       hasTask: true,
       canCompleteTask: vi.fn().mockResolvedValue(true),
       updateStatus: vi.fn().mockResolvedValue(undefined),
+      deleteTask: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(unsubscribeMock),
     };
 
@@ -208,6 +213,42 @@ describe("PaneTask Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
     });
+
+    it("2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("wa-divider");
+      const doneIdx = htmlStr.search(/value=["']?9["']?/);
+      const dividerIdx = htmlStr.indexOf("<wa-divider");
+      expect(doneIdx).toBeGreaterThan(-1);
+      expect(dividerIdx).toBeGreaterThan(doneIdx);
+    });
+
+    it("2-11. wa-divider の後ろに削除項目（wa-dropdown-item value=\"delete\" variant=\"danger\"）がレンダリングされ、trash-solid-full アイコンが表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*value=["']delete["'][^>]*variant=["']danger["']/);
+      expect(htmlStr).toContain("trash-solid-full");
+      expect(htmlStr).toContain("削除");
+    });
+
+    it("2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること", async () => {
+      // 削除ダイアログを開く
+      element.handleOpenDeleteDialog();
+      expect(element.isDeleteDialogOpen).toBe(true);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("タスクの削除確認");
+      expect(htmlStr).toContain("このタスクを削除してもよろしいですか？");
+
+      // キャンセル
+      element.handleCloseDeleteDialog();
+      expect(element.isDeleteDialogOpen).toBe(false);
+      expect(mockTaskController.deleteTask).not.toHaveBeenCalled();
+
+      // 削除確定
+      element.handleOpenDeleteDialog();
+      await element.handleConfirmDelete();
+      expect(mockTaskController.deleteTask).toHaveBeenCalledTimes(1);
+      expect(element.isDeleteDialogOpen).toBe(false);
+    });
   });
 
   describe("3. タブ領域（wa-tab-group）の描画", () => {
@@ -232,9 +273,9 @@ describe("PaneTask Component", () => {
       expect(htmlStr).toContain("task-issues");
     });
 
-    it("3-4. property パネル内に「Property タブは準備中です」プレースホルダーが表示されること", () => {
+    it("3-4. property パネル内に task-property コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("Property タブは準備中です");
+      expect(htmlStr).toContain("task-property");
     });
 
     it("3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること", () => {
