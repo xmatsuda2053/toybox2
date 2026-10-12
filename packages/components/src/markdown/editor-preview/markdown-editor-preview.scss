@@ -119,6 +119,18 @@
   flex: 1;
 }
 
+.markdown-editor-preview__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--stepnote-text-primary, var(--wa-color-text-normal, inherit));
+  padding: 0 4px;
+}
+
 /* 書式ツールバー */
 .markdown-editor-preview__toolbar {
   display: flex;
@@ -988,5 +1000,9 @@
       color: #ffffff;
       border-color: var(--wa-color-brand-70, #218bff);
     }
+  }
+
+  .markdown-editor-preview__title {
+    color: var(--wa-color-text-normal, #e6edf3);
   }
 }

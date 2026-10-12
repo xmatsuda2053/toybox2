@@ -268,6 +268,7 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
       <div class="task-summary__field task-summary__field--description">
         <markdown-editor-preview
           class="task-summary__description"
+          .titleText=${"概要"}
           .value=${task?.description ?? ""}
           .mode=${this.descriptionMode}
           .themeMode=${themeMode}

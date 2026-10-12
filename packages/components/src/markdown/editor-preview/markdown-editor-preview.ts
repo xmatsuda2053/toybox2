@@ -185,8 +185,8 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /** タイトル表示文字列 */
-  @property({ type: String })
-  public titleText = "Markdown";
+  @property({ type: String, attribute: "title-text" })
+  public titleText = "";
 
   /** プラグイン・サニタイズ設定オプション (DI) */
   @property({ type: Object })
@@ -1239,13 +1239,31 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * プレビューモード時のヘッダータイトルを描画する。
+   */
+  private renderTitle() {
+    if (!this.titleText || !this.titleText.trim()) {
+      return nothing;
+    }
+
+    return html`
+      <span
+        class="markdown-editor-preview__title"
+        title="${this.titleText}"
+      >
+        ${this.titleText}
+      </span>
+    `;
+  }
+
+  /**
    * ツールバーヘッダーを描画する。
    */
   private renderHeader() {
     return html`
       <header class="markdown-editor-preview__header">
         <div class="markdown-editor-preview__header-left">
-          ${this.mode !== "preview" ? this.renderToolbar() : ""}
+          ${this.mode !== "preview" ? this.renderToolbar() : this.renderTitle()}
         </div>
         <div class="markdown-editor-preview__header-right">
           ${this.renderAutoHeightButton()} ${this.renderModeSwitchTabs()}
