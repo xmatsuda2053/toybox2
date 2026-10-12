@@ -100,12 +100,12 @@
  * 23. エディタ操作メニューの削除ボタン仕様
  *   - showDeleteButton の初期値が false であること
  *   - showDeleteButton が false の場合、削除項目および wa-divider がレンダリングされないこと
- *   - showDeleteButton が true の場合、構文ヘルプの後に wa-divider と削除項目（variant="danger", value="delete", trash-can-solid-full, "削除"）がレンダリングされること
+ *   - showDeleteButton が true の場合、構文ヘルプの後に wa-divider と削除項目（variant="danger", value="delete", trash-solid-full, "削除"）がレンダリングされること
  *   - handleActionMenuSelect() において value='delete' で markdown-delete イベント（detail: { value: string }）が発火すること
  * 24. エディタ操作メニューのコマンド0〜9サブメニュー仕様
  *   - commands の初期値が空配列であること
  *   - commands が未指定（空配列）の場合、親項目「コマンド」およびそのサブメニューがレンダリングされないこと
- *   - commands が設定された場合、親項目「コマンド」とサブメニュー項目がレンダリングされ、アイコン number-0〜9 が設定されること
+ *   - commands が設定された場合、親項目「コマンド」（アイコン: terminal-solid-full）とサブメニュー項目がレンダリングされ、アイコン number-0〜9 が設定されること
  *   - commands に 10 件を超える要素が渡された場合、先頭 10 件（コマンド0〜9）のみがレンダリングされること
  *   - 構文ヘルプの後に wa-divider が配置され、その後にコマンド項目が配置されること
  *   - handleActionMenuSelect() において value='command:n' で対応する eventName のカスタムイベント（detail: { value: string }）が発火すること
@@ -1112,7 +1112,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).not.toContain(
         '<wa-dropdown-item variant="danger" value="delete"',
       );
-      expect(htmlStr).not.toContain("trash-can-solid-full");
+      expect(htmlStr).not.toContain("trash-solid-full");
       expect(htmlStr).not.toContain("<wa-divider");
     });
 
@@ -1131,7 +1131,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(dividerIdx).toBeLessThan(deleteIdx);
 
       expect(htmlStr).toContain('variant="danger"');
-      expect(htmlStr).toContain("trash-can-solid-full");
+      expect(htmlStr).toContain("trash-solid-full");
       expect(htmlStr).toContain("削除");
     });
 
@@ -1176,6 +1176,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       const htmlStr = flattenTemplate(element.render());
 
       expect(htmlStr).toContain("コマンド");
+      expect(htmlStr).toContain("terminal-solid-full");
       expect(htmlStr).toContain('slot="submenu"');
       expect(htmlStr).toContain('value="command:0"');
       expect(htmlStr).toContain("number-0-solid-full");

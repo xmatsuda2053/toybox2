@@ -59,6 +59,7 @@ import sun_solid_full from "./assets/icons/sun-solid-full.svg?raw";
 import table_columns_solid_full from "./assets/icons/table-columns-solid-full.svg?raw";
 import table_solid_full from "./assets/icons/table-solid-full.svg?raw";
 import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
+import terminal_solid_full from "./assets/icons/terminal-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
 import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation-solid-full.svg?raw";
 import user_solid_full from "./assets/icons/user-solid-full.svg?raw";
@@ -130,6 +131,7 @@ export const icons: Record<string, string> = {
   "table-columns-solid-full": table_columns_solid_full,
   "table-solid-full": table_solid_full,
   "tag-solid-full": tag_solid_full,
+  "terminal-solid-full": terminal_solid_full,
   "trash-solid-full": trash_solid_full,
   "triangle-exclamation-solid-full": triangle_exclamation_solid_full,
   "user-solid-full": user_solid_full,

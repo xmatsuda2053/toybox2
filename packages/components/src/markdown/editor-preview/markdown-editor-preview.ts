@@ -1127,6 +1127,12 @@ export class MarkdownEditorPreview extends LitElement {
 
     return html`
       <wa-dropdown-item>
+        <wa-icon
+          slot="icon"
+          library="my-icons"
+          name="terminal-solid-full"
+          class="markdown-editor-preview__action-menu-item-icon"
+        ></wa-icon>
         コマンド
         ${activeCommands.map(
           (cmd, index) => html`
@@ -1191,7 +1197,7 @@ export class MarkdownEditorPreview extends LitElement {
               <wa-icon
                 slot="icon"
                 library="my-icons"
-                name="trash-can-solid-full"
+                name="trash-solid-full"
                 class="markdown-editor-preview__action-menu-item-icon"
               ></wa-icon>
               削除
