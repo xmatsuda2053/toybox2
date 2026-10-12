@@ -14,10 +14,19 @@
  * 4. ホスト要素のテーマ属性同期（syncHostTheme）
  *   - ダークモード判定時に data-theme="dark" と wa-dark クラスを設定し wa-light を除去すること
  *   - ライトモード判定時に data-theme="light" と wa-light クラスを設定し wa-dark を除去すること
+ * 5. テーマモードの解決（resolveThemeMode）
+ *   - "dark" の場合は true を返すこと
+ *   - "light" の場合は false を返すこと
+ *   - "auto" の場合は祖先要素・環境判定（detectIsDarkMode）の結果を返すこと
  */
 
 import { describe, it, expect } from "vitest";
-import { detectIsDarkMode, getParentOrHost, syncHostTheme } from "./theme-sync.js";
+import {
+  detectIsDarkMode,
+  getParentOrHost,
+  syncHostTheme,
+  resolveThemeMode,
+} from "./theme-sync.js";
 
 function createMockElement(
   attrs: Record<string, string> = {},
@@ -152,6 +161,32 @@ describe("detectIsDarkMode (theme-sync)", () => {
       expect(el.getAttribute("data-theme")).toBe("light");
       expect(el.classList.contains("wa-light")).toBe(true);
       expect(el.classList.contains("wa-dark")).toBe(false);
+    });
+  });
+
+  describe("resolveThemeMode (テーマモードの解決)", () => {
+    it("'dark' の場合は常に true を返すこと", () => {
+      expect(resolveThemeMode("dark")).toBe(true);
+    });
+
+    it("'light' の場合は常に false を返すこと", () => {
+      expect(resolveThemeMode("light")).toBe(false);
+    });
+
+    it("'auto' かつ親要素が 'dark' の場合は true を返すこと", () => {
+      const parent = createMockElement({ "data-theme": "dark" });
+      const child = createMockElement({});
+      child.parentElement = parent;
+
+      expect(resolveThemeMode("auto", child)).toBe(true);
+    });
+
+    it("'auto' かつ親要素が 'light' の場合は false を返すこと", () => {
+      const parent = createMockElement({ "data-theme": "light" });
+      const child = createMockElement({});
+      child.parentElement = parent;
+
+      expect(resolveThemeMode("auto", child)).toBe(false);
     });
   });
 });

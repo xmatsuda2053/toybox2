@@ -83,23 +83,44 @@ export function getLinePrefixForAction(
  * @param isPrecededByNewline 直前の文字が改行かどうか（table のみ使用）
  * @returns 挿入テキストとカーソル位置
  */
+/**
+ * 任意のデリミタ記号で選択文字列または既定テキストを囲む結果を計算する純粋関数
+ *
+ * @param selectedText 選択中のテキスト文字列
+ * @param from 選択開始オフセット
+ * @param to 選択終了オフセット
+ * @param delimiter 囲みデリミタ記号（例: "**", "*", "`" 等）
+ * @param defaultText テキスト未選択時に挿入する既定文字列（例: "太字", "斜体" 等）
+ * @returns 挿入テキストとカーソル位置
+ */
+export function formatSurroundingDelimiter(
+  selectedText: string,
+  from: number,
+  to: number,
+  delimiter: string,
+  defaultText: string,
+): SurroundingSyntaxResult {
+  const dLen = delimiter.length;
+  if (selectedText) {
+    return {
+      insertText: `${delimiter}${selectedText}${delimiter}`,
+      anchor: from + dLen,
+      head: to + dLen,
+    };
+  }
+  return {
+    insertText: `${delimiter}${defaultText}${delimiter}`,
+    anchor: from + dLen,
+    head: from + dLen + defaultText.length,
+  };
+}
+
 function formatBold(
   selectedText: string,
   from: number,
   to: number,
 ): SurroundingSyntaxResult {
-  if (selectedText) {
-    return {
-      insertText: `**${selectedText}**`,
-      anchor: from + 2,
-      head: to + 2,
-    };
-  }
-  return {
-    insertText: "**太字**",
-    anchor: from + 2,
-    head: from + 4,
-  };
+  return formatSurroundingDelimiter(selectedText, from, to, "**", "太字");
 }
 
 function formatItalic(
@@ -107,18 +128,7 @@ function formatItalic(
   from: number,
   to: number,
 ): SurroundingSyntaxResult {
-  if (selectedText) {
-    return {
-      insertText: `*${selectedText}*`,
-      anchor: from + 1,
-      head: to + 1,
-    };
-  }
-  return {
-    insertText: "*斜体*",
-    anchor: from + 1,
-    head: from + 3,
-  };
+  return formatSurroundingDelimiter(selectedText, from, to, "*", "斜体");
 }
 
 function formatCode(
@@ -133,18 +143,7 @@ function formatCode(
       head: to + 4,
     };
   }
-  if (selectedText) {
-    return {
-      insertText: `\`${selectedText}\``,
-      anchor: from + 1,
-      head: to + 1,
-    };
-  }
-  return {
-    insertText: "`コード`",
-    anchor: from + 1,
-    head: from + 4,
-  };
+  return formatSurroundingDelimiter(selectedText, from, to, "`", "コード");
 }
 
 function formatLink(

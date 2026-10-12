@@ -150,3 +150,37 @@ export function syncHostThemeVariants(
     element.setAttribute("light-theme", lightTheme);
   }
 }
+
+/**
+ * テーマモード設定と実行環境からダークモード有効フラグを解決する純粋関数
+ *
+ * @param themeMode テーマモード ("light" | "dark" | "auto")
+ * @param element 判定対象要素（auto 判定時に使用）
+ * @returns ダークモードの場合は true
+ */
+export function resolveThemeMode(
+  themeMode: "light" | "dark" | "auto",
+  element?: HTMLElement,
+): boolean {
+  if (themeMode === "dark") return true;
+  if (themeMode === "light") return false;
+  return detectIsDarkMode(element);
+}
+
+/**
+ * ホスト要素にテーマ（ダーク/ライト）およびテーマバリアントを同期する
+ *
+ * @param element 対象ホスト要素
+ * @param isDark ダークモード有効フラグ
+ * @param darkTheme ダークテーマバリアント
+ * @param lightTheme ライトテーマバリアント
+ */
+export function applyHostThemeSync(
+  element: HTMLElement,
+  isDark: boolean,
+  darkTheme: string = "contrast",
+  lightTheme: string = "default",
+): void {
+  syncHostTheme(element, isDark);
+  syncHostThemeVariants(element, darkTheme, lightTheme);
+}
