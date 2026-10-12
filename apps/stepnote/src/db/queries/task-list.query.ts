@@ -143,6 +143,20 @@ export class TaskListQuery {
   }
 
   /**
+   * 指定した会計年度のタスク一覧を取得する。
+   *
+   * @private
+   * @param {number} fiscalYear 対象会計年度
+   * @return {Promise<TaskRecord[]>} タスク一覧
+   * @memberof TaskListQuery
+   */
+  private async getTasksByFiscalYear(
+    fiscalYear: number,
+  ): Promise<TaskRecord[]> {
+    return this.db.tasks.where("fiscalYear").equals(fiscalYear).toArray();
+  }
+
+  /**
    * 指定した会計年度に属するタスクを対象に、各 QuickAccess フィルター条件の該当件数を集計して取得する。
    *
    * @param {number} fiscalYear 対象会計年度
@@ -152,11 +166,7 @@ export class TaskListQuery {
   public async getQuickAccessTaskCounts(
     fiscalYear: number,
   ): Promise<QuickAccessTaskCounts> {
-    const tasks = await this.db.tasks
-      .where("fiscalYear")
-      .equals(fiscalYear)
-      .toArray();
-
+    const tasks = await this.getTasksByFiscalYear(fiscalYear);
     return calculateQuickAccessTaskCounts(tasks);
   }
 
@@ -183,10 +193,7 @@ export class TaskListQuery {
   public async getTaskIssueCounts(
     fiscalYear: number,
   ): Promise<Map<number, TaskIssueCount>> {
-    const tasks = await this.db.tasks
-      .where("fiscalYear")
-      .equals(fiscalYear)
-      .toArray();
+    const tasks = await this.getTasksByFiscalYear(fiscalYear);
 
     const countsMap = new Map<number, TaskIssueCount>();
     for (const task of tasks) {

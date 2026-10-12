@@ -61,6 +61,29 @@ export function applyQuickAccessFilter(
 }
 
 /**
+ * 期限日（Date インスタンスまたは ISO 文字列）をエポックミリ秒に変換する。
+ *
+ * @param {Date | string} dueDate 期限日
+ * @return {number} エポックミリ秒
+ */
+export function toDueDateTimestamp(dueDate: Date | string): number {
+  return dueDate instanceof Date
+    ? dueDate.getTime()
+    : new Date(dueDate).getTime();
+}
+
+/**
+ * 2つの期限日を比較し、昇順ソート用の差分値を返す。
+ *
+ * @param {Date | string} a 期限日A
+ * @param {Date | string} b 期限日B
+ * @return {number} 差分ミリ秒（a < b の場合は負数、a > b の場合は正数、同一は 0）
+ */
+export function compareDueDates(a: Date | string, b: Date | string): number {
+  return toDueDateTimestamp(a) - toDueDateTimestamp(b);
+}
+
+/**
  * タスク一覧を期限日昇順、タスク名五十音順でソートする。
  * 元の配列を変更せず、新しいソート済み配列を返す。
  *
@@ -69,15 +92,7 @@ export function applyQuickAccessFilter(
  */
 export function sortTasksByDueDateAndName(tasks: TaskRecord[]): TaskRecord[] {
   return [...tasks].sort((a, b) => {
-    const aTime =
-      a.dueDate instanceof Date
-        ? a.dueDate.getTime()
-        : new Date(a.dueDate).getTime();
-    const bTime =
-      b.dueDate instanceof Date
-        ? b.dueDate.getTime()
-        : new Date(b.dueDate).getTime();
-    const timeDiff = aTime - bTime;
+    const timeDiff = compareDueDates(a.dueDate, b.dueDate);
     return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
   });
 }
@@ -93,15 +108,8 @@ export function sortIssuesByDueDateAndTitle(
   issues: readonly IssueRecord[],
 ): IssueRecord[] {
   return [...issues].sort((a, b) => {
-    const aTime =
-      a.dueDate instanceof Date
-        ? a.dueDate.getTime()
-        : new Date(a.dueDate).getTime();
-    const bTime =
-      b.dueDate instanceof Date
-        ? b.dueDate.getTime()
-        : new Date(b.dueDate).getTime();
-    const timeDiff = aTime - bTime;
+    const timeDiff = compareDueDates(a.dueDate, b.dueDate);
     return timeDiff !== 0 ? timeDiff : a.title.localeCompare(b.title, "ja");
   });
 }
+

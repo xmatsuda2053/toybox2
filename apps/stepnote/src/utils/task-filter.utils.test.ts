@@ -7,6 +7,8 @@ import {
   applyQuickAccessFilter,
   sortTasksByDueDateAndName,
   sortIssuesByDueDateAndTitle,
+  toDueDateTimestamp,
+  compareDueDates,
 } from "./task-filter.utils";
 
 /**
@@ -263,4 +265,37 @@ describe("task-filter.utils", () => {
       expect(sorted.map((i) => i.id)).toEqual([2, 3, 1]);
     });
   });
+
+  describe("toDueDateTimestamp", () => {
+    it("Date インスタンスから正しいエポックミリ秒を取得できること", () => {
+      const date = new Date("2026-10-15T00:00:00.000Z");
+      expect(toDueDateTimestamp(date)).toBe(date.getTime());
+    });
+
+    it("ISO文字列から正しいエポックミリ秒を取得できること", () => {
+      const isoStr = "2026-10-15T00:00:00.000Z";
+      expect(toDueDateTimestamp(isoStr)).toBe(new Date(isoStr).getTime());
+    });
+  });
+
+  describe("compareDueDates", () => {
+    it("期限日Aが期限日Bより過去の場合、負の数値を返すこと", () => {
+      const past = new Date("2026-10-10T00:00:00.000Z");
+      const future = new Date("2026-10-20T00:00:00.000Z");
+      expect(compareDueDates(past, future)).toBeLessThan(0);
+    });
+
+    it("期限日Aが期限日Bより未来の場合、正の数値を返すこと", () => {
+      const past = new Date("2026-10-10T00:00:00.000Z");
+      const future = new Date("2026-10-20T00:00:00.000Z");
+      expect(compareDueDates(future, past)).toBeGreaterThan(0);
+    });
+
+    it("期限日Aと期限日Bが同一の場合、0 を返すこと", () => {
+      const dateA = new Date("2026-10-15T00:00:00.000Z");
+      const dateB = "2026-10-15T00:00:00.000Z";
+      expect(compareDueDates(dateA, dateB)).toBe(0);
+    });
+  });
 });
+
