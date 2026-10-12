@@ -187,6 +187,7 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
       expect(htmlStr).toContain("pane-task");
       expect(htmlStr).toContain("<pane-task");
       expect(htmlStr).toContain("pane-journal");
+      expect(htmlStr).toContain("<pane-journal");
 
       // Navigation 内部の上下分割領域の存在確認
       expect(htmlStr).toContain("navigation-quick-access");
