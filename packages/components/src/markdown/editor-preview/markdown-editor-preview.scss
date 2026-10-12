@@ -584,82 +584,19 @@
   }
 }
 
-.markdown-editor-preview__action-menu {
-  display: none;
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 1000;
-  min-width: 150px;
-  background-color: var(--stepnote-bg-surface, #ffffff);
-  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  flex-direction: column;
-
-  &--open {
-    display: flex;
-  }
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__action-menu,
-:host(.wa-dark) .markdown-editor-preview__action-menu {
-  background-color: var(--stepnote-bg-surface, #1e2228);
-  border-color: var(--stepnote-border-subtle, #30363d);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-.markdown-editor-preview__action-menu-list {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 0;
-}
-
-.markdown-editor-preview__action-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background-color: var(--stepnote-bg-tertiary, #f1f5f9);
-  }
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__action-menu-item,
-:host(.wa-dark) .markdown-editor-preview__action-menu-item {
-  &:hover {
-    background-color: var(--stepnote-bg-tertiary, #2d333b);
-  }
+.markdown-editor-preview__action-menu-dropdown {
+  display: inline-flex;
 }
 
 .markdown-editor-preview__action-menu-item-icon {
   font-size: 14px;
-  color: var(--stepnote-text-secondary, #64748b);
+  color: var(--stepnote-text-secondary);
   flex-shrink: 0;
 }
 
 :host([data-theme="dark"]) .markdown-editor-preview__action-menu-item-icon,
 :host(.wa-dark) .markdown-editor-preview__action-menu-item-icon {
-  color: var(--stepnote-text-secondary, #8b949e);
-}
-
-.markdown-editor-preview__action-menu-item-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--stepnote-text-primary, #0f172a);
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__action-menu-item-label,
-:host(.wa-dark) .markdown-editor-preview__action-menu-item-label {
-  color: var(--stepnote-text-primary, #e6edf3);
+  color: var(--stepnote-text-secondary);
 }
 
 /* 構文ヘルプダイアログモーダル */

@@ -20,6 +20,9 @@ import {
 } from "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
 import { formatMarkdown } from "../formatter/markdown-formatter.js";
+import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
+import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
+import "@awesome.me/webawesome/dist/components/divider/divider.js";
 
 export type MarkdownDisplayMode = "split" | "edit" | "preview";
 
@@ -694,7 +697,33 @@ export class MarkdownEditorPreview extends LitElement {
    * @param open 指定した開閉状態（省略時はトグル）
    */
   public toggleActionMenu(open?: boolean): void {
-    this.isActionMenuOpen = open ?? !this.isActionMenuOpen;
+    const dropdown = this.renderRoot?.querySelector<
+      HTMLElement & { open: boolean }
+    >(".markdown-editor-preview__action-menu-dropdown");
+    if (dropdown) {
+      dropdown.open = open ?? !dropdown.open;
+      this.isActionMenuOpen = dropdown.open;
+    } else {
+      this.isActionMenuOpen = open ?? !this.isActionMenuOpen;
+    }
+  }
+
+  /**
+   * エディタ操作メニュー内の項目選択イベントをハンドリングする。
+   *
+   * @param event wa-select カスタムイベント
+   */
+  public async handleActionMenuSelect(
+    event: CustomEvent<{ item: { value: string } }>,
+  ): Promise<void> {
+    const value = event.detail.item.value;
+    if (value === "copy") {
+      await this.handleMenuCopyAction();
+    } else if (value === "format") {
+      await this.handleMenuFormatAction();
+    } else if (value === "help") {
+      this.handleMenuHelpAction();
+    }
   }
 
   /**
@@ -1050,51 +1079,33 @@ export class MarkdownEditorPreview extends LitElement {
    */
   private renderActionMenuItems() {
     return html`
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuCopyAction()}
-      >
+      <wa-dropdown-item value="copy">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="copy-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label">
-          コピー
-        </span>
-      </button>
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuFormatAction()}
-      >
+        コピー
+      </wa-dropdown-item>
+      <wa-dropdown-item value="format">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="wand-magic-sparkles-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label">
-          整形
-        </span>
-      </button>
-      <button
-        type="button"
-        class="markdown-editor-preview__action-menu-item"
-        role="menuitem"
-        @click=${() => this.handleMenuHelpAction()}
-      >
+        整形
+      </wa-dropdown-item>
+      <wa-dropdown-item value="help">
         <wa-icon
+          slot="icon"
           library="my-icons"
           name="question-solid-full"
           class="markdown-editor-preview__action-menu-item-icon"
         ></wa-icon>
-        <span class="markdown-editor-preview__action-menu-item-label"
-          >構文ヘルプ</span
-        >
-      </button>
+        構文ヘルプ
+      </wa-dropdown-item>
     `;
   }
 
@@ -1104,37 +1115,27 @@ export class MarkdownEditorPreview extends LitElement {
   private renderActionMenu() {
     return html`
       <div class="markdown-editor-preview__action-menu-container">
-        <button
-          type="button"
-          class="markdown-editor-preview__action-menu-btn ${this
-            .isActionMenuOpen
-            ? "markdown-editor-preview__action-menu-btn--active"
-            : ""}"
-          title="エディタメニュー"
-          aria-label="エディタメニュー"
-          aria-expanded=${this.isActionMenuOpen ? "true" : "false"}
-          @click=${(e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleActionMenu();
-          }}
+        <wa-dropdown
+          placement="bottom-end"
+          class="markdown-editor-preview__action-menu-dropdown"
+          @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
+            this.handleActionMenuSelect(e)}
         >
-          <wa-icon
-            library="my-icons"
-            name="bars-solid-full"
-            label="エディタメニュー"
-          ></wa-icon>
-        </button>
-        <div
-          class="markdown-editor-preview__action-menu ${this.isActionMenuOpen
-            ? "markdown-editor-preview__action-menu--open"
-            : ""}"
-          role="menu"
-        >
-          <div class="markdown-editor-preview__action-menu-list">
-            ${this.renderActionMenuItems()}
-          </div>
-        </div>
+          <button
+            slot="trigger"
+            type="button"
+            class="markdown-editor-preview__action-menu-btn"
+            title="エディタメニュー"
+            aria-label="エディタメニュー"
+          >
+            <wa-icon
+              library="my-icons"
+              name="bars-solid-full"
+              label="エディタメニュー"
+            ></wa-icon>
+          </button>
+          ${this.renderActionMenuItems()}
+        </wa-dropdown>
       </div>
     `;
   }

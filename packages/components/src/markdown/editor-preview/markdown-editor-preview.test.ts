@@ -82,16 +82,15 @@
  *   - SCSS において .markdown-editor-preview__toolbar-btn の min-width / min-height が 24px、アイコンフォントサイズが 15px にコンパクト化されていること
  *   - SCSS において .markdown-editor-preview__mode-btn の min-height が 24px にコンパクト化されていること
  *   - SCSS においてコンテナクエリ閾値が @container editor-preview (max-width: 430px) に最適化されていること
- * 21. ヘッダー右端のエディタ操作メニューおよびドロップダウン仕様
- *   - ヘッダー右端にエディタ操作メニューボタン（.markdown-editor-preview__action-menu-btn）がレンダリングされること
- *   - メニューボタンのアイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
- *   - ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン」の順に配置されていること
- *   - 初期状態でアクションメニューが閉じていること
- *   - toggleActionMenu() によりアクションメニューの開閉がトグルされること
- *   - アクションメニュー内に「構文ヘルプ」項目（question-solid-full）が含まれ、選択時にヘルプモーダルが開いてメニューが閉じること
- *   - アクションメニュー内に「コピー」項目（copy-solid-full）が含まれ、選択時にクリップボードへコピーされてメニューが閉じること
- *   - アクションメニュー内に「整形」項目（wand-magic-sparkles等）が含まれ、選択時にフォーマッターが実行されてメニューが閉じること
- *   - Escape キー押下や外部クリックによりアクションメニューが閉じること
+ * 21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様
+ *   - ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること
+ *   - エディタ操作メニューが wa-dropdown（placement='bottom-end'）としてレンダリングされること
+ *   - メニューボタンが slot='trigger' として配置され、アイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
+ *   - wa-dropdown 内に「コピー（value='copy'）」「整形（value='format'）」「構文ヘルプ（value='help'）」の各 wa-dropdown-item が含まれること
+ *   - wa-select イベント（または handleActionMenuSelect）により各アクション（コピー、整形、構文ヘルプ）が実行されること
+ *   - メニュー内の「コピー」実行時、value がクリップボードにコピーされ markdown-copy イベントが発火すること
+ *   - メニュー内の「整形」実行時、フォーマッターが実行されて value が更新されること
+ *   - メニュー内の「構文ヘルプ」実行時、toggleHelp(true) が呼び出されること
  * 22. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
  *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
  *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
@@ -937,8 +936,8 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-  describe("21. ヘッダー右端のエディタ操作メニューおよびドロップダウン仕様", () => {
-    it("ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン」の順に配置されていること", () => {
+  describe("21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様", () => {
+    it("ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること", () => {
       element.allowAutoHeight = true;
       const htmlStr = flattenTemplate(element.render());
       const autoHeightIdx = htmlStr.indexOf(
@@ -958,65 +957,36 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(modeGroupIdx).toBeLessThan(actionMenuIdx);
     });
 
-    it("メニューボタンのアイコンが bars-solid-full であり、title と aria-label が設定されていること", () => {
+    it("エディタ操作メニューが wa-dropdown（placement='bottom-end'）としてレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("<wa-dropdown");
+      expect(htmlStr).toContain('placement="bottom-end"');
+    });
+
+    it("メニューボタンが slot='trigger' として配置され、アイコンが bars-solid-full であり、title と aria-label が設定されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('slot="trigger"');
       expect(htmlStr).toContain("markdown-editor-preview__action-menu-btn");
       expect(htmlStr).toContain("bars-solid-full");
       expect(htmlStr).toMatch(/title=["']エディタメニュー["']/);
       expect(htmlStr).toMatch(/aria-label=["']エディタメニュー["']/);
     });
 
-    it("初期状態で isActionMenuOpen が false であり、ドロップダウンが開いていないこと", () => {
-      expect((element as any).isActionMenuOpen).toBe(false);
+    it("wa-dropdown 内に「コピー」「整形」「構文ヘルプ」の各 wa-dropdown-item がレンダリングされていること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain(
-        "markdown-editor-preview__action-menu--open",
-      );
+      expect(htmlStr).toContain('<wa-dropdown-item value="copy"');
+      expect(htmlStr).toContain('<wa-dropdown-item value="format"');
+      expect(htmlStr).toContain('<wa-dropdown-item value="help"');
+      expect(htmlStr).toContain("copy-solid-full");
+      expect(htmlStr).toContain("wand-magic-sparkles-solid-full");
+      expect(htmlStr).toContain("question-solid-full");
+      expect(htmlStr).toContain("コピー");
+      expect(htmlStr).toContain("整形");
+      expect(htmlStr).toContain("構文ヘルプ");
     });
 
-    it("toggleActionMenu() により isActionMenuOpen がトグルされること", () => {
-      (element as any).toggleActionMenu(true);
-      expect((element as any).isActionMenuOpen).toBe(true);
-      let htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("markdown-editor-preview__action-menu--open");
-
-      (element as any).toggleActionMenu(false);
-      expect((element as any).isActionMenuOpen).toBe(false);
-      htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain(
-        "markdown-editor-preview__action-menu--open",
-      );
-    });
-
-    it("メニュー内の構文ヘルプ項目をクリックすると、toggleHelp(true) が呼び出されメニューが閉じること", () => {
-      (element as any).toggleActionMenu(true);
-      let helpOpened = false;
-      element.toggleHelp = (open?: boolean) => {
-        helpOpened = open ?? true;
-      };
-
-      (element as any).handleMenuHelpAction();
-      expect(helpOpened).toBe(true);
-      expect((element as any).isActionMenuOpen).toBe(false);
-    });
-
-    it("Escape キー押下により開いているアクションメニューが閉じること", () => {
-      (element as any).toggleActionMenu(true);
-      expect((element as any).isActionMenuOpen).toBe(true);
-
-      (element as any).handleGlobalKeydown({ key: "Escape" } as any);
-
-      expect((element as any).isActionMenuOpen).toBe(false);
-    });
-
-    interface TestableActionMenuPreview extends MarkdownEditorPreview {
-      isActionMenuOpen: boolean;
-    }
-
-    it("メニュー内の「コピー」ボタンをクリックすると、value がクリップボードにコピーされメニューが閉じること", async () => {
+    it("handleActionMenuSelect() において value='copy' でコピー処理が実行され markdown-copy イベントが発火すること", async () => {
       element.value = "# コピー対象テキスト";
-      element.toggleActionMenu(true);
-
       let copiedText = "";
       const originalClipboard = globalThis.navigator?.clipboard;
       Object.assign(globalThis.navigator || {}, {
@@ -1036,13 +1006,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
           );
         });
 
-        await element.handleMenuCopyAction();
+        const customEvt = new CustomEvent("wa-select", {
+          detail: { item: { value: "copy" } },
+        });
+        await element.handleActionMenuSelect(customEvt);
 
         expect(copiedText).toBe("# コピー対象テキスト");
         expect(copyEventFired).toBe(true);
-        expect(
-          (element as unknown as TestableActionMenuPreview).isActionMenuOpen,
-        ).toBe(false);
       } finally {
         if (originalClipboard) {
           Object.assign(globalThis.navigator, { clipboard: originalClipboard });
@@ -1050,16 +1020,28 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       }
     });
 
-    it("メニュー内の「整形」ボタンをクリックすると、フォーマッターが実行されて value が更新されメニューが閉じること", async () => {
+    it("handleActionMenuSelect() において value='format' でフォーマッターが実行されて value が更新されること", async () => {
       element.value = "#  未整形タイトル \n\n\n\n本文段落  ";
-      element.toggleActionMenu(true);
-
-      await element.handleMenuFormatAction();
+      const customEvt = new CustomEvent("wa-select", {
+        detail: { item: { value: "format" } },
+      });
+      await element.handleActionMenuSelect(customEvt);
 
       expect(element.value.trim()).toBe("# 未整形タイトル\n\n本文段落");
-      expect(
-        (element as unknown as TestableActionMenuPreview).isActionMenuOpen,
-      ).toBe(false);
+    });
+
+    it("handleActionMenuSelect() において value='help' で toggleHelp(true) が呼び出されること", () => {
+      let helpOpened = false;
+      element.toggleHelp = (open?: boolean) => {
+        helpOpened = open ?? true;
+      };
+
+      const customEvt = new CustomEvent("wa-select", {
+        detail: { item: { value: "help" } },
+      });
+      element.handleActionMenuSelect(customEvt);
+
+      expect(helpOpened).toBe(true);
     });
   });
 
