@@ -92,3 +92,13 @@ export type MarkdownDarkThemeVariant = "contrast" | "soft";
  */
 export type MarkdownLightThemeVariant = "default";
 
+/**
+ * Markdown エディタ操作メニューのカスタムコマンド定義
+ */
+export interface MarkdownEditorCommand {
+  /** メニュー項目に表示するラベル文字列 */
+  readonly label: string;
+  /** クリック時に発火するカスタムイベント名 */
+  readonly eventName: string;
+}
+

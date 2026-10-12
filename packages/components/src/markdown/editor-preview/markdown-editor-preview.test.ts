@@ -102,6 +102,13 @@
  *   - showDeleteButton が false の場合、削除項目および wa-divider がレンダリングされないこと
  *   - showDeleteButton が true の場合、構文ヘルプの後に wa-divider と削除項目（variant="danger", value="delete", trash-can-solid-full, "削除"）がレンダリングされること
  *   - handleActionMenuSelect() において value='delete' で markdown-delete イベント（detail: { value: string }）が発火すること
+ * 24. エディタ操作メニューのコマンド0〜9サブメニュー仕様
+ *   - commands の初期値が空配列であること
+ *   - commands が未指定（空配列）の場合、親項目「コマンド」およびそのサブメニューがレンダリングされないこと
+ *   - commands が設定された場合、親項目「コマンド」とサブメニュー項目がレンダリングされ、アイコン number-0〜9 が設定されること
+ *   - commands に 10 件を超える要素が渡された場合、先頭 10 件（コマンド0〜9）のみがレンダリングされること
+ *   - 構文ヘルプの後に wa-divider が配置され、その後にコマンド項目が配置されること
+ *   - handleActionMenuSelect() において value='command:n' で対応する eventName のカスタムイベント（detail: { value: string }）が発火すること
  */
 
 import * as fs from "node:fs";
@@ -1145,6 +1152,121 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect(deleteFired).toBe(true);
       expect(deletePayload).toBe("# 削除対象の文書");
+    });
+  });
+
+  describe("24. エディタ操作メニューのコマンド0〜9サブメニュー仕様", () => {
+    it("commands の初期値が空配列であること", () => {
+      expect(element.commands).toEqual([]);
+    });
+
+    it("commands が未指定（空配列）の場合、親項目「コマンド」およびそのサブメニューがレンダリングされないこと", () => {
+      element.commands = [];
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("コマンド");
+      expect(htmlStr).not.toContain('slot="submenu"');
+      expect(htmlStr).not.toContain("number-0-solid-full");
+    });
+
+    it("commands が設定された場合、親項目「コマンド」とサブメニュー項目がレンダリングされ、アイコン number-0〜9 が設定されること", () => {
+      element.commands = [
+        { label: "タスク完了保存", eventName: "task-save" },
+        { label: "課題へ変換", eventName: "task-convert-issue" },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("コマンド");
+      expect(htmlStr).toContain('slot="submenu"');
+      expect(htmlStr).toContain('value="command:0"');
+      expect(htmlStr).toContain("number-0-solid-full");
+      expect(htmlStr).toContain("タスク完了保存");
+      expect(htmlStr).toContain('value="command:1"');
+      expect(htmlStr).toContain("number-1-solid-full");
+      expect(htmlStr).toContain("課題へ変換");
+    });
+
+    it("commands に 10 件を超える要素が渡された場合、先頭 10 件（コマンド0〜9）のみがレンダリングされること", () => {
+      element.commands = Array.from({ length: 15 }, (_, i) => ({
+        label: `コマンド${i}`,
+        eventName: `cmd-${i}`,
+      }));
+      const htmlStr = flattenTemplate(element.render());
+
+      for (let i = 0; i < 10; i++) {
+        expect(htmlStr).toContain(`value="command:${i}"`);
+        expect(htmlStr).toContain(`number-${i}-solid-full`);
+        expect(htmlStr).toContain(`コマンド${i}`);
+      }
+      expect(htmlStr).not.toContain('value="command:10"');
+      expect(htmlStr).not.toContain("number-10-solid-full");
+      expect(htmlStr).not.toContain("コマンド10");
+    });
+
+    it("構文ヘルプの後に wa-divider が配置され、その後にコマンド項目が配置されること", () => {
+      element.commands = [{ label: "カスタム保存", eventName: "custom-save" }];
+      const htmlStr = flattenTemplate(element.render());
+
+      const helpIdx = htmlStr.indexOf('value="help"');
+      const dividerIdx = htmlStr.indexOf("<wa-divider");
+      const cmdIdx = htmlStr.indexOf('value="command:0"');
+
+      expect(helpIdx).toBeGreaterThan(-1);
+      expect(dividerIdx).toBeGreaterThan(-1);
+      expect(cmdIdx).toBeGreaterThan(-1);
+      expect(helpIdx).toBeLessThan(dividerIdx);
+      expect(dividerIdx).toBeLessThan(cmdIdx);
+    });
+
+    it("handleActionMenuSelect() において value='command:0' で対応する eventName のカスタムイベントが発火すること", async () => {
+      element.value = "# コマンド対象テキスト";
+      element.commands = [
+        { label: "即時保存", eventName: "custom-quick-save" },
+        { label: "アーカイブ", eventName: "custom-archive" },
+      ];
+
+      let saveFired = false;
+      let savePayload = "";
+      element.addEventListener("custom-quick-save", (e: Event) => {
+        saveFired = true;
+        savePayload = (e as CustomEvent<{ value: string }>).detail.value;
+      });
+
+      let archiveFired = false;
+      element.addEventListener("custom-archive", () => {
+        archiveFired = true;
+      });
+
+      const customEvt = new CustomEvent("wa-select", {
+        detail: { item: { value: "command:0" } },
+      });
+      await element.handleActionMenuSelect(customEvt);
+
+      expect(saveFired).toBe(true);
+      expect(savePayload).toBe("# コマンド対象テキスト");
+      expect(archiveFired).toBe(false);
+    });
+
+    it("handleActionMenuSelect() において value='command:1' で別コマンドの eventName のカスタムイベントが発火すること", async () => {
+      element.value = "# アーカイブ対象テキスト";
+      element.commands = [
+        { label: "即時保存", eventName: "custom-quick-save" },
+        { label: "アーカイブ", eventName: "custom-archive" },
+      ];
+
+      let archiveFired = false;
+      let archivePayload = "";
+      element.addEventListener("custom-archive", (e: Event) => {
+        archiveFired = true;
+        archivePayload = (e as CustomEvent<{ value: string }>).detail.value;
+      });
+
+      const customEvt = new CustomEvent("wa-select", {
+        detail: { item: { value: "command:1" } },
+      });
+      await element.handleActionMenuSelect(customEvt);
+
+      expect(archiveFired).toBe(true);
+      expect(archivePayload).toBe("# アーカイブ対象テキスト");
     });
   });
 });

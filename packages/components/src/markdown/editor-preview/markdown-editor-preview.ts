@@ -7,6 +7,7 @@ import type {
   MarkdownFeatureExtension,
   MarkdownDarkThemeVariant,
   MarkdownLightThemeVariant,
+  MarkdownEditorCommand,
 } from "../types.js";
 import { debounce } from "@shared/utils";
 import {
@@ -242,6 +243,10 @@ export class MarkdownEditorPreview extends LitElement {
   /** 削除ボタンの表示有無 */
   @property({ type: Boolean, attribute: "show-delete-button" })
   public showDeleteButton = false;
+
+  /** カスタムコマンド定義リスト（最大10件、コマンド0〜コマンド9） */
+  @property({ type: Array })
+  public commands: readonly MarkdownEditorCommand[] = [];
 
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
@@ -729,7 +734,27 @@ export class MarkdownEditorPreview extends LitElement {
       this.handleMenuHelpAction();
     } else if (value === "delete") {
       this.handleMenuDeleteAction();
+    } else if (value.startsWith("command:")) {
+      const index = parseInt(value.slice("command:".length), 10);
+      this.handleMenuCustomCommand(index);
     }
+  }
+
+  /**
+   * 指定されたインデックスのカスタムコマンドを実行し、定義されたイベントを発火する。
+   *
+   * @param index コマンドインデックス (0〜9)
+   */
+  public handleMenuCustomCommand(index: number): void {
+    const cmd = this.commands[index];
+    if (!cmd) return;
+    this.dispatchEvent(
+      new CustomEvent(cmd.eventName, {
+        detail: { value: this.value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   /**
@@ -1094,9 +1119,42 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * カスタムコマンド（コマンド0〜9）のサブメニューを描画する。
+   */
+  private renderCommandSubmenu() {
+    const activeCommands = this.commands.slice(0, 10);
+    if (activeCommands.length === 0) return nothing;
+
+    return html`
+      <wa-dropdown-item>
+        コマンド
+        ${activeCommands.map(
+          (cmd, index) => html`
+            <wa-dropdown-item
+              slot="submenu"
+              value="command:${index}"
+            >
+              <wa-icon
+                slot="icon"
+                library="my-icons"
+                name="number-${index}-solid-full"
+                class="markdown-editor-preview__action-menu-item-icon"
+              ></wa-icon>
+              ${cmd.label}
+            </wa-dropdown-item>
+          `,
+        )}
+      </wa-dropdown-item>
+    `;
+  }
+
+  /**
    * エディタ操作メニューの各アクション項目を描画する。
    */
   private renderActionMenuItems() {
+    const hasExtendedActions =
+      this.commands.length > 0 || this.showDeleteButton;
+
     return html`
       <wa-dropdown-item value="copy">
         <wa-icon
@@ -1125,9 +1183,10 @@ export class MarkdownEditorPreview extends LitElement {
         ></wa-icon>
         構文ヘルプ
       </wa-dropdown-item>
+      ${hasExtendedActions ? html`<wa-divider></wa-divider>` : nothing}
+      ${this.renderCommandSubmenu()}
       ${this.showDeleteButton
         ? html`
-            <wa-divider></wa-divider>
             <wa-dropdown-item variant="danger" value="delete">
               <wa-icon
                 slot="icon"
