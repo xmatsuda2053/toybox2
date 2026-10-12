@@ -109,6 +109,14 @@
  *   - commands に 10 件を超える要素が渡された場合、先頭 10 件（コマンド0〜9）のみがレンダリングされること
  *   - 構文ヘルプの後に wa-divider が配置され、その後にコマンド項目が配置されること
  *   - handleActionMenuSelect() において value='command:n' で対応する eventName のカスタムイベント（detail: { value: string }）が発火すること
+ * 25. プレビューモード時のヘッダータイトル表示仕様
+ *   - titleText の初期値が空文字（""）であること
+ *   - mode="preview" かつ titleText が設定されている場合、ヘッダー左側にタイトル要素（.markdown-editor-preview__title）がレンダリングされること
+ *   - mode="preview" かつ titleText が未設定（空文字）の場合、タイトル要素がレンダリングされないこと
+ *   - mode="preview" かつ titleText が空白のみの場合、タイトル要素がレンダリングされないこと
+ *   - mode="edit" または mode="split" の場合、titleText が設定されていてもタイトル要素がレンダリングされず、書式ツールバーがレンダリングされること
+ *   - タイトル要素に title 属性として titleText の値が設定されていること
+ *   - SCSS において .markdown-editor-preview__title に対し省略表示スタイル（overflow: hidden, text-overflow: ellipsis, white-space: nowrap）が定義されていること
  */
 
 import * as fs from "node:fs";
@@ -1268,6 +1276,68 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect(archiveFired).toBe(true);
       expect(archivePayload).toBe("# アーカイブ対象テキスト");
+    });
+  });
+
+  describe("プレビューモード時のヘッダータイトル表示仕様", () => {
+    it("titleText の初期値が空文字（\"\"）であること", () => {
+      expect(element.titleText).toBe("");
+    });
+
+    it("mode=\"preview\" かつ titleText が設定されている場合、ヘッダー左側にタイトル要素がレンダリングされること", () => {
+      element.mode = "preview";
+      element.titleText = "タスクの概要と課題一覧";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("markdown-editor-preview__title");
+      expect(htmlStr).toContain("タスクの概要と課題一覧");
+    });
+
+    it("mode=\"preview\" かつ titleText が未設定（空文字）の場合、タイトル要素がレンダリングされないこと", () => {
+      element.mode = "preview";
+      element.titleText = "";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("markdown-editor-preview__title");
+    });
+
+    it("mode=\"preview\" かつ titleText が空白のみの場合、タイトル要素がレンダリングされないこと", () => {
+      element.mode = "preview";
+      element.titleText = "   ";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("markdown-editor-preview__title");
+    });
+
+    it("mode=\"edit\" または mode=\"split\" の場合、titleText が設定されていてもタイトル要素がレンダリングされず、書式ツールバーがレンダリングされること", () => {
+      element.mode = "edit";
+      element.titleText = "タスクの概要と課題一覧";
+      const editHtml = flattenTemplate(element.render());
+      expect(editHtml).not.toContain("markdown-editor-preview__title");
+      expect(editHtml).toContain("markdown-editor-preview__toolbar");
+
+      element.mode = "split";
+      const splitHtml = flattenTemplate(element.render());
+      expect(splitHtml).not.toContain("markdown-editor-preview__title");
+      expect(splitHtml).toContain("markdown-editor-preview__toolbar");
+    });
+
+    it("タイトル要素に title 属性として titleText の値が設定されていること", () => {
+      element.mode = "preview";
+      element.titleText = "非常に長いタイトルのためホバーで全文確認したいタスク名称";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain('title="非常に長いタイトルのためホバーで全文確認したいタスク名称"');
+    });
+
+    it("SCSS において .markdown-editor-preview__title に対し省略表示スタイル（overflow, text-overflow, white-space）が定義されていること", () => {
+      const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain(".markdown-editor-preview__title");
+      expect(scssContent).toMatch(/overflow:\s*hidden;/);
+      expect(scssContent).toMatch(/text-overflow:\s*ellipsis;/);
+      expect(scssContent).toMatch(/white-space:\s*nowrap;/);
     });
   });
 });
