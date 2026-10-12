@@ -13,6 +13,7 @@ import {
 } from "@/utils/controller-consumers.mixin.js";
 import "./task-summary.js";
 import "./task-issues.js";
+import "./task-property.js";
 import styles from "./pane-task.scss?inline";
 
 /**
@@ -61,6 +62,9 @@ export class PaneTask extends WithIssuesController(
   @state()
   public canComplete: boolean = true;
 
+  @state()
+  public isDeleteDialogOpen: boolean = false;
+
   override willUpdate(changedProperties: Map<string, unknown>): void {
     super.willUpdate(changedProperties);
     void this.updateCanComplete();
@@ -95,6 +99,41 @@ export class PaneTask extends WithIssuesController(
    */
   public handleSelectStatus = async (code: TaskStatusCode): Promise<void> => {
     await this.taskController?.updateStatus(code);
+  };
+
+  /**
+   * 削除確認ダイアログを開く
+   */
+  public handleOpenDeleteDialog = (): void => {
+    this.isDeleteDialogOpen = true;
+  };
+
+  /**
+   * 削除確認ダイアログを閉じる
+   */
+  public handleCloseDeleteDialog = (): void => {
+    this.isDeleteDialogOpen = false;
+  };
+
+  /**
+   * タスク削除の確定ハンドラー
+   */
+  public handleConfirmDelete = async (): Promise<void> => {
+    if (this.taskController) {
+      await this.taskController.deleteTask();
+    }
+    this.isDeleteDialogOpen = false;
+  };
+
+  /**
+   * ステータスドロップダウン選択ハンドラー
+   */
+  public handleDropdownSelect = async (value: string): Promise<void> => {
+    if (value === "delete") {
+      this.handleOpenDeleteDialog();
+    } else {
+      await this.handleSelectStatus(Number(value) as TaskStatusCode);
+    }
   };
 
   /**
@@ -189,6 +228,29 @@ export class PaneTask extends WithIssuesController(
   }
 
   /**
+   * ドロップダウン内の削除項目の描画
+   */
+  private renderDropdownDeleteAction(): HTMLTemplateResult {
+    return html`
+      <wa-divider></wa-divider>
+      <wa-dropdown-item
+        value="delete"
+        variant="danger"
+        type="checkbox"
+        @click=${() => this.handleOpenDeleteDialog()}
+      >
+        <wa-icon
+          slot="icon"
+          library="my-icons"
+          name="trash-solid-full"
+          class="pane-task__status-icon"
+        ></wa-icon>
+        削除
+      </wa-dropdown-item>
+    `;
+  }
+
+  /**
    * ステータス切り替えUI（GitHub Issue風ドロップダウン）の描画
    */
   private renderStatusDropdown(): HTMLTemplateResult {
@@ -203,9 +265,7 @@ export class PaneTask extends WithIssuesController(
         <wa-dropdown
           class="pane-task__status-dropdown"
           @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
-            this.handleSelectStatus(
-              Number(e.detail.item.value) as TaskStatusCode,
-            )}
+            this.handleDropdownSelect(e.detail.item.value)}
         >
           <wa-button
             slot="trigger"
@@ -226,6 +286,7 @@ export class PaneTask extends WithIssuesController(
           ${TASK_STATUS_LIST.map((status) =>
             this.renderStatusDropdownItem(status, currentCode),
           )}
+          ${this.renderDropdownDeleteAction()}
         </wa-dropdown>
       </div>
     `;
@@ -240,6 +301,42 @@ export class PaneTask extends WithIssuesController(
         ${this.renderHeaderLeft()}
         ${this.activeTab === "summary" ? this.renderStatusDropdown() : null}
       </div>
+    `;
+  }
+
+  /**
+   * 削除確認ダイアログの描画
+   */
+  private renderDeleteDialog(): HTMLTemplateResult {
+    return html`
+      <wa-dialog
+        class="pane-task__delete-dialog"
+        label="タスクの削除確認"
+        ?open=${this.isDeleteDialogOpen}
+        @wa-after-hide=${this.handleCloseDeleteDialog}
+      >
+        <div class="pane-task__delete-dialog-body">
+          このタスクを削除してもよろしいですか？<br />
+          ※この操作は取り消せません。
+        </div>
+        <div slot="footer" class="pane-task__delete-dialog-footer">
+          <wa-button
+            variant="neutral"
+            appearance="plain"
+            size="s"
+            @click=${this.handleCloseDeleteDialog}
+          >
+            キャンセル
+          </wa-button>
+          <wa-button
+            variant="danger"
+            size="s"
+            @click=${this.handleConfirmDelete}
+          >
+            削除
+          </wa-button>
+        </div>
+      </wa-dialog>
     `;
   }
 
@@ -266,9 +363,7 @@ export class PaneTask extends WithIssuesController(
         </wa-tab-panel>
 
         <wa-tab-panel name="property" class="pane-task__tab-panel">
-          <div class="pane-task__placeholder">
-            <span>Property タブは準備中です</span>
-          </div>
+          <task-property .theme=${this.theme}></task-property>
         </wa-tab-panel>
       </wa-tab-group>
     `;
@@ -286,6 +381,7 @@ export class PaneTask extends WithIssuesController(
     return html`
       <div class="pane-task">
         ${this.renderHeader()} ${this.renderTabGroup()}
+        ${this.renderDeleteDialog()}
       </div>
     `;
   }

@@ -8,6 +8,8 @@ import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
 import bold_solid_full from "./assets/icons/bold-solid-full.svg?raw";
 import bookmark_solid_full from "./assets/icons/bookmark-solid-full.svg?raw";
 import building_solid_full from "./assets/icons/building-solid-full.svg?raw";
+import calendar_check_solid_full from "./assets/icons/calendar-check-solid-full.svg?raw";
+import calendar_plus_solid_full from "./assets/icons/calendar-plus-solid-full.svg?raw";
 import calendar_solid_full from "./assets/icons/calendar-solid-full.svg?raw";
 import caret_right_solid_full from "./assets/icons/caret-right-solid-full.svg?raw";
 import check_solid_full from "./assets/icons/check-solid-full.svg?raw";
@@ -64,6 +66,8 @@ export const icons: Record<string, string> = {
   "bold-solid-full": bold_solid_full,
   "bookmark-solid-full": bookmark_solid_full,
   "building-solid-full": building_solid_full,
+  "calendar-check-solid-full": calendar_check_solid_full,
+  "calendar-plus-solid-full": calendar_plus_solid_full,
   "calendar-solid-full": calendar_solid_full,
   "caret-right-solid-full": caret_right_solid_full,
   "check-solid-full": check_solid_full,

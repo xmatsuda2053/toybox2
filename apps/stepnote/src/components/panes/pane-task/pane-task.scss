@@ -172,3 +172,16 @@
   color: var(--wa-color-text-quiet);
   font-size: var(--wa-font-size-s);
 }
+
+.pane-task__delete-dialog-body {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-normal);
+  line-height: var(--wa-line-height-normal);
+}
+
+.pane-task__delete-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-s);
+}
+
