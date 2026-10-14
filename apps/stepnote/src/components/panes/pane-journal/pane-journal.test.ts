@@ -12,12 +12,14 @@ import { PaneJournal } from "./pane-journal.js";
  *    - 1-2. ヘッダー部 (.pane-journal__header) が存在し、タイトルとして「JOURNAL」(.pane-journal__title) が表示されること
  *
  * 2. タブ領域 (wa-tab-group) の描画
- *    - 2-1. wa-tab-group 内に Logs, Notes の順で2つのタブ (wa-tab) が存在すること
- *    - 2-2. logs パネル (wa-tab-panel[name="logs"]) 内に journal-logs コンポーネントが存在すること
+ *    - 2-1. wa-tab-group 内に Issues, Notes, Logs の順で3つのタブ (wa-tab) が存在すること
+ *    - 2-2. issues パネル (wa-tab-panel[name="issues"]) 内に journal-issues コンポーネントが存在すること
  *    - 2-3. notes パネル (wa-tab-panel[name="notes"]) 内にプレースホルダー表示 (.pane-journal__placeholder) が存在すること
- *    - 2-4. wa-tab-group に active 属性がバインドされ、初期値が 'logs' であること
- *    - 2-5. handleTabShow 呼び出しにより activeTab プロパティが更新されること
- *    - 2-6. journal-logs に theme が伝播（.theme=${this.theme}）されること
+ *    - 2-4. logs パネル (wa-tab-panel[name="logs"]) 内に journal-logs コンポーネントが存在すること
+ *    - 2-5. wa-tab-group に active 属性がバインドされ、初期値が 'issues' であること
+ *    - 2-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
+ *    - 2-7. journal-issues に theme が伝播（.theme=${this.theme}）されること
+ *    - 2-8. journal-logs に theme が伝播（.theme=${this.theme}）されること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート (pane-journal.scss) が存在し、ルートブロック .pane-journal および主要BEMセレクタが定義されていること
@@ -52,29 +54,34 @@ describe("PaneJournal Component", () => {
   });
 
   describe("2. タブ領域 (wa-tab-group) の描画", () => {
-    it("2-1. wa-tab-group 内に Logs, Notes の順で2つのタブが存在すること", () => {
+    it("2-1. wa-tab-group 内に Issues, Notes, Logs の順で3つのタブが存在すること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toContain("wa-tab-group");
       expect(htmlStr).toContain('class="pane-journal__tab-group"');
 
-      const logsTabMatch = htmlStr.indexOf('panel="logs"');
+      const issuesTabMatch = htmlStr.indexOf('panel="issues"');
       const notesTabMatch = htmlStr.indexOf('panel="notes"');
-      expect(logsTabMatch).toBeGreaterThan(-1);
-      expect(notesTabMatch).toBeGreaterThan(-1);
-      expect(logsTabMatch).toBeLessThan(notesTabMatch);
+      const logsTabMatch = htmlStr.indexOf('panel="logs"');
 
-      expect(htmlStr).toContain(">Logs</wa-tab>");
+      expect(issuesTabMatch).toBeGreaterThan(-1);
+      expect(notesTabMatch).toBeGreaterThan(-1);
+      expect(logsTabMatch).toBeGreaterThan(-1);
+      expect(issuesTabMatch).toBeLessThan(notesTabMatch);
+      expect(notesTabMatch).toBeLessThan(logsTabMatch);
+
+      expect(htmlStr).toContain(">Issues</wa-tab>");
       expect(htmlStr).toContain(">Notes</wa-tab>");
+      expect(htmlStr).toContain(">Logs</wa-tab>");
     });
 
-    it("2-2. logs パネル (wa-tab-panel[name=\"logs\"]) 内に journal-logs コンポーネントが存在すること", () => {
+    it("2-2. issues パネル (wa-tab-panel[name=\"issues\"]) 内に journal-issues コンポーネントが存在すること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toContain('<wa-tab-panel name="logs"');
-      expect(htmlStr).toContain("<journal-logs");
+      expect(htmlStr).toContain('<wa-tab-panel name="issues"');
+      expect(htmlStr).toContain("<journal-issues");
     });
 
     it("2-3. notes パネル (wa-tab-panel[name=\"notes\"]) 内にプレースホルダー表示が存在すること", () => {
@@ -85,31 +92,46 @@ describe("PaneJournal Component", () => {
       expect(htmlStr).toContain("Notes Content (準備中)");
     });
 
-    it("2-4. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'logs'）と連動していること", () => {
-      expect(element.activeTab).toBe("logs");
+    it("2-4. logs パネル (wa-tab-panel[name=\"logs\"]) 内に journal-logs コンポーネントが存在すること", () => {
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toContain('<wa-tab-panel name="logs"');
+      expect(htmlStr).toContain("<journal-logs");
+    });
+
+    it("2-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'issues'）と連動していること", () => {
+      expect(element.activeTab).toBe("issues");
 
       const template = element.render();
       const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?logs["']?/);
+      expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?issues["']?/);
 
       element.activeTab = "notes";
       const notesHtml = flattenTemplate(element.render());
       expect(notesHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?notes["']?/);
     });
 
-    it("2-5. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
-      expect(element.activeTab).toBe("logs");
+    it("2-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
+      expect(element.activeTab).toBe("issues");
 
       element.handleTabShow(
         new CustomEvent("wa-tab-show", {
-          detail: { name: "notes" },
+          detail: { name: "logs" },
         }) as unknown as CustomEvent<{ name: string }>,
       );
 
-      expect(element.activeTab).toBe("notes");
+      expect(element.activeTab).toBe("logs");
     });
 
-    it("2-6. journal-logs に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
+    it("2-7. journal-issues に theme が伝播（.theme=${this.theme}）されること", () => {
+      element.theme = "dark";
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<journal-issues[^>]*\.theme=["']?dark["']?/);
+    });
+
+    it("2-8. journal-logs に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
       element.theme = "dark";
       const template = element.render();
       const htmlStr = flattenTemplate(template);

@@ -5,19 +5,19 @@ import { flattenTemplate } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { IssuesController } from "@/controllers/issues.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
-import { TaskIssues } from "./task-issues";
+import { JournalIssues } from "./journal-issues";
 
 /**
- * 【TaskIssues 仕様 (Issues タブコンポーネント)】
+ * 【JournalIssues 仕様 (Issues タブコンポーネント)】
  *
  * 1. 初期描画と空状態 (Initial Render & Empty State)
  *    - 1-1. 初期表示ビューモードは一覧（viewMode = 'list'）であること
- *    - 1-2. issuesController.state が空配列の場合、空状態メッセージ（.task-issues__empty）が表示されること
- *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.task-issues__btn-add）および完了を含めるスイッチ（.task-issues__toggle-completed）が表示されること
- *    - 1-4. 一覧ヘッダー上部にタスク名（.task-issues__task-name）が表示されること
+ *    - 1-2. issuesController.state が空配列の場合、空状態メッセージ（.journal-issues__empty）が表示されること
+ *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.journal-issues__btn-add）および完了を含めるスイッチ（.journal-issues__toggle-completed）が表示されること
+ *    - 1-4. 一覧ヘッダー上部にタスク名（.journal-issues__task-name）が表示されないこと
  *
  * 2. 一覧表示と完了フィルター (List View & Filter)
- *    - 2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.task-issues__item）として描画されること
+ *    - 2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.journal-issues__item）として描画されること
  *    - 2-2. デフォルト（showCompleted = false）の場合、完了済み Issue（statusCode: 9）は一覧から除外されること
  *    - 2-3. showCompleted = true の場合、完了済み Issue（statusCode: 9）も一覧に表示されること
  *    - 2-4. 一覧上のステータス変更操作で issuesController.updateIssue（または updateStatusCode）が呼び出されること
@@ -27,10 +27,10 @@ import { TaskIssues } from "./task-issues";
  * 3. 画面遷移（一覧 ⇔ 詳細） (View Switching)
  *    - 3-1. 一覧ヘッダーの「+ 追加」ボタンクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、新規Issue編集状態になること
  *    - 3-2. 一覧のアイテムクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、該当Issueの編集状態になること
- *    - 3-3. 詳細ビューの戻るボタン（.task-issues__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること
+ *    - 3-3. 詳細ビューの戻るボタン（.journal-issues__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること
  *
  * 4. 詳細ビューの構成と編集・自動保存 (Detail View & Auto-save)
- *    - 4-1. 詳細ヘッダー（.task-issues__detail-header）内に戻るボタンとステータス変更UI（.task-issues__status-dropdown）が表示され、独立した削除ボタン（.task-issues__btn-delete）が存在しないこと
+ *    - 4-1. 詳細ヘッダー（.journal-issues__detail-header）内に戻るボタンとステータス変更UI（.journal-issues__status-dropdown）が表示され、独立した削除ボタン（.journal-issues__btn-delete）が存在しないこと
  *    - 4-2. フォーム内のタイトル入力に @input が設定され、期日入力、Markdownエディタが表示されること
  *    - 4-3. Markdownエディタ（markdown-editor-preview）に .mode がバインドされ、新規作成時は 'edit' を維持すること
  *    - 4-4. ステータスドロップダウン内に完了項目の後 wa-divider が配置され、その下に削除項目（value="delete", variant="danger", trash-solid-full アイコン）が配置されること
@@ -42,14 +42,14 @@ import { TaskIssues } from "./task-issues";
  *    - 4-15. 既存編集時、ステータスを完了（9）に変更した際に即座に updateIssue が呼び出されること
  *
  * 5. BEM設計およびSCSSスタイルの検証
- *    - 5-1. SCSSスタイルシート（task-issues.scss）が存在し、ルートブロック .task-issues および主要BEMセレクタが定義されていること
- *    - 5-2. task-issues.scss に !important および @extend が一切含まれていないこと
- *    - 5-3. task-issues.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
- *    - 5-4. .task-issues__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること
- *    - 5-5. .task-issues__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること
+ *    - 5-1. SCSSスタイルシート（journal-issues.scss）が存在し、ルートブロック .journal-issues および主要BEMセレクタが定義されていること
+ *    - 5-2. journal-issues.scss に !important および @extend が一切含まれていないこと
+ *    - 5-3. journal-issues.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
+ *    - 5-4. .journal-issues__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること
+ *    - 5-5. .journal-issues__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること
  */
-describe("TaskIssues Component", () => {
-  let element: TaskIssues;
+describe("JournalIssues Component", () => {
+  let element: JournalIssues;
   let mockIssuesController: {
     state: IssueRecord[];
     createIssue: ReturnType<typeof vi.fn>;
@@ -103,7 +103,7 @@ describe("TaskIssues Component", () => {
       subscribe: vi.fn().mockReturnValue(() => {}),
     };
 
-    element = new TaskIssues();
+    element = new JournalIssues();
     element.issuesController =
       mockIssuesController as unknown as IssuesController;
     element.taskController = mockTaskController as unknown as TaskController;
@@ -114,33 +114,32 @@ describe("TaskIssues Component", () => {
       expect(element.viewMode).toBe("list");
     });
 
-    it("1-2. issuesController.state が空配列の場合、空状態メッセージ（.task-issues__empty）が表示されること", () => {
+    it("1-2. issuesController.state が空配列の場合、空状態メッセージ（.journal-issues__empty）が表示されること", () => {
       mockIssuesController.state = [];
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__empty");
+      expect(htmlStr).toContain("journal-issues__empty");
       expect(htmlStr).toContain("Issue がありません");
     });
 
-    it("1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.task-issues__btn-add, plus-solid-full, plain）および完了を含めるスイッチ（wa-switch.task-issues__toggle-completed）が表示されること", () => {
+    it("1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.journal-issues__btn-add, plus-solid-full, plain）および完了を含めるスイッチ（wa-switch.journal-issues__toggle-completed）が表示されること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__btn-add");
+      expect(htmlStr).toContain("journal-issues__btn-add");
       expect(htmlStr).toMatch(
-        /<wa-button[^>]*class="[^"]*task-issues__btn-add[^"]*"[^>]*appearance=["']plain["']/,
+        /<wa-button[^>]*class="[^"]*journal-issues__btn-add[^"]*"[^>]*appearance=["']plain["']/,
       );
       expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']plus-solid-full["']/);
       expect(htmlStr).not.toMatch(
-        /<wa-button[^>]*class="[^"]*task-issues__btn-add[^"]*"[^>]*>[\s\S]*追加[\s\S]*<\/wa-button>/,
+        /<wa-button[^>]*class="[^"]*journal-issues__btn-add[^"]*"[^>]*>[\s\S]*追加[\s\S]*<\/wa-button>/,
       );
       expect(htmlStr).toMatch(
-        /<wa-switch[^>]*class="[^"]*task-issues__toggle-completed[^"]*"/,
+        /<wa-switch[^>]*class="[^"]*journal-issues__toggle-completed[^"]*"/,
       );
       expect(htmlStr).toContain("完了したIssueを含める");
     });
 
-    it("1-4. 一覧ヘッダー上部にタスク名（.task-issues__task-name）が表示されること", () => {
+    it("1-4. 一覧ヘッダー上部にタスク名（.journal-issues__task-name）が表示されないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__task-name");
-      expect(htmlStr).toContain("親タスク");
+      expect(htmlStr).not.toContain("journal-issues__task-name");
     });
   });
 
@@ -161,9 +160,9 @@ describe("TaskIssues Component", () => {
       element.handleToggleShowCompleted();
       expect(element.showCompleted).toBe(true);
     });
-    it("2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.task-issues__item）として描画されること", () => {
+    it("2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.journal-issues__item）として描画されること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__item");
+      expect(htmlStr).toContain("journal-issues__item");
       expect(htmlStr).toContain("設計書のレビュー実施");
       expect(htmlStr).toContain("APIエンドポイント実装");
     });
@@ -243,7 +242,7 @@ describe("TaskIssues Component", () => {
       expect(element.editingIssueId).toBe(1);
     });
 
-    it("3-3. 詳細ビューの戻るボタン（.task-issues__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること", () => {
+    it("3-3. 詳細ビューの戻るボタン（.journal-issues__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること", () => {
       element.handleSelectIssue(sampleIssues[0]);
       expect(element.viewMode).toBe("detail");
 
@@ -258,35 +257,35 @@ describe("TaskIssues Component", () => {
       element.handleSelectIssue(sampleIssues[0]);
     });
 
-    it("4-1. 詳細ヘッダー（.task-issues__detail-header）内に戻るボタンとステータス変更UI（.task-issues__status-dropdown）が表示され、独立した削除ボタン（.task-issues__btn-delete）が存在しないこと", () => {
+    it("4-1. 詳細ヘッダー（.journal-issues__detail-header）内に戻るボタンとステータス変更UI（.journal-issues__status-dropdown）が表示され、独立した削除ボタン（.journal-issues__btn-delete）が存在しないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__btn-back");
-      expect(htmlStr).toContain("task-issues__status-dropdown");
-      expect(htmlStr).toContain("task-issues__status");
-      expect(htmlStr).not.toContain("task-issues__btn-delete");
+      expect(htmlStr).toContain("journal-issues__btn-back");
+      expect(htmlStr).toContain("journal-issues__status-dropdown");
+      expect(htmlStr).toContain("journal-issues__status");
+      expect(htmlStr).not.toContain("journal-issues__btn-delete");
     });
 
-    it("4-2. フォーム内にはタイトル入力（@input 設定）、期日入力、Markdownエディタが表示され、ステータス行（.task-issues__field--status）が存在しないこと", () => {
+    it("4-2. フォーム内にはタイトル入力（@input 設定）、期日入力、Markdownエディタが表示され、ステータス行（.journal-issues__field--status）が存在しないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__title-input");
+      expect(htmlStr).toContain("journal-issues__title-input");
       // @input がバインドされていること（Shoelace/Web Awesome移行で @wa-input ではなく @input）
       expect(htmlStr).toMatch(
-        /<wa-input[^>]*class="[^"]*task-issues__title-input[^"]*"[^>]*@input=/,
+        /<wa-input[^>]*class="[^"]*journal-issues__title-input[^"]*"[^>]*@input=/,
       );
       expect(htmlStr).not.toMatch(/@wa-input=/);
-      expect(htmlStr).toContain("task-issues__due-date");
+      expect(htmlStr).toContain("journal-issues__due-date");
       expect(htmlStr).toMatch(
-        /<datepicker-input[^>]*class="[^"]*task-issues__due-date[^"]*"[^>]*\.value=["']?2026-04-15["']?/,
+        /<datepicker-input[^>]*class="[^"]*journal-issues__due-date[^"]*"[^>]*\.value=["']?2026-04-15["']?/,
       );
       expect(htmlStr).toContain("datepicker-change");
-      expect(htmlStr).toContain("task-issues__editor");
-      expect(htmlStr).not.toContain("task-issues__field--status");
+      expect(htmlStr).toContain("journal-issues__editor");
+      expect(htmlStr).not.toContain("journal-issues__field--status");
     });
 
-    it("4-3. ステータス変更ボタン（.task-issues__status）にTASK同様のスタイル（with-caret, slot='start'）が設定され、現在のステータスが表示されること", () => {
+    it("4-3. ステータス変更ボタン（.journal-issues__status）にTASK同様のスタイル（with-caret, slot='start'）が設定され、現在のステータスが表示されること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<wa-button[^>]*class="[^"]*task-issues__status[^"]*"[^>]*\bwith-caret\b/,
+        /<wa-button[^>]*class="[^"]*journal-issues__status[^"]*"[^>]*\bwith-caret\b/,
       );
       expect(htmlStr).toContain("開始待ち");
       expect(htmlStr).toMatch(
@@ -312,12 +311,12 @@ describe("TaskIssues Component", () => {
       expect(htmlStr).toMatch(
         /<wa-divider[\s\S]*?<wa-dropdown-item[^>]*value=["']delete["']/,
       );
-      // 削除項目に variant="danger", type="checkbox" と trash-solid-full アイコン（.task-issues__status-icon）が設定されていること
+      // 削除項目に variant="danger", type="checkbox" と trash-solid-full アイコン（.journal-issues__status-icon）が設定されていること
       expect(htmlStr).toMatch(
         /<wa-dropdown-item[^>]*value=["']delete["'][^>]*variant=["']danger["'][^>]*type=["']checkbox["']/,
       );
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*name=["']trash-solid-full["'][^>]*class="[^"]*task-issues__status-icon[^"]*"/,
+        /<wa-icon[^>]*name=["']trash-solid-full["'][^>]*class="[^"]*journal-issues__status-icon[^"]*"/,
       );
     });
 
@@ -363,7 +362,7 @@ describe("TaskIssues Component", () => {
       element.handleOpenDeleteDialog();
       expect(element.isDeleteDialogOpen).toBe(true);
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues__delete-dialog");
+      expect(htmlStr).toContain("journal-issues__delete-dialog");
       expect(htmlStr).toContain("Issueの削除確認");
       expect(htmlStr).toContain("取り消せません");
 
@@ -401,7 +400,7 @@ describe("TaskIssues Component", () => {
 
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<markdown-editor-preview[^>]*class="[^"]*task-issues__editor[^"]*"[^>]*\.mode=["']?edit["']?/,
+        /<markdown-editor-preview[^>]*class="[^"]*journal-issues__editor[^"]*"[^>]*\.mode=["']?edit["']?/,
       );
 
       // 内容変更時も editorMode は 'edit' を維持する
@@ -412,7 +411,7 @@ describe("TaskIssues Component", () => {
     it("4-12. タイトル入力フィールドに @input だけでなく @change および @blur がバインドされていること", () => {
       const htmlStr = flattenTemplate(element.render());
       const inputBlock =
-        htmlStr.match(/<wa-input[\s\S]*?class="[^"]*task-issues__title-input[^"]*"[\s\S]*?<\/wa-input>/)?.[0] ?? "";
+        htmlStr.match(/<wa-input[\s\S]*?class="[^"]*journal-issues__title-input[^"]*"[\s\S]*?<\/wa-input>/)?.[0] ?? "";
       expect(inputBlock).toContain("@input=");
       expect(inputBlock).toContain("@change=");
       expect(inputBlock).toContain("@blur=");
@@ -458,28 +457,28 @@ describe("TaskIssues Component", () => {
   });
 
   describe("5. BEM設計およびSCSSスタイルの検証", () => {
-    const scssPath = path.resolve(__dirname, "task-issues.scss");
+    const scssPath = path.resolve(__dirname, "journal-issues.scss");
 
-    it("5-1. SCSSスタイルシート（task-issues.scss）が存在し、ルートブロック .task-issues が定義されていること", () => {
+    it("5-1. SCSSスタイルシート（journal-issues.scss）が存在し、ルートブロック .journal-issues が定義されていること", () => {
       expect(fs.existsSync(scssPath)).toBe(true);
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toContain(".task-issues");
+      expect(content).toContain(".journal-issues");
     });
 
-    it("5-2. task-issues.scss に !important および @extend が一切含まれていないこと", () => {
+    it("5-2. journal-issues.scss に !important および @extend が一切含まれていないこと", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       expect(content).not.toContain("!important");
       expect(content).not.toContain("@extend");
     });
 
-    it("5-3. task-issues.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること", () => {
+    it("5-3. journal-issues.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       // Hexカラー (#fff, #123456) や rgb/rgba の直値がないこと（カスタムプロパティ除く）
       const hexMatches = content.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
       expect(hexMatches.length).toBe(0);
     });
 
-    it("5-4. .task-issues__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること", () => {
+    it("5-4. .journal-issues__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       const itemBlock = content.match(/&__item\s*\{[^}]*\}/)?.[0] ?? "";
       expect(itemBlock).toMatch(
@@ -487,7 +486,7 @@ describe("TaskIssues Component", () => {
       );
     });
 
-    it("5-5. .task-issues__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること", () => {
+    it("5-5. .journal-issues__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       const statusBlock =
         content.match(/&__item-status\s*\{[\s\S]*?(?=\n\s*&__)/)?.[0] ?? "";

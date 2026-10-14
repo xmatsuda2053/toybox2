@@ -22,20 +22,20 @@ import {
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
 import { sortIssuesByDueDateAndTitle } from "@/utils/task-filter.utils.js";
-import styles from "./task-issues.scss?inline";
+import styles from "./journal-issues.scss?inline";
 
 
 /**
- * サブタスク（Issues）タブコンポーネント (TaskIssues)
+ * サブタスク（Issues）タブコンポーネント (JournalIssues)
  *
  * 親タスクに紐づく Issue の一覧表示・完了切り替え・新規作成・詳細編集・自動保存を提供する。
  *
  * @export
- * @class TaskIssues
+ * @class JournalIssues
  * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
  */
-@customElement("task-issues")
-export class TaskIssues extends WithIssuesController(
+@customElement("journal-issues")
+export class JournalIssues extends WithIssuesController(
   WithTaskController(SubscriberElement),
 ) {
   public static override styles = unsafeCSS(styles);
@@ -243,43 +243,35 @@ export class TaskIssues extends WithIssuesController(
   /** 空状態の描画 */
   private renderEmptyState(): HTMLTemplateResult {
     return html`
-      <div class="task-issues__empty">
+      <div class="journal-issues__empty">
         <span>Issue がありません</span>
       </div>
-    `;
-  }
-
-  /** タスク名ヘッダーの描画 */
-  private renderTaskName(): HTMLTemplateResult {
-    const taskName = this.taskController?.state?.name ?? "";
-    return html`
-      <div class="task-issues__task-name" title=${taskName}>${taskName}</div>
     `;
   }
 
   /** 一覧ヘッダーの描画 */
   private renderListHeader(): HTMLTemplateResult {
     return html`
-      <div class="task-issues__header">
+      <div class="journal-issues__header">
         <wa-switch
-          class="task-issues__toggle-completed"
+          class="journal-issues__toggle-completed"
           size="s"
           ?checked=${this.showCompleted}
           @change=${this.handleToggleShowCompleted}
         >
           完了したIssueを含める
         </wa-switch>
-        <div class="task-issues__actions">
+        <div class="journal-issues__actions">
           <wa-tooltip
-            for="task-issues-btn-add"
+            for="journal-issues-btn-add"
             placement="bottom"
             trigger="hover"
           >
             新規Issueを追加
           </wa-tooltip>
           <wa-button
-            id="task-issues-btn-add"
-            class="task-issues__btn-add"
+            id="journal-issues-btn-add"
+            class="journal-issues__btn-add"
             variant="neutral"
             appearance="plain"
             size="s"
@@ -313,7 +305,7 @@ export class TaskIssues extends WithIssuesController(
       >
         <wa-icon
           slot="trigger"
-          class="task-issues__item-status type-${typeName}"
+          class="journal-issues__item-status type-${typeName}"
           library="my-icons"
           name=${iconName}
           @click=${(e: MouseEvent) => e.stopPropagation()}
@@ -343,7 +335,7 @@ export class TaskIssues extends WithIssuesController(
                   slot="icon"
                   library="my-icons"
                   name=${TASK_STATUS_ICON_MAP[status.code]}
-                  class="task-issues__status-icon type-${TASK_STATUS_TYPE_MAP[
+                  class="journal-issues__status-icon type-${TASK_STATUS_TYPE_MAP[
                     status.code
                   ]}"
                 ></wa-icon>
@@ -358,7 +350,7 @@ export class TaskIssues extends WithIssuesController(
   /** 単一 Issue アイテムの描画 */
   private renderIssueItem(issue: IssueRecord): HTMLTemplateResult {
     const isDone = issue.statusCode === 9;
-    const itemClass = `task-issues__item ${isDone ? "task-issues__item--completed" : ""}`;
+    const itemClass = `journal-issues__item ${isDone ? "journal-issues__item--completed" : ""}`;
     const iconName =
       TASK_STATUS_ICON_MAP[issue.statusCode] ?? TASK_STATUS_ICON_MAP[0];
     const typeName =
@@ -376,10 +368,10 @@ export class TaskIssues extends WithIssuesController(
         @click=${() => this.handleSelectIssue(issue)}
       >
         ${this.renderIssueStatusDropdown(issue, typeName, iconName)}
-        <span class="task-issues__item-title" title=${displayTitle}>
+        <span class="journal-issues__item-title" title=${displayTitle}>
           ${displayTitle}
         </span>
-        <span class="task-issues__item-due">${dueStr}</span>
+        <span class="journal-issues__item-due">${dueStr}</span>
       </div>
     `;
   }
@@ -393,12 +385,12 @@ export class TaskIssues extends WithIssuesController(
     const sortedIssues = sortIssuesByDueDateAndTitle(filteredIssues);
 
     return html`
-      <div class="task-issues">
-        ${this.renderTaskName()} ${this.renderListHeader()}
+      <div class="journal-issues">
+        ${this.renderListHeader()}
         ${sortedIssues.length === 0
           ? this.renderEmptyState()
           : html`
-              <div class="task-issues__list">
+              <div class="journal-issues__list">
                 ${sortedIssues.map((issue) => this.renderIssueItem(issue))}
               </div>
             `}
@@ -421,7 +413,7 @@ export class TaskIssues extends WithIssuesController(
           slot="icon"
           library="my-icons"
           name="trash-solid-full"
-          class="task-issues__status-icon"
+          class="journal-issues__status-icon"
         ></wa-icon>
         削除
       </wa-dropdown-item>
@@ -437,7 +429,7 @@ export class TaskIssues extends WithIssuesController(
     return html`
       <wa-button
         slot="trigger"
-        class="task-issues__status"
+        class="journal-issues__status"
         variant="neutral"
         size="s"
         with-caret
@@ -447,7 +439,7 @@ export class TaskIssues extends WithIssuesController(
           slot="start"
           library="my-icons"
           name=${icon}
-          class="task-issues__status-icon type-${type}"
+          class="journal-issues__status-icon type-${type}"
         ></wa-icon>
         ${labelJa}
       </wa-button>
@@ -463,7 +455,7 @@ export class TaskIssues extends WithIssuesController(
   ): HTMLTemplateResult {
     return html`
       <wa-dropdown
-        class="task-issues__status-dropdown"
+        class="journal-issues__status-dropdown"
         @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
           this.handleDetailDropdownSelect(e.detail.item.value)}
       >
@@ -488,9 +480,9 @@ export class TaskIssues extends WithIssuesController(
       TASK_STATUS_TYPE_MAP[statusCode] ?? TASK_STATUS_TYPE_MAP[0];
 
     return html`
-      <div class="task-issues__detail-header">
+      <div class="journal-issues__detail-header">
         <wa-button
-          class="task-issues__btn-back"
+          class="journal-issues__btn-back"
           variant="neutral"
           size="s"
           appearance="plain"
@@ -503,7 +495,7 @@ export class TaskIssues extends WithIssuesController(
           ></wa-icon>
           一覧に戻る
         </wa-button>
-        <div class="task-issues__detail-actions">
+        <div class="journal-issues__detail-actions">
           ${this.renderDetailStatusDropdown(
             statusCode,
             currentStatus,
@@ -518,11 +510,11 @@ export class TaskIssues extends WithIssuesController(
   /** タイトル入力フィールドの描画 */
   private renderTitleField(title: string): HTMLTemplateResult {
     return html`
-      <div class="task-issues__field">
-        <label class="task-issues__label">タイトル</label>
-        <div class="task-issues__control">
+      <div class="journal-issues__field">
+        <label class="journal-issues__label">タイトル</label>
+        <div class="journal-issues__control">
           <wa-input
-            class="task-issues__title-input"
+            class="journal-issues__title-input"
             size="s"
             .value=${title}
             placeholder="Issueタイトルを入力"
@@ -541,11 +533,11 @@ export class TaskIssues extends WithIssuesController(
   /** 期日入力フィールドの描画 */
   private renderDueDateField(formattedDueDate: string): HTMLTemplateResult {
     return html`
-      <div class="task-issues__field">
-        <label class="task-issues__label">期日</label>
-        <div class="task-issues__control">
+      <div class="journal-issues__field">
+        <label class="journal-issues__label">期日</label>
+        <div class="journal-issues__control">
           <datepicker-input
-            class="task-issues__due-date"
+            class="journal-issues__due-date"
             size="s"
             .value=${formattedDueDate}
             @datepicker-change=${(
@@ -564,9 +556,9 @@ export class TaskIssues extends WithIssuesController(
   /** Markdown エディタフィールドの描画 */
   private renderEditorField(value: string): HTMLTemplateResult {
     return html`
-      <div class="task-issues__field task-issues__field--content">
+      <div class="journal-issues__field journal-issues__field--content">
         <markdown-editor-preview
-          class="task-issues__editor"
+          class="journal-issues__editor"
           .themeMode=${this.theme === "dark" ? "dark" : "light"}
           .darkTheme=${"soft"}
           .value=${value}
@@ -603,16 +595,16 @@ export class TaskIssues extends WithIssuesController(
   private renderDeleteDialog(): HTMLTemplateResult {
     return html`
       <wa-dialog
-        class="task-issues__delete-dialog"
+        class="journal-issues__delete-dialog"
         label="Issueの削除確認"
         ?open=${this.isDeleteDialogOpen}
         @wa-after-hide=${this.handleCloseDeleteDialog}
       >
-        <div class="task-issues__delete-dialog-body">
+        <div class="journal-issues__delete-dialog-body">
           このIssueを削除してもよろしいですか？<br />
           ※この操作は取り消せません。
         </div>
-        <div slot="footer" class="task-issues__delete-dialog-footer">
+        <div slot="footer" class="journal-issues__delete-dialog-footer">
           <wa-button
             variant="neutral"
             appearance="plain"
@@ -640,7 +632,7 @@ export class TaskIssues extends WithIssuesController(
     );
 
     return html`
-      <div class="task-issues task-issues__detail">
+      <div class="journal-issues journal-issues__detail">
         ${this.renderDetailHeader(issue)} ${this.renderDetailForm(issue)}
         ${this.renderDeleteDialog()}
       </div>
@@ -656,6 +648,6 @@ export class TaskIssues extends WithIssuesController(
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-issues": TaskIssues;
+    "journal-issues": JournalIssues;
   }
 }
