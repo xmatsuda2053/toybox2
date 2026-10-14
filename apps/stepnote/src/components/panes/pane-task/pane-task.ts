@@ -14,7 +14,6 @@ import {
   WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
 import "./task-summary.js";
-import "./task-issues.js";
 import "./task-property.js";
 import styles from "./pane-task.scss?inline";
 
@@ -23,7 +22,7 @@ import styles from "./pane-task.scss?inline";
  * タスクエリア（第4ペイン）コンテナコンポーネント (PaneTask)
  *
  * 画面第4ペインを担当し、タスクの基本ヘッダー（ID、ステータス、IDコピー）および
- * 3つのタブ（Summary, Property, Issues）のコンテナを提供する。
+ * 2つのタブ（Summary, Property）のコンテナを提供する。
  *
  * @export
  * @class PaneTask
@@ -343,15 +342,10 @@ export class PaneTask extends WithIssuesController(
         @wa-tab-show=${this.handleTabShow}
       >
         <wa-tab slot="nav" panel="summary">Summary</wa-tab>
-        <wa-tab slot="nav" panel="issues">Issues</wa-tab>
         <wa-tab slot="nav" panel="property">Property</wa-tab>
 
         <wa-tab-panel name="summary" class="pane-task__tab-panel">
           <task-summary .theme=${this.theme}></task-summary>
-        </wa-tab-panel>
-
-        <wa-tab-panel name="issues" class="pane-task__tab-panel">
-          <task-issues .theme=${this.theme}></task-issues>
         </wa-tab-panel>
 
         <wa-tab-panel name="property" class="pane-task__tab-panel">

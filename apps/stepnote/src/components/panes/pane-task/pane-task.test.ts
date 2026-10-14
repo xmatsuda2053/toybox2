@@ -26,10 +26,10 @@ import { PaneTask } from "./pane-task.js";
  *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
  *
  * 3. タブ領域（wa-tab-group）の描画
- *    - 3-1. wa-tab-group 内に Summary, Issues, Property の順で3つのタブが存在すること
+ *    - 3-1. wa-tab-group 内に Summary, Property の順で2つのタブが存在し、Issues タブが存在しないこと
  *    - 3-2. summary パネル内に task-summary コンポーネントがレンダリングされること
- *    - 3-3. issues パネル内に task-issues コンポーネントがレンダリングされること
- *    - 3-4. property パネル内に task-property コンポーネントがレンダリングされること
+ *    - 3-3. property パネル内に task-property コンポーネントがレンダリングされること
+ *    - 3-4. issues パネルおよび task-issues コンポーネントが存在しないこと
  *    - 3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
  *
@@ -252,39 +252,45 @@ describe("PaneTask Component", () => {
   });
 
   describe("3. タブ領域（wa-tab-group）の描画", () => {
-    it("3-1. wa-tab-group 内に Summary, Issues, Property の順で3つのタブが存在すること", () => {
+    it("3-1. wa-tab-group 内に Summary, Property の順で2つのタブが存在し、Issues タブが存在しないこと", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("wa-tab-group");
       const summaryIdx = htmlStr.indexOf('panel="summary"');
-      const issuesIdx = htmlStr.indexOf('panel="issues"');
       const propertyIdx = htmlStr.indexOf('panel="property"');
+      const issuesIdx = htmlStr.indexOf('panel="issues"');
       expect(summaryIdx).toBeGreaterThan(-1);
-      expect(issuesIdx).toBeGreaterThan(summaryIdx);
-      expect(propertyIdx).toBeGreaterThan(issuesIdx);
+      expect(propertyIdx).toBeGreaterThan(summaryIdx);
+      expect(issuesIdx).toBe(-1);
+      expect(htmlStr).toContain(">Summary</wa-tab>");
+      expect(htmlStr).toContain(">Property</wa-tab>");
+      expect(htmlStr).not.toContain(">Issues</wa-tab>");
     });
 
     it("3-2. summary パネル内に task-summary コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('<wa-tab-panel name="summary"');
       expect(htmlStr).toContain("task-summary");
     });
 
-    it("3-3. issues パネル内に task-issues コンポーネントがレンダリングされること", () => {
+    it("3-3. property パネル内に task-property コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-issues");
+      expect(htmlStr).toContain('<wa-tab-panel name="property"');
+      expect(htmlStr).toContain("task-property");
     });
 
-    it("3-4. property パネル内に task-property コンポーネントがレンダリングされること", () => {
+    it("3-4. issues パネルおよび task-issues コンポーネントが存在しないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("task-property");
+      expect(htmlStr).not.toContain('name="issues"');
+      expect(htmlStr).not.toContain("task-issues");
     });
 
     it("3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?summary["']?/);
 
-      element.activeTab = "issues";
-      const issuesHtml = flattenTemplate(element.render());
-      expect(issuesHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?issues["']?/);
+      element.activeTab = "property";
+      const propertyHtml = flattenTemplate(element.render());
+      expect(propertyHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?property["']?/);
     });
 
     it("3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
