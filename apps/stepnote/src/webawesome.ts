@@ -15,6 +15,7 @@ import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "@awesome.me/webawesome/dist/components/input/input.js";
 import "@awesome.me/webawesome/dist/components/option/option.js";
 import "@awesome.me/webawesome/dist/components/popover/popover.js";
+import "@awesome.me/webawesome/dist/components/relative-time/relative-time.js";
 import "@awesome.me/webawesome/dist/components/select/select.js";
 import "@awesome.me/webawesome/dist/components/spinner/spinner.js";
 import "@awesome.me/webawesome/dist/components/switch/switch.js";
@@ -37,6 +38,7 @@ export const WEB_AWESOME_COMPONENTS = [
   "input",
   "option",
   "popover",
+  "relative-time",
   "select",
   "spinner",
   "switch",

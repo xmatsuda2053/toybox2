@@ -1,0 +1,294 @@
+@use "../../../styles/mixins.scss" as *;
+@use "../pane-common.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--wa-color-surface-default);
+  @include theme-transition;
+}
+
+.journal-logs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  @include theme-transition;
+}
+
+/* ヘッダーツールバー */
+.journal-logs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-xs, 8px);
+  margin-bottom: var(--wa-space-m, 16px);
+  box-sizing: border-box;
+}
+
+.journal-logs__search {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--wa-font-size-s, 13px);
+}
+
+.journal-logs__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  flex-shrink: 0;
+}
+
+.journal-logs__btn-add {
+  @include flex-center;
+  cursor: pointer;
+}
+
+/* ログ一覧領域 */
+.journal-logs__list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  @include custom-scrollbar;
+}
+
+/* テーブルヘッダー */
+.journal-logs__list-header {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  background-color: var(--wa-color-neutral-fill-quiet);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+  font-size: var(--wa-font-size-xs, 12px);
+  font-weight: 600;
+  color: var(--wa-color-text-quiet);
+  user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.journal-logs__list-header-cell {
+  @include flex-center;
+  height: 100%;
+  padding: 0 var(--wa-space-2xs, 4px);
+  box-sizing: border-box;
+  text-align: center;
+
+  &:not(:last-child) {
+    border-right: 1px solid var(--wa-color-surface-border);
+  }
+
+  &--graph {
+    width: 48px;
+    flex-shrink: 0;
+  }
+
+  &--description {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &--date {
+    width: 150px;
+    flex-shrink: 0;
+  }
+}
+
+/* ログ行 */
+.journal-logs__row {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: var(--wa-font-size-s, 13px);
+  @include theme-transition;
+
+  &:hover,
+  &--expanded {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+
+  &:hover {
+    .journal-logs__graph-node {
+      transform: scale(1.33);
+    }
+  }
+}
+
+.journal-logs__cell {
+  display: flex;
+  align-items: center;
+  padding: var(--wa-space-3xs, 2px) var(--wa-space-2xs, 4px);
+  box-sizing: border-box;
+
+  &--graph {
+    width: 48px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  &--description {
+    flex: 1;
+    min-width: 0;
+    @include text-ellipsis;
+    color: var(--wa-color-text-normal);
+  }
+
+  &--date {
+    width: 150px;
+    justify-content: center;
+    font-size: var(--wa-font-size-s, 13px);
+    color: var(--wa-color-text-quiet);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* タイムライン線とノード */
+.journal-logs__graph-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.journal-logs__graph-line-top {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 50%;
+  background-color: var(--label-icon-color);
+}
+
+.journal-logs__graph-line-bottom {
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 50%;
+  background-color: var(--label-icon-color);
+}
+
+.journal-logs__graph-node {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--label-icon-color);
+  border: 2px solid var(--wa-color-surface-default);
+  box-sizing: border-box;
+  z-index: 1;
+  transition: transform 0.15s ease;
+}
+
+/* 詳細コンテナ（開閉アコーディオンアニメーション） */
+.journal-logs__detail-container {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  animation: journal-logs-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &--collapsing {
+    animation: journal-logs-detail-collapse 0.28s cubic-bezier(0.25, 1, 0.5, 1)
+      forwards;
+    pointer-events: none;
+  }
+}
+
+/* インライン詳細パネル */
+.journal-logs__detail {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  background-color: var(--wa-color-surface-default);
+  padding: 0 var(--wa-space-xs, 8px) var(--wa-space-xs, 8px) 0;
+  box-sizing: border-box;
+}
+
+.journal-logs__detail-graph {
+  width: 48px;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.journal-logs__graph-line-through {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--label-icon-color);
+}
+
+.journal-logs__detail-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-top: var(--wa-space-xs, 8px);
+  background-color: var(--wa-color-surface-default);
+  border: 1px solid var(--wa-color-surface-border);
+  border-radius: var(--wa-border-radius-m, 6px);
+  overflow: hidden;
+}
+
+/* 空状態 */
+.journal-logs__empty {
+  @include flex-center;
+  flex-direction: column;
+  gap: var(--wa-space-s, 8px);
+  padding: var(--wa-space-2xl, 32px);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s, 13px);
+}
+
+/* 削除確認ダイアログ */
+.journal-logs__delete-dialog {
+  --width: 400px;
+}
+
+/* アコーディオン開閉キーフレームアニメーション */
+@keyframes journal-logs-detail-expand {
+  0% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.15;
+  }
+  100% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes journal-logs-detail-collapse {
+  0% {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  35% {
+    opacity: 0;
+  }
+  100% {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journal-logs__detail-container {
+    animation: none;
+  }
+}

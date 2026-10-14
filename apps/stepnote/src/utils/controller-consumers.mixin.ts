@@ -1,10 +1,16 @@
 import { LitElement } from "lit";
 import { property } from "lit/decorators.js";
 import { consume } from "@lit/context";
-import { labelsContext, taskContext, issuesContext } from "@/contexts/index.js";
+import {
+  labelsContext,
+  taskContext,
+  issuesContext,
+  logsContext,
+} from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
+import type { LogsController } from "@/controllers/logs.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -120,3 +126,35 @@ export function WithIssuesController<T extends LitElementConstructor>(Base: T) {
   }
   return IssuesConsumerClass;
 }
+
+/**
+ * LogsController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける logsController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithLogsController<T extends LitElementConstructor>(Base: T) {
+  class LogsConsumerClass extends Base {
+    private _logsController?: LogsController;
+
+    /** 作業ログ管理コントローラー */
+    public get logsController(): LogsController | undefined {
+      return this._logsController;
+    }
+
+    @consume({ context: logsContext, subscribe: true })
+    @property({ attribute: false })
+    public set logsController(controller: LogsController | undefined) {
+      this._logsController = this.subscriber.bind(
+        "logs",
+        this._logsController,
+        controller,
+      );
+    }
+  }
+  return LogsConsumerClass;
+}
+

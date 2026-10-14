@@ -299,10 +299,16 @@ export abstract class BaseTaskSubItemController<
     if (this._taskId === undefined) {
       return undefined;
     }
-    const newId = await this.repository.add({
+    const now = new Date();
+    const itemData = {
       taskId: this._taskId,
+      createdAt: now,
+      updatedAt: now,
       ...data,
-    } as unknown as Omit<TRecord, "id">);
+    };
+    const newId = await this.repository.add(
+      itemData as unknown as Omit<TRecord, "id">,
+    );
     await this.loadState();
     return newId;
   };
@@ -320,7 +326,14 @@ export abstract class BaseTaskSubItemController<
     id: number,
     data: Partial<Omit<TRecord, "id" | "taskId">>,
   ): Promise<void> => {
-    await this.repository.update(id, data as unknown as Partial<TRecord>);
+    const updateData = {
+      updatedAt: new Date(),
+      ...data,
+    };
+    await this.repository.update(
+      id,
+      updateData as unknown as Partial<TRecord>,
+    );
     await this.loadState();
   };
 

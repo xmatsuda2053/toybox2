@@ -4,10 +4,12 @@ import {
   WithLabelsController,
   WithTaskController,
   WithIssuesController,
+  WithLogsController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
+import type { LogsController } from "@/controllers/logs.controller";
 
 /**
  * テスト仕様一覧:
@@ -22,7 +24,10 @@ import type { IssuesController } from "@/controllers/issues.controller";
  * 4. WithIssuesController Mixin
  *    - issuesController の getter / setter が提供されること
  *    - issuesController 設定時に subscriber.bind が呼び出され、値が保持されること
- * 5. コントローラー解除・再設定時の動作
+ * 5. WithLogsController Mixin
+ *    - logsController の getter / setter が提供されること
+ *    - logsController 設定時に subscriber.bind が呼び出され、値が保持されること
+ * 6. コントローラー解除・再設定時の動作
  *    - 5-1. labelsController に undefined を再設定した際、既存の購読が解除されること
  *    - 5-2. taskController に undefined を再設定した際、既存の購読が解除されること
  *    - 5-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
@@ -93,7 +98,26 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
-  describe("4. コントローラー解除・再設定時の動作", () => {
+  describe("5. WithLogsController Mixin", () => {
+    class DummyLogsElement extends WithLogsController(SubscriberElement) {}
+
+    it("5-1. logsController の getter / setter が提供され、初期値は undefined であること", () => {
+      const el = new DummyLogsElement();
+      expect(el.logsController).toBeUndefined();
+    });
+
+    it("5-2. logsController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
+      const el = new DummyLogsElement();
+      const mockLogsCtrl = {
+        subscribe: vi.fn(),
+      } as unknown as LogsController;
+
+      el.logsController = mockLogsCtrl;
+      expect(el.logsController).toBe(mockLogsCtrl);
+    });
+  });
+
+  describe("6. コントローラー解除・再設定時の動作", () => {
     class DummyConsumerElement extends WithTaskController(
       WithLabelsController(SubscriberElement),
     ) {}

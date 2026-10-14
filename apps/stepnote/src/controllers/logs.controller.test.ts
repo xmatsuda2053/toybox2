@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
 import { LogsController } from "@/controllers/logs.controller";
+import type { LogsRepository } from "@/repositories/logs.repository";
 import type { LogRecord } from "@/db/models/journal.model";
 
 /**
@@ -75,10 +76,12 @@ const createMockHost = () => {
  *    - [x] 3-1. createLog 実行時に新規Logが追加され、新しく採番された ID が返ること
  *    - [x] 3-2. createLog 実行後、state が最新化されて requestUpdate() が呼ばれること
  *    - [x] 3-3. taskId が undefined の場合、createLog を呼び出しても追加処理は行われず undefined が返ること
+ *    - [x] 3-4. createLog 実行時、createdAt および updatedAt が未指定の場合に自動的に現在日時が補完されて登録されること
  *
  * 4. Log 更新・削除 (Log Update & Deletion)
  *    - [x] 4-1. updateLog 実行時に対象Logが更新され、state が更新されて requestUpdate() が呼ばれること
  *    - [x] 4-2. deleteLog 実行時に対象Logが削除され、state が更新されて requestUpdate() が呼ばれること
+ *    - [x] 4-3. updateLog 実行時、updatedAt が自動的に現在日時に更新されること
  *
  * 5. 状態購読（subscribe）の検証
  *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
@@ -115,7 +118,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository(testLogs);
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;
@@ -128,7 +131,7 @@ describe("LogsController (TDD)", () => {
     it("1-2. taskId 未指定時、state は空配列 [] となり、taskId は undefined となり、host.requestUpdate() が呼ばれること", async () => {
       mockHost = createMockHost();
       fakeRepository = new FakeLogsRepository(testLogs);
-      controller = new LogsController(mockHost.host, fakeRepository as any);
+      controller = new LogsController(mockHost.host, fakeRepository as unknown as LogsRepository);
       await controller.initialized;
 
       expect(controller.state).toEqual([]);
@@ -141,7 +144,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository(testLogs);
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;
@@ -156,7 +159,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository(testLogs);
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;
@@ -200,7 +203,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository();
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;
@@ -242,6 +245,25 @@ describe("LogsController (TDD)", () => {
       expect(controller.state).toEqual([]);
       expect(fakeRepository.data).toHaveLength(0);
     });
+
+    it("3-4. createLog 実行時、createdAt および updatedAt が未指定の場合に自動的に現在日時が補完されて登録されること", async () => {
+      const beforeTime = Date.now();
+      const newId = await controller.createLog({
+        value: "日時未指定の新規Log",
+      });
+
+      expect(newId).toBeDefined();
+      const createdItem = controller.state.find((item) => item.id === newId);
+      expect(createdItem).toBeDefined();
+      expect(createdItem?.createdAt).toBeInstanceOf(Date);
+      expect(createdItem?.updatedAt).toBeInstanceOf(Date);
+      expect(createdItem!.createdAt!.getTime()).toBeGreaterThanOrEqual(
+        beforeTime,
+      );
+      expect(createdItem!.updatedAt!.getTime()).toBeGreaterThanOrEqual(
+        beforeTime,
+      );
+    });
   });
 
   describe("4. Log 更新・削除 (Log Update & Deletion)", () => {
@@ -250,7 +272,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository(testLogs);
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;
@@ -271,6 +293,22 @@ describe("LogsController (TDD)", () => {
       expect(controller.state[0].id).toBe(2);
       expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
+
+    it("4-3. updateLog 実行時、updatedAt が自動的に現在日時に更新されること", async () => {
+      // 過去日時のLogを準備
+      const pastDate = new Date("2026-01-01T00:00:00Z");
+      fakeRepository.data[0].updatedAt = pastDate;
+      const beforeUpdate = Date.now();
+
+      await controller.updateLog(1, { value: "更新後のLog" });
+
+      const updatedItem = controller.state.find((item) => item.id === 1);
+      expect(updatedItem).toBeDefined();
+      expect(updatedItem?.updatedAt).toBeInstanceOf(Date);
+      expect(updatedItem!.updatedAt!.getTime()).toBeGreaterThanOrEqual(
+        beforeUpdate,
+      );
+    });
   });
 
   describe("5. 状態購読（subscribe）の検証", () => {
@@ -279,7 +317,7 @@ describe("LogsController (TDD)", () => {
       fakeRepository = new FakeLogsRepository(testLogs);
       controller = new LogsController(
         mockHost.host,
-        fakeRepository as any,
+        fakeRepository as unknown as LogsRepository,
         1,
       );
       await controller.initialized;

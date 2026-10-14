@@ -13,10 +13,11 @@ import { PaneJournal } from "./pane-journal.js";
  *
  * 2. タブ領域 (wa-tab-group) の描画
  *    - 2-1. wa-tab-group 内に Logs, Notes の順で2つのタブ (wa-tab) が存在すること
- *    - 2-2. logs パネル (wa-tab-panel[name="logs"]) 内にプレースホルダー表示 (.pane-journal__placeholder) が存在すること
+ *    - 2-2. logs パネル (wa-tab-panel[name="logs"]) 内に journal-logs コンポーネントが存在すること
  *    - 2-3. notes パネル (wa-tab-panel[name="notes"]) 内にプレースホルダー表示 (.pane-journal__placeholder) が存在すること
  *    - 2-4. wa-tab-group に active 属性がバインドされ、初期値が 'logs' であること
  *    - 2-5. handleTabShow 呼び出しにより activeTab プロパティが更新されること
+ *    - 2-6. journal-logs に theme が伝播（.theme=${this.theme}）されること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート (pane-journal.scss) が存在し、ルートブロック .pane-journal および主要BEMセレクタが定義されていること
@@ -68,13 +69,12 @@ describe("PaneJournal Component", () => {
       expect(htmlStr).toContain(">Notes</wa-tab>");
     });
 
-    it("2-2. logs パネル (wa-tab-panel[name=\"logs\"]) 内にプレースホルダー表示が存在すること", () => {
+    it("2-2. logs パネル (wa-tab-panel[name=\"logs\"]) 内に journal-logs コンポーネントが存在すること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toContain('<wa-tab-panel name="logs"');
-      expect(htmlStr).toContain('class="pane-journal__placeholder"');
-      expect(htmlStr).toContain("Logs Content (準備中)");
+      expect(htmlStr).toContain("<journal-logs");
     });
 
     it("2-3. notes パネル (wa-tab-panel[name=\"notes\"]) 内にプレースホルダー表示が存在すること", () => {
@@ -107,6 +107,14 @@ describe("PaneJournal Component", () => {
       );
 
       expect(element.activeTab).toBe("notes");
+    });
+
+    it("2-6. journal-logs に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
+      element.theme = "dark";
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<journal-logs[^>]*\.theme=["']?dark["']?/);
+      expect(htmlStr).toMatch(/<journal-logs[^>]*data-theme=["']?dark["']?/);
     });
   });
 
