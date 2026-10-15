@@ -15,6 +15,7 @@ import {
 } from "@/utils/controller-consumers.mixin.js";
 import "@/components/task/task-summary.js";
 import "@/components/task/task-property.js";
+import "@/components/issues/issues-view.js";
 import styles from "./task-pane.scss?inline";
 
 /**
@@ -341,10 +342,15 @@ export class TaskPane extends WithIssuesController(
         @wa-tab-show=${this.handleTabShow}
       >
         <wa-tab slot="nav" panel="summary">Summary</wa-tab>
+        <wa-tab slot="nav" panel="issues">Issues</wa-tab>
         <wa-tab slot="nav" panel="property">Property</wa-tab>
 
         <wa-tab-panel name="summary" class="task-pane__tab-panel">
           <task-summary .theme=${this.theme}></task-summary>
+        </wa-tab-panel>
+
+        <wa-tab-panel name="issues" class="task-pane__tab-panel">
+          <issues-view .theme=${this.theme}></issues-view>
         </wa-tab-panel>
 
         <wa-tab-panel name="property" class="task-pane__tab-panel">

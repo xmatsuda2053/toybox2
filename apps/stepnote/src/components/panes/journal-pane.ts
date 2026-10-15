@@ -1,7 +1,6 @@
 import { html, unsafeCSS, type HTMLTemplateResult, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
-import "@/components/issues/issues-view.js";
 import "@/components/logs/logs-view.js";
 import styles from "./journal-pane.scss?inline";
 
@@ -26,7 +25,7 @@ export class JournalPane extends LitElement {
   public theme: string = "light";
 
   @state()
-  public activeTab: string = "issues";
+  public activeTab: string = "notes";
 
   /**
    * タブ切り替えハンドラー
@@ -59,13 +58,8 @@ export class JournalPane extends LitElement {
         active=${this.activeTab}
         @wa-tab-show=${this.handleTabShow}
       >
-        <wa-tab slot="nav" panel="issues">Issues</wa-tab>
         <wa-tab slot="nav" panel="notes">Notes</wa-tab>
         <wa-tab slot="nav" panel="logs">Logs</wa-tab>
-
-        <wa-tab-panel name="issues" class="journal-pane__tab-panel">
-          <issues-view .theme=${this.theme}></issues-view>
-        </wa-tab-panel>
 
         <wa-tab-panel name="notes" class="journal-pane__tab-panel">
           <div class="journal-pane__placeholder">Notes Content (準備中)</div>
