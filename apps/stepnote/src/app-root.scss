@@ -74,8 +74,8 @@
   @include theme-transition;
 }
 
-/* 1. Menu (最左ペイン): 固定サイズ 45px */
-.pane-menu {
+/* 1. Menu (最左メニュー): 固定サイズ 45px */
+.app-menu {
   width: var(--stepnote-pane-menu-width);
   flex-shrink: 0;
   overflow: hidden;
@@ -101,14 +101,14 @@
 }
 
 /* 3. Task List (第3ペイン): 固定サイズ 260px・垂直スクロール */
-.pane-task-list {
+.task-list {
   --pane-target-width: var(--stepnote-pane-task-list-width);
   overflow-y: auto;
   @include pane-border-right;
 }
 
 /* 4. Task (第4ペイン): 残り横幅を Journal と均等分割 (1:1) */
-.pane-task {
+.task-pane {
   flex: 1 1 0%;
   min-width: 0;
   overflow-y: auto;
@@ -116,7 +116,7 @@
 }
 
 /* 5. Journal (第5ペイン): Task と均等分割 (1:1) */
-.pane-journal {
+.journal-pane {
   flex: 1 1 0%;
   min-width: 0;
   overflow-y: auto;

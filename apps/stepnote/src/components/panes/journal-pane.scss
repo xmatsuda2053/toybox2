@@ -1,0 +1,96 @@
+@use "../../styles/mixins.scss" as *;
+@use "./pane-common.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--wa-color-surface-default);
+  @include theme-transition;
+}
+
+.journal-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  @include theme-transition;
+}
+
+.journal-pane__header {
+  @include pane-section-header;
+  box-sizing: border-box;
+  background-color: var(--wa-color-surface-default);
+}
+
+.journal-pane__title {
+  @include pane-section-title;
+  padding: var(--wa-space-3xs, 2px) var(--wa-space-xs, 8px);
+}
+
+.journal-pane__tab-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0 var(--wa-space-xs, 8px) var(--wa-space-xs, 8px);
+  box-sizing: border-box;
+
+  &::part(tab-group) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  &::part(body) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  wa-tab {
+    font-size: var(--wa-font-size-xs, 12px);
+  }
+}
+
+.journal-pane__tab-panel {
+  display: none;
+
+  &[active] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    @include custom-scrollbar;
+    --padding: 0;
+    padding: 0 var(--wa-space-m, 12px) var(--wa-space-l, 16px);
+    box-sizing: border-box;
+
+    &::part(base) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 100%;
+      padding-top: var(--wa-space-l, 16px);
+      box-sizing: border-box;
+    }
+  }
+}
+
+.journal-pane__placeholder {
+  @include flex-center;
+  padding: var(--wa-space-2xl);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+}

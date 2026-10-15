@@ -1,0 +1,38 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+@use "../panes/pane-common.scss" as *;
+
+@include pane-host-layout;
+
+:host {
+  @include theme-transition;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--wa-space-xs, 8px) 0;
+}
+
+.app-menu__primary,
+.app-menu__secondary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  width: 100%;
+}
+
+.app-menu__toggle-btn {
+  @include flex-center;
+}
+
+.app-menu__toggle-icon {
+  display: inline-block;
+  transition: transform 0.2s ease;
+
+  &.is-open {
+    transform: rotate(0deg);
+  }
+
+  &.is-closed {
+    transform: rotate(90deg);
+  }
+}

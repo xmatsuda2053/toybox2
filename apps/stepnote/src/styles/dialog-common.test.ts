@@ -124,11 +124,11 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
 
   describe("4. コンポーネント側での Mixin 適用と直書き重複排除", () => {
     const navLabelsScssPath = new URL(
-      "../components/panes/pane-navigation/navigation-labels.scss",
+      "../components/navigation/navigation-labels.scss",
       import.meta.url,
     );
     const taskCreateDialogScssPath = new URL(
-      "../components/panes/pane-task-list/task-create-dialog.scss",
+      "../components/task-list/task-create-dialog.scss",
       import.meta.url,
     );
 
@@ -170,11 +170,11 @@ describe("dialog-common.scss ダイアログ共通スタイル仕様", () => {
 
   describe("6. SCSS-014: ダイアログ Dark モード共通適用 Mixin 仕様", () => {
     const navLabelsScssPath = new URL(
-      "../components/panes/pane-navigation/navigation-labels.scss",
+      "../components/navigation/navigation-labels.scss",
       import.meta.url,
     );
     const taskCreateDialogScssPath = new URL(
-      "../components/panes/pane-task-list/task-create-dialog.scss",
+      "../components/task-list/task-create-dialog.scss",
       import.meta.url,
     );
 

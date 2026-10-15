@@ -48,14 +48,14 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 3-2. 画面の上下に header および footer 要素がレンダリングされること
  *
  * 【AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)】
- * 4. メニューペイン（pane-menu）の配置と状態連携
- *    - [x] 4-1. panes-container 内に pane-menu コンポーネントがレンダリングされること
- *    - [x] 4-2. isNavigationListAreaOpen の状態（開状態: true）が pane-menu のプロパティへ反映されること
- *    - [x] 4-3. isNavigationListAreaOpen の状態（閉状態: false）が pane-menu のプロパティへ反映されること
+ * 4. メニュー（app-menu）の配置と状態連携
+ *    - [x] 4-1. panes-container 内に app-menu コンポーネントがレンダリングされること
+ *    - [x] 4-2. isNavigationListAreaOpen の状態（開状態: true）が app-menu のプロパティへ反映されること
+ *    - [x] 4-3. isNavigationListAreaOpen の状態（閉状態: false）が app-menu のプロパティへ反映されること
  *
  * 5. パネル非表示レイアウト連動とコラプシブルクラス付与
  *    - [x] 5-1. Navigation ペインおよび Task List ペインに開閉アニメーション用の共通クラス（pane-collapsible）が付与されていること
- *    - [x] 5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List ペイン（pane-task-list）に hidden 属性が付与されること
+ *    - [x] 5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List（task-list）に hidden 属性が付与されること
  *    - [x] 5-3. isNavigationListAreaOpen が true の場合、Navigation ペインおよび Task List ペインに hidden 属性が付与されないこと
  *
  * 【AppRoot Header Theme Switcher 仕様 (Phase 4)】
@@ -181,13 +181,13 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
       // 5ペインのコンテナおよび各ペイン要素の存在確認
       expect(htmlStr).toContain("app-shell");
       expect(htmlStr).toContain("panes-container");
-      expect(htmlStr).toContain("pane-menu");
+      expect(htmlStr).toContain("app-menu");
       expect(htmlStr).toContain("pane-navigation");
-      expect(htmlStr).toContain("pane-task-list");
-      expect(htmlStr).toContain("pane-task");
-      expect(htmlStr).toContain("<pane-task");
-      expect(htmlStr).toContain("pane-journal");
-      expect(htmlStr).toContain("<pane-journal");
+      expect(htmlStr).toContain("task-list");
+      expect(htmlStr).toContain("task-pane");
+      expect(htmlStr).toContain("<task-pane");
+      expect(htmlStr).toContain("journal-pane");
+      expect(htmlStr).toContain("<journal-pane");
 
       // Navigation 内部の上下分割領域の存在確認
       expect(htmlStr).toContain("navigation-quick-access");
@@ -210,20 +210,20 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
     appRoot.layoutUIController.setNavigationListAreaOpen(true);
   });
 
-  describe("4. メニューペイン（pane-menu）の配置と状態連携", () => {
-    it("4-1. panes-container 内に pane-menu コンポーネントがレンダリングされること", () => {
+  describe("4. メニュー（app-menu）の配置と状態連携", () => {
+    it("4-1. panes-container 内に app-menu コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toContain("<pane-menu");
-      expect(htmlStr).toContain('class="pane-menu"');
+      expect(htmlStr).toContain("<app-menu");
+      expect(htmlStr).toContain('class="app-menu"');
     });
 
-    it("4-2. isNavigationListAreaOpen の状態（開状態: true）が pane-menu のプロパティへ反映されること", () => {
+    it("4-2. isNavigationListAreaOpen の状態（開状態: true）が app-menu のプロパティへ反映されること", () => {
       expect(appRoot.layoutUIController.state.isNavigationListAreaOpen).toBe(true);
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toContain(".isNavigationListAreaOpen=true");
     });
 
-    it("4-3. isNavigationListAreaOpen の状態（閉状態: false）が pane-menu のプロパティへ反映されること", () => {
+    it("4-3. isNavigationListAreaOpen の状態（閉状態: false）が app-menu のプロパティへ反映されること", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(false);
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toContain(".isNavigationListAreaOpen=false");
@@ -234,21 +234,21 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
     it("5-1. Navigation ペインおよび Task List ペインに開閉アニメーション用の共通クラス（pane-collapsible）が付与されていること", () => {
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toMatch(/class="[^"]*\bpane-navigation\b[^"]*\bpane-collapsible\b/);
-      expect(htmlStr).toMatch(/class="[^"]*\bpane-task-list\b[^"]*\bpane-collapsible\b/);
+      expect(htmlStr).toMatch(/class="[^"]*\btask-list\b[^"]*\bpane-collapsible\b/);
     });
 
-    it("5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List ペイン（pane-task-list）に hidden 属性が付与されること", () => {
+    it("5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List（task-list）に hidden 属性が付与されること", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(false);
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toMatch(/class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/);
-      expect(htmlStr).toMatch(/class="[^"]*\bpane-task-list\b[^"]*"[^>]*\bhidden\b/);
+      expect(htmlStr).toMatch(/class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/);
     });
 
-    it("5-3. isNavigationListAreaOpen が true の場合、Navigation ペインおよび Task List ペインに hidden 属性が付与されないこと", () => {
+    it("5-3. isNavigationListAreaOpen が true の場合、Navigation ペインおよび Task List に hidden 属性が付与されないこと", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(true);
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).not.toMatch(/class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/);
-      expect(htmlStr).not.toMatch(/class="[^"]*\bpane-task-list\b[^"]*"[^>]*\bhidden\b/);
+      expect(htmlStr).not.toMatch(/class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/);
     });
   });
 });

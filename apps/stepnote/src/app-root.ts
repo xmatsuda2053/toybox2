@@ -23,12 +23,12 @@ import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
 import { ThemeController } from "@/controllers/theme.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
-import "@/components/panes/pane-menu/pane-menu.js";
-import "@/components/panes/pane-navigation/navigation-quick-access.js";
-import "@/components/panes/pane-navigation/navigation-labels.js";
-import "@/components/panes/pane-task-list/pane-task-list.js";
-import "@/components/panes/pane-task/pane-task.js";
-import "@/components/panes/pane-journal/pane-journal.js";
+import "@/components/menu/app-menu.js";
+import "@/components/navigation/navigation-quick-access.js";
+import "@/components/navigation/navigation-labels.js";
+import "@/components/task-list/task-list.js";
+import "@/components/panes/task-pane.js";
+import "@/components/panes/journal-pane.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -240,12 +240,12 @@ export class AppRoot extends LitElement {
   ): HTMLTemplateResult {
     return html`
       <div class="panes-container">
-        <!-- 1. Menu ペイン (最左ペイン: 固定 45px) -->
-        <pane-menu
-          class="pane-menu"
+        <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
+        <app-menu
+          class="app-menu"
           data-theme=${resolvedTheme}
           .isNavigationListAreaOpen=${isOpen}
-        ></pane-menu>
+        ></app-menu>
 
         <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
         <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
@@ -259,21 +259,21 @@ export class AppRoot extends LitElement {
           ></navigation-labels>
         </aside>
 
-        <!-- 3. Task List ペイン (第3ペイン) -->
-        <pane-task-list
-          class="pane-task-list pane-collapsible"
+        <!-- 3. Task List (第3ペイン) -->
+        <task-list
+          class="task-list pane-collapsible"
           data-theme=${resolvedTheme}
           ?hidden=${!isOpen}
-        ></pane-task-list>
+        ></task-list>
 
         <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
-        <main class="pane-task">
-          <pane-task data-theme=${resolvedTheme}></pane-task>
+        <main class="task-pane">
+          <task-pane data-theme=${resolvedTheme}></task-pane>
         </main>
 
         <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-        <aside class="pane-journal">
-          <pane-journal data-theme=${resolvedTheme}></pane-journal>
+        <aside class="journal-pane">
+          <journal-pane data-theme=${resolvedTheme}></journal-pane>
         </aside>
       </div>
     `;
