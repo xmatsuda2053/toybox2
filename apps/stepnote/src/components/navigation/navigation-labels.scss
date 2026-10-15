@@ -1,0 +1,259 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+@use "../../styles/dialog-common.scss" as *;
+@use "../panes/pane-common.scss" as *;
+
+@include pane-host-layout;
+
+
+.labels__container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.labels__header {
+  flex-shrink: 0;
+}
+
+.labels__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+}
+
+.labels__btn-clear {
+  @include flex-center;
+
+  wa-icon {
+    font-size: 0.9em;
+  }
+}
+
+.labels__btn-add {
+  @include flex-center;
+
+  wa-icon {
+    font-size: 1.15em;
+  }
+}
+
+.labels__content {
+  @include pane-scrollable-content;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ラベルボタン共通スタイル（Quick Access ボタン同等のスタイル再現） */
+.labels__btn {
+  width: 100%;
+  @include flex-between;
+  box-sizing: border-box;
+  padding-block: var(--wa-space-2xs);
+  padding-inline: var(--wa-space-xs);
+  border-radius: var(--wa-border-radius-m, 4px);
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--wa-color-neutral-on-quiet, inherit);
+  font-family: inherit;
+  font-size: var(--wa-font-size-m);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+
+  &:focus-visible {
+    outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
+    outline-offset: 1px;
+  }
+}
+
+/* ラベルボタン・アクティブ状態 */
+.labels__btn.is-active {
+  font-weight: 600;
+  color: var(--wa-color-neutral-on-normal);
+  background-color: var(--wa-color-neutral-fill-normal);
+
+  &:hover {
+    background-color: var(
+      --wa-color-neutral-fill-normal-hover,
+      color-mix(
+        in oklab,
+        var(--wa-color-neutral-fill-normal),
+        var(--wa-color-mix-hover)
+      )
+    );
+  }
+}
+
+.is-active .labels__icon {
+  color: var(--label-icon-active-color);
+
+  &.type-caret {
+    color: inherit;
+  }
+}
+
+.is-active .labels__btn-menu {
+  opacity: 0.9;
+  color: var(--label-menu-trigger-active-color);
+}
+
+.labels__btn-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.labels__icons {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.labels__icon {
+  font-size: var(--wa-font-size-m);
+  color: var(--label-icon-color);
+
+  &.type-caret {
+    font-size: var(--wa-font-size-xs, 11px);
+    color: inherit;
+  }
+}
+
+.labels__text {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+  text-align: left;
+}
+
+.labels__menu-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--wa-space-3xs, 2px);
+}
+
+.labels__btn-menu {
+  opacity: 0.8;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  color: var(--label-menu-trigger-color);
+  border-radius: var(--wa-border-radius-s, 4px);
+
+  &::part(base) {
+    padding: 0;
+    min-height: auto;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+  }
+
+  wa-icon {
+    font-size: var(--wa-font-size-xs, 12px);
+    color: inherit;
+  }
+
+  &:hover {
+    opacity: 1;
+    color: var(--label-menu-trigger-hover-color);
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+.labels__empty-message {
+  padding: var(--wa-space-m, 16px) var(--wa-space-s, 12px);
+  font-size: var(--wa-font-size-xs, 12px);
+  color: var(--wa-color-text-subtle);
+  text-align: center;
+  user-select: none;
+}
+
+/* ==========================================================================
+   ドロップダウンメニューのスタイリング（Light既定）
+   ========================================================================== */
+wa-dropdown {
+  --wa-color-text-normal: var(--stepnote-dropdown-color);
+  --wa-color-neutral-fill-normal: var(--stepnote-dropdown-item-hover-bg);
+  --wa-color-danger-on-quiet: var(--stepnote-dropdown-danger-color);
+
+  &::part(menu) {
+    background-color: var(--stepnote-dropdown-bg);
+    border: 1px solid var(--stepnote-dropdown-border);
+    border-radius: var(--wa-border-radius-m, 6px);
+    box-shadow: var(--stepnote-dropdown-shadow);
+    color: var(--stepnote-dropdown-color);
+  }
+}
+
+wa-dropdown-item {
+  color: var(--stepnote-dropdown-color);
+  font-size: var(--wa-font-size-sm);
+
+  wa-icon {
+    color: var(--stepnote-dropdown-item-icon-color);
+  }
+}
+
+wa-dropdown-item[variant="danger"] {
+  color: var(--stepnote-dropdown-danger-color);
+
+  wa-icon {
+    color: var(--stepnote-dropdown-danger-color);
+  }
+}
+
+/* ==========================================================================
+   ダイアログスタイル（Light既定）
+   ========================================================================== */
+wa-dialog {
+  @include dialog-surface;
+}
+
+.dialog-form {
+  @include dialog-form-layout;
+}
+
+.dialog-field {
+  @include dialog-field-layout;
+}
+
+.dialog-footer {
+  @include dialog-footer-layout;
+}
+
+.delete-dialog-message {
+  font-size: var(--wa-font-size-m);
+  color: var(--stepnote-dialog-body-color);
+  line-height: 1.6;
+  padding-block: var(--wa-space-s, 12px);
+
+  strong {
+    color: var(--stepnote-dialog-title-color);
+    font-weight: 700;
+  }
+}
+
+/* ==========================================================================
+   Dark モード時のダイアログ（独立サーフェス・高コントラスト）
+   ========================================================================== */
+@include dialog-dark-theme(".dialog-field");

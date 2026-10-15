@@ -1,0 +1,44 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+@use "../../styles/dialog-common.scss" as *;
+@use "../panes/pane-common.scss" as *;
+
+@include box-sizing-reset;
+
+:host {
+  @include theme-transition;
+  display: block;
+}
+
+/* ==========================================================================
+   Task Create Dialog スタイル（Light 既定）
+   ========================================================================== */
+wa-dialog {
+  @include dialog-surface;
+}
+
+.task-create-dialog {
+  display: block;
+}
+
+.task-create-dialog__form {
+  @include dialog-form-layout;
+}
+
+.task-create-dialog__field {
+  @include dialog-field-layout;
+}
+
+.task-create-dialog__actions {
+  @include dialog-footer-layout;
+}
+
+.task-create-dialog__btn-cancel,
+.task-create-dialog__btn-submit {
+  min-width: 80px;
+}
+
+/* ==========================================================================
+   Dark モード時のダイアログ（独立サーフェス・高コントラスト）
+   ========================================================================== */
+@include dialog-dark-theme(".task-create-dialog__field");

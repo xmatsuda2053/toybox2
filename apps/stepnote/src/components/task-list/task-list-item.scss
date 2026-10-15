@@ -1,0 +1,181 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  @include theme-transition;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 4px;
+}
+
+@include box-sizing-reset;
+
+@media (prefers-reduced-motion: reduce) {
+  :host,
+  .task-list-item,
+  .task-list-item__btn-bookmark {
+    transition: none;
+  }
+}
+
+.task-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 8px var(--wa-space-xs, 8px);
+  border-radius: var(--wa-border-radius-m, 4px);
+  border: 1px solid var(--wa-color-surface-border);
+  background-color: var(--wa-color-surface-default);
+  color: var(--wa-color-text-normal);
+  font-family: var(--wa-font-family-body);
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+  transition: var(--stepnote-transition-theme);
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+.task-list-item--selected {
+  background-color: var(--wa-color-neutral-fill-normal);
+  border-color: var(--wa-color-brand-60);
+  border-left: 3px solid var(--wa-color-brand-60);
+  padding-left: calc(var(--wa-space-xs, 8px) - 2px);
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-normal-hover);
+  }
+}
+
+.task-list-item__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.task-list-item__row--header {
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.task-list-item__row--meta {
+  gap: 5px;
+  font-size: 13px;
+  color: var(--wa-color-text-quiet);
+  line-height: 1.25;
+}
+
+.task-list-item__status-icon {
+  flex-shrink: 0;
+  width: 15px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-list-item__status-icon--pending {
+  color: var(--quick-access-icon-pending);
+}
+
+.task-list-item__status-icon--progress {
+  color: var(--quick-access-icon-progress);
+}
+
+.task-list-item__status-icon--done {
+  color: var(--quick-access-icon-done);
+}
+
+.task-list-item__title {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.task-list-item__label {
+  flex: 1;
+  min-width: 0;
+  display: inline-block;
+  @include text-ellipsis;
+}
+
+.task-list-item__btn-bookmark {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: var(--stepnote-transition-theme);
+
+  &:hover .task-list-item__bookmark-icon {
+    color: var(--quick-access-icon-active-bookmark);
+  }
+}
+
+.task-list-item__bookmark-icon {
+  color: var(--wa-color-text-quiet);
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  transition: var(--stepnote-transition-theme);
+}
+
+.task-list-item__btn-bookmark--active {
+  color: var(--quick-access-icon-active-bookmark);
+}
+
+.task-list-item__bookmark-icon--active {
+  color: var(--quick-access-icon-active-bookmark);
+}
+
+.task-list-item__due-date {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.task-list-item__due-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-list-item__due-icon--overdue {
+  color: var(--quick-access-icon-overdue);
+}
+
+.task-list-item__due-icon--asap {
+  color: var(--quick-access-icon-asap);
+}
+
+.task-list-item__due-icon--upcoming {
+  color: var(--quick-access-icon-upcoming);
+}
+
+.task-list-item__issues-progress {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wa-color-text-quiet);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-list-item__divider {
+  --color: var(--wa-color-text-quiet);
+  --spacing: 0;
+  height: 11px;
+  align-self: center;
+}

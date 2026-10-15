@@ -76,7 +76,7 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
       const paneTransitionPattern =
         /(?:transition:\s*var\(--stepnote-transition-theme\)|@include\s+theme-transition|@include\s+pane-border-right)/;
 
-      const paneMenuMatch = appRootScss.match(/\.pane-menu\s*\{[\s\S]*?\}/);
+      const paneMenuMatch = appRootScss.match(/\.app-menu\s*\{[\s\S]*?\}/);
       expect(paneMenuMatch).not.toBeNull();
       expect(paneMenuMatch![0]).toMatch(paneTransitionPattern);
 
@@ -86,12 +86,12 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
       expect(paneNavMatch).not.toBeNull();
       expect(paneNavMatch![0]).toMatch(paneTransitionPattern);
 
-      const paneTaskMatch = appRootScss.match(/\.pane-task\s*\{[\s\S]*?\}/);
+      const paneTaskMatch = appRootScss.match(/\.task-pane\s*\{[\s\S]*?\}/);
       expect(paneTaskMatch).not.toBeNull();
       expect(paneTaskMatch![0]).toMatch(paneTransitionPattern);
 
       const paneJournalMatch = appRootScss.match(
-        /\.pane-journal\s*\{[\s\S]*?\}/,
+        /\.journal-pane\s*\{[\s\S]*?\}/,
       );
       expect(paneJournalMatch).not.toBeNull();
       expect(paneJournalMatch![0]).toMatch(paneTransitionPattern);
@@ -107,10 +107,10 @@ describe("テーマ切替トランジション仕様 (Theme Transition)", () => 
       expect(collapsibleMatch![0]).toMatch(/width/);
     });
 
-    it("app-root.scss において .pane-collapsible が個別ペイン（.pane-navigation, .pane-task-list）より後に定義され、開閉トランジションが上書きされないこと", () => {
+    it("app-root.scss において .pane-collapsible が個別ペイン（.pane-navigation, .task-list）より後に定義され、開閉トランジションが上書きされないこと", () => {
       const collapsibleIndex = appRootScss.indexOf(".pane-collapsible {");
       const navigationIndex = appRootScss.indexOf(".pane-navigation {");
-      const taskListIndex = appRootScss.indexOf(".pane-task-list {");
+      const taskListIndex = appRootScss.indexOf(".task-list {");
 
       expect(collapsibleIndex).toBeGreaterThan(-1);
       expect(navigationIndex).toBeGreaterThan(-1);
