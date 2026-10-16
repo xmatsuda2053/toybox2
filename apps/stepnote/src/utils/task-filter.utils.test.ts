@@ -10,6 +10,9 @@ import {
   toDueDateTimestamp,
   compareDueDates,
   filterIssuesByKeyword,
+  extractIssueTitle,
+  parseBulkIssuesInput,
+  groupAndSortIssues,
 } from "./task-filter.utils";
 
 /**
@@ -40,6 +43,19 @@ import {
  *    - タイトルにキーワードが含まれるIssueを抽出できること（大文字小文字無視）
  *    - 本文（value）にキーワードが含まれるIssueを抽出できること（大文字小文字無視）
  *    - タイトル・本文のいずれにも合致しないIssueは除外されること
+ * 7. extractIssueTitle
+ *    - Markdown本文の1行目からタイトル文字列を抽出すること
+ *    - 先頭の Markdown 見出し記号（# 等）は除外されること
+ *    - 空文字または無効値の場合は (無題のIssue) を返すこと
+ * 8. parseBulkIssuesInput
+ *    - 改行区切りのテキストから1行ずつのタイトル配列を抽出すること
+ *    - 空行や空白文字のみの行を除外すること
+ *    - 前後の余白（空白）がトリムされること
+ *    - 有効な行が存在しない場合は空配列を返すこと
+ * 9. groupAndSortIssues
+ *    - 未完了Issue（statusCode !== 9）と完了Issue（statusCode === 9）に分離されること
+ *    - 未完了・完了のそれぞれの中で期日昇順・五十音順でソートされること
+ *    - 該当するIssueが存在しないグループは空配列となること
  */
 
 describe("task-filter.utils", () => {
@@ -362,5 +378,105 @@ describe("task-filter.utils", () => {
       expect(result).toHaveLength(0);
     });
   });
+
+  describe("extractIssueTitle", () => {
+    it("Markdown本文の1行目からタイトル文字列を抽出すること", () => {
+      const md = "Issueのタイトル\n\nここから詳細な本文が続きます。";
+      expect(extractIssueTitle(md)).toBe("Issueのタイトル");
+    });
+
+    it("先頭の Markdown 見出し記号（# 等）は除外されること", () => {
+      expect(extractIssueTitle("# メインタイトル\n本文")).toBe("メインタイトル");
+      expect(extractIssueTitle("###   スペース付き見出し\n本文")).toBe("スペース付き見出し");
+    });
+
+    it("空文字または無効値の場合は (無題のIssue) を返すこと", () => {
+      expect(extractIssueTitle("")).toBe("(無題のIssue)");
+      expect(extractIssueTitle("   ")).toBe("(無題のIssue)");
+      expect(extractIssueTitle("### ")).toBe("(無題のIssue)");
+      expect(extractIssueTitle(undefined as unknown as string)).toBe("(無題のIssue)");
+    });
+  });
+
+  describe("parseBulkIssuesInput", () => {
+    it("改行区切りのテキストから1行ずつのタイトル配列を抽出すること", () => {
+      const text = "タスク1\nタスク2\nタスク3";
+      expect(parseBulkIssuesInput(text)).toEqual(["タスク1", "タスク2", "タスク3"]);
+    });
+
+    it("空行や空白文字のみの行を除外すること", () => {
+      const text = "タスク1\n\n  \nタスク2\n\nタスク3\n";
+      expect(parseBulkIssuesInput(text)).toEqual(["タスク1", "タスク2", "タスク3"]);
+    });
+
+    it("前後の余白（空白）がトリムされること", () => {
+      const text = "  タスク1  \n\tタスク2\t";
+      expect(parseBulkIssuesInput(text)).toEqual(["タスク1", "タスク2"]);
+    });
+
+    it("有効な行が存在しない場合は空配列を返すこと", () => {
+      expect(parseBulkIssuesInput("")).toEqual([]);
+      expect(parseBulkIssuesInput("   \n\n  \t  ")).toEqual([]);
+    });
+  });
+
+  describe("groupAndSortIssues", () => {
+    const mixedIssues: IssueRecord[] = [
+      {
+        id: 1,
+        taskId: 10,
+        title: "未完了タスクB",
+        value: "",
+        statusCode: 0,
+        dueDate: new Date("2026-05-10"),
+      },
+      {
+        id: 2,
+        taskId: 10,
+        title: "完了タスクA",
+        value: "",
+        statusCode: 9,
+        dueDate: new Date("2026-05-02"),
+      },
+      {
+        id: 3,
+        taskId: 10,
+        title: "未完了タスクA",
+        value: "",
+        statusCode: 5,
+        dueDate: new Date("2026-05-01"),
+      },
+      {
+        id: 4,
+        taskId: 10,
+        title: "完了タスクB",
+        value: "",
+        statusCode: 9,
+        dueDate: new Date("2026-05-05"),
+      },
+    ];
+
+    it("未完了Issue（statusCode !== 9）と完了Issue（statusCode === 9）に分離されること", () => {
+      const { openIssues, completedIssues } = groupAndSortIssues(mixedIssues);
+      expect(openIssues).toHaveLength(2);
+      expect(completedIssues).toHaveLength(2);
+      expect(openIssues.every((i) => i.statusCode !== 9)).toBe(true);
+      expect(completedIssues.every((i) => i.statusCode === 9)).toBe(true);
+    });
+
+    it("未完了・完了のそれぞれの中で期日昇順・五十音順でソートされること", () => {
+      const { openIssues, completedIssues } = groupAndSortIssues(mixedIssues);
+      expect(openIssues.map((i) => i.id)).toEqual([3, 1]); // 5/1 -> 5/10
+      expect(completedIssues.map((i) => i.id)).toEqual([2, 4]); // 5/2 -> 5/5
+    });
+
+    it("該当するIssueが存在しないグループは空配列となること", () => {
+      const allOpen = [mixedIssues[0], mixedIssues[2]];
+      const result = groupAndSortIssues(allOpen);
+      expect(result.openIssues).toHaveLength(2);
+      expect(result.completedIssues).toEqual([]);
+    });
+  });
 });
+
 

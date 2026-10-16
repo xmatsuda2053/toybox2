@@ -24,6 +24,14 @@ class FakeIssuesRepository {
     return id;
   }
 
+  async bulkAdd(items: Array<Omit<IssueRecord, "id">>): Promise<number[]> {
+    return items.map((item) => {
+      const id = this.data.length + 1;
+      this.data.push({ id, ...item });
+      return id;
+    });
+  }
+
   async update(
     id: number,
     partial: Partial<Omit<IssueRecord, "id">>,
@@ -75,6 +83,8 @@ const createMockHost = () => {
  *    - [x] 3-1. createIssue 実行時に新規Issueが追加され、新しく採番された ID が返ること
  *    - [x] 3-2. createIssue 実行後、state が最新化されて requestUpdate() が呼ばれること
  *    - [x] 3-3. taskId が undefined の場合、createIssue を呼び出しても追加処理は行われず undefined が返ること
+ *    - [x] 3-4. createMultipleIssues 実行時に複数タイトルからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること
+ *    - [x] 3-5. taskId が undefined またはタイトル配列が空の場合、createMultipleIssues は何も作成しないこと
  *
  * 4. Issue 更新・削除 (Issue Update & Deletion)
  *    - [x] 4-1. updateIssue 実行時に対象Issueが更新され、state が更新されて requestUpdate() が呼ばれること
@@ -258,6 +268,30 @@ describe("IssuesController (TDD)", () => {
       expect(result).toBeUndefined();
       expect(controller.state).toEqual([]);
       expect(fakeRepository.data).toHaveLength(0);
+    });
+
+    it("3-4. createMultipleIssues 実行時に複数タイトルからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること", async () => {
+      const titles = ["一括タスク1", "一括タスク2"];
+      const customDueDate = new Date("2026-07-01");
+
+      await controller.createMultipleIssues(titles, customDueDate);
+
+      expect(controller.state).toHaveLength(2);
+      expect(controller.state[0].title).toBe("一括タスク1");
+      expect(controller.state[0].value).toBe("### 一括タスク1\n\n");
+      expect(controller.state[0].dueDate).toEqual(customDueDate);
+      expect(controller.state[0].statusCode).toBe(0);
+      expect(controller.state[1].title).toBe("一括タスク2");
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+    });
+
+    it("3-5. taskId が undefined またはタイトル配列が空の場合、createMultipleIssues は何も作成しないこと", async () => {
+      await controller.createMultipleIssues([]);
+      expect(controller.state).toHaveLength(0);
+
+      await controller.setTaskId(undefined);
+      await controller.createMultipleIssues(["タイトル"]);
+      expect(controller.state).toHaveLength(0);
     });
   });
 

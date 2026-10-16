@@ -171,6 +171,12 @@ export class DatePickerInput extends LitElement {
   public name: string = "";
 
   /**
+   * 枠線および背景を非表示にするフラグ（一覧行などでのインライン表示向け）
+   */
+  @property({ type: Boolean, reflect: true })
+  public borderless: boolean = false;
+
+  /**
    * カレンダー表示中の年
    */
   @state()

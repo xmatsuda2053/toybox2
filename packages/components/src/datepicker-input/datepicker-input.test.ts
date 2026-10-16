@@ -24,6 +24,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 2-7. label プロパティが wa-input の label 属性へ反映されること
  *    - 2-8. required プロパティが wa-input の required 属性へ反映されること
  *    - 2-9. label プロパティが未指定の場合、wa-input に label 属性が付与されず、空ラベルによる上部余白が発生しないこと
+ *    - 2-10. borderless プロパティ（デフォルト false）をサポートし、true を設定可能なこと
  *
  * 3. カレンダーナビゲーション操作（Navigation Handling）
  *    - 3-1. 前月操作（handlePrevMonth）により表示年月が1ヶ月前へ更新されること
@@ -42,6 +43,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 5-2. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）
  *    - 5-3. SCSSスタイルシートにおいてセレクタの深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  *    - 5-4. SCSSスタイルシートにおいて :host の display が block に設定され、インラインブロックによる不要な上部余白が抑止されていること
+ *    - 5-5. SCSSスタイルシートにおいて :host([borderless]) が定義され、--wa-form-control-border-color: transparent および --wa-form-control-background-color: transparent が設定されていること
  */
 
 describe("DatePickerInput Component", () => {
@@ -167,6 +169,12 @@ describe("DatePickerInput Component", () => {
       expect(rendered).not.toContain("label=''");
       expect(rendered).not.toMatch(/<wa-input[^>]*\blabel=/);
     });
+
+    it("2-10. borderless プロパティ（デフォルト false）をサポートし、true を設定可能なこと", () => {
+      expect(element.borderless).toBe(false);
+      element.borderless = true;
+      expect(element.borderless).toBe(true);
+    });
   });
 
   describe("3. カレンダーナビゲーション操作（Navigation Handling）", () => {
@@ -290,6 +298,14 @@ describe("DatePickerInput Component", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toMatch(/:host\s*\{[^}]*\bdisplay:\s*block;/);
       expect(scssContent).not.toMatch(/:host\s*\{[^}]*\bdisplay:\s*inline-block;/);
+    });
+
+    it("5-5. SCSSスタイルシートにおいて :host([borderless]) が定義され、--wa-form-control-border-color: transparent および --wa-form-control-background-color: transparent が設定されていること", () => {
+      const scssPath = new URL("./datepicker-input.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(
+        /:host\(\[borderless\]\)\s*\{[^}]*--wa-form-control-border-color:\s*transparent;[^}]*--wa-form-control-background-color:\s*transparent;/,
+      );
     });
   });
 

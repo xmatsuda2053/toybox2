@@ -10,6 +10,11 @@
   --datepicker-weekend-color: var(--wa-color-pink-50, #c84382);
 }
 
+:host([borderless]) {
+  --wa-form-control-border-color: transparent;
+  --wa-form-control-background-color: transparent;
+}
+
 :host-context(.wa-dark),
 :host-context([data-theme="dark"]) {
   --datepicker-weekend-color: var(--wa-color-pink-60, #da6e74);
