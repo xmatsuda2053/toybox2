@@ -313,11 +313,12 @@ export class TaskProperty extends WithIssuesController(
           <div class="task-property">
             ${this.renderCreatedAtField(task)}
             ${this.renderUpdatedAtField(task)}
-            ${this.renderFiscalYearField(task)}
-            ${this.renderLabelField(task)}
             ${this.renderIssuesCountField()}
             ${this.renderNotesCountField()}
             ${this.renderLogsCountField()}
+            <wa-divider class="task-property__divider"></wa-divider>
+            ${this.renderFiscalYearField(task)}
+            ${this.renderLabelField(task)}
           </div>
         `
       : this.renderEmptyState();

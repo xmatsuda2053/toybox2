@@ -60,6 +60,7 @@ import { TaskProperty } from "./task-property.js";
  *    - 7-4. 各コントローラーの state が空または undefined の場合、0件と表示されること
  *    - 7-5. 各フィールドの slot="start" に対応するアイコン（list-check-solid-full, pen-to-square-solid-full, code-branch-solid-full）が出力されること
  *    - 7-6. issuesController, notesController, logsController 設定時にそれぞれ subscribe が呼び出されること
+ *    - 7-7. 変更不可項目（作成日時、更新日時、課題、メモ、履歴）が上部に配置され、wa-divider で区切られて変更可能項目（年度、ラベル）が下部に配置されていること
  */
 describe("TaskProperty Component", () => {
   let element: TaskProperty;
@@ -514,6 +515,38 @@ describe("TaskProperty Component", () => {
       expect(unsubscribeIssuesMock).toHaveBeenCalled();
       expect(unsubscribeNotesMock).toHaveBeenCalled();
       expect(unsubscribeLogsMock).toHaveBeenCalled();
+    });
+
+    it("7-7. 変更不可項目（作成日時、更新日時、課題、メモ、履歴）が上部に配置され、wa-divider で区切られて変更可能項目（年度、ラベル）が下部に配置されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const createdAtIdx = htmlStr.indexOf("task-property__input--created-at");
+      const updatedAtIdx = htmlStr.indexOf("task-property__input--updated-at");
+      const issuesIdx = htmlStr.indexOf("task-property__input--issues-count");
+      const notesIdx = htmlStr.indexOf("task-property__input--notes-count");
+      const logsIdx = htmlStr.indexOf("task-property__input--logs-count");
+      const dividerIdx = htmlStr.indexOf("<wa-divider");
+      const fiscalYearIdx = htmlStr.indexOf("task-property__fiscal-year-select");
+      const labelIdx = htmlStr.indexOf("task-property__label-select");
+
+      expect(createdAtIdx).toBeGreaterThan(-1);
+      expect(updatedAtIdx).toBeGreaterThan(-1);
+      expect(issuesIdx).toBeGreaterThan(-1);
+      expect(notesIdx).toBeGreaterThan(-1);
+      expect(logsIdx).toBeGreaterThan(-1);
+      expect(dividerIdx).toBeGreaterThan(-1);
+      expect(fiscalYearIdx).toBeGreaterThan(-1);
+      expect(labelIdx).toBeGreaterThan(-1);
+
+      // 変更不可項目はすべて divider より前にあること
+      expect(createdAtIdx).toBeLessThan(dividerIdx);
+      expect(updatedAtIdx).toBeLessThan(dividerIdx);
+      expect(issuesIdx).toBeLessThan(dividerIdx);
+      expect(notesIdx).toBeLessThan(dividerIdx);
+      expect(logsIdx).toBeLessThan(dividerIdx);
+
+      // 変更可能項目はすべて divider より後にあること
+      expect(fiscalYearIdx).toBeGreaterThan(dividerIdx);
+      expect(labelIdx).toBeGreaterThan(dividerIdx);
     });
   });
 });
