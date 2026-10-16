@@ -12,52 +12,53 @@ import { IssuesView } from "./issues-view.js";
  * 【IssuesView 仕様 (課題管理コンポーネント)】
  *
  * 1. 初期描画と空状態 (Initial Render & Empty State)
- *    - 1-1. 初期表示ビューモードは一覧（viewMode = 'list'）であること
- *    - 1-2. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること
- *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add）およびテキストを省略してツールチップ（wa-tooltip）を連携した完了スイッチ（wa-switch#issues-view-toggle-completed）が省スペースに表示されること
- *    - 1-4. 一覧ヘッダー上部にタスク名（.issues-view__task-name）が表示されないこと
- *    - 1-5. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること
+ *    - 1-1. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること
+ *    - 1-2. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること
+ *    - 1-3. 一覧ヘッダーに単一追加ボタン（.issues-view__btn-add）および一括追加ボタン（.issues-view__btn-bulk-add）が表示されること
+ *    - 1-4. 完了表示切り替えスイッチ（#issues-view-toggle-completed）が存在しないこと（廃止）
  *
- * 2. 一覧表示と完了フィルター (List View & Filter)
- *    - 2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.issues-view__item）として描画されること
- *    - 2-2. デフォルト（showCompleted = false）の場合、完了済み Issue（statusCode: 9）は一覧から除外されること
- *    - 2-3. showCompleted = true の場合、完了済み Issue（statusCode: 9）も一覧に表示されること
- *    - 2-4. 一覧上のステータス変更操作で issuesController.updateIssue が呼び出されること
- *    - 2-5. wa-switch の変更ハンドラー（handleToggleShowCompleted）により showCompleted がトグル・同期されること
- *    - 2-6. 一覧のIssueアイテムが期限日（dueDate）の昇順でソートされて描画されること
- *    - 2-7. search-input の search-input イベントにより searchKeyword が更新され、タイトルまたは本文で Issue が絞り込まれること
- *    - 2-8. 検索キーワードのクリア時（keyword: ""）に検索絞り込みが解除され、全件が表示されること
+ * 2. 一覧セクション表示と進捗可視化 (Sections & List View)
+ *    - 2-1. 未完了Issue（statusCode !== 9）と完了Issue（statusCode === 9）が、それぞれのセクション見出し（.issues-view__section-header）および区切り線（wa-divider.issues-view__divider）で区切られて描画されること
+ *    - 2-2. 未完了セクション見出しに未完了件数（未完了 (2)）、完了セクション見出しに完了件数（完了 (1)）が表示されること
+ *    - 2-3. 未完了・完了のそれぞれの中で期日昇順（期限の近い順）にソートされて描画されること
+ *    - 2-4. 各Issueアイテム（.issues-view__item）にステータスアイコン、タイトル、datepicker-input（.issues-view__item-due）が描画され、borderless 属性が指定されていること
+ *    - 2-5. 検索キーワード入力（search-input）により、タイトルまたは本文でIssueが絞り込まれてセクション表示されること
  *
- * 3. 画面遷移（一覧 ⇔ 詳細） (View Switching)
- *    - 3-1. 一覧ヘッダーの「+ 追加」ボタンクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、新規Issue編集状態になること
- *    - 3-2. 一覧のアイテムクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、該当Issueの編集状態になること
- *    - 3-3. 詳細ビューの戻るボタン（.issues-view__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること
+ * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
+ *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
+ *    - 3-2. アイテム内の datepicker-input で日付変更（datepicker-change）した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
+ *    - 3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger="hover" が設定され、「ステータスを変更」と表示されること
  *
- * 4. 詳細ビューの構成と編集・自動保存 (Detail View & Auto-save)
- *    - 4-1. 詳細ヘッダー（.issues-view__detail-header）内に戻るボタンとステータス変更UI（.issues-view__status-dropdown）が表示され、独立した削除ボタン（.issues-view__btn-delete）が存在しないこと
- *    - 4-2. フォーム内のタイトル入力に @input が設定され、期日入力、Markdownエディタが表示されること
- *    - 4-3. Markdownエディタ（markdown-editor-preview）に .mode がバインドされ、新規作成時は 'edit' を維持すること
- *    - 4-4. ステータスドロップダウン内に完了項目の後 wa-divider が配置され、その下に削除項目（value="delete", variant="danger", trash-solid-full アイコン）が配置されること
- *    - 4-5. ドロップダウンでステータス値選択時は handleStatusChange が走り、'delete' 選択時は削除確認ダイアログが開くこと
- *    - 4-9. ドロップダウン内の削除項目選択で確認ダイアログ（wa-dialog）が表示され、確認後に issuesController.deleteIssue が実行されること
- *    - 4-12. タイトル入力フィールドに @input だけでなく @change および @blur がバインドされていること
- *    - 4-13. 新規作成時、タイトル変更時（handleTitleChange）に debounce を待たず即座に createIssue が呼び出されること
- *    - 4-14. 新規作成時（editingIssueId 未設定）、ステータスを完了（9）に変更した際に即座に createIssue が呼び出され、statusCode: 9 で保存されること
- *    - 4-15. 既存編集時、ステータスを完了（9）に変更した際に即座に updateIssue が呼び出されること
+ * 4. インライン詳細アコーディオン展開と編集・自動保存・削除 (Inline Detail & Auto-save)
+ *    - 4-1. Issue行（.issues-view__item）クリックで該当Issueがインライン詳細（.issues-view__detail-container）として展開され、Markdownエディタ（markdown-editor-preview）が表示されること
+ *    - 4-2. 展開中のIssue行を再度クリックすると折りたたまれること（トグル展開）
+ *    - 4-3. 別のIssue行をクリックすると、前の展開行が閉じ、新しくクリックした行が開くこと（排他展開）
+ *    - 4-4. インライン詳細にはタイトル入力欄や期日入力欄が含まれず、Markdownエディタのみであること
+ *    - 4-5. Markdownエディタの内容変更（markdown-change）により、300msデバウンスを経て issuesController.updateIssue が title（1行目から抽出）と value で呼び出されること
+ *    - 4-6. Markdownエディタの削除要求（markdown-delete）で削除確認ダイアログ（wa-dialog）が開き、確認後に issuesController.deleteIssue が実行され、詳細が閉じること
+ *    - 4-7. 各Issue行（.issues-view__item）とインライン詳細（.issues-view__detail-container）が一体化ラッパー（.issues-view__row-group）に内包され、不要な余白なく連結描画されること
  *
- * 5. BEM設計およびSCSSスタイルの検証
- *    - 5-1. SCSSスタイルシート（issues-view.scss）が存在し、ルートブロック .issues-view が定義されていること
- *    - 5-2. issues-view.scss に !important および @extend が一切含まれていないこと
- *    - 5-3. issues-view.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
- *    - 5-4. .issues-view__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること
- *    - 5-5. .issues-view__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること
- *    - 5-6. 一覧ヘッダー（.issues-view__header）に下部境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること
+ * 5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)
+ *    - 5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること
+ *    - 5-2. 一括追加ボタン（.issues-view__btn-bulk-add）クリック時、一括作成ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと
+ *    - 5-3. 一括作成ダイアログ内の wa-textarea に入力し、作成ボタンをクリックすると issuesController.createMultipleIssues が呼ばれ、ダイアログが閉じること
+ *    - 5-4. キャンセルボタンクリックでダイアログが閉じること
+ *
+ * 6. BEM設計およびSCSSスタイルの検証
+ *    - 6-1. SCSSスタイルシート（issues-view.scss）が存在し、ルートブロック .issues-view が定義されていること
+ *    - 6-2. !important および @extend が一切含まれていないこと
+ *    - 6-3. ハードコードされたカラーコードが 0 件（完全ゼロ）であること
+ *    - 6-4. アコーディオン展開アニメーション（@keyframes issues-view-detail-expand / collapse）が定義されていること
+ *    - 6-5. issues-view.scss において .issues-view__item-due に対し、背景色を親行と同色にする --wa-form-control-background-color: transparent が設定されていること
+ *    - 6-6. issues-view.scss において .issues-view__row-group が定義され、display: flex; flex-direction: column; が設定されていること
+ *    - 6-7. issues-view.scss において .issues-view__item--expanded に対し、背景色の変更設定（background-color）が含まれず、角丸解除（border-bottom-left-radius / right-radius: 0）のみが設定されていること
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
   let mockIssuesController: {
     state: IssueRecord[];
     createIssue: ReturnType<typeof vi.fn>;
+    createMultipleIssues: ReturnType<typeof vi.fn>;
     updateIssue: ReturnType<typeof vi.fn>;
     deleteIssue: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
@@ -73,7 +74,7 @@ describe("IssuesView Component", () => {
       taskId: 10,
       statusCode: 0,
       title: "設計書のレビュー実施",
-      value: "## レビュー観点\n- 整合性確認",
+      value: "### 設計書のレビュー実施\n\n- 整合性確認",
       dueDate: new Date("2026-04-15"),
     },
     {
@@ -81,7 +82,7 @@ describe("IssuesView Component", () => {
       taskId: 10,
       statusCode: 9,
       title: "テストデータ準備",
-      value: "完了済みです",
+      value: "### テストデータ準備\n\n完了済みです",
       dueDate: new Date("2026-04-10"),
     },
     {
@@ -89,7 +90,7 @@ describe("IssuesView Component", () => {
       taskId: 10,
       statusCode: 5,
       title: "APIエンドポイント実装",
-      value: "進行中",
+      value: "### APIエンドポイント実装\n\n進行中",
       dueDate: new Date("2026-04-20"),
     },
   ];
@@ -99,6 +100,7 @@ describe("IssuesView Component", () => {
     mockIssuesController = {
       state: [...sampleIssues],
       createIssue: vi.fn().mockResolvedValue(100),
+      createMultipleIssues: vi.fn().mockResolvedValue([101, 102]),
       updateIssue: vi.fn().mockResolvedValue(undefined),
       deleteIssue: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(() => {}),
@@ -115,461 +117,292 @@ describe("IssuesView Component", () => {
   });
 
   describe("1. 初期描画と空状態 (Initial Render & Empty State)", () => {
-    it("1-1. 初期表示ビューモードは一覧（viewMode = 'list'）であること", () => {
-      expect(element.viewMode).toBe("list");
-    });
-
-    it("1-2. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること", () => {
+    it("1-1. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること", () => {
       mockIssuesController.state = [];
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__empty");
       expect(htmlStr).toContain("Issue がありません");
     });
 
-    it("1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add, plus-solid-full, plain）およびテキストを省略してツールチップ（wa-tooltip）を連携した完了スイッチ（wa-switch#issues-view-toggle-completed）が省スペースに表示されること", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("issues-view__btn-add");
-      expect(htmlStr).toMatch(
-        /<wa-button[^>]*class="[^"]*issues-view__btn-add[^"]*"[^>]*appearance=["']plain["']/,
-      );
-      expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']plus-solid-full["']/);
-      expect(htmlStr).not.toMatch(
-        /<wa-button[^>]*class="[^"]*issues-view__btn-add[^"]*"[^>]*>[\s\S]*追加[\s\S]*<\/wa-button>/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-switch[^>]*id="issues-view-toggle-completed"[^>]*class="[^"]*issues-view__toggle-completed[^"]*"[^>]*aria-label="完了したIssueを含める"/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-tooltip[^>]*for="issues-view-toggle-completed"[^>]*trigger="hover"[^>]*>[\s\S]*完了したIssueを含める[\s\S]*<\/wa-tooltip>/,
-      );
-      expect(htmlStr).not.toMatch(
-        /<wa-switch[^>]*class="[^"]*issues-view__toggle-completed[^"]*"[^>]*>[\s\S]*完了したIssueを含める[\s\S]*<\/wa-switch>/,
-      );
-    });
-
-    it("1-4. 一覧ヘッダー上部にタスク名（.issues-view__task-name）が表示されないこと", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("issues-view__task-name");
-    });
-
-    it("1-5. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること", () => {
+    it("1-2. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("search-input");
       expect(htmlStr).toContain("issues-view__search-input");
       expect(htmlStr).toMatch(/placeholder=["']Issue を検索\.\.\.["']/);
       expect(htmlStr).toMatch(/size=["']s["']/);
     });
-  });
 
-  describe("2. 一覧表示と完了フィルター (List View & Filter)", () => {
-    it("2-5. wa-switch の変更ハンドラー（handleToggleShowCompleted）により showCompleted がトグル・同期されること", () => {
-      element.showCompleted = false;
-      element.handleToggleShowCompleted({
-        target: { checked: true },
-      } as unknown as Event);
-      expect(element.showCompleted).toBe(true);
-
-      element.handleToggleShowCompleted({
-        target: { checked: false },
-      } as unknown as Event);
-      expect(element.showCompleted).toBe(false);
-
-      element.handleToggleShowCompleted();
-      expect(element.showCompleted).toBe(true);
+    it("1-3. 一覧ヘッダーに単一追加ボタン（.issues-view__btn-add）および一括追加ボタン（.issues-view__btn-bulk-add）が表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__btn-add");
+      expect(htmlStr).toContain("issues-view__btn-bulk-add");
+      expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']plus-solid-full["']/);
+      expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']list-check-solid-full["']/);
     });
 
-    it("2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.issues-view__item）として描画されること", () => {
+    it("1-4. 完了表示切り替えスイッチ（#issues-view-toggle-completed）が存在しないこと（廃止）", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("issues-view-toggle-completed");
+    });
+  });
+
+  describe("2. 一覧セクション表示と進捗可視化 (Sections & List View)", () => {
+    it("2-1. 未完了Issue（statusCode !== 9）と完了Issue（statusCode === 9）が、それぞれのセクション見出し（.issues-view__section-header）および区切り線（wa-divider.issues-view__divider）で区切られて描画されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__section-header");
+      expect(htmlStr).toContain("issues-view__divider");
+      expect(htmlStr).toContain("未完了");
+      expect(htmlStr).toContain("完了");
+    });
+
+    it("2-2. 未完了セクション見出しに未完了件数（未完了 (2)）、完了セクション見出しに完了件数（完了 (1)）が表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("未完了 (2)");
+      expect(htmlStr).toContain("完了 (1)");
+    });
+
+    it("2-3. 未完了・完了のそれぞれの中で期日昇順（期限の近い順）にソートされて描画されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      // 未完了: 4/15 (設計書のレビュー実施) -> 4/20 (APIエンドポイント実装)
+      const reviewIdx = htmlStr.indexOf("設計書のレビュー実施");
+      const apiIdx = htmlStr.indexOf("APIエンドポイント実装");
+      expect(reviewIdx).toBeGreaterThan(-1);
+      expect(apiIdx).toBeGreaterThan(-1);
+      expect(reviewIdx).toBeLessThan(apiIdx);
+
+      // 完了: 4/10 (テストデータ準備)
+      const testDataIdx = htmlStr.indexOf("テストデータ準備");
+      expect(testDataIdx).toBeGreaterThan(-1);
+    });
+
+    it("2-4. 各Issueアイテム（.issues-view__item）にステータスアイコン、タイトル、datepicker-input（.issues-view__item-due）が描画され、borderless 属性が指定されていること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__item");
-      expect(htmlStr).toContain("設計書のレビュー実施");
+      expect(htmlStr).toContain("issues-view__status-btn");
+      expect(htmlStr).toContain("issues-view__item-status");
+      expect(htmlStr).toContain("issues-view__item-title");
+      expect(htmlStr).toContain("datepicker-input");
+      expect(htmlStr).toContain("issues-view__item-due");
+      expect(htmlStr).toContain("borderless");
+    });
+
+    it("2-5. 検索キーワード入力（search-input）により、タイトルまたは本文でIssueが絞り込まれてセクション表示されること", () => {
+      element.handleSearchInput(
+        new CustomEvent<SearchInputEventDetail>("search-input", {
+          detail: { value: "API", keyword: "API" },
+        }),
+      );
+      const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("APIエンドポイント実装");
-    });
-
-    it("2-2. デフォルト（showCompleted = false）の場合、完了済み Issue（statusCode: 9）は一覧から除外されること", () => {
-      element.showCompleted = false;
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("設計書のレビュー実施");
-      expect(htmlStr).toContain("APIエンドポイント実装");
-      expect(htmlStr).not.toContain("テストデータ準備");
-    });
-
-    it("2-3. showCompleted = true の場合、完了済み Issue（statusCode: 9）も一覧に表示されること", () => {
-      element.showCompleted = true;
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("テストデータ準備");
-    });
-
-    it("2-4. 一覧上のステータス変更操作で issuesController.updateIssue が呼び出されること", async () => {
-      await element.handleStatusChange(1, 9);
-      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
-        statusCode: 9,
-      });
-    });
-
-    it("2-6. 一覧のIssueアイテムが期限日（dueDate）の昇順でソートされて描画されること", () => {
-      mockIssuesController.state = [
-        {
-          id: 101,
-          taskId: 10,
-          statusCode: 0,
-          title: "期日が最も遅い課題",
-          value: "",
-          dueDate: new Date("2026-05-01"),
-        },
-        {
-          id: 102,
-          taskId: 10,
-          statusCode: 0,
-          title: "期日が最も早い課題",
-          value: "",
-          dueDate: new Date("2026-04-01"),
-        },
-        {
-          id: 103,
-          taskId: 10,
-          statusCode: 0,
-          title: "期日が中間の課題",
-          value: "",
-          dueDate: new Date("2026-04-15"),
-        },
-      ];
-
-      const htmlStr = flattenTemplate(element.render());
-      const firstIndex = htmlStr.indexOf("期日が最も早い課題");
-      const secondIndex = htmlStr.indexOf("期日が中間の課題");
-      const thirdIndex = htmlStr.indexOf("期日が最も遅い課題");
-
-      expect(firstIndex).toBeGreaterThan(-1);
-      expect(secondIndex).toBeGreaterThan(firstIndex);
-      expect(thirdIndex).toBeGreaterThan(secondIndex);
-    });
-
-    it("2-7. search-input の search-input イベントにより searchKeyword が更新され、タイトルまたは本文で Issue が絞り込まれること", () => {
-      mockIssuesController.state = [
-        {
-          id: 1,
-          taskId: 10,
-          title: "API エンドポイント設計",
-          value: "OpenAPI 仕様書を作成",
-          statusCode: 0,
-          dueDate: new Date("2026-04-15"),
-        },
-        {
-          id: 2,
-          taskId: 10,
-          title: "UI コンポーネント実装",
-          value: "Web Awesome の wa-switch を配置",
-          statusCode: 0,
-          dueDate: new Date("2026-04-20"),
-        },
-      ];
-
-      const event = new CustomEvent<SearchInputEventDetail>("search-input", {
-        detail: { value: "API", keyword: "API" },
-      });
-      element.handleSearchInput(event);
-
-      expect(element.searchKeyword).toBe("API");
-
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("API エンドポイント設計");
-      expect(htmlStr).not.toContain("UI コンポーネント実装");
-    });
-
-    it("2-8. 検索キーワードのクリア時（keyword: ''）に検索絞り込みが解除され、全件が表示されること", () => {
-      mockIssuesController.state = [
-        {
-          id: 1,
-          taskId: 10,
-          title: "API エンドポイント設計",
-          value: "",
-          statusCode: 0,
-          dueDate: new Date("2026-04-15"),
-        },
-        {
-          id: 2,
-          taskId: 10,
-          title: "UI コンポーネント実装",
-          value: "",
-          statusCode: 0,
-          dueDate: new Date("2026-04-20"),
-        },
-      ];
-      element.searchKeyword = "API";
-
-      const event = new CustomEvent<SearchInputEventDetail>("search-input", {
-        detail: { value: "", keyword: "" },
-      });
-      element.handleSearchInput(event);
-
-      expect(element.searchKeyword).toBe("");
-
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("API エンドポイント設計");
-      expect(htmlStr).toContain("UI コンポーネント実装");
+      expect(htmlStr).not.toContain("設計書のレビュー実施");
+      expect(htmlStr).toContain("未完了 (1)");
     });
   });
 
-  describe("3. 画面遷移（一覧 ⇔ 詳細） (View Switching)", () => {
-    it("3-1. 一覧ヘッダーの「+ 追加」ボタンクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、新規Issue編集状態になること", () => {
-      element.handleAddNewIssue();
-      expect(element.viewMode).toBe("detail");
-      expect(element.editingIssueId).toBeUndefined();
-    });
+  describe("3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)", () => {
+    it("3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること", async () => {
+      const stopPropagationMock = vi.fn();
+      await element.handleStatusChange(1, 5, {
+        stopPropagation: stopPropagationMock,
+      } as unknown as Event);
 
-    it("3-2. 一覧のアイテムクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、該当Issueの編集状態になること", () => {
-      element.handleSelectIssue(sampleIssues[0]);
-      expect(element.viewMode).toBe("detail");
-      expect(element.editingIssueId).toBe(1);
-    });
-
-    it("3-3. 詳細ビューの戻るボタン（.issues-view__btn-back）クリックで一覧ビュー（viewMode = 'list'）に戻ること", () => {
-      element.handleSelectIssue(sampleIssues[0]);
-      expect(element.viewMode).toBe("detail");
-
-      element.handleBackToList();
-      expect(element.viewMode).toBe("list");
-      expect(element.editingIssueId).toBeUndefined();
-    });
-  });
-
-  describe("4. 詳細ビューの構成と編集・自動保存 (Detail View & Auto-save)", () => {
-    beforeEach(() => {
-      element.handleSelectIssue(sampleIssues[0]);
-    });
-
-    it("4-1. 詳細ヘッダー（.issues-view__detail-header）内に戻るボタンとステータス変更UI（.issues-view__status-dropdown）が表示され、独立した削除ボタン（.issues-view__btn-delete）が存在しないこと", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("issues-view__btn-back");
-      expect(htmlStr).toContain("issues-view__status-dropdown");
-      expect(htmlStr).toContain("issues-view__status");
-      expect(htmlStr).not.toContain("issues-view__btn-delete");
-    });
-
-    it("4-2. フォーム内にはタイトル入力（@input 設定）、期日入力、Markdownエディタが表示され、ステータス行（.issues-view__field--status）が存在しないこと", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("issues-view__title-input");
-      expect(htmlStr).toMatch(
-        /<wa-input[^>]*class="[^"]*issues-view__title-input[^"]*"[^>]*@input=/,
-      );
-      expect(htmlStr).not.toMatch(/@wa-input=/);
-      expect(htmlStr).toContain("issues-view__due-date");
-      expect(htmlStr).toMatch(
-        /<datepicker-input[^>]*class="[^"]*issues-view__due-date[^"]*"[^>]*\.value=["']?2026-04-15["']?/,
-      );
-      expect(htmlStr).toContain("datepicker-change");
-      expect(htmlStr).toContain("issues-view__editor");
-      expect(htmlStr).not.toContain("issues-view__field--status");
-    });
-
-    it("4-3. ステータス変更ボタン（.issues-view__status）にTASK同様のスタイル（with-caret, slot='start'）が設定され、現在のステータスが表示されること", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(
-        /<wa-button[^>]*class="[^"]*issues-view__status[^"]*"[^>]*\bwith-caret\b/,
-      );
-      expect(htmlStr).toContain("開始待ち");
-      expect(htmlStr).toMatch(
-        /<wa-icon[^>]*slot="start"[^>]*library="my-icons"[^>]*name=["']?circle-stop-solid-full["']?/,
-      );
-    });
-
-    it("4-4. ステータスドロップダウンのアイテム群において、現在のステータスコードのみが checked（排他選択）となり、完了の下に wa-divider と削除項目が配置されること", () => {
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(
-        /<wa-dropdown-item[^>]*value=["']?0["']?[^>]*\bchecked\b/,
-      );
-      expect(htmlStr).not.toMatch(
-        /<wa-dropdown-item[^>]*value=["']?5["']?[^>]*\bchecked\b/,
-      );
-      expect(htmlStr).not.toMatch(
-        /<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bchecked\b/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-divider[\s\S]*?<wa-dropdown-item[^>]*value=["']delete["']/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-dropdown-item[^>]*value=["']delete["'][^>]*variant=["']danger["'][^>]*type=["']checkbox["']/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-icon[^>]*name=["']trash-solid-full["'][^>]*class="[^"]*issues-view__status-icon[^"]*"/,
-      );
-    });
-
-    it("4-5. ドロップダウンでステータス値選択時は updateIssue が走り、'delete' 選択時は削除確認ダイアログが開くこと", async () => {
-      await element.handleDetailDropdownSelect("5");
+      expect(stopPropagationMock).toHaveBeenCalled();
       expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
         statusCode: 5,
       });
-
-      expect(element.isDeleteDialogOpen).toBe(false);
-      element.handleDetailDropdownSelect("delete");
-      expect(element.isDeleteDialogOpen).toBe(true);
     });
 
-    it("4-6. タイトル入力変更時に debounce を経て issuesController.updateIssue が呼び出されること", () => {
-      element.handleTitleInput("新しいタイトル");
-      vi.advanceTimersByTime(300);
+    it("3-2. アイテム内の datepicker-input で日付変更（datepicker-change）した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること", async () => {
+      const stopPropagationMock = vi.fn();
+      const newDate = new Date("2026-06-15");
+      await element.handleDueDateChange(1, newDate, {
+        stopPropagation: stopPropagationMock,
+      } as unknown as Event);
+
+      expect(stopPropagationMock).toHaveBeenCalled();
       expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
-        title: "新しいタイトル",
+        dueDate: newDate,
       });
     });
 
-    it("4-7. 期日変更時に issuesController.updateIssue が呼び出されること", () => {
-      const newDue = new Date("2026-05-01");
-      element.handleDueDateChange(newDue);
-      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
-        dueDate: newDue,
-      });
-    });
-
-    it("4-8. Markdown変更時に debounce を経て issuesController.updateIssue が呼び出されること", () => {
-      element.handleContentChange("## 変更後のMarkdown");
-      vi.advanceTimersByTime(300);
-      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
-        value: "## 変更後のMarkdown",
-      });
-    });
-
-    it("4-9. 削除ボタンクリックで確認ダイアログが開き、キャンセルで閉じ、削除確定で deleteIssue が呼び出され一覧に戻ること", async () => {
-      expect(element.isDeleteDialogOpen).toBe(false);
-
-      element.handleOpenDeleteDialog();
-      expect(element.isDeleteDialogOpen).toBe(true);
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("issues-view__delete-dialog");
-      expect(htmlStr).toContain("Issueの削除確認");
-      expect(htmlStr).toContain("取り消せません");
-
-      element.handleCloseDeleteDialog();
-      expect(element.isDeleteDialogOpen).toBe(false);
-      expect(mockIssuesController.deleteIssue).not.toHaveBeenCalled();
-
-      element.handleOpenDeleteDialog();
-      await element.handleConfirmDelete();
-      expect(mockIssuesController.deleteIssue).toHaveBeenCalledWith(1);
-      expect(element.viewMode).toBe("list");
-      expect(element.isDeleteDialogOpen).toBe(false);
-    });
-
-    it("4-10. 新規作成時（editingIssueId 未設定）、親タスクIDが同期されて createIssue が呼び出され、採番されたIDがセットされること", async () => {
-      element.handleAddNewIssue();
-      mockIssuesController.createIssue.mockResolvedValue(99);
-
-      element.handleTitleInput("新規追加のIssue");
-      vi.advanceTimersByTime(300);
-
-      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "新規追加のIssue",
-          statusCode: 0,
-        }),
-      );
-    });
-
-    it("4-11. 新規作成時（handleAddNewIssue）の editorMode は 'edit' であり、Markdownエディタに .mode がバインドされ入力時もプレビューに切り替わらないこと", () => {
-      element.handleAddNewIssue();
-      expect(element.editorMode).toBe("edit");
-
+    it("3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、「ステータスを変更」と表示されること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<markdown-editor-preview[^>]*class="[^"]*issues-view__editor[^"]*"[^>]*\.mode=["']?edit["']?/,
+        /<wa-tooltip[^>]*for=["']issues-view-status-btn-1["'][^>]*trigger=["']hover["']/,
       );
-
-      element.handleContentChange("あ");
-      expect(element.editorMode).toBe("edit");
-    });
-
-    it("4-12. タイトル入力フィールドに @input だけでなく @change および @blur がバインドされていること", () => {
-      const htmlStr = flattenTemplate(element.render());
-      const inputBlock =
-        htmlStr.match(/<wa-input[\s\S]*?class="[^"]*issues-view__title-input[^"]*"[\s\S]*?<\/wa-input>/)?.[0] ?? "";
-      expect(inputBlock).toContain("@input=");
-      expect(inputBlock).toContain("@change=");
-      expect(inputBlock).toContain("@blur=");
-    });
-
-    it("4-13. 新規作成時、タイトル変更時（handleTitleChange）に debounce を待たず即座に createIssue が呼び出されること", async () => {
-      element.handleAddNewIssue();
-      mockIssuesController.createIssue.mockResolvedValue(100);
-
-      await element.handleTitleChange("確定されたタイトル");
-
-      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "確定されたタイトル",
-        }),
-      );
-      expect(element.editingIssueId).toBe(100);
-    });
-
-    it("4-14. 新規作成時（editingIssueId 未設定）、ステータスを完了（9）に変更した際に即座に createIssue が呼び出され、statusCode: 9 で保存されること", async () => {
-      element.handleAddNewIssue();
-      mockIssuesController.createIssue.mockResolvedValue(101);
-
-      await element.handleStatusChange(9);
-
-      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
-        expect.objectContaining({
-          statusCode: 9,
-        }),
-      );
-      expect(element.editingIssueId).toBe(101);
-    });
-
-    it("4-15. 既存編集時、ステータスを完了（9）に変更した際に即座に updateIssue が呼び出されること", async () => {
-      element.handleSelectIssue(sampleIssues[0]);
-
-      await element.handleDetailDropdownSelect("9");
-
-      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
-        statusCode: 9,
-      });
+      expect(htmlStr).toContain("ステータスを変更");
     });
   });
 
-  describe("5. BEM設計およびSCSSスタイルの検証", () => {
-    const scssPath = path.resolve(__dirname, "issues-view.scss");
+  describe("4. インライン詳細アコーディオン展開と編集・自動保存・削除 (Inline Detail & Auto-save)", () => {
+    it("4-1. Issue行（.issues-view__item）クリックで該当Issueがインライン詳細（.issues-view__detail-container）として展開され、Markdownエディタ（markdown-editor-preview）が表示されること", () => {
+      element.handleToggleExpand(1);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__detail-container");
+      expect(htmlStr).toContain("markdown-editor-preview");
+      expect(htmlStr).toContain("issues-view__detail-editor");
+      expect(htmlStr).toContain("show-delete-button");
+    });
 
-    it("5-1. SCSSスタイルシート（issues-view.scss）が存在し、ルートブロック .issues-view が定義されていること", () => {
+    it("4-2. 展開中のIssue行を再度クリックすると折りたたまれること（トグル展開）", () => {
+      element.handleToggleExpand(1);
+      expect(element.expandedIssueIds.has(1)).toBe(true);
+
+      element.handleToggleExpand(1);
+      expect(element.expandedIssueIds.has(1)).toBe(false);
+      expect(element.collapsingIssueId).toBe(1);
+    });
+
+    it("4-3. 別のIssue行をクリックすると、前の展開行が閉じ、新しくクリックした行が開くこと（排他展開）", () => {
+      element.handleToggleExpand(1);
+      expect(element.expandedIssueIds.has(1)).toBe(true);
+
+      element.handleToggleExpand(3);
+      expect(element.expandedIssueIds.has(1)).toBe(false);
+      expect(element.expandedIssueIds.has(3)).toBe(true);
+      expect(element.collapsingIssueId).toBe(1);
+    });
+
+    it("4-4. インライン詳細にはタイトル入力欄や期日入力欄が含まれず、Markdownエディタのみであること", () => {
+      element.handleToggleExpand(1);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("markdown-editor-preview");
+      expect(htmlStr).not.toContain("issues-view__title-input");
+    });
+
+    it("4-5. Markdownエディタの内容変更（markdown-change）により、300msデバウンスを経て issuesController.updateIssue が title（1行目から抽出）と value で呼び出されること", async () => {
+      const newValue = "### 更新後のタイトル\n\n更新されたMarkdown本文";
+      element.handleContentChange(1, newValue);
+
+      // デバウンス中
+      expect(mockIssuesController.updateIssue).not.toHaveBeenCalled();
+
+      // 300ms 経過
+      vi.advanceTimersByTime(300);
+
+      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
+        title: "更新後のタイトル",
+        value: newValue,
+      });
+    });
+
+    it("4-6. Markdownエディタの削除要求（markdown-delete）で削除確認ダイアログ（wa-dialog）が開き、確認後に issuesController.deleteIssue が実行され、詳細が閉じること", async () => {
+      element.handleToggleExpand(1);
+      element.handleRequestDelete(1);
+      expect(element.isDeleteDialogOpen).toBe(true);
+      expect(element.deletingIssueId).toBe(1);
+
+      await element.handleConfirmDelete();
+      expect(mockIssuesController.deleteIssue).toHaveBeenCalledWith(1);
+      expect(element.isDeleteDialogOpen).toBe(false);
+      expect(element.expandedIssueIds.has(1)).toBe(false);
+    });
+
+    it("4-7. 各Issue行（.issues-view__item）とインライン詳細（.issues-view__detail-container）が一体化ラッパー（.issues-view__row-group）に内包され、不要な余白なく連結描画されること", () => {
+      element.handleToggleExpand(1);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__row-group");
+    });
+  });
+
+  describe("5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)", () => {
+    it("5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること", async () => {
+      await element.handleCreateIssue();
+
+      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "新規Issue",
+          value: "### 新規Issue\n\n",
+          statusCode: 0,
+        }),
+      );
+      expect(element.expandedIssueIds.has(100)).toBe(true);
+    });
+
+    it("5-2. 一括追加ボタン（.issues-view__btn-bulk-add）クリック時、一括作成ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと", () => {
+      element.handleOpenBulkAddDialog();
+      expect(element.isBulkAddDialogOpen).toBe(true);
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__bulk-dialog");
+      expect(htmlStr).toContain("wa-textarea");
+    });
+
+    it("5-3. 一括作成ダイアログ内の wa-textarea に入力し、作成ボタンをクリックすると issuesController.createMultipleIssues が呼ばれ、ダイアログが閉じること", async () => {
+      element.handleOpenBulkAddDialog();
+      element.bulkAddText = "一括1\n一括2\n  \n一括3";
+
+      await element.handleConfirmBulkAdd();
+
+      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
+        ["一括1", "一括2", "一括3"],
+        expect.any(Date),
+      );
+      expect(element.isBulkAddDialogOpen).toBe(false);
+      expect(element.bulkAddText).toBe("");
+    });
+
+    it("5-4. キャンセルボタンクリックでダイアログが閉じること", () => {
+      element.handleOpenBulkAddDialog();
+      element.bulkAddText = "キャンセル対象テキスト";
+
+      element.handleCloseBulkAddDialog();
+      expect(element.isBulkAddDialogOpen).toBe(false);
+      expect(element.bulkAddText).toBe("");
+    });
+  });
+
+  describe("6. BEM設計およびSCSSスタイルの検証", () => {
+    const scssPath = path.resolve(__dirname, "./issues-view.scss");
+    let scssContent: string;
+
+    beforeEach(() => {
+      scssContent = fs.readFileSync(scssPath, "utf-8");
+    });
+
+    it("6-1. SCSSスタイルシート（issues-view.scss）が存在し、ルートブロック .issues-view が定義されていること", () => {
       expect(fs.existsSync(scssPath)).toBe(true);
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toContain(".issues-view");
+      expect(scssContent).toContain(".issues-view");
     });
 
-    it("5-2. issues-view.scss に !important および @extend が一切含まれていないこと", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).not.toContain("!important");
-      expect(content).not.toContain("@extend");
+    it("6-2. issues-view.scss に !important および @extend が一切含まれていないこと", () => {
+      expect(scssContent).not.toMatch(/!important/);
+      expect(scssContent).not.toMatch(/@extend\b/);
     });
 
-    it("5-3. issues-view.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      const hexMatches = content.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
-      expect(hexMatches.length).toBe(0);
+    it("6-3. issues-view.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること", () => {
+      const colorMatches = scssContent.match(/#(?:[0-9a-fA-F]{3,8})\b/g) ?? [];
+      const rgbMatches = scssContent.match(/\brgba?\s*\(/gi) ?? [];
+      const hslMatches = scssContent.match(/\bhsla?\s*\(/gi) ?? [];
+      expect(colorMatches).toEqual([]);
+      expect(rgbMatches).toEqual([]);
+      expect(hslMatches).toEqual([]);
     });
 
-    it("5-4. .issues-view__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      const itemBlock = content.match(/&__item\s*\{[^}]*\}/)?.[0] ?? "";
-      expect(itemBlock).toMatch(
-        /background-color:\s*var\(--wa-color-neutral-fill-quiet\);/,
+    it("6-4. アコーディオン展開アニメーション（@keyframes issues-view-detail-expand / collapse）が定義されていること", () => {
+      expect(scssContent).toContain("issues-view-detail-expand");
+      expect(scssContent).toContain("issues-view-detail-collapse");
+    });
+
+    it("6-5. issues-view.scss において .issues-view__item-due に対し、背景色を親行と同色にする --wa-form-control-background-color: transparent が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /&__item-due\s*\{[^}]*--wa-form-control-background-color:\s*transparent;/,
       );
     });
 
-    it("5-5. .issues-view__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      const statusBlock =
-        content.match(/&__item-status\s*\{[\s\S]*?(?=\n\s*&__)/)?.[0] ?? "";
-      expect(statusBlock).toContain("var(--quick-access-icon-pending)");
-      expect(statusBlock).toContain("var(--quick-access-icon-progress)");
-      expect(statusBlock).toContain("var(--quick-access-icon-done)");
+    it("6-6. issues-view.scss において .issues-view__row-group が定義され、display: flex; flex-direction: column; が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /&__row-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/,
+      );
     });
 
-    it("5-6. 一覧ヘッダー（.issues-view__header）に下部境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      const headerBlock =
-        content.match(/&__header\s*\{[\s\S]*?(?=\n\s*&__)/)?.[0] ?? "";
-      expect(headerBlock).not.toContain("border-bottom");
+    it("6-7. issues-view.scss において .issues-view__item--expanded に対し、背景色の変更設定（background-color）が含まれず、角丸解除（border-bottom-left-radius / right-radius: 0）のみが設定されていること", () => {
+      const expandedMatch = scssContent.match(/&--expanded\s*\{([^}]+)\}/);
+      expect(expandedMatch).not.toBeNull();
+      const expandedBody = expandedMatch![1];
+      expect(expandedBody).not.toMatch(/background-color/);
+      expect(expandedBody).toMatch(/border-bottom-left-radius:\s*0;/);
+      expect(expandedBody).toMatch(/border-bottom-right-radius:\s*0;/);
     });
   });
 });

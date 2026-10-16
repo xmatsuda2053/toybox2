@@ -137,3 +137,75 @@ export function filterIssuesByKeyword(
   });
 }
 
+/**
+ * Issue（課題）本文の1行目からタイトル文字列を抽出する。
+ * 先頭の Markdown 見出し記号（# 等）は除外され、空文字または無効値の場合はデフォルト文字列を返す。
+ *
+ * @export
+ * @param {string} value Issue本文（Markdown文字列）
+ * @return {string} 抽出されたタイトル
+ */
+export function extractIssueTitle(value: string): string {
+  if (!value || typeof value !== "string") {
+    return "(無題のIssue)";
+  }
+
+  const firstLine = value.split(/\r?\n/)[0]?.trim() ?? "";
+  const titleWithoutHeading = firstLine.replace(/^#+\s*/, "").trim();
+
+  if (!titleWithoutHeading) {
+    return "(無題のIssue)";
+  }
+
+  return titleWithoutHeading;
+}
+
+/**
+ * 改行区切りの複数行テキストから、有効なIssueタイトル配列を抽出する。
+ * 空行や空白文字のみの行を除外し、各行の前後の空白をトリムする。
+ *
+ * @export
+ * @param {string} text 入力テキスト
+ * @return {string[]} トリム済みタイトル配列
+ */
+export function parseBulkIssuesInput(text: string): string[] {
+  if (!text || typeof text !== "string") {
+    return [];
+  }
+
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+/**
+ * Issue配列を未完了（statusCode !== 9）と完了（statusCode === 9）に分離し、
+ * それぞれの中で期日昇順・タイトル五十音順にソートして返却する。
+ *
+ * @export
+ * @param {readonly IssueRecord[]} issues ソート対象のIssue配列
+ * @return {{ openIssues: IssueRecord[]; completedIssues: IssueRecord[] }} 分離・ソート済みオブジェクト
+ */
+export function groupAndSortIssues(issues: readonly IssueRecord[]): {
+  openIssues: IssueRecord[];
+  completedIssues: IssueRecord[];
+} {
+  const openIssues: IssueRecord[] = [];
+  const completedIssues: IssueRecord[] = [];
+
+  for (const issue of issues) {
+    if (issue.statusCode === 9) {
+      completedIssues.push(issue);
+    } else {
+      openIssues.push(issue);
+    }
+  }
+
+  return {
+    openIssues: sortIssuesByDueDateAndTitle(openIssues),
+    completedIssues: sortIssuesByDueDateAndTitle(completedIssues),
+  };
+}
+
+

@@ -47,6 +47,22 @@ export class BaseRepository<TRecord extends { id?: number }> {
   };
 
   /**
+   * 複数のレコードを一括追加する
+   *
+   * @param {Array<Omit<TRecord, "id">>} items
+   * @return {*} {Promise<number[]>} 自動採番されたレコードID配列
+   * @memberof BaseRepository
+   */
+  public bulkAdd = async (
+    items: Array<Omit<TRecord, "id">>,
+  ): Promise<number[]> => {
+    return (await this.table.bulkAdd(
+      items.map((item) => ({ ...item })) as unknown as TRecord[],
+      { allKeys: true },
+    )) as number[];
+  };
+
+  /**
    * 指定したIDのレコードを部分更新する
    *
    * @param {number} id

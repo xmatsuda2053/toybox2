@@ -20,6 +20,7 @@ import { IssuesRepository } from "@/repositories/issues.repository";
  *    - [x] 2-2. 既存Issueのプロパティを更新できること
  *    - [x] 2-3. 指定したIDのIssueを削除できること
  *    - [x] 2-4. 指定したtaskIdに紐づくIssueを一括削除できること (deleteByTaskId)
+ *    - [x] 2-5. 複数Issueを一括追加でき、自動採番された ID リストが返ること (bulkAdd)
  *
  * 3. ステータスコードの更新 (Status Update)
  *    - [x] 3-1. 指定したIDのIssueのステータスコードを正常に更新できること
@@ -205,6 +206,35 @@ describe("IssuesRepository Tests", () => {
       expect(remainingTaskId1).toEqual([]);
       expect(remainingTaskId2).toHaveLength(1);
       expect(remainingTaskId2[0].title).toBe("Issue 2-1");
+    });
+
+    it("2-5. 複数Issueを一括追加でき、自動採番された ID リストが返ること (bulkAdd)", async () => {
+      const items: Array<Omit<IssueRecord, "id">> = [
+        {
+          taskId: 1,
+          statusCode: 0,
+          title: "Bulk Issue 1",
+          value: "",
+          dueDate: new Date("2026-06-01"),
+        },
+        {
+          taskId: 1,
+          statusCode: 0,
+          title: "Bulk Issue 2",
+          value: "",
+          dueDate: new Date("2026-06-02"),
+        },
+      ];
+
+      const ids = await repository.bulkAdd(items);
+
+      expect(ids).toHaveLength(2);
+      expect(ids[0]).toBeGreaterThan(0);
+      expect(ids[1]).toBeGreaterThan(ids[0]);
+
+      const stored = await repository.getByTaskId(1);
+      expect(stored).toHaveLength(2);
+      expect(stored.map((i) => i.title)).toEqual(["Bulk Issue 1", "Bulk Issue 2"]);
     });
   });
 
