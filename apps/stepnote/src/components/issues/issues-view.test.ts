@@ -13,7 +13,7 @@ import { IssuesView } from "./issues-view.js";
  * 1. 初期描画と空状態 (Initial Render & Empty State)
  *    - 1-1. 初期表示ビューモードは一覧（viewMode = 'list'）であること
  *    - 1-2. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること
- *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add）および完了を含めるスイッチ（.issues-view__toggle-completed）が表示されること
+ *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add）およびテキストを省略してツールチップ（wa-tooltip）を連携した完了スイッチ（wa-switch#issues-view-toggle-completed）が省スペースに表示されること
  *    - 1-4. 一覧ヘッダー上部にタスク名（.issues-view__task-name）が表示されないこと
  *
  * 2. 一覧表示と完了フィルター (List View & Filter)
@@ -121,7 +121,7 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("Issue がありません");
     });
 
-    it("1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add, plus-solid-full, plain）および完了を含めるスイッチ（wa-switch.issues-view__toggle-completed）が表示されること", () => {
+    it("1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add, plus-solid-full, plain）およびテキストを省略してツールチップ（wa-tooltip）を連携した完了スイッチ（wa-switch#issues-view-toggle-completed）が省スペースに表示されること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__btn-add");
       expect(htmlStr).toMatch(
@@ -132,9 +132,14 @@ describe("IssuesView Component", () => {
         /<wa-button[^>]*class="[^"]*issues-view__btn-add[^"]*"[^>]*>[\s\S]*追加[\s\S]*<\/wa-button>/,
       );
       expect(htmlStr).toMatch(
-        /<wa-switch[^>]*class="[^"]*issues-view__toggle-completed[^"]*"/,
+        /<wa-switch[^>]*id="issues-view-toggle-completed"[^>]*class="[^"]*issues-view__toggle-completed[^"]*"[^>]*aria-label="完了したIssueを含める"/,
       );
-      expect(htmlStr).toContain("完了したIssueを含める");
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="issues-view-toggle-completed"[^>]*trigger="hover"[^>]*>[\s\S]*完了したIssueを含める[\s\S]*<\/wa-tooltip>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-switch[^>]*class="[^"]*issues-view__toggle-completed[^"]*"[^>]*>[\s\S]*完了したIssueを含める[\s\S]*<\/wa-switch>/,
+      );
     });
 
     it("1-4. 一覧ヘッダー上部にタスク名（.issues-view__task-name）が表示されないこと", () => {
