@@ -251,14 +251,21 @@ export class IssuesView extends WithIssuesController(
   private renderListHeader(): HTMLTemplateResult {
     return html`
       <div class="issues-view__header">
-        <wa-switch
-          class="issues-view__toggle-completed"
-          size="s"
-          ?checked=${this.showCompleted}
-          @change=${this.handleToggleShowCompleted}
+        <wa-tooltip
+          for="issues-view-toggle-completed"
+          placement="bottom"
+          trigger="hover"
         >
           完了したIssueを含める
-        </wa-switch>
+        </wa-tooltip>
+        <wa-switch
+          id="issues-view-toggle-completed"
+          class="issues-view__toggle-completed"
+          size="s"
+          aria-label="完了したIssueを含める"
+          ?checked=${this.showCompleted}
+          @change=${this.handleToggleShowCompleted}
+        ></wa-switch>
         <div class="issues-view__actions">
           <wa-tooltip
             for="issues-view-btn-add"
