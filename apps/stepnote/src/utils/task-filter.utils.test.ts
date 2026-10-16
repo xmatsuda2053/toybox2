@@ -9,6 +9,7 @@ import {
   sortIssuesByDueDateAndTitle,
   toDueDateTimestamp,
   compareDueDates,
+  filterIssuesByKeyword,
 } from "./task-filter.utils";
 
 /**
@@ -34,6 +35,11 @@ import {
  * 5. sortIssuesByDueDateAndTitle
  *    - 期限日（dueDate）の昇順で正しくソートされること
  *    - 期限日が同一の場合、Issueタイトルの日本語五十音順で正しくソートされること
+ * 6. filterIssuesByKeyword
+ *    - キーワードが空または空白のみの場合、全Issueをそのまま返すこと
+ *    - タイトルにキーワードが含まれるIssueを抽出できること（大文字小文字無視）
+ *    - 本文（value）にキーワードが含まれるIssueを抽出できること（大文字小文字無視）
+ *    - タイトル・本文のいずれにも合致しないIssueは除外されること
  */
 
 describe("task-filter.utils", () => {
@@ -295,6 +301,65 @@ describe("task-filter.utils", () => {
       const dateA = new Date("2026-10-15T00:00:00.000Z");
       const dateB = "2026-10-15T00:00:00.000Z";
       expect(compareDueDates(dateA, dateB)).toBe(0);
+    });
+  });
+
+  describe("filterIssuesByKeyword", () => {
+    const dummyIssues: IssueRecord[] = [
+      {
+        id: 1,
+        taskId: 10,
+        title: "API エンドポイント設計",
+        value: "REST API の仕様を OpenAPI 形式で記述する",
+        statusCode: 0,
+        dueDate: new Date("2026-04-15"),
+      },
+      {
+        id: 2,
+        taskId: 10,
+        title: "UI コンポーネント実装",
+        value: "Web Awesome の wa-switch を活用してスイッチを配置",
+        statusCode: 5,
+        dueDate: new Date("2026-04-20"),
+      },
+      {
+        id: 3,
+        taskId: 10,
+        title: "単体テスト作成",
+        value: "Vitest を使用してユニットテストを実装する",
+        statusCode: 9,
+        dueDate: new Date("2026-04-25"),
+      },
+    ];
+
+    it("キーワードが空または空白のみの場合、全Issueをそのまま返すこと", () => {
+      expect(filterIssuesByKeyword(dummyIssues, "")).toEqual(dummyIssues);
+      expect(filterIssuesByKeyword(dummyIssues, "   ")).toEqual(dummyIssues);
+    });
+
+    it("タイトルにキーワードが含まれるIssueを抽出できること（大文字小文字無視）", () => {
+      const result = filterIssuesByKeyword(dummyIssues, "api");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+
+      const resultJa = filterIssuesByKeyword(dummyIssues, "コンポーネント");
+      expect(resultJa).toHaveLength(1);
+      expect(resultJa[0].id).toBe(2);
+    });
+
+    it("本文（value）にキーワードが含まれるIssueを抽出できること（大文字小文字無視）", () => {
+      const result = filterIssuesByKeyword(dummyIssues, "vitest");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(3);
+
+      const resultOpenApi = filterIssuesByKeyword(dummyIssues, "openapi");
+      expect(resultOpenApi).toHaveLength(1);
+      expect(resultOpenApi[0].id).toBe(1);
+    });
+
+    it("タイトル・本文のいずれにも合致しないIssueは除外されること", () => {
+      const result = filterIssuesByKeyword(dummyIssues, "該当なしキーワード");
+      expect(result).toHaveLength(0);
     });
   });
 });

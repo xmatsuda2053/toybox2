@@ -6,7 +6,10 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
-import type { DatePickerChangeEventDetail } from "@shared/components";
+import type {
+  DatePickerChangeEventDetail,
+  SearchInputEventDetail,
+} from "@shared/components";
 import { format } from "@shared/utils";
 import type { IssueRecord } from "@/db/models/task.model";
 import type { TaskStatusCode } from "@/types";
@@ -21,7 +24,10 @@ import {
   WithIssuesController,
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
-import { sortIssuesByDueDateAndTitle } from "@/utils/task-filter.utils.js";
+import {
+  sortIssuesByDueDateAndTitle,
+  filterIssuesByKeyword,
+} from "@/utils/task-filter.utils.js";
 import styles from "./issues-view.scss?inline";
 
 /**
@@ -50,6 +56,9 @@ export class IssuesView extends WithIssuesController(
   public showCompleted: boolean = false;
 
   @state()
+  public searchKeyword: string = "";
+
+  @state()
   public editingIssueId?: number;
 
   @state()
@@ -63,6 +72,13 @@ export class IssuesView extends WithIssuesController(
   private draftValue: string = "";
   private draftStatusCode: TaskStatusCode = 0;
   private debounceTimer?: ReturnType<typeof setTimeout>;
+
+  /** 検索入力ハンドラー */
+  public handleSearchInput = (
+    event: CustomEvent<SearchInputEventDetail>,
+  ): void => {
+    this.searchKeyword = event.detail?.keyword ?? "";
+  };
 
   /** 新規 Issue 追加開始ハンドラー */
   public handleAddNewIssue = (): void => {
@@ -251,22 +267,29 @@ export class IssuesView extends WithIssuesController(
   private renderListHeader(): HTMLTemplateResult {
     return html`
       <div class="issues-view__header">
-        <wa-tooltip
-          for="issues-view-toggle-completed"
-          placement="bottom"
-          trigger="hover"
-        >
-          完了したIssueを含める
-        </wa-tooltip>
-        <wa-switch
-          id="issues-view-toggle-completed"
-          class="issues-view__toggle-completed"
+        <search-input
+          class="issues-view__search-input"
           size="s"
-          aria-label="完了したIssueを含める"
-          ?checked=${this.showCompleted}
-          @change=${this.handleToggleShowCompleted}
-        ></wa-switch>
+          placeholder="Issue を検索..."
+          .value=${this.searchKeyword}
+          @search-input=${this.handleSearchInput}
+        ></search-input>
         <div class="issues-view__actions">
+          <wa-tooltip
+            for="issues-view-toggle-completed"
+            placement="bottom"
+            trigger="hover"
+          >
+            完了したIssueを含める
+          </wa-tooltip>
+          <wa-switch
+            id="issues-view-toggle-completed"
+            class="issues-view__toggle-completed"
+            size="s"
+            aria-label="完了したIssueを含める"
+            ?checked=${this.showCompleted}
+            @change=${this.handleToggleShowCompleted}
+          ></wa-switch>
           <wa-tooltip
             for="issues-view-btn-add"
             placement="bottom"
@@ -384,10 +407,14 @@ export class IssuesView extends WithIssuesController(
   /** 一覧ビューの描画 */
   private renderListView(): HTMLTemplateResult {
     const allIssues = this.issuesController?.state ?? [];
-    const filteredIssues = this.showCompleted
+    const completedFiltered = this.showCompleted
       ? allIssues
       : allIssues.filter((i) => i.statusCode !== 9);
-    const sortedIssues = sortIssuesByDueDateAndTitle(filteredIssues);
+    const keywordFiltered = filterIssuesByKeyword(
+      completedFiltered,
+      this.searchKeyword,
+    );
+    const sortedIssues = sortIssuesByDueDateAndTitle(keywordFiltered);
 
     return html`
       <div class="issues-view">

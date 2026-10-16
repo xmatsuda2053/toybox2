@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
+import type { SearchInputEventDetail } from "@shared/components";
 import type { IssuesController } from "@/controllers/issues.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
 import { IssuesView } from "./issues-view.js";
@@ -15,6 +16,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 1-2. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること
  *    - 1-3. 一覧ヘッダーにプラスアイコンのみの追加ボタン（.issues-view__btn-add）およびテキストを省略してツールチップ（wa-tooltip）を連携した完了スイッチ（wa-switch#issues-view-toggle-completed）が省スペースに表示されること
  *    - 1-4. 一覧ヘッダー上部にタスク名（.issues-view__task-name）が表示されないこと
+ *    - 1-5. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること
  *
  * 2. 一覧表示と完了フィルター (List View & Filter)
  *    - 2-1. issuesController.state の各 Issue（ステータスアイコン・タイトル・期日）がリストアイテム（.issues-view__item）として描画されること
@@ -23,6 +25,8 @@ import { IssuesView } from "./issues-view.js";
  *    - 2-4. 一覧上のステータス変更操作で issuesController.updateIssue が呼び出されること
  *    - 2-5. wa-switch の変更ハンドラー（handleToggleShowCompleted）により showCompleted がトグル・同期されること
  *    - 2-6. 一覧のIssueアイテムが期限日（dueDate）の昇順でソートされて描画されること
+ *    - 2-7. search-input の search-input イベントにより searchKeyword が更新され、タイトルまたは本文で Issue が絞り込まれること
+ *    - 2-8. 検索キーワードのクリア時（keyword: ""）に検索絞り込みが解除され、全件が表示されること
  *
  * 3. 画面遷移（一覧 ⇔ 詳細） (View Switching)
  *    - 3-1. 一覧ヘッダーの「+ 追加」ボタンクリックで詳細ビュー（viewMode = 'detail'）に切り替わり、新規Issue編集状態になること
@@ -47,6 +51,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 5-3. issues-view.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
  *    - 5-4. .issues-view__item の背景色に soft なトークン（var(--wa-color-neutral-fill-quiet)）が指定されていること
  *    - 5-5. .issues-view__item-status のステータス色にドロップダウンと同一の Quick Access トークン（var(--quick-access-icon-...)）が適用されていること
+ *    - 5-6. 一覧ヘッダー（.issues-view__header）に下部境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
@@ -146,6 +151,14 @@ describe("IssuesView Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toContain("issues-view__task-name");
     });
+
+    it("1-5. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("search-input");
+      expect(htmlStr).toContain("issues-view__search-input");
+      expect(htmlStr).toMatch(/placeholder=["']Issue を検索\.\.\.["']/);
+      expect(htmlStr).toMatch(/size=["']s["']/);
+    });
   });
 
   describe("2. 一覧表示と完了フィルター (List View & Filter)", () => {
@@ -229,6 +242,71 @@ describe("IssuesView Component", () => {
       expect(firstIndex).toBeGreaterThan(-1);
       expect(secondIndex).toBeGreaterThan(firstIndex);
       expect(thirdIndex).toBeGreaterThan(secondIndex);
+    });
+
+    it("2-7. search-input の search-input イベントにより searchKeyword が更新され、タイトルまたは本文で Issue が絞り込まれること", () => {
+      mockIssuesController.state = [
+        {
+          id: 1,
+          taskId: 10,
+          title: "API エンドポイント設計",
+          value: "OpenAPI 仕様書を作成",
+          statusCode: 0,
+          dueDate: new Date("2026-04-15"),
+        },
+        {
+          id: 2,
+          taskId: 10,
+          title: "UI コンポーネント実装",
+          value: "Web Awesome の wa-switch を配置",
+          statusCode: 0,
+          dueDate: new Date("2026-04-20"),
+        },
+      ];
+
+      const event = new CustomEvent<SearchInputEventDetail>("search-input", {
+        detail: { value: "API", keyword: "API" },
+      });
+      element.handleSearchInput(event);
+
+      expect(element.searchKeyword).toBe("API");
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("API エンドポイント設計");
+      expect(htmlStr).not.toContain("UI コンポーネント実装");
+    });
+
+    it("2-8. 検索キーワードのクリア時（keyword: ''）に検索絞り込みが解除され、全件が表示されること", () => {
+      mockIssuesController.state = [
+        {
+          id: 1,
+          taskId: 10,
+          title: "API エンドポイント設計",
+          value: "",
+          statusCode: 0,
+          dueDate: new Date("2026-04-15"),
+        },
+        {
+          id: 2,
+          taskId: 10,
+          title: "UI コンポーネント実装",
+          value: "",
+          statusCode: 0,
+          dueDate: new Date("2026-04-20"),
+        },
+      ];
+      element.searchKeyword = "API";
+
+      const event = new CustomEvent<SearchInputEventDetail>("search-input", {
+        detail: { value: "", keyword: "" },
+      });
+      element.handleSearchInput(event);
+
+      expect(element.searchKeyword).toBe("");
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("API エンドポイント設計");
+      expect(htmlStr).toContain("UI コンポーネント実装");
     });
   });
 
@@ -485,6 +563,13 @@ describe("IssuesView Component", () => {
       expect(statusBlock).toContain("var(--quick-access-icon-pending)");
       expect(statusBlock).toContain("var(--quick-access-icon-progress)");
       expect(statusBlock).toContain("var(--quick-access-icon-done)");
+    });
+
+    it("5-6. 一覧ヘッダー（.issues-view__header）に下部境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること", () => {
+      const content = fs.readFileSync(scssPath, "utf-8");
+      const headerBlock =
+        content.match(/&__header\s*\{[\s\S]*?(?=\n\s*&__)/)?.[0] ?? "";
+      expect(headerBlock).not.toContain("border-bottom");
     });
   });
 });

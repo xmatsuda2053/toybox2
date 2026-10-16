@@ -113,3 +113,27 @@ export function sortIssuesByDueDateAndTitle(
   });
 }
 
+/**
+ * Issue（課題）一覧を検索キーワード（タイトルまたは本文）で絞り込む。
+ * キーワードが空または空白のみの場合は全Issueをそのまま返す。
+ * 元の配列を変更せず、新しい配列を返す。
+ *
+ * @param {readonly IssueRecord[]} issues 絞り込み対象のIssue配列
+ * @param {string} keyword 検索キーワード
+ * @return {IssueRecord[]} 絞り込み後のIssue配列
+ */
+export function filterIssuesByKeyword(
+  issues: readonly IssueRecord[],
+  keyword: string,
+): IssueRecord[] {
+  const trimmed = keyword.trim().toLowerCase();
+  if (!trimmed) {
+    return [...issues];
+  }
+  return issues.filter((issue) => {
+    const titleMatch = issue.title.toLowerCase().includes(trimmed);
+    const valueMatch = (issue.value ?? "").toLowerCase().includes(trimmed);
+    return titleMatch || valueMatch;
+  });
+}
+
