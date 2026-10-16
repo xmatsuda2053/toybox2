@@ -7,6 +7,9 @@ import {
   SubscriberElement,
   WithLabelsController,
   WithTaskController,
+  WithIssuesController,
+  WithNotesController,
+  WithLogsController,
 } from "@/utils/controller-consumers.mixin.js";
 import styles from "./task-property.scss?inline";
 
@@ -14,16 +17,21 @@ import styles from "./task-property.scss?inline";
  * タスクプロパティコンポーネント (TaskProperty)
  *
  * Task ペイン（第4ペイン）の Property タブを担当し、
- * タスクの作成日時・更新日時の表示（編集不可）および
- * 年度・所属ラベルの確認・変更 UI（wa-select）を提供する。
+ * タスクの作成日時・更新日時の表示（編集不可）、
+ * 年度・所属ラベルの確認・変更 UI（wa-select）、および
+ * 子データ（Issues、Notes、Logs）の活動量・集計件数表示を提供する。
  *
  * @export
  * @class TaskProperty
- * @extends {WithLabelsController(WithTaskController(SubscriberElement))}
+ * @extends {WithIssuesController(WithNotesController(WithLogsController(WithLabelsController(WithTaskController(SubscriberElement)))))}
  */
 @customElement("task-property")
-export class TaskProperty extends WithLabelsController(
-  WithTaskController(SubscriberElement),
+export class TaskProperty extends WithIssuesController(
+  WithNotesController(
+    WithLogsController(
+      WithLabelsController(WithTaskController(SubscriberElement)),
+    ),
+  ),
 ) {
   public static styles = unsafeCSS(styles);
 
@@ -205,6 +213,97 @@ export class TaskProperty extends WithLabelsController(
   }
 
   /**
+   * 課題（Issues）件数フィールドの描画
+   */
+  private renderIssuesCountField(): HTMLTemplateResult {
+    const issues = this.issuesController?.state ?? [];
+    const total = issues.length;
+    const uncompleted = issues.filter((issue) => issue.statusCode !== 9).length;
+    const issuesText = `${total}件 (未完了 ${uncompleted}件)`;
+
+    return html`
+      <div class="task-property__field">
+        <label class="task-property__label">課題</label>
+        <div class="task-property__control">
+          <wa-input
+            class="task-property__input task-property__input--issues-count"
+            size="s"
+            readonly
+            .value=${issuesText}
+          >
+            <wa-icon
+              slot="start"
+              library="my-icons"
+              name="list-check-solid-full"
+              class="task-property__icon"
+            ></wa-icon>
+          </wa-input>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * メモ（Notes）件数フィールドの描画
+   */
+  private renderNotesCountField(): HTMLTemplateResult {
+    const notes = this.notesController?.state ?? [];
+    const total = notes.length;
+    const notesText = `${total}件`;
+
+    return html`
+      <div class="task-property__field">
+        <label class="task-property__label">メモ</label>
+        <div class="task-property__control">
+          <wa-input
+            class="task-property__input task-property__input--notes-count"
+            size="s"
+            readonly
+            .value=${notesText}
+          >
+            <wa-icon
+              slot="start"
+              library="my-icons"
+              name="pen-to-square-solid-full"
+              class="task-property__icon"
+            ></wa-icon>
+          </wa-input>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * 履歴（Logs）件数フィールドの描画
+   */
+  private renderLogsCountField(): HTMLTemplateResult {
+    const logs = this.logsController?.state ?? [];
+    const total = logs.length;
+    const logsText = `${total}件`;
+
+    return html`
+      <div class="task-property__field">
+        <label class="task-property__label">履歴</label>
+        <div class="task-property__control">
+          <wa-input
+            class="task-property__input task-property__input--logs-count"
+            size="s"
+            readonly
+            .value=${logsText}
+          >
+            <wa-icon
+              slot="start"
+              library="my-icons"
+              name="code-branch-solid-full"
+              class="task-property__icon"
+            ></wa-icon>
+          </wa-input>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
    * メインレンダリング
    */
   public render(): HTMLTemplateResult {
@@ -216,6 +315,9 @@ export class TaskProperty extends WithLabelsController(
             ${this.renderUpdatedAtField(task)}
             ${this.renderFiscalYearField(task)}
             ${this.renderLabelField(task)}
+            ${this.renderIssuesCountField()}
+            ${this.renderNotesCountField()}
+            ${this.renderLogsCountField()}
           </div>
         `
       : this.renderEmptyState();

@@ -4,11 +4,13 @@ import {
   WithLabelsController,
   WithTaskController,
   WithIssuesController,
+  WithNotesController,
   WithLogsController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
+import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
 
 /**
@@ -24,13 +26,16 @@ import type { LogsController } from "@/controllers/logs.controller";
  * 4. WithIssuesController Mixin
  *    - issuesController の getter / setter が提供されること
  *    - issuesController 設定時に subscriber.bind が呼び出され、値が保持されること
- * 5. WithLogsController Mixin
+ * 5. WithNotesController Mixin
+ *    - notesController の getter / setter が提供されること
+ *    - notesController 設定時に subscriber.bind が呼び出され、値が保持されること
+ * 6. WithLogsController Mixin
  *    - logsController の getter / setter が提供されること
  *    - logsController 設定時に subscriber.bind が呼び出され、値が保持されること
- * 6. コントローラー解除・再設定時の動作
- *    - 5-1. labelsController に undefined を再設定した際、既存の購読が解除されること
- *    - 5-2. taskController に undefined を再設定した際、既存の購読が解除されること
- *    - 5-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
+ * 7. コントローラー解除・再設定時の動作
+ *    - 7-1. labelsController に undefined を再設定した際、既存の購読が解除されること
+ *    - 7-2. taskController に undefined を再設定した際、既存の購読が解除されること
+ *    - 7-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
  */
 
 describe("controller-consumers.mixin", () => {
@@ -98,15 +103,34 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
-  describe("5. WithLogsController Mixin", () => {
+  describe("5. WithNotesController Mixin", () => {
+    class DummyNotesElement extends WithNotesController(SubscriberElement) {}
+
+    it("5-1. notesController の getter / setter が提供され、初期値は undefined であること", () => {
+      const el = new DummyNotesElement();
+      expect(el.notesController).toBeUndefined();
+    });
+
+    it("5-2. notesController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
+      const el = new DummyNotesElement();
+      const mockNotesCtrl = {
+        subscribe: vi.fn(),
+      } as unknown as NotesController;
+
+      el.notesController = mockNotesCtrl;
+      expect(el.notesController).toBe(mockNotesCtrl);
+    });
+  });
+
+  describe("6. WithLogsController Mixin", () => {
     class DummyLogsElement extends WithLogsController(SubscriberElement) {}
 
-    it("5-1. logsController の getter / setter が提供され、初期値は undefined であること", () => {
+    it("6-1. logsController の getter / setter が提供され、初期値は undefined であること", () => {
       const el = new DummyLogsElement();
       expect(el.logsController).toBeUndefined();
     });
 
-    it("5-2. logsController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
+    it("6-2. logsController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
       const el = new DummyLogsElement();
       const mockLogsCtrl = {
         subscribe: vi.fn(),
@@ -117,12 +141,12 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
-  describe("6. コントローラー解除・再設定時の動作", () => {
+  describe("7. コントローラー解除・再設定時の動作", () => {
     class DummyConsumerElement extends WithTaskController(
       WithLabelsController(SubscriberElement),
     ) {}
 
-    it("4-1. labelsController に undefined を再設定した際、既存の購読が解除されること", () => {
+    it("7-1. labelsController に undefined を再設定した際、既存の購読が解除されること", () => {
       const el = new DummyConsumerElement();
       const unsubMock = vi.fn();
       const mockLabelsCtrl = {
@@ -137,7 +161,7 @@ describe("controller-consumers.mixin", () => {
       expect(unsubMock).toHaveBeenCalledTimes(1);
     });
 
-    it("4-2. taskController に undefined を再設定した際、既存の購読が解除されること", () => {
+    it("7-2. taskController に undefined を再設定した際、既存の購読が解除されること", () => {
       const el = new DummyConsumerElement();
       const unsubMock = vi.fn();
       const mockTaskCtrl = {
@@ -152,7 +176,7 @@ describe("controller-consumers.mixin", () => {
       expect(unsubMock).toHaveBeenCalledTimes(1);
     });
 
-    it("4-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと", () => {
+    it("7-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと", () => {
       const el = new DummyConsumerElement();
       const mockLabelsCtrl = {
         subscribe: vi.fn(),
