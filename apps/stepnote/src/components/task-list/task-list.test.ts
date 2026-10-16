@@ -27,9 +27,10 @@ import { TaskList } from "./task-list.js";
  *
  * 5. BEM設計およびSCSSスタイルの検証
  *    - [ ] 5-1. SCSSスタイルシート（task-list.scss）が存在し、ルートブロック .task-list および主要要素のBEMセレクタが定義されていること
- *    - [ ] 5-2. 背景色および境界線に正式なデザイントークン（--wa-color-surface-default, --wa-color-surface-border）が適用されていること
+ *    - [ ] 5-2. 背景色に正式なデザイントークン（--wa-color-surface-default）が適用されていること
  *    - [ ] 5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .task-list に最小幅（min-width）が設定されていること
  *    - [ ] 5-4. テンプレートおよびSCSSから旧クラス名（pane-task-list*）が完全に排除されていること
+ *    - [ ] 5-5. 検索エリア（task-list__search）に境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること
  *
  * 6. タスク新規作成ダイアログ連携
  *    - [ ] 6-1. テンプレート内に task-create-dialog がレンダリングされること
@@ -175,11 +176,10 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       expect(scssContent).toContain("&__list");
     });
 
-    it("5-2. 背景色および境界線に正式なデザイントークン（--wa-color-surface-default, --wa-color-surface-border）が適用されていること", () => {
+    it("5-2. 背景色に正式なデザイントークン（--wa-color-surface-default）が適用されていること", () => {
       const scssPath = new URL("./task-list.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toContain("var(--wa-color-surface-default)");
-      expect(scssContent).toContain("var(--wa-color-surface-border)");
       expect(scssContent).not.toContain("--stepnote-bg-primary");
       expect(scssContent).not.toContain("--stepnote-border-color");
     });
@@ -200,6 +200,14 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       const scssPath = new URL("./task-list.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).not.toMatch(/\.pane-task-list\b/);
+    });
+
+    it("5-5. 検索エリア（task-list__search）に境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること", () => {
+      const scssPath = new URL("./task-list.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      const searchBlockMatch = scssContent.match(/&__search\s*\{[\s\S]*?\n\s*\}/);
+      expect(searchBlockMatch).not.toBeNull();
+      expect(searchBlockMatch![0]).not.toContain("border-bottom");
     });
   });
 
