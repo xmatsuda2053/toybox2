@@ -5,11 +5,13 @@ import {
   labelsContext,
   taskContext,
   issuesContext,
+  notesContext,
   logsContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
+import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
@@ -125,6 +127,37 @@ export function WithIssuesController<T extends LitElementConstructor>(Base: T) {
     }
   }
   return IssuesConsumerClass;
+}
+
+/**
+ * NotesController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける notesController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithNotesController<T extends LitElementConstructor>(Base: T) {
+  class NotesConsumerClass extends Base {
+    private _notesController?: NotesController;
+
+    /** メモ管理コントローラー */
+    public get notesController(): NotesController | undefined {
+      return this._notesController;
+    }
+
+    @consume({ context: notesContext, subscribe: true })
+    @property({ attribute: false })
+    public set notesController(controller: NotesController | undefined) {
+      this._notesController = this.subscriber.bind(
+        "notes",
+        this._notesController,
+        controller,
+      );
+    }
+  }
+  return NotesConsumerClass;
 }
 
 /**

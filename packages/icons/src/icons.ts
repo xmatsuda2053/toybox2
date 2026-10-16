@@ -18,6 +18,7 @@ import circle_check_solid_full from "./assets/icons/circle-check-solid-full.svg?
 import circle_play_solid_full from "./assets/icons/circle-play-solid-full.svg?raw";
 import circle_plus_solid_full from "./assets/icons/circle-plus-solid-full.svg?raw";
 import circle_stop_solid_full from "./assets/icons/circle-stop-solid-full.svg?raw";
+import code_branch_solid_full from "./assets/icons/code-branch-solid-full.svg?raw";
 import code_solid_full from "./assets/icons/code-solid-full.svg?raw";
 import compress_solid_full from "./assets/icons/compress-solid-full.svg?raw";
 import copy_solid_full from "./assets/icons/copy-solid-full.svg?raw";
@@ -88,6 +89,7 @@ export const icons: Record<string, string> = {
   "circle-plus-solid-full": circle_plus_solid_full,
   "circle-plus": circle_plus_solid_full,
   "circle-stop-solid-full": circle_stop_solid_full,
+  "code-branch-solid-full": code_branch_solid_full,
   "code-solid-full": code_solid_full,
   "compress-solid-full": compress_solid_full,
   "compress": compress_solid_full,

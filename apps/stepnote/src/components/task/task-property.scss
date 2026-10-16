@@ -59,3 +59,10 @@
   font-size: var(--wa-font-size-s);
   color: var(--wa-color-text-quiet);
 }
+
+.task-property__divider {
+  width: 100%;
+  margin: 0;
+  @include theme-transition;
+}
+

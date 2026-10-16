@@ -2,10 +2,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate, format, getFiscalYearRange } from "@shared/utils";
-import type { TaskRecord } from "@/db/models/task.model.js";
+import type { TaskRecord, IssueRecord } from "@/db/models/task.model.js";
 import type { LabelRecord } from "@/db/models/navigation.model.js";
+import type { NoteRecord, LogRecord } from "@/db/models/journal.model.js";
 import type { TaskController } from "@/controllers/task.controller.js";
 import type { LabelsController } from "@/controllers/labels.controller.js";
+import type { IssuesController } from "@/controllers/issues.controller.js";
+import type { NotesController } from "@/controllers/notes.controller.js";
+import type { LogsController } from "@/controllers/logs.controller.js";
 import { TaskProperty } from "./task-property.js";
 
 /**
@@ -48,6 +52,15 @@ import { TaskProperty } from "./task-property.js";
  *    - 6-4. task-property.scss に @extend が一切含まれていないこと
  *    - 6-5. task-property.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
  *    - 6-6. task-property.scss において .task-property__field が定義され、各項目のラベルおよびコントロール配置が整備されていること
+ *
+ * 7. 子データ（Issues / Notes / Logs）の件数・集計表示
+ *    - 7-1. 課題（Issues）件数フィールドが存在し、総件数および未完了件数が正しく表示されること
+ *    - 7-2. メモ（Notes）件数フィールドが存在し、総件数が正しく表示されること
+ *    - 7-3. 履歴（Logs）件数フィールドが存在し、総件数が正しく表示されること
+ *    - 7-4. 各コントローラーの state が空または undefined の場合、0件と表示されること
+ *    - 7-5. 各フィールドの slot="start" に対応するアイコン（list-check-solid-full, pen-to-square-solid-full, code-branch-solid-full）が出力されること
+ *    - 7-6. issuesController, notesController, logsController 設定時にそれぞれ subscribe が呼び出されること
+ *    - 7-7. 変更不可項目（作成日時、更新日時、課題、メモ、履歴）が上部に配置され、wa-divider で区切られて変更可能項目（年度、ラベル）が下部に配置されていること
  */
 describe("TaskProperty Component", () => {
   let element: TaskProperty;
@@ -61,8 +74,23 @@ describe("TaskProperty Component", () => {
     state: LabelRecord[];
     subscribe: ReturnType<typeof vi.fn>;
   };
+  let mockIssuesController: {
+    state: IssueRecord[];
+    subscribe: ReturnType<typeof vi.fn>;
+  };
+  let mockNotesController: {
+    state: NoteRecord[];
+    subscribe: ReturnType<typeof vi.fn>;
+  };
+  let mockLogsController: {
+    state: LogRecord[];
+    subscribe: ReturnType<typeof vi.fn>;
+  };
   let unsubscribeTaskMock: ReturnType<typeof vi.fn>;
   let unsubscribeLabelsMock: ReturnType<typeof vi.fn>;
+  let unsubscribeIssuesMock: ReturnType<typeof vi.fn>;
+  let unsubscribeNotesMock: ReturnType<typeof vi.fn>;
+  let unsubscribeLogsMock: ReturnType<typeof vi.fn>;
 
   const baseTask: TaskRecord = {
     id: 101,
@@ -85,9 +113,100 @@ describe("TaskProperty Component", () => {
     { id: 3, name: "運用保守", description: "", isSelected: false },
   ];
 
+  const sampleIssues: IssueRecord[] = [
+    {
+      id: 1,
+      taskId: 101,
+      title: "UIコンポーネント設計",
+      statusCode: 0,
+      value: "",
+      dueDate: new Date("2026-06-01T00:00:00.000Z"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      taskId: 101,
+      title: "単体テスト作成",
+      statusCode: 5,
+      value: "",
+      dueDate: new Date("2026-06-05T00:00:00.000Z"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 3,
+      taskId: 101,
+      title: "ドキュメント作成",
+      statusCode: 9,
+      value: "",
+      dueDate: new Date("2026-06-10T00:00:00.000Z"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const sampleNotes: NoteRecord[] = [
+    {
+      id: 1,
+      taskId: 101,
+      value: "仕様メモ1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      taskId: 101,
+      value: "仕様メモ2",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const sampleLogs: LogRecord[] = [
+    {
+      id: 1,
+      taskId: 101,
+      value: "タスク作成",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 2,
+      taskId: 101,
+      value: "ステータス更新",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 3,
+      taskId: 101,
+      value: "Issue追加",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 4,
+      taskId: 101,
+      value: "Issue更新",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 5,
+      taskId: 101,
+      value: "Issue完了",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
   beforeEach(() => {
     unsubscribeTaskMock = vi.fn();
     unsubscribeLabelsMock = vi.fn();
+    unsubscribeIssuesMock = vi.fn();
+    unsubscribeNotesMock = vi.fn();
+    unsubscribeLogsMock = vi.fn();
 
     mockTaskController = {
       state: { ...baseTask },
@@ -101,10 +220,29 @@ describe("TaskProperty Component", () => {
       subscribe: vi.fn().mockReturnValue(unsubscribeLabelsMock),
     };
 
+    mockIssuesController = {
+      state: [...sampleIssues],
+      subscribe: vi.fn().mockReturnValue(unsubscribeIssuesMock),
+    };
+
+    mockNotesController = {
+      state: [...sampleNotes],
+      subscribe: vi.fn().mockReturnValue(unsubscribeNotesMock),
+    };
+
+    mockLogsController = {
+      state: [...sampleLogs],
+      subscribe: vi.fn().mockReturnValue(unsubscribeLogsMock),
+    };
+
     element = new TaskProperty();
     element.taskController = mockTaskController as unknown as TaskController;
     element.labelsController =
       mockLabelsController as unknown as LabelsController;
+    element.issuesController =
+      mockIssuesController as unknown as IssuesController;
+    element.notesController = mockNotesController as unknown as NotesController;
+    element.logsController = mockLogsController as unknown as LogsController;
   });
 
   describe("1. タスク未選択状態（Empty State）の描画", () => {
@@ -301,6 +439,114 @@ describe("TaskProperty Component", () => {
     it("6-6. task-property.scss において .task-property__field が定義され、各項目のラベルおよびコントロール配置が整備されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       expect(content).toContain(".task-property__field");
+    });
+  });
+
+  describe("7. 子データ（Issues / Notes / Logs）の件数・集計表示", () => {
+    it("7-1. 課題（Issues）件数フィールドが存在し、総件数および未完了件数が正しく表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class=["'][^"']*task-property__input--issues-count[^"']*["'][^>]*\breadonly\b/,
+      );
+      expect(htmlStr).toContain("3件 (未完了 2件)");
+    });
+
+    it("7-2. メモ（Notes）件数フィールドが存在し、総件数が正しく表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class=["'][^"']*task-property__input--notes-count[^"']*["'][^>]*\breadonly\b/,
+      );
+      expect(htmlStr).toContain("2件");
+    });
+
+    it("7-3. 履歴（Logs）件数フィールドが存在し、総件数が正しく表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class=["'][^"']*task-property__input--logs-count[^"']*["'][^>]*\breadonly\b/,
+      );
+      expect(htmlStr).toContain("5件");
+    });
+
+    it("7-4. 各コントローラーの state が空または undefined の場合、0件と表示されること", () => {
+      mockIssuesController.state = [];
+      mockNotesController.state = [];
+      mockLogsController.state = [];
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("0件 (未完了 0件)");
+      expect(htmlStr).toContain("0件");
+    });
+
+    it('7-5. 各フィールドの slot="start" に対応するアイコン（list-check-solid-full, pen-to-square-solid-full, cubes-stacked-solid-full）が出力されること', () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*slot=["']start["'][^>]*library=["']my-icons["'][^>]*name=["']list-check-solid-full["']/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*slot=["']start["'][^>]*library=["']my-icons["'][^>]*name=["']pen-to-square-solid-full["']/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*slot=["']start["'][^>]*library=["']my-icons["'][^>]*name=["']code-branch-solid-full["']/,
+      );
+    });
+
+    it("7-6. issuesController, notesController, logsController 設定時にそれぞれ subscribe が呼び出され、disconnectedCallback 時に解除されること", () => {
+      const newIssuesCtrl = {
+        state: [],
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+      const newNotesCtrl = {
+        state: [],
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+      const newLogsCtrl = {
+        state: [],
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+
+      element.issuesController = newIssuesCtrl as unknown as IssuesController;
+      element.notesController = newNotesCtrl as unknown as NotesController;
+      element.logsController = newLogsCtrl as unknown as LogsController;
+
+      expect(newIssuesCtrl.subscribe).toHaveBeenCalled();
+      expect(newNotesCtrl.subscribe).toHaveBeenCalled();
+      expect(newLogsCtrl.subscribe).toHaveBeenCalled();
+
+      element.disconnectedCallback();
+      expect(unsubscribeIssuesMock).toHaveBeenCalled();
+      expect(unsubscribeNotesMock).toHaveBeenCalled();
+      expect(unsubscribeLogsMock).toHaveBeenCalled();
+    });
+
+    it("7-7. 変更不可項目（作成日時、更新日時、課題、メモ、履歴）が上部に配置され、wa-divider で区切られて変更可能項目（年度、ラベル）が下部に配置されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const createdAtIdx = htmlStr.indexOf("task-property__input--created-at");
+      const updatedAtIdx = htmlStr.indexOf("task-property__input--updated-at");
+      const issuesIdx = htmlStr.indexOf("task-property__input--issues-count");
+      const notesIdx = htmlStr.indexOf("task-property__input--notes-count");
+      const logsIdx = htmlStr.indexOf("task-property__input--logs-count");
+      const dividerIdx = htmlStr.indexOf("<wa-divider");
+      const fiscalYearIdx = htmlStr.indexOf("task-property__fiscal-year-select");
+      const labelIdx = htmlStr.indexOf("task-property__label-select");
+
+      expect(createdAtIdx).toBeGreaterThan(-1);
+      expect(updatedAtIdx).toBeGreaterThan(-1);
+      expect(issuesIdx).toBeGreaterThan(-1);
+      expect(notesIdx).toBeGreaterThan(-1);
+      expect(logsIdx).toBeGreaterThan(-1);
+      expect(dividerIdx).toBeGreaterThan(-1);
+      expect(fiscalYearIdx).toBeGreaterThan(-1);
+      expect(labelIdx).toBeGreaterThan(-1);
+
+      // 変更不可項目はすべて divider より前にあること
+      expect(createdAtIdx).toBeLessThan(dividerIdx);
+      expect(updatedAtIdx).toBeLessThan(dividerIdx);
+      expect(issuesIdx).toBeLessThan(dividerIdx);
+      expect(notesIdx).toBeLessThan(dividerIdx);
+      expect(logsIdx).toBeLessThan(dividerIdx);
+
+      // 変更可能項目はすべて divider より後にあること
+      expect(fiscalYearIdx).toBeGreaterThan(dividerIdx);
+      expect(labelIdx).toBeGreaterThan(dividerIdx);
     });
   });
 });
