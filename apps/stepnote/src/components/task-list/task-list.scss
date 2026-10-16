@@ -42,8 +42,6 @@
 
   &__search {
     padding: var(--wa-space-xs, 8px) var(--wa-space-s, 12px);
-    border-bottom: var(--wa-border-width-s) var(--wa-border-style)
-      var(--wa-color-surface-border);
     flex-shrink: 0;
     @include theme-transition;
   }
