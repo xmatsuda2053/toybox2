@@ -480,6 +480,11 @@ export class IssuesView extends WithIssuesController(
             ${displayTitle}
           </span>
           ${this.renderDueDateInput(issue)}
+          <wa-icon
+            class="issues-view__item-caret"
+            library="my-icons"
+            name="caret-right-solid-full"
+          ></wa-icon>
         </div>
         ${isExpanded || isCollapsing
           ? this.renderInlineDetail(issue, isCollapsing)
