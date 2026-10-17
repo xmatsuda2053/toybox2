@@ -1,0 +1,99 @@
+@use "../../styles/mixins.scss" as *;
+@use "../panes/pane-common.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--wa-color-surface-default);
+  @include theme-transition;
+}
+
+.notes-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  @include theme-transition;
+}
+
+/* ヘッダーツールバー */
+.notes-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-xs, 8px);
+  margin-bottom: var(--wa-space-xs, 8px);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.notes-view__search {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--wa-font-size-s, 13px);
+}
+
+.notes-view__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  flex-shrink: 0;
+}
+
+.notes-view__btn-add {
+  @include flex-center;
+  cursor: pointer;
+}
+
+/* ページタブバー */
+.notes-view__tab-group {
+  margin-bottom: var(--wa-space-xs, 8px);
+  flex-shrink: 0;
+
+  wa-tab {
+    font-size: var(--wa-font-size-xs, 12px);
+  }
+}
+
+.notes-view__tab-title {
+  @include text-ellipsis;
+  display: inline-block;
+  max-width: 140px;
+}
+
+/* エディタ表示領域 */
+.notes-view__editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notes-view__editor markdown-editor-preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 空状態・結果なし */
+.notes-view__empty,
+.notes-view__no-results {
+  @include flex-center;
+  flex-direction: column;
+  gap: var(--wa-space-s, 8px);
+  padding: var(--wa-space-2xl, 32px);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s, 13px);
+  flex: 1;
+}
+
+/* 削除確認ダイアログ */
+.notes-view__delete-dialog {
+  --width: 400px;
+}

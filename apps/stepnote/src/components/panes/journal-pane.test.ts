@@ -14,11 +14,11 @@ import { JournalPane } from "./journal-pane.js";
  * 2. タブ領域 (wa-tab-group) の描画
  *    - 2-1. wa-tab-group 内に Notes, Logs の順で2つのタブ (wa-tab) が存在し、Issues タブが存在しないこと
  *    - 2-2. issues パネルおよび issues-view コンポーネントが存在しないこと
- *    - 2-3. notes パネル (wa-tab-panel[name="notes"]) 内にプレースホルダー表示 (.journal-pane__placeholder) が存在すること
+ *    - 2-3. notes パネル (wa-tab-panel[name="notes"]) 内に notes-view コンポーネントが存在すること
  *    - 2-4. logs パネル (wa-tab-panel[name="logs"]) 内に logs-view コンポーネントが存在すること
  *    - 2-5. wa-tab-group に active 属性がバインドされ、初期値が 'notes' であること
  *    - 2-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
- *    - 2-7. logs-view に theme が伝播（.theme=${this.theme} および data-theme）されること
+ *    - 2-7. notes-view および logs-view に theme が伝播されること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート (journal-pane.scss) が存在し、ルートブロック .journal-pane および主要BEMセレクタが定義されていること
@@ -83,12 +83,12 @@ describe("JournalPane Component", () => {
       expect(htmlStr).not.toContain("<issues-view");
     });
 
-    it("2-3. notes パネル (wa-tab-panel[name=\"notes\"]) 内にプレースホルダー表示が存在すること", () => {
+    it("2-3. notes パネル (wa-tab-panel[name=\"notes\"]) 内に notes-view コンポーネントが存在すること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toContain('<wa-tab-panel name="notes"');
-      expect(htmlStr).toContain("Notes Content (準備中)");
+      expect(htmlStr).toContain("<notes-view");
     });
 
     it("2-4. logs パネル (wa-tab-panel[name=\"logs\"]) 内に logs-view コンポーネントが存在すること", () => {
@@ -123,10 +123,12 @@ describe("JournalPane Component", () => {
       expect(element.activeTab).toBe("logs");
     });
 
-    it("2-7. logs-view に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
+    it("2-7. notes-view および logs-view に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
       element.theme = "dark";
       const template = element.render();
       const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.theme=["']?dark["']?/);
+      expect(htmlStr).toMatch(/<notes-view[^>]*data-theme=["']?dark["']?/);
       expect(htmlStr).toMatch(/<logs-view[^>]*\.theme=["']?dark["']?/);
       expect(htmlStr).toMatch(/<logs-view[^>]*data-theme=["']?dark["']?/);
     });
@@ -149,7 +151,6 @@ describe("JournalPane Component", () => {
       expect(scssContent).toMatch(/\.journal-pane__title\s*\{/);
       expect(scssContent).toMatch(/\.journal-pane__tab-group\s*\{/);
       expect(scssContent).toMatch(/\.journal-pane__tab-panel\s*\{/);
-      expect(scssContent).toMatch(/\.journal-pane__placeholder\s*\{/);
     });
 
     it("3-2. テーマ切替トランジション等のCSS変数指定 (@include theme-transition) が定義されていること", () => {
