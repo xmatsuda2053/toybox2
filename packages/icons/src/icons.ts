@@ -41,6 +41,7 @@ import location_dot_solid_full from "./assets/icons/location-dot-solid-full.svg?
 import magnifying_glass_solid_full from "./assets/icons/magnifying-glass-solid-full.svg?raw";
 import markdown_brands_solid_full from "./assets/icons/markdown-brands-solid-full.svg?raw";
 import moon_solid_full from "./assets/icons/moon-solid-full.svg?raw";
+import note_sticky_solid_full from "./assets/icons/note-sticky-solid-full.svg?raw";
 import number_0_solid_full from "./assets/icons/number-0-solid-full.svg?raw";
 import number_1_solid_full from "./assets/icons/number-1-solid-full.svg?raw";
 import number_2_solid_full from "./assets/icons/number-2-solid-full.svg?raw";
@@ -114,6 +115,7 @@ export const icons: Record<string, string> = {
   "magnifying-glass-solid-full": magnifying_glass_solid_full,
   "markdown-brands-solid-full": markdown_brands_solid_full,
   "moon-solid-full": moon_solid_full,
+  "note-sticky-solid-full": note_sticky_solid_full,
   "number-0-solid-full": number_0_solid_full,
   "number-1-solid-full": number_1_solid_full,
   "number-2-solid-full": number_2_solid_full,
