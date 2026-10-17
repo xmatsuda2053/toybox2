@@ -216,9 +216,23 @@ export class TaskList extends WithIssuesController(
   public isCreateDialogOpen: boolean = false;
 
   /**
+   * ラベルが選択されているか判定する
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof TaskList
+   */
+  public get hasSelectedLabel(): boolean {
+    return this.labelsController?.hasSelectedLabels ?? false;
+  }
+
+  /**
    * 新規タスク作成ダイアログを開く
    */
   public handleOpenCreateDialog = (): void => {
+    if (!this.hasSelectedLabel) {
+      return;
+    }
     this.isCreateDialogOpen = true;
   };
 
@@ -338,6 +352,11 @@ export class TaskList extends WithIssuesController(
    */
   private renderHeader(): HTMLTemplateResult {
     const currentYear = this.currentFiscalYear;
+    const isAddDisabled = !this.hasSelectedLabel;
+    const addTooltip = isAddDisabled
+      ? "ラベルを選択してください"
+      : "新規タスクを追加";
+
     return html`
       <header class="task-list__header">
         <span class="task-list__title">LIST ${currentYear}</span>
@@ -349,7 +368,7 @@ export class TaskList extends WithIssuesController(
             placement="bottom"
             trigger="hover"
           >
-            新規タスクを追加
+            ${addTooltip}
           </wa-tooltip>
           <wa-button
             id="task-list-btn-add"
@@ -357,12 +376,13 @@ export class TaskList extends WithIssuesController(
             variant="neutral"
             appearance="plain"
             size="m"
+            ?disabled=${isAddDisabled}
             @click=${this.handleOpenCreateDialog}
           >
             <wa-icon
               library="my-icons"
               name="plus-solid-full"
-              label="新規タスクを追加"
+              label=${addTooltip}
             ></wa-icon>
           </wa-button>
         </div>
