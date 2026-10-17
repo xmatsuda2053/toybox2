@@ -25,6 +25,7 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 2-8. required プロパティが wa-input の required 属性へ反映されること
  *    - 2-9. label プロパティが未指定の場合、wa-input に label 属性が付与されず、空ラベルによる上部余白が発生しないこと
  *    - 2-10. borderless プロパティ（デフォルト false）をサポートし、true を設定可能なこと
+ *    - 2-11. icon プロパティ（デフォルト "calendar-solid-full"）をサポートし、指定したアイコン名が wa-icon に反映されること
  *
  * 3. カレンダーナビゲーション操作（Navigation Handling）
  *    - 3-1. 前月操作（handlePrevMonth）により表示年月が1ヶ月前へ更新されること
@@ -174,6 +175,16 @@ describe("DatePickerInput Component", () => {
       expect(element.borderless).toBe(false);
       element.borderless = true;
       expect(element.borderless).toBe(true);
+    });
+
+    it("2-11. icon プロパティ（デフォルト \"calendar-solid-full\"）をサポートし、指定したアイコン名が wa-icon に反映されること", () => {
+      expect(element.icon).toBe("calendar-solid-full");
+      let rendered = flattenTemplate(element.render());
+      expect(rendered).toContain('name="calendar-solid-full"');
+
+      element.icon = "fire-solid-full";
+      rendered = flattenTemplate(element.render());
+      expect(rendered).toContain('name="fire-solid-full"');
     });
   });
 

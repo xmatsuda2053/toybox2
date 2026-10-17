@@ -24,6 +24,9 @@ import { IssuesView } from "./issues-view.js";
  *    - 2-4. 各Issueアイテム（.issues-view__item）にステータスアイコン、タイトル、datepicker-input（.issues-view__item-due）が描画され、borderless 属性が指定されていること
  *    - 2-5. 検索キーワード入力（search-input）により、タイトルまたは本文でIssueが絞り込まれてセクション表示されること
  *    - 2-6. 各Issueアイテム（.issues-view__item）の右端に開閉状態を示す Caret アイコン（.issues-view__item-caret、name="caret-right-solid-full"）が描画されていること
+ *    - 2-7. 各Issueアイテムの期日入力欄（datepicker-input）に対応するツールチップ（wa-tooltip）が配置され、「期限日」と表示されること
+ *    - 2-8. 未完了Issueの期限日に応じて、期限切れ・当日・間近の各状態に対応するアイコンおよび修飾クラス（--overdue, --asap, --upcoming）が適用されること
+ *    - 2-9. 完了済みIssue（statusCode === 9）については、期限日が過去であっても期限警告のアイコンおよび修飾クラスが適用されないこと
  *
  * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
  *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
@@ -55,6 +58,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 6-7. issues-view.scss において .issues-view__item--expanded に対し、背景色の変更設定（background-color）が含まれず、角丸解除（border-bottom-left-radius / right-radius: 0）のみが設定されていること
  *    - 6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること
  *    - 6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること
+ *    - 6-10. issues-view.scss において .issues-view__item-due の状態別修飾クラス（--overdue, --asap, --upcoming）が定義され、デザイントークンのカラーが指定されていること
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
@@ -205,6 +209,109 @@ describe("IssuesView Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
         /<wa-icon[^>]*class=["'][^"']*issues-view__item-caret[^"']*["'][^>]*name=["']caret-right-solid-full["']/,
+      );
+    });
+
+    it("2-7. 各Issueアイテムの期日入力欄（datepicker-input）に対応するツールチップ（wa-tooltip）が配置され、「期限日」と表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for=["']issues-view-due-1["'][^>]*>\s*期限日\s*<\/wa-tooltip>/,
+      );
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-1["']/,
+      );
+    });
+
+    it("2-8. 未完了Issueの期限日に応じて、期限切れ・当日・間近の各状態に対応するアイコンおよび修飾クラス（--overdue, --asap, --upcoming）が適用されること", () => {
+      vi.setSystemTime(new Date("2026-04-15T00:00:00Z"));
+      const testIssues: IssueRecord[] = [
+        {
+          id: 10,
+          taskId: 1,
+          statusCode: 0,
+          title: "期限切れIssue",
+          value: "期限切れ",
+          dueDate: new Date("2026-04-10"),
+        },
+        {
+          id: 11,
+          taskId: 1,
+          statusCode: 0,
+          title: "期限当日Issue",
+          value: "期限当日",
+          dueDate: new Date("2026-04-15"),
+        },
+        {
+          id: 12,
+          taskId: 1,
+          statusCode: 0,
+          title: "期限間近Issue",
+          value: "期限間近",
+          dueDate: new Date("2026-04-17"),
+        },
+        {
+          id: 13,
+          taskId: 1,
+          statusCode: 0,
+          title: "余裕ありIssue",
+          value: "4日以上先",
+          dueDate: new Date("2026-04-25"),
+        },
+      ];
+      element.issuesController = {
+        state: testIssues,
+        subscribe: vi.fn().mockReturnValue(() => {}),
+      } as unknown as IssuesController;
+
+      const htmlStr = flattenTemplate(element.render());
+
+      // 期限切れ: fire-solid-full / issues-view__item-due--overdue
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-10["'][^>]*class=["'][^"']*issues-view__item-due--overdue[^"']*["'][^>]*icon=["']fire-solid-full["']/,
+      );
+
+      // 期限当日: triangle-exclamation-solid-full / issues-view__item-due--asap
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-11["'][^>]*class=["'][^"']*issues-view__item-due--asap[^"']*["'][^>]*icon=["']triangle-exclamation-solid-full["']/,
+      );
+
+      // 期限間近: calendar-solid-full / issues-view__item-due--upcoming
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-12["'][^>]*class=["'][^"']*issues-view__item-due--upcoming[^"']*["'][^>]*icon=["']calendar-solid-full["']/,
+      );
+
+      // 余裕あり: 通常カレンダーアイコン、修飾クラスなし
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-13["'][^>]*icon=["']calendar-solid-full["']/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-13["'][^>]*class=["'][^"']*(?:--overdue|--asap|--upcoming)/,
+      );
+    });
+
+    it("2-9. 完了済みIssue（statusCode === 9）については、期限日が過去であっても期限警告のアイコンおよび修飾クラスが適用されないこと", () => {
+      vi.setSystemTime(new Date("2026-04-15T00:00:00Z"));
+      const testIssues: IssueRecord[] = [
+        {
+          id: 20,
+          taskId: 1,
+          statusCode: 9,
+          title: "完了済み期限切れIssue",
+          value: "完了済み",
+          dueDate: new Date("2026-04-10"),
+        },
+      ];
+      element.issuesController = {
+        state: testIssues,
+        subscribe: vi.fn().mockReturnValue(() => {}),
+      } as unknown as IssuesController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-20["'][^>]*icon=["']calendar-solid-full["']/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<datepicker-input[^>]*id=["']issues-view-due-20["'][^>]*class=["'][^"']*(?:--overdue|--asap|--upcoming)/,
       );
     });
   });
@@ -425,6 +532,12 @@ describe("IssuesView Component", () => {
       expect(scssContent).toMatch(
         /&--expanded\s*\{[^}]*\.issues-view__item-caret\s*\{[^}]*transform:\s*rotate\(90deg\);[^}]*color:\s*var\(--wa-color-text-normal\);/s,
       );
+    });
+
+    it("6-10. issues-view.scss において .issues-view__item-due の状態別修飾クラス（--overdue, --asap, --upcoming）が定義され、デザイントークンのカラーが指定されていること", () => {
+      expect(scssContent).toMatch(/&--overdue\s*\{[^}]*var\(--quick-access-icon-overdue\)/);
+      expect(scssContent).toMatch(/&--asap\s*\{[^}]*var\(--quick-access-icon-asap\)/);
+      expect(scssContent).toMatch(/&--upcoming\s*\{[^}]*var\(--quick-access-icon-upcoming\)/);
     });
   });
 });

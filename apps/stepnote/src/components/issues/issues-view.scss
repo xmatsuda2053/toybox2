@@ -194,6 +194,18 @@
     &::part(input) {
       font-size: var(--wa-font-size-s, 13px);
     }
+
+    &--overdue {
+      --datepicker-icon-color: var(--quick-access-icon-overdue);
+    }
+
+    &--asap {
+      --datepicker-icon-color: var(--quick-access-icon-asap);
+    }
+
+    &--upcoming {
+      --datepicker-icon-color: var(--quick-access-icon-upcoming);
+    }
   }
 
   &__item-caret {

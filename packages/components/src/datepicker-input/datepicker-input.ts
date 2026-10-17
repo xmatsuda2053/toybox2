@@ -177,6 +177,12 @@ export class DatePickerInput extends LitElement {
   public borderless: boolean = false;
 
   /**
+   * 入力欄の先頭に表示するアイコン名
+   */
+  @property({ type: String })
+  public icon: string = "calendar-solid-full";
+
+  /**
    * カレンダー表示中の年
    */
   @state()
@@ -351,9 +357,10 @@ export class DatePickerInput extends LitElement {
     const icon = html`
       <wa-icon
         slot="start"
+        part="icon"
         class="datepicker-input__icon"
         library="my-icons"
-        name="calendar-solid-full"
+        name="${this.icon}"
       ></wa-icon>
     `;
 
