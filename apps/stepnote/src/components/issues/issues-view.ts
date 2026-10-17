@@ -81,9 +81,21 @@ export class IssuesView extends WithIssuesController(
 
   private collapseTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private lastTaskId?: number;
+
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
     const parentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId !== parentTaskId) {
+      this.lastTaskId = parentTaskId;
+      this.expandedIssueIds = new Set();
+      this.collapsingIssueId = null;
+      this.issueModeMap.clear();
+      if (this.collapseTimer) {
+        clearTimeout(this.collapseTimer);
+        this.collapseTimer = null;
+      }
+    }
     if (
       this.issuesController &&
       parentTaskId !== undefined &&
@@ -106,6 +118,14 @@ export class IssuesView extends WithIssuesController(
     }
   }
 
+  /** 全 Issue のエディタモードをプレビューモードへリセットする */
+  public resetModesToPreview(): void {
+    for (const key of this.issueModeMap.keys()) {
+      this.issueModeMap.set(key, "preview");
+    }
+    this.requestUpdate();
+  }
+
   /** 検索入力ハンドラー */
   public handleSearchInput = (
     event: CustomEvent<SearchInputEventDetail>,
@@ -113,7 +133,7 @@ export class IssuesView extends WithIssuesController(
     this.searchKeyword = event.detail?.keyword ?? "";
   };
 
-  /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移） */
+  /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移、プレビューモード初期化） */
   public handleToggleExpand = (issueId: number): void => {
     if (this.collapseTimer) {
       clearTimeout(this.collapseTimer);
@@ -140,6 +160,7 @@ export class IssuesView extends WithIssuesController(
       }
       nextSet.clear();
       nextSet.add(issueId);
+      this.issueModeMap.set(issueId, "preview");
     }
 
     this.expandedIssueIds = nextSet;
@@ -179,8 +200,8 @@ export class IssuesView extends WithIssuesController(
     });
 
     if (newId !== undefined) {
-      this.issueModeMap.set(newId, "edit");
       this.handleToggleExpand(newId);
+      this.issueModeMap.set(newId, "edit");
     }
   };
 

@@ -45,6 +45,9 @@ import { IssuesView } from "./issues-view.js";
  *    - 4-8. Issue展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview' モード、handleModeChange によりモードが更新されること
  *    - 4-9. 新規追加ボタン（handleCreateIssue）で作成された Issue はエディタモード（.mode='edit'）で自動展開されること
  *    - 4-10. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること
+ *    - 4-11. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
+ *    - 4-12. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセット（issueModeMap が初期化）され、展開状態もクリアされること
+ *    - 4-13. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること
  *
  * 5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)
  *    - 5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること
@@ -67,6 +70,8 @@ import { IssuesView } from "./issues-view.js";
 describe("IssuesView Component", () => {
   let element: IssuesView;
   let mockIssuesController: {
+    taskId?: number;
+    setTaskId?: ReturnType<typeof vi.fn>;
     state: IssueRecord[];
     createIssue: ReturnType<typeof vi.fn>;
     createMultipleIssues: ReturnType<typeof vi.fn>;
@@ -109,6 +114,8 @@ describe("IssuesView Component", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockIssuesController = {
+      taskId: 10,
+      setTaskId: vi.fn(),
       state: [...sampleIssues],
       createIssue: vi.fn().mockResolvedValue(100),
       createMultipleIssues: vi.fn().mockResolvedValue([101, 102]),
@@ -472,6 +479,48 @@ describe("IssuesView Component", () => {
       element.handleRequestDelete(1);
       await element.handleConfirmDelete();
       expect(element.issueModeMap.has(1)).toBe(false);
+    });
+
+    it("4-11. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
+      element.handleToggleExpand(1);
+      element.handleModeChange(1, "edit");
+      expect(element.issueModeMap.get(1)).toBe("edit");
+
+      // 一度閉じる
+      element.handleToggleExpand(1);
+      // 再度手動で展開する
+      element.handleToggleExpand(1);
+      expect(element.issueModeMap.get(1)).toBe("preview");
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+    });
+
+    it("4-12. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
+      element.handleToggleExpand(1);
+      element.handleModeChange(1, "edit");
+      expect(element.expandedIssueIds.has(1)).toBe(true);
+      expect(element.issueModeMap.get(1)).toBe("edit");
+
+      // 親タスクの切り替えをシミュレート
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 999,
+      };
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.expandedIssueIds.size).toBe(0);
+      expect(element.issueModeMap.size).toBe(0);
+    });
+
+    it("4-13. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること", () => {
+      element.issueModeMap.set(1, "edit");
+      element.issueModeMap.set(2, "edit");
+
+      element.resetModesToPreview();
+
+      expect(element.issueModeMap.get(1)).toBe("preview");
+      expect(element.issueModeMap.get(2)).toBe("preview");
     });
   });
 

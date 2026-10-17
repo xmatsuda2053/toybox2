@@ -66,9 +66,21 @@ export class LogsView extends WithLogsController(
 
   private collapseTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private lastTaskId?: number;
+
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
     const parentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId !== parentTaskId) {
+      this.lastTaskId = parentTaskId;
+      this.expandedLogIds = new Set();
+      this.collapsingLogId = null;
+      this.logModeMap.clear();
+      if (this.collapseTimer) {
+        clearTimeout(this.collapseTimer);
+        this.collapseTimer = null;
+      }
+    }
     if (
       this.logsController &&
       parentTaskId !== undefined &&
@@ -91,6 +103,14 @@ export class LogsView extends WithLogsController(
     }
   }
 
+  /** 全ログのエディタモードをプレビューモードへリセットする */
+  public resetModesToPreview(): void {
+    for (const key of this.logModeMap.keys()) {
+      this.logModeMap.set(key, "preview");
+    }
+    this.requestUpdate();
+  }
+
   /** 検索入力ハンドラー（search-input カスタムイベントまたは文字列） */
   public handleSearchInput = (
     eventOrQuery: CustomEvent<SearchInputEventDetail> | string,
@@ -102,7 +122,7 @@ export class LogsView extends WithLogsController(
     this.searchQuery = query;
   };
 
-  /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移） */
+  /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移、プレビューモード初期化） */
   public handleToggleExpand = (logId: number): void => {
     if (this.collapseTimer) {
       clearTimeout(this.collapseTimer);
@@ -129,6 +149,7 @@ export class LogsView extends WithLogsController(
       }
       nextSet.clear();
       nextSet.add(logId);
+      this.logModeMap.set(logId, "preview");
     }
 
     this.expandedLogIds = nextSet;
@@ -167,8 +188,8 @@ export class LogsView extends WithLogsController(
     });
 
     if (newId !== undefined) {
-      this.logModeMap.set(newId, "edit");
       this.handleToggleExpand(newId);
+      this.logModeMap.set(newId, "edit");
     }
   };
 

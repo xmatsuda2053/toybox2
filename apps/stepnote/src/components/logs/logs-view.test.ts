@@ -43,6 +43,9 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 4-9. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること
  *    - 4-10. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること
  *    - 4-11. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること
+ *    - 4-12. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
+ *    - 4-13. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセット（logModeMap が初期化）され、展開状態もクリアされること
+ *    - 4-14. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること
  *
  * 5. 新規ログ作成 (Create Log)
  *    - 5-1. 新規追加ボタンクリック（handleCreateLog）で logsController.createLog が見出しレベル ### のテンプレートで呼び出され、作成されたログが自動展開されること
@@ -70,6 +73,8 @@ import { formatLogDate } from "./logs-view.utils";
 describe("LogsView Component", () => {
   let element: LogsView;
   let mockLogsController: {
+    taskId?: number;
+    setTaskId?: ReturnType<typeof vi.fn>;
     state: LogRecord[];
     createLog: ReturnType<typeof vi.fn>;
     updateLog: ReturnType<typeof vi.fn>;
@@ -100,6 +105,8 @@ describe("LogsView Component", () => {
 
   beforeEach(() => {
     mockLogsController = {
+      taskId: 1,
+      setTaskId: vi.fn(),
       state: [...sampleLogs],
       createLog: vi.fn().mockResolvedValue(103),
       updateLog: vi.fn().mockResolvedValue(undefined),
@@ -371,6 +378,46 @@ describe("LogsView Component", () => {
       element.handleRequestDelete(101);
       await element.handleConfirmDelete();
       expect(element.logModeMap.has(101)).toBe(false);
+    });
+
+    it("4-12. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
+      element.handleModeChange(101, "edit");
+      expect(element.logModeMap.get(101)).toBe("edit");
+
+      // 一度閉じる
+      element.handleToggleExpand(101);
+      // 再度手動で展開する
+      element.handleToggleExpand(101);
+      expect(element.logModeMap.get(101)).toBe("preview");
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+    });
+
+    it("4-13. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
+      element.handleModeChange(101, "edit");
+      expect(element.expandedLogIds.has(101)).toBe(true);
+      expect(element.logModeMap.get(101)).toBe("edit");
+
+      // 親タスク切り替え
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 999,
+      };
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.expandedLogIds.size).toBe(0);
+      expect(element.logModeMap.size).toBe(0);
+    });
+
+    it("4-14. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること", () => {
+      element.logModeMap.set(101, "edit");
+      element.logModeMap.set(102, "edit");
+
+      element.resetModesToPreview();
+
+      expect(element.logModeMap.get(101)).toBe("preview");
+      expect(element.logModeMap.get(102)).toBe("preview");
     });
   });
 

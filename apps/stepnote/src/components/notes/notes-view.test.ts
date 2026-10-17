@@ -35,6 +35,11 @@ import { NotesView } from "./notes-view";
  *    - 4-6. handleContentChange が連続で呼び出された場合、前回のタイマーがキャンセルされ、最後の入力から 300ms 後に1度だけ呼び出されること
  *    - 4-7. disconnectedCallback 実行時に保留中のデバウンスタイマーがクリアされること
  *    - 4-8. 新規作成されたノートはエディタモード（.mode='edit'）で表示され、handleModeChange によりモードが更新されること
+ *    - 4-9. ノートタブ切り替え時（handleSelectNote / handleTabShow）に、切り替え先ノートがプレビューモード（preview）で表示されること
+ *    - 4-10. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、全ノートのエディタモードがプレビューモードへリセット（noteModeMap が初期化）されること
+ *    - 4-11. resetModesToPreview() の呼び出しにより、全ノートのエディタモードがプレビューモードへリセットされること
+ *    - 4-12. 新規ノート作成後（handleCreateNote）に wa-tab-show イベントが発火してもエディタモード（edit）がプレビューモードで上書きされず維持されること
+ *    - 4-13. handleTabShow 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること
  *
  * 5. 新規ページ作成 (Create Page)
  *    - 5-1. 新規追加ボタンクリック（handleCreateNote）で notesController.createNote が初期値 "## Note" で呼び出され、作成された新しいNoteが自動的にアクティブになること
@@ -54,6 +59,8 @@ import { NotesView } from "./notes-view";
 describe("NotesView Component", () => {
   let element: NotesView;
   let mockNotesController: {
+    taskId?: number;
+    setTaskId?: ReturnType<typeof vi.fn>;
     state: NoteRecord[];
     createNote: ReturnType<typeof vi.fn>;
     updateNote: ReturnType<typeof vi.fn>;
@@ -84,6 +91,8 @@ describe("NotesView Component", () => {
 
   beforeEach(() => {
     mockNotesController = {
+      taskId: 1,
+      setTaskId: vi.fn(),
       state: [...sampleNotes],
       createNote: vi.fn().mockResolvedValue(203),
       updateNote: vi.fn().mockResolvedValue(undefined),
@@ -289,6 +298,76 @@ describe("NotesView Component", () => {
 
       element.handleModeChange("preview");
       expect(element.currentEditorMode).toBe("preview");
+    });
+
+    it("4-9. ノートタブ切り替え時（handleSelectNote / handleTabShow）に、切り替え先ノートがプレビューモード（preview）で表示されること", () => {
+      // 201 番ノートを edit にする
+      element.handleSelectNote(201);
+      element.handleModeChange("edit");
+      expect(element.currentEditorMode).toBe("edit");
+
+      // 202 番ノートを選択
+      element.handleSelectNote(202);
+      expect(element.currentEditorMode).toBe("preview");
+
+      // 再度 201 番ノートに戻った場合もプレビューモードで初期化されること
+      element.handleSelectNote(201);
+      expect(element.currentEditorMode).toBe("preview");
+    });
+
+    it("4-10. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、全ノートのエディタモードがプレビューモードへリセットされること", () => {
+      element.handleSelectNote(201);
+      element.handleModeChange("edit");
+      expect(element.noteModeMap.get(201)).toBe("edit");
+
+      // 親タスク切り替え
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 999,
+      };
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.noteModeMap.size).toBe(0);
+      expect(element.currentEditorMode).toBe("preview");
+    });
+
+    it("4-11. resetModesToPreview() の呼び出しにより、全ノートのエディタモードがプレビューモードへリセットされること", () => {
+      element.noteModeMap.set(201, "edit");
+      element.noteModeMap.set(202, "edit");
+
+      element.resetModesToPreview();
+
+      expect(element.noteModeMap.size).toBe(0);
+      expect(element.currentEditorMode).toBe("preview");
+    });
+
+    it("4-12. 新規ノート作成後（handleCreateNote）に wa-tab-show イベントが発火してもエディタモード（edit）がプレビューモードで上書きされず維持されること", async () => {
+      mockNotesController.createNote.mockImplementation(async (note: { value: string }) => {
+        const id = 203;
+        mockNotesController.state.push({ id, taskId: 1, value: note.value });
+        return id;
+      });
+
+      await element.handleCreateNote();
+      expect(element.activeNoteId).toBe(203);
+      expect(element.currentEditorMode).toBe("edit");
+
+      // wa-tab-group からの wa-tab-show イベント発火をシミュレート
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "203" } }),
+      );
+
+      // 上書きされず edit モードのままであること
+      expect(element.currentEditorMode).toBe("edit");
+    });
+
+    it("4-13. handleTabShow 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること", () => {
+      const event = new CustomEvent("wa-tab-show", { detail: { name: "201" } });
+      const stopPropagationSpy = vi.spyOn(event, "stopPropagation");
+
+      element.handleTabShow(event);
+
+      expect(stopPropagationSpy).toHaveBeenCalledTimes(1);
     });
   });
 

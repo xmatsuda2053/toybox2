@@ -126,12 +126,22 @@ export class TaskPane extends WithIssuesController(
   };
 
   /**
-   * タブ切り替えハンドラー
+   * タブ切り替えハンドラー（表示タブの更新および子コンポーネントのプレビューモード初期化）
    */
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
     const tabName = e.detail?.name;
-    if (tabName) {
+    if (
+      tabName === "summary" ||
+      tabName === "issues" ||
+      tabName === "property"
+    ) {
       this.activeTab = tabName;
+      if (tabName === "issues") {
+        const issuesView = this.renderRoot?.querySelector("issues-view") as
+          | (HTMLElement & { resetModesToPreview?: () => void })
+          | null;
+        issuesView?.resetModesToPreview?.();
+      }
     }
   };
 

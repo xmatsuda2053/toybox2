@@ -104,9 +104,16 @@ export class NotesView extends WithNotesController(
     return "preview";
   }
 
+  private lastTaskId?: number;
+
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
     const parentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId !== parentTaskId) {
+      this.lastTaskId = parentTaskId;
+      this.noteModeMap.clear();
+      this.activeNoteId = undefined;
+    }
     if (
       this.notesController &&
       parentTaskId !== undefined &&
@@ -124,6 +131,12 @@ export class NotesView extends WithNotesController(
     this.debounceTimerMap.clear();
   }
 
+  /** 全ノートのエディタモードをプレビューモードへリセットする */
+  public resetModesToPreview(): void {
+    this.noteModeMap.clear();
+    this.requestUpdate();
+  }
+
   /** 検索入力ハンドラー */
   public handleSearchInput = (
     eventOrQuery: CustomEvent<SearchInputEventDetail> | string,
@@ -135,13 +148,17 @@ export class NotesView extends WithNotesController(
     this.searchQuery = query;
   };
 
-  /** タブ選択ハンドラー */
+  /** タブ選択ハンドラー（別ノートへの切り替え時のみプレビューモードで初期化） */
   public handleSelectNote = (noteId: number): void => {
-    this.activeNoteId = noteId;
+    if (this.activeNoteId !== noteId) {
+      this.activeNoteId = noteId;
+      this.noteModeMap.set(noteId, "preview");
+    }
   };
 
   /** wa-tab 切り替えハンドラー */
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
+    e.stopPropagation();
     const tabName = e.detail?.name;
     if (tabName) {
       const id = Number(tabName);
