@@ -40,6 +40,9 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 4-6. 削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が表示されること
  *    - 4-7. 削除確定（handleConfirmDelete）で logsController.deleteLog が呼び出され、展開状態から除外されること
  *    - 4-8. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること
+ *    - 4-9. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること
+ *    - 4-10. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること
+ *    - 4-11. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること
  *
  * 5. 新規ログ作成 (Create Log)
  *    - 5-1. 新規追加ボタンクリック（handleCreateLog）で logsController.createLog が見出しレベル ### のテンプレートで呼び出され、作成されたログが自動展開されること
@@ -327,6 +330,47 @@ describe("LogsView Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.darkTheme=["']?soft["']?/);
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.themeMode=["']?dark["']?/);
+    });
+
+    it("4-9. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること", () => {
+      element.handleToggleExpand(101);
+      let template = element.render();
+      let htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+
+      element.handleModeChange(101, "edit");
+      template = element.render();
+      htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+    });
+
+    it("4-10. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること", async () => {
+      mockLogsController.createLog.mockImplementation(async (log: { value: string; createdAt: Date; updatedAt: Date }) => {
+        const id = 103;
+        mockLogsController.state.push({
+          id,
+          taskId: 1,
+          value: log.value,
+          createdAt: log.createdAt,
+          updatedAt: log.updatedAt,
+        });
+        return id;
+      });
+
+      await element.handleCreateLog();
+      expect(element.expandedLogIds.has(103)).toBe(true);
+      expect(element.logModeMap.get(103)).toBe("edit");
+
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+    });
+
+    it("4-11. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること", async () => {
+      element.logModeMap.set(101, "edit");
+      element.handleRequestDelete(101);
+      await element.handleConfirmDelete();
+      expect(element.logModeMap.has(101)).toBe(false);
     });
   });
 

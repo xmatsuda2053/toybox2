@@ -5,8 +5,10 @@ import {
   type PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import "@shared/components";
-import type { SearchInputEventDetail } from "@shared/components";
+import type {
+  SearchInputEventDetail,
+  MarkdownDisplayMode,
+} from "@shared/components";
 import type { LogRecord } from "@/db/models/journal.model";
 import {
   SubscriberElement,
@@ -55,6 +57,9 @@ export class LogsView extends WithLogsController(
 
   @state()
   public deletingLogId?: number;
+
+  @state()
+  public logModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
   private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
     new Map();
@@ -129,6 +134,15 @@ export class LogsView extends WithLogsController(
     this.expandedLogIds = nextSet;
   };
 
+  /** エディタ表示モード変更ハンドラー */
+  public handleModeChange = (
+    logId: number,
+    mode: MarkdownDisplayMode,
+  ): void => {
+    this.logModeMap.set(logId, mode);
+    this.requestUpdate();
+  };
+
   /** 詳細パネルのアニメーション終了ハンドラー（アンマウントクリーンアップ） */
   public handleDetailAnimationEnd = (logId: number): void => {
     if (this.collapsingLogId === logId) {
@@ -141,7 +155,7 @@ export class LogsView extends WithLogsController(
     }
   };
 
-  /** 新規ログ作成ハンドラー */
+  /** 新規ログ作成ハンドラー（初期作成して自動展開、エディタモード初期化） */
   public handleCreateLog = async (): Promise<void> => {
     if (!this.logsController) return;
 
@@ -153,6 +167,7 @@ export class LogsView extends WithLogsController(
     });
 
     if (newId !== undefined) {
+      this.logModeMap.set(newId, "edit");
       this.handleToggleExpand(newId);
     }
   };
@@ -193,6 +208,7 @@ export class LogsView extends WithLogsController(
   public handleConfirmDelete = async (): Promise<void> => {
     if (this.deletingLogId !== undefined && this.logsController) {
       await this.logsController.deleteLog(this.deletingLogId);
+      this.logModeMap.delete(this.deletingLogId);
       const nextSet = new Set(this.expandedLogIds);
       nextSet.delete(this.deletingLogId);
       this.expandedLogIds = nextSet;
@@ -296,6 +312,8 @@ export class LogsView extends WithLogsController(
     const containerClass = isCollapsing
       ? "logs-view__detail-container logs-view__detail-container--collapsing"
       : "logs-view__detail-container";
+    const currentMode =
+      (log.id !== undefined && this.logModeMap.get(log.id)) || "preview";
 
     return html`
       <div
@@ -312,9 +330,13 @@ export class LogsView extends WithLogsController(
           <div class="logs-view__detail-editor">
             <markdown-editor-preview
               .value=${log.value}
+              .mode=${currentMode}
               .themeMode=${themeMode}
               .darkTheme=${"soft"}
               deleteAction="enabled"
+              @mode-change=${(e: CustomEvent<{ mode: MarkdownDisplayMode }>) =>
+                log.id !== undefined &&
+                this.handleModeChange(log.id, e.detail.mode)}
               @markdown-change=${(e: CustomEvent<{ value: string }>) =>
                 log.id !== undefined &&
                 this.handleContentChange(log.id, e.detail.value)}

@@ -9,6 +9,7 @@ import "@shared/components";
 import type {
   DatePickerChangeEventDetail,
   SearchInputEventDetail,
+  MarkdownDisplayMode,
 } from "@shared/components";
 import { format } from "@shared/utils";
 import type { IssueRecord } from "@/db/models/task.model";
@@ -71,6 +72,9 @@ export class IssuesView extends WithIssuesController(
 
   @state()
   public bulkAddText: string = "";
+
+  @state()
+  public issueModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
   private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
     new Map();
@@ -141,6 +145,15 @@ export class IssuesView extends WithIssuesController(
     this.expandedIssueIds = nextSet;
   };
 
+  /** エディタ表示モード変更ハンドラー */
+  public handleModeChange = (
+    issueId: number,
+    mode: MarkdownDisplayMode,
+  ): void => {
+    this.issueModeMap.set(issueId, mode);
+    this.requestUpdate();
+  };
+
   /** 詳細パネルのアニメーション終了ハンドラー（アンマウントクリーンアップ） */
   public handleDetailAnimationEnd = (issueId: number): void => {
     if (this.collapsingIssueId === issueId) {
@@ -153,7 +166,7 @@ export class IssuesView extends WithIssuesController(
     }
   };
 
-  /** 単一新規 Issue 追加ハンドラー（即時作成して自動展開） */
+  /** 単一新規 Issue 追加ハンドラー（即時作成して自動展開、エディタモード初期化） */
   public handleCreateIssue = async (): Promise<void> => {
     if (!this.issuesController) return;
 
@@ -166,6 +179,7 @@ export class IssuesView extends WithIssuesController(
     });
 
     if (newId !== undefined) {
+      this.issueModeMap.set(newId, "edit");
       this.handleToggleExpand(newId);
     }
   };
@@ -249,6 +263,7 @@ export class IssuesView extends WithIssuesController(
   public handleConfirmDelete = async (): Promise<void> => {
     if (this.deletingIssueId !== undefined && this.issuesController) {
       await this.issuesController.deleteIssue(this.deletingIssueId);
+      this.issueModeMap.delete(this.deletingIssueId);
       const nextSet = new Set(this.expandedIssueIds);
       nextSet.delete(this.deletingIssueId);
       this.expandedIssueIds = nextSet;
@@ -457,6 +472,8 @@ export class IssuesView extends WithIssuesController(
     const containerClass = isCollapsing
       ? "issues-view__detail-container issues-view__detail-container--collapsing"
       : "issues-view__detail-container";
+    const currentMode =
+      (issue.id !== undefined && this.issueModeMap.get(issue.id)) || "preview";
 
     return html`
       <div
@@ -470,7 +487,11 @@ export class IssuesView extends WithIssuesController(
             .themeMode=${this.theme === "dark" ? "dark" : "light"}
             .darkTheme=${"soft"}
             .value=${issue.value}
+            .mode=${currentMode}
             ?show-delete-button=${true}
+            @mode-change=${(e: CustomEvent<{ mode: MarkdownDisplayMode }>) =>
+              issue.id !== undefined &&
+              this.handleModeChange(issue.id, e.detail.mode)}
             @markdown-change=${(e: CustomEvent<{ value: string }>) =>
               issue.id !== undefined &&
               this.handleContentChange(issue.id, e.detail.value)}

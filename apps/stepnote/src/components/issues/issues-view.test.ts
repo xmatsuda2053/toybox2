@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
+import type { TaskStatusCode } from "@/types";
 import type { SearchInputEventDetail } from "@shared/components";
 import type { IssuesController } from "@/controllers/issues.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
@@ -41,6 +42,9 @@ import { IssuesView } from "./issues-view.js";
  *    - 4-5. Markdownエディタの内容変更（markdown-change）により、300msデバウンスを経て issuesController.updateIssue が title（1行目から抽出）と value で呼び出されること
  *    - 4-6. Markdownエディタの削除要求（markdown-delete）で削除確認ダイアログ（wa-dialog）が開き、確認後に issuesController.deleteIssue が実行され、詳細が閉じること
  *    - 4-7. 各Issue行（.issues-view__item）とインライン詳細（.issues-view__detail-container）が一体化ラッパー（.issues-view__row-group）に内包され、不要な余白なく連結描画されること
+ *    - 4-8. Issue展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview' モード、handleModeChange によりモードが更新されること
+ *    - 4-9. 新規追加ボタン（handleCreateIssue）で作成された Issue はエディタモード（.mode='edit'）で自動展開されること
+ *    - 4-10. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること
  *
  * 5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)
  *    - 5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること
@@ -419,6 +423,55 @@ describe("IssuesView Component", () => {
       element.handleToggleExpand(1);
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__row-group");
+    });
+
+    it("4-8. Issue 展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること", () => {
+      element.handleToggleExpand(1);
+      let template = element.render();
+      let htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+
+      element.handleModeChange(1, "edit");
+      template = element.render();
+      htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+    });
+
+    it("4-9. 新規追加ボタン（handleCreateIssue）で作成された Issue はエディタモード（.mode='edit'）で自動展開されること", async () => {
+      mockIssuesController.createIssue.mockImplementation(
+        async (issue: {
+          title: string;
+          value: string;
+          statusCode: TaskStatusCode;
+          dueDate: Date;
+        }) => {
+          const id = 100;
+          mockIssuesController.state.push({
+            id,
+            taskId: 10,
+            title: issue.title,
+            value: issue.value,
+            statusCode: issue.statusCode,
+            dueDate: issue.dueDate,
+          });
+          return id;
+        },
+      );
+
+      await element.handleCreateIssue();
+      expect(element.expandedIssueIds.has(100)).toBe(true);
+      expect(element.issueModeMap.get(100)).toBe("edit");
+
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+    });
+
+    it("4-10. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること", async () => {
+      element.issueModeMap.set(1, "edit");
+      element.handleRequestDelete(1);
+      await element.handleConfirmDelete();
+      expect(element.issueModeMap.has(1)).toBe(false);
     });
   });
 
