@@ -33,12 +33,17 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
   public activeTab: string = "notes";
 
   /**
-   * タブ切り替えハンドラー
+   * タブ切り替えハンドラー（表示タブの更新および子コンポーネントのプレビューモード初期化）
    */
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
     const tabName = e.detail?.name;
-    if (tabName) {
+    if (tabName === "notes" || tabName === "logs") {
       this.activeTab = tabName;
+      const targetSelector = tabName === "logs" ? "logs-view" : "notes-view";
+      const targetEl = this.renderRoot?.querySelector(targetSelector) as
+        | (HTMLElement & { resetModesToPreview?: () => void })
+        | null;
+      targetEl?.resetModesToPreview?.();
     }
   };
 

@@ -26,6 +26,8 @@ import { JournalPane } from "./journal-pane.js";
  *    - 3-5. wa-tab-group に active 属性がバインドされ、初期値が 'notes' であること
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
  *    - 3-7. notes-view および logs-view に theme が伝播されること
+ *    - 3-8. handleTabShow 呼び出し時に、切り替え先の子コンポーネント（notes-view / logs-view）の resetModesToPreview が呼び出されること
+ *    - 3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (journal-pane.scss) が存在し、ルートブロック .journal-pane および主要BEMセレクタ（.journal-pane__empty等）が定義されていること
@@ -179,6 +181,58 @@ describe("JournalPane Component", () => {
       );
 
       expect(element.activeTab).toBe("logs");
+    });
+
+    it("3-8. handleTabShow 呼び出し時に、子コンポーネント（notes-view / logs-view）の resetModesToPreview が呼び出されること", () => {
+      const resetNotesSpy = vi.fn();
+      const resetLogsSpy = vi.fn();
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: vi.fn((sel: string) => {
+            if (sel === "notes-view") return { resetModesToPreview: resetNotesSpy };
+            if (sel === "logs-view") return { resetModesToPreview: resetLogsSpy };
+            return null;
+          }),
+        },
+        configurable: true,
+      });
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "logs" } }) as unknown as CustomEvent<{ name: string }>,
+      );
+      expect(resetLogsSpy).toHaveBeenCalledTimes(1);
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "notes" } }) as unknown as CustomEvent<{ name: string }>,
+      );
+      expect(resetNotesSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
+      const resetNotesSpy = vi.fn();
+      const resetLogsSpy = vi.fn();
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: vi.fn((sel: string) => {
+            if (sel === "notes-view") return { resetModesToPreview: resetNotesSpy };
+            if (sel === "logs-view") return { resetModesToPreview: resetLogsSpy };
+            return null;
+          }),
+        },
+        configurable: true,
+      });
+
+      expect(element.activeTab).toBe("notes");
+
+      // 子孫コンポーネント（NotesView内のノートID等）からのイベントを模倣
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "203" } }) as unknown as CustomEvent<{ name: string }>,
+      );
+
+      // activeTab は変更されず、resetModesToPreview も呼ばれないこと
+      expect(element.activeTab).toBe("notes");
+      expect(resetNotesSpy).not.toHaveBeenCalled();
+      expect(resetLogsSpy).not.toHaveBeenCalled();
     });
 
     it("3-7. notes-view および logs-view に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {

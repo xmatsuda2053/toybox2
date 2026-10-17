@@ -32,6 +32,8 @@ import { TaskPane } from "./task-pane.js";
  *    - 3-4. property パネル内に task-property コンポーネントがレンダリングされること
  *    - 3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
+ *    - 3-7. handleTabShow 呼び出し時に、子コンポーネント（issues-view 等）の resetModesToPreview が呼び出されること
+ *    - 3-8. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *
  * 4. コントローラー購読（Context連携）
  *    - 4-1. taskController 設定時に controller.subscribe が呼び出されること
@@ -298,6 +300,48 @@ describe("TaskPane Component", () => {
         new CustomEvent("wa-tab-show", { detail: { name: "property" } }),
       );
       expect(element.activeTab).toBe("property");
+    });
+
+    it("3-7. handleTabShow 呼び出し時に、子コンポーネント（issues-view 等）の resetModesToPreview が呼び出されること", () => {
+      const resetSpy = vi.fn();
+      const mockIssuesView = { resetModesToPreview: resetSpy };
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: vi.fn((sel: string) => {
+            if (sel === "issues-view") return mockIssuesView;
+            return null;
+          }),
+        },
+        configurable: true,
+      });
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "issues" } }),
+      );
+      expect(resetSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("3-8. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
+      const resetSpy = vi.fn();
+      const mockIssuesView = { resetModesToPreview: resetSpy };
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: vi.fn((sel: string) => {
+            if (sel === "issues-view") return mockIssuesView;
+            return null;
+          }),
+        },
+        configurable: true,
+      });
+
+      expect(element.activeTab).toBe("summary");
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "random-invalid-tab" } }),
+      );
+
+      expect(element.activeTab).toBe("summary");
+      expect(resetSpy).not.toHaveBeenCalled();
     });
   });
 
