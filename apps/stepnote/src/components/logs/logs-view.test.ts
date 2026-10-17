@@ -69,6 +69,7 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 6-22. 詳細コンテナ（.logs-view__detail-container）に滑らかな展開アニメーション（0.35s、ease-out expo イージング）が設定され、閉じる状態（&--collapsing）に折りたたみアニメーション（0.28s）が設定されていること
  *    - 6-23. @keyframes logs-view-detail-expand および collapse で文字潰れを防ぐ段階的フェードイン・先行フェードアウトが設定されていること
  *    - 6-24. prefers-reduced-motion: reduce メディアクエリ内でアニメーション抑制が定義されていること
+ *    - 6-25. 詳細エディタ（.logs-view__detail-editor）に展開時の高さを確保するための最小高さ（min-height: 240px）が設定され、詳細コンテナ（.logs-view__detail-container）に縦スクロール時の縮小を防ぐ flex-shrink: 0 が設定されていること
  */
 describe("LogsView Component", () => {
   let element: LogsView;
@@ -603,6 +604,23 @@ describe("LogsView Component", () => {
       expect(scss).toMatch(
         /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*\{[\s\S]*?\.logs-view__detail-container\s*\{[\s\S]*?animation:\s*none/,
       );
+    });
+
+    it("6-25. 詳細エディタ（.logs-view__detail-editor）に展開時の高さを確保するための最小高さ（min-height: 240px）が設定され、詳細コンテナ（.logs-view__detail-container）に縦スクロール時の縮小を防ぐ flex-shrink: 0 が設定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      const editorBlockMatch = scss.match(
+        /\.logs-view__detail-editor\s*\{([^}]+)\}/,
+      );
+      expect(editorBlockMatch).not.toBeNull();
+      const editorBlock = editorBlockMatch ? editorBlockMatch[1] : "";
+      expect(editorBlock).toMatch(/min-height:\s*240px/);
+
+      const containerBlockMatch = scss.match(
+        /\.logs-view__detail-container\s*\{([^}]+)\}/,
+      );
+      expect(containerBlockMatch).not.toBeNull();
+      const containerBlock = containerBlockMatch ? containerBlockMatch[1] : "";
+      expect(containerBlock).toMatch(/flex-shrink:\s*0/);
     });
   });
 });
