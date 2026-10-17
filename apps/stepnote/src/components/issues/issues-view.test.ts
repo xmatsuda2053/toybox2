@@ -23,6 +23,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 2-3. 未完了・完了のそれぞれの中で期日昇順（期限の近い順）にソートされて描画されること
  *    - 2-4. 各Issueアイテム（.issues-view__item）にステータスアイコン、タイトル、datepicker-input（.issues-view__item-due）が描画され、borderless 属性が指定されていること
  *    - 2-5. 検索キーワード入力（search-input）により、タイトルまたは本文でIssueが絞り込まれてセクション表示されること
+ *    - 2-6. 各Issueアイテム（.issues-view__item）の右端に開閉状態を示す Caret アイコン（.issues-view__item-caret、name="caret-right-solid-full"）が描画されていること
  *
  * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
  *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
@@ -52,6 +53,8 @@ import { IssuesView } from "./issues-view.js";
  *    - 6-5. issues-view.scss において .issues-view__item-due に対し、背景色を親行と同色にする --wa-form-control-background-color: transparent が設定されていること
  *    - 6-6. issues-view.scss において .issues-view__row-group が定義され、display: flex; flex-direction: column; が設定されていること
  *    - 6-7. issues-view.scss において .issues-view__item--expanded に対し、背景色の変更設定（background-color）が含まれず、角丸解除（border-bottom-left-radius / right-radius: 0）のみが設定されていること
+ *    - 6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること
+ *    - 6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
@@ -196,6 +199,13 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("APIエンドポイント実装");
       expect(htmlStr).not.toContain("設計書のレビュー実施");
       expect(htmlStr).toContain("未完了 (1)");
+    });
+
+    it("2-6. 各Issueアイテム（.issues-view__item）の右端に開閉状態を示す Caret アイコン（.issues-view__item-caret、name=\"caret-right-solid-full\"）が描画されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*class=["'][^"']*issues-view__item-caret[^"']*["'][^>]*name=["']caret-right-solid-full["']/,
+      );
     });
   });
 
@@ -403,6 +413,18 @@ describe("IssuesView Component", () => {
       expect(expandedBody).not.toMatch(/background-color/);
       expect(expandedBody).toMatch(/border-bottom-left-radius:\s*0;/);
       expect(expandedBody).toMatch(/border-bottom-right-radius:\s*0;/);
+    });
+
+    it("6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /&__item-caret\s*\{[^}]*color:\s*var\(--wa-color-text-quiet\);[^}]*transition:/s,
+      );
+    });
+
+    it("6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /&--expanded\s*\{[^}]*\.issues-view__item-caret\s*\{[^}]*transform:\s*rotate\(90deg\);[^}]*color:\s*var\(--wa-color-text-normal\);/s,
+      );
     });
   });
 });

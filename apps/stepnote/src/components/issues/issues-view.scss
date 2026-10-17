@@ -96,11 +96,20 @@
 
     &:hover {
       background-color: var(--wa-color-neutral-fill-normal);
+
+      .issues-view__item-caret {
+        color: var(--wa-color-text-normal);
+      }
     }
 
     &--expanded {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
+
+      .issues-view__item-caret {
+        transform: rotate(90deg);
+        color: var(--wa-color-text-normal);
+      }
     }
 
     &--completed {
@@ -185,6 +194,19 @@
     &::part(input) {
       font-size: var(--wa-font-size-s, 13px);
     }
+  }
+
+  &__item-caret {
+    flex-shrink: 0;
+    font-size: var(--wa-font-size-s, 14px);
+    color: var(--wa-color-text-quiet);
+    transition:
+      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   &__detail-container {
