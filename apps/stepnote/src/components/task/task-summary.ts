@@ -1,6 +1,5 @@
 import {
   html,
-  nothing,
   unsafeCSS,
   type HTMLTemplateResult,
   type PropertyValues,
@@ -156,23 +155,21 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
   };
 
   /**
-   * 期限ステータスアイコン（slot="start"）を描画する
+   * タスクの期限情報（アイコン名および修飾クラス）を取得する
    */
-  private renderDueStatusIcon(): HTMLTemplateResult | typeof nothing {
-    const dueDate = this.taskController?.state?.dueDate;
-    const dueInfo = getTaskDueIconInfo(dueDate);
-    if (!dueInfo) {
-      return nothing;
+  private getTaskDueDisplay(): { icon: string; modifierClass: string } {
+    const task = this.taskController?.state;
+    if (!task?.dueDate || task.statusCode === 9) {
+      return { icon: "calendar-solid-full", modifierClass: "" };
     }
-
-    return html`
-      <wa-icon
-        slot="start"
-        library="my-icons"
-        name="${dueInfo.icon}"
-        class="task-summary__name-due-icon task-summary__name-due-icon--${dueInfo.status}"
-      ></wa-icon>
-    `;
+    const dueInfo = getTaskDueIconInfo(task.dueDate);
+    if (!dueInfo) {
+      return { icon: "calendar-solid-full", modifierClass: "" };
+    }
+    return {
+      icon: dueInfo.icon,
+      modifierClass: `task-summary__due-date--${dueInfo.status}`,
+    };
   }
 
   /**
@@ -192,7 +189,12 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
             @input=${(e: Event) =>
               this.handleNameInput((e.target as HTMLInputElement).value)}
           >
-            ${this.renderDueStatusIcon()}
+            <wa-icon
+              slot="start"
+              library="my-icons"
+              name="note-sticky-solid-full"
+              class="task-summary__name-icon"
+            ></wa-icon>
           </wa-input>
         </div>
       </div>
@@ -207,14 +209,19 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
     const formattedDueDate = task?.dueDate
       ? format(new Date(task.dueDate), "yyyy-MM-dd")
       : "";
+    const { icon, modifierClass } = this.getTaskDueDisplay();
+    const className = modifierClass
+      ? `task-summary__due-date ${modifierClass}`
+      : "task-summary__due-date";
 
     return html`
       <div class="task-summary__field">
         <label class="task-summary__label">期限日</label>
         <div class="task-summary__control">
           <datepicker-input
-            class="task-summary__due-date"
+            class="${className}"
             size="s"
+            icon="${icon}"
             .value=${formattedDueDate}
             @datepicker-change=${(
               e: CustomEvent<DatePickerChangeEventDetail>,

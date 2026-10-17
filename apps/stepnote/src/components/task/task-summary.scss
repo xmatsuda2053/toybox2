@@ -94,26 +94,27 @@
   width: 100%;
 }
 
-.task-summary__name-due-icon {
+.task-summary__name-icon {
   font-size: var(--wa-font-size-m);
   display: inline-flex;
   align-items: center;
-
-  &--overdue {
-    color: var(--quick-access-icon-overdue);
-  }
-
-  &--asap {
-    color: var(--quick-access-icon-asap);
-  }
-
-  &--upcoming {
-    color: var(--quick-access-icon-upcoming);
-  }
+  color: var(--wa-color-text-quiet);
 }
 
 .task-summary__due-date {
   width: 100%;
+
+  &--overdue {
+    --datepicker-icon-color: var(--quick-access-icon-overdue);
+  }
+
+  &--asap {
+    --datepicker-icon-color: var(--quick-access-icon-asap);
+  }
+
+  &--upcoming {
+    --datepicker-icon-color: var(--quick-access-icon-upcoming);
+  }
 }
 
 .task-summary__contacts {

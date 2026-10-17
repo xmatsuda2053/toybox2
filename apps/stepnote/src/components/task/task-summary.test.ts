@@ -16,11 +16,13 @@ import { TaskSummary } from "./task-summary.js";
  *    - 1-4. taskController.state の詳細説明が markdown-editor-preview（.task-summary__description）に反映されること
  *    - 1-5. taskController.state が未定義の場合、空描画または適切なフォールバックとなること
  *    - 1-6. 詳細説明フィールドにラベル（.task-summary__label）が存在せず、markdown-editor-preview が autoHeight なし（表示可能領域一杯）でレンダリングされること
- *    - 1-7. 期限切れの場合、タスク名 input の slot="start" に fire-solid-full アイコン（.task-summary__name-due-icon--overdue）が描画されること
- *    - 1-8. 期限当日の場合、タスク名 input の slot="start" に triangle-exclamation-solid-full アイコン（.task-summary__name-due-icon--asap）が描画されること
- *    - 1-9. 期限間近（3日以内）の場合、タスク名 input の slot="start" に calendar-solid-full アイコン（.task-summary__name-due-icon--upcoming）が描画されること
- *    - 1-10. 期限切れ・当日・間近のいずれにも該当しない（4日以上先）場合、タスク名 input に slot="start" アイコンが描画されないこと
- *    - 1-11. 関係者フィールドのラベル（.task-summary__label--contacts）内に関係者追加アイコン（wa-icon.task-summary__btn-add-contact, name='circle-plus'）が出力されること
+ *    - 1-7. タスク名 input の slot="start" に固定アイコン（note-sticky-solid-full, library="my-icons"）が常時描画されること
+ *    - 1-8. 期限切れの場合、datepicker-input（.task-summary__due-date）に icon="fire-solid-full" および .task-summary__due-date--overdue が付与されること
+ *    - 1-9. 期限当日の場合、datepicker-input（.task-summary__due-date）に icon="triangle-exclamation-solid-full" および .task-summary__due-date--asap が付与されること
+ *    - 1-10. 期限間近（3日以内）の場合、datepicker-input（.task-summary__due-date）に icon="calendar-solid-full" および .task-summary__due-date--upcoming が付与されること
+ *    - 1-11. 期限切れ・当日・間近のいずれにも該当しない（4日以上先）場合、または期限日未設定の場合、datepicker-input に通常の calendar-solid-full が設定され、修飾クラスが付与されないこと
+ *    - 1-12. タスク完了時（statusCode === 9）の場合、期限切れ等の期日であっても警告アイコン・修飾クラスが抑制され、通常の calendar-solid-full が設定されること
+ *    - 1-13. 関係者フィールドのラベル（.task-summary__label--contacts）内に関係者追加アイコン（wa-icon.task-summary__btn-add-contact, name='circle-plus'）が出力されること
  *
  * 2. 詳細説明の有無に応じた Markdown モード
  *    - 2-1. 詳細説明が空文字の場合、Markdown表示モードが 'edit' に初期化されること
@@ -44,7 +46,7 @@ import { TaskSummary } from "./task-summary.js";
  *    - 5-4. task-summary.scss に @extend が一切含まれていないこと
  *    - 5-5. task-summary.scss 全体においてハードコードされたカラーコードが 0 件（完全ゼロ）であること
  *    - 5-6. task-summary.scss において .task-summary__field が横並び配置され、ラベル幅が固定されていること、および詳細説明が領域一杯（flex: 1）に伸長すること
- *    - 5-7. task-summary.scss に .task-summary__name-due-icon および各修飾子（--overdue, --asap, --upcoming）が定義されていること
+ *    - 5-7. task-summary.scss に .task-summary__due-date の各修飾子（--overdue, --asap, --upcoming）および --datepicker-icon-color が定義されていること
  *    - 5-8. task-summary.scss に .task-summary__label--contacts および .task-summary__btn-add-contact が定義され、ポインターカーソルとホバー色が設定されていること
  *    - 5-9. task-summary.scss において :host および .task-summary に min-height: 100% が定義され、コンテンツが少ない時はタスクエリア末尾まで広がり、コンテンツ増大時は縦に自然伸長すること
  *
@@ -139,7 +141,14 @@ describe("TaskSummary Component", () => {
       );
     });
 
-    it('1-7. 期限切れの場合、タスク名 input の slot="start" に fire-solid-full アイコン（.task-summary__name-due-icon--overdue）が描画されること', () => {
+    it('1-7. タスク名 input の slot="start" に固定アイコン（note-sticky-solid-full, library="my-icons"）が常時描画されること', () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*slot="start"[^>]*library="my-icons"[^>]*name=["']?note-sticky-solid-full["']?[^>]*class="[^"]*task-summary__name-icon[^"]*"/,
+      );
+    });
+
+    it('1-8. 期限切れの場合、datepicker-input（.task-summary__due-date）に icon="fire-solid-full" および .task-summary__due-date--overdue が付与されること', () => {
       vi.setSystemTime(new Date("2026-10-09T00:00:00.000Z"));
       mockTaskController.state = {
         ...baseTask,
@@ -147,11 +156,11 @@ describe("TaskSummary Component", () => {
       };
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*slot="start"[^>]*library="my-icons"[^>]*name=["']?fire-solid-full["']?[^>]*class="[^"]*task-summary__name-due-icon--overdue[^"]*"/,
+        /<datepicker-input[^>]*class="[^"]*task-summary__due-date--overdue[^"]*"[^>]*icon="fire-solid-full"/,
       );
     });
 
-    it('1-8. 期限当日の場合、タスク名 input の slot="start" に triangle-exclamation-solid-full アイコン（.task-summary__name-due-icon--asap）が描画されること', () => {
+    it('1-9. 期限当日の場合、datepicker-input（.task-summary__due-date）に icon="triangle-exclamation-solid-full" および .task-summary__due-date--asap が付与されること', () => {
       vi.setSystemTime(new Date("2026-10-09T00:00:00.000Z"));
       mockTaskController.state = {
         ...baseTask,
@@ -159,11 +168,11 @@ describe("TaskSummary Component", () => {
       };
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*slot="start"[^>]*library="my-icons"[^>]*name=["']?triangle-exclamation-solid-full["']?[^>]*class="[^"]*task-summary__name-due-icon--asap[^"]*"/,
+        /<datepicker-input[^>]*class="[^"]*task-summary__due-date--asap[^"]*"[^>]*icon="triangle-exclamation-solid-full"/,
       );
     });
 
-    it('1-9. 期限間近（3日以内）の場合、タスク名 input の slot="start" に calendar-solid-full アイコン（.task-summary__name-due-icon--upcoming）が描画されること', () => {
+    it('1-10. 期限間近（3日以内）の場合、datepicker-input（.task-summary__due-date）に icon="calendar-solid-full" および .task-summary__due-date--upcoming が付与されること', () => {
       vi.setSystemTime(new Date("2026-10-09T00:00:00.000Z"));
       mockTaskController.state = {
         ...baseTask,
@@ -171,22 +180,38 @@ describe("TaskSummary Component", () => {
       };
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*slot="start"[^>]*library="my-icons"[^>]*name=["']?calendar-solid-full["']?[^>]*class="[^"]*task-summary__name-due-icon--upcoming[^"]*"/,
+        /<datepicker-input[^>]*class="[^"]*task-summary__due-date--upcoming[^"]*"[^>]*icon="calendar-solid-full"/,
       );
     });
 
-    it('1-10. 期限切れ・当日・間近のいずれにも該当しない（4日以上先）場合、タスク名 input に slot="start" アイコンが描画されないこと', () => {
+    it('1-11. 期限切れ・当日・間近のいずれにも該当しない（4日以上先）場合、または期限日未設定の場合、datepicker-input に通常の calendar-solid-full が設定され、修飾クラスが付与されないこと', () => {
       vi.setSystemTime(new Date("2026-10-09T00:00:00.000Z"));
       mockTaskController.state = {
         ...baseTask,
         dueDate: new Date("2026-10-20T00:00:00.000Z"),
       };
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("task-summary__name-due-icon");
-      expect(htmlStr).not.toContain('slot="start"');
+      expect(htmlStr).not.toContain("task-summary__due-date--");
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*class="task-summary__due-date"[^>]*icon="calendar-solid-full"/,
+      );
     });
 
-    it("1-11. 関係者フィールドのラベル（.task-summary__label--contacts）内に関係者追加アイコン（wa-icon.task-summary__btn-add-contact, name='circle-plus'）が出力されること", () => {
+    it('1-12. タスク完了時（statusCode === 9）の場合、期限切れ等の期日であっても警告アイコン・修飾クラスが抑制され、通常の calendar-solid-full が設定されること', () => {
+      vi.setSystemTime(new Date("2026-10-09T00:00:00.000Z"));
+      mockTaskController.state = {
+        ...baseTask,
+        statusCode: 9,
+        dueDate: new Date("2026-10-08T00:00:00.000Z"),
+      };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("task-summary__due-date--");
+      expect(htmlStr).toMatch(
+        /<datepicker-input[^>]*class="task-summary__due-date"[^>]*icon="calendar-solid-full"/,
+      );
+    });
+
+    it("1-13. 関係者フィールドのラベル（.task-summary__label--contacts）内に関係者追加アイコン（wa-icon.task-summary__btn-add-contact, name='circle-plus'）が出力されること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("task-summary__label--contacts");
       expect(htmlStr).toMatch(
@@ -328,12 +353,13 @@ describe("TaskSummary Component", () => {
       expect(content).toMatch(/flex:\s*1/);
     });
 
-    it("5-7. task-summary.scss に .task-summary__name-due-icon および各修飾子（--overdue, --asap, --upcoming）が定義されていること", () => {
+    it("5-7. task-summary.scss に .task-summary__due-date の各修飾子（--overdue, --asap, --upcoming）および --datepicker-icon-color が定義されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toContain(".task-summary__name-due-icon");
-      expect(content).toContain("--overdue");
-      expect(content).toContain("--asap");
-      expect(content).toContain("--upcoming");
+      expect(content).toContain(".task-summary__due-date");
+      expect(content).toContain("&--overdue");
+      expect(content).toContain("&--asap");
+      expect(content).toContain("&--upcoming");
+      expect(content).toContain("--datepicker-icon-color");
       expect(content).toContain("var(--quick-access-icon-overdue)");
       expect(content).toContain("var(--quick-access-icon-asap)");
       expect(content).toContain("var(--quick-access-icon-upcoming)");
