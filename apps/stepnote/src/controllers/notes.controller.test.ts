@@ -300,4 +300,45 @@ describe("NotesController (TDD)", () => {
       expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("6. システムログ連携仕様", () => {
+    let fakeSystemLogService: {
+      logNoteCreated: ReturnType<typeof vi.fn>;
+      logNoteDeleted: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeNotesRepository(testNotes);
+      fakeSystemLogService = {
+        logNoteCreated: vi.fn().mockResolvedValue(undefined),
+        logNoteDeleted: vi.fn().mockResolvedValue(undefined),
+      };
+      controller = new NotesController(
+        mockHost.host,
+        fakeRepository as any,
+        1,
+        fakeSystemLogService as any,
+      );
+      await controller.initialized;
+    });
+
+    it("6-1. createNote 実行時に systemLogService.logNoteCreated が呼び出されること", async () => {
+      const newId = await controller.createNote({ value: "## Note\n\n新規ノート本文" });
+
+      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledWith(1, newId);
+    });
+
+    it("6-2. deleteNote 実行時に systemLogService.logNoteDeleted が呼び出されること", async () => {
+      await controller.deleteNote(1);
+
+      expect(fakeSystemLogService.logNoteDeleted).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logNoteDeleted).toHaveBeenCalledWith(
+        1,
+        1,
+        "Note 1-1",
+      );
+    });
+  });
 });

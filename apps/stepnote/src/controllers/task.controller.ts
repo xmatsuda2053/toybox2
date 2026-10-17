@@ -1,6 +1,8 @@
 import type { ReactiveControllerHost } from "lit";
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { IssuesRepository } from "@/repositories/issues.repository";
+import type { LabelsRepository } from "@/repositories/labels.repository";
+import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { CreateTaskInput, Summary, Property, TaskStatusCode } from "@/types";
 import { BaseTaskScopeController } from "./base-reactive.controller";
@@ -17,15 +19,21 @@ export class TaskController extends BaseTaskScopeController<
   TaskRecord | undefined
 > {
   private issuesRepository?: IssuesRepository;
+  private systemLogService?: SystemLogService;
+  private labelsRepository?: LabelsRepository;
 
   constructor(
     host: ReactiveControllerHost,
     repository: TaskRepository,
     taskId?: number,
     issuesRepository?: IssuesRepository,
+    systemLogService?: SystemLogService,
+    labelsRepository?: LabelsRepository,
   ) {
     super(host, repository, undefined, taskId);
     this.issuesRepository = issuesRepository;
+    this.systemLogService = systemLogService;
+    this.labelsRepository = labelsRepository;
   }
 
   /**
@@ -112,6 +120,7 @@ export class TaskController extends BaseTaskScopeController<
     const newId = await this.repository.add(taskData);
     this._taskId = newId;
     await this.loadState();
+    await this.recordTaskCreateLog(newId, input);
     return newId;
   };
 
@@ -129,12 +138,88 @@ export class TaskController extends BaseTaskScopeController<
     if (this._taskId === undefined) {
       return;
     }
+    const before = this._state ? { ...this._state } : undefined;
     await this.repository.update(this._taskId, {
       ...partial,
       updatedAt: partial.updatedAt ?? new Date(),
     });
     await this.loadState();
+    if (before) {
+      await this.recordTaskUpdateLogs(before, partial);
+    }
   };
+
+  /** ラベルIDからラベル名を取得するヘルパー */
+  private async resolveLabelName(labelId: number): Promise<string> {
+    if (this.labelsRepository) {
+      const label = await this.labelsRepository.getById(labelId);
+      if (label?.name) return label.name;
+    }
+    return `ラベル ${labelId}`;
+  }
+
+  /** タスク作成ログの記録 */
+  private async recordTaskCreateLog(
+    newId: number,
+    input: CreateTaskInput,
+  ): Promise<void> {
+    if (!this.systemLogService) return;
+    const labelName = await this.resolveLabelName(input.labelId);
+    await this.systemLogService.logTaskCreated(newId, {
+      name: input.name,
+      dueDate: input.dueDate,
+      labelName,
+      fiscalYear: input.fiscalYear,
+      statusCode: input.statusCode,
+    });
+  }
+
+  /** タスク更新時のシステムログ記録（委譲） */
+  private async recordTaskUpdateLogs(
+    before: TaskRecord,
+    partial: Partial<Omit<TaskRecord, "id">>,
+  ): Promise<void> {
+    if (!this.systemLogService || this._taskId === undefined) return;
+    await this.recordTaskBasicChanges(this._taskId, before, partial);
+    await this.recordTaskPropertyChanges(this._taskId, before, partial);
+  }
+
+  /** タスク基本情報（名前、ステータス、関係者）の変更ログ記録 */
+  private async recordTaskBasicChanges(
+    taskId: number,
+    before: TaskRecord,
+    partial: Partial<Omit<TaskRecord, "id">>,
+  ): Promise<void> {
+    if (!this.systemLogService) return;
+
+    if (partial.name !== undefined && partial.name !== before.name) {
+      await this.systemLogService.logTaskNameChanged(taskId, before.name, partial.name);
+    }
+    if (partial.statusCode !== undefined && partial.statusCode !== before.statusCode) {
+      await this.systemLogService.logTaskStatusChanged(taskId, before.statusCode, partial.statusCode);
+    }
+  }
+
+  /** タスク属性情報（期日、年度、ラベル）の変更ログ記録 */
+  private async recordTaskPropertyChanges(
+    taskId: number,
+    before: TaskRecord,
+    partial: Partial<Omit<TaskRecord, "id">>,
+  ): Promise<void> {
+    if (!this.systemLogService) return;
+
+    if (partial.dueDate !== undefined && partial.dueDate.getTime() !== before.dueDate.getTime()) {
+      await this.systemLogService.logTaskDueDateChanged(taskId, before.dueDate, partial.dueDate);
+    }
+    if (partial.fiscalYear !== undefined && partial.fiscalYear !== before.fiscalYear) {
+      await this.systemLogService.logTaskFiscalYearChanged(taskId, before.fiscalYear, partial.fiscalYear);
+    }
+    if (partial.labelId !== undefined && partial.labelId !== before.labelId) {
+      const beforeLabel = await this.resolveLabelName(before.labelId);
+      const afterLabel = await this.resolveLabelName(partial.labelId);
+      await this.systemLogService.logTaskLabelChanged(taskId, beforeLabel, afterLabel, before.labelId, partial.labelId);
+    }
+  }
 
   /**
    * 対象タスクのサマリー項目を更新する。

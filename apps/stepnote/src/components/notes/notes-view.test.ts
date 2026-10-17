@@ -20,6 +20,8 @@ import { NotesView } from "./notes-view";
  *    - 2-2. 各 wa-tab に抽出されたノートタイトル（1行目見出し記号除去済み）が表示されること
  *    - 2-3. wa-tab-show イベントまたは handleSelectNote でアクティブなNoteID（activeNoteId）が切り替わること
  *    - 2-4. wa-tab-group の active 属性にアクティブなNoteIDがバインドされていること
+ *    - 2-5. 各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画され、#201 などのIDが表示されること
+ *    - 2-6. アクティブなノートのタブID要素に修飾クラス（.notes-view__tab-id--active）が付与され、非アクティブなノートには付与されないこと
  *
  * 3. 検索フィルタリング (Search Filtering)
  *    - 3-1. search-input 入力（handleSearchInput）によりタブ一覧がリアルタイムに絞り込まれること
@@ -174,6 +176,27 @@ describe("NotesView Component", () => {
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?201["']?/);
+    });
+
+    it("2-5. 各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画され、#201 などのIDが表示されること", () => {
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toContain("notes-view__tab-id");
+      expect(htmlStr).toContain("#201");
+      expect(htmlStr).toContain("#202");
+    });
+
+    it("2-6. アクティブなノートのタブID要素に修飾クラス（.notes-view__tab-id--active）が付与され、非アクティブなノートには付与されないこと", () => {
+      element.activeNoteId = 201;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toMatch(
+        /class=["'][^"']*notes-view__tab-id--active[^"']*["'][^>]*>#201<\/span>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /class=["'][^"']*notes-view__tab-id--active[^"']*["'][^>]*>#202<\/span>/,
+      );
     });
   });
 

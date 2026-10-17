@@ -32,6 +32,7 @@ import "@/components/panes/journal-pane.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
+import { SystemLogService } from "@/services/system-log.service.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -63,6 +64,7 @@ export class AppRoot extends LitElement {
   public notesController: NotesController;
   public issuesController: IssuesController;
   public themeController: ThemeController;
+  public systemLogService: SystemLogService;
 
   constructor() {
     super();
@@ -70,17 +72,31 @@ export class AppRoot extends LitElement {
     // 1. Controller インスタンスの生成と初期化
     const taskRepository = new TaskRepository();
     const issuesRepository = new IssuesRepository();
+    const labelsRepository = new LabelsRepository();
+    const logsRepository = new LogsRepository();
+    const notesRepository = new NotesRepository();
+
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
       this,
       new QuickAccessRepository(),
     );
-    this.labelsController = new LabelsController(this, new LabelsRepository());
+    this.labelsController = new LabelsController(this, labelsRepository);
+    this.logsController = new LogsController(this, logsRepository);
+
+    // 共通システムログサービスの初期化
+    this.systemLogService = new SystemLogService(
+      logsRepository,
+      this.logsController,
+    );
+
     this.taskController = new TaskController(
       this,
       taskRepository,
       undefined,
       issuesRepository,
+      this.systemLogService,
+      labelsRepository,
     );
     this.taskListController = new TaskListController(
       this,
@@ -88,9 +104,18 @@ export class AppRoot extends LitElement {
       getCurrentFiscalYear(),
       new TaskListQuery(db),
     );
-    this.logsController = new LogsController(this, new LogsRepository());
-    this.notesController = new NotesController(this, new NotesRepository());
-    this.issuesController = new IssuesController(this, issuesRepository);
+    this.notesController = new NotesController(
+      this,
+      notesRepository,
+      undefined,
+      this.systemLogService,
+    );
+    this.issuesController = new IssuesController(
+      this,
+      issuesRepository,
+      undefined,
+      this.systemLogService,
+    );
     this.themeController = new ThemeController(this);
 
     // 2. @lit/context Provider による Context 配給の登録
