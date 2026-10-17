@@ -2,6 +2,7 @@ import { html, unsafeCSS, type HTMLTemplateResult, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
 import "@/components/logs/logs-view.js";
+import "@/components/notes/notes-view.js";
 import styles from "./journal-pane.scss?inline";
 
 /**
@@ -62,7 +63,10 @@ export class JournalPane extends LitElement {
         <wa-tab slot="nav" panel="logs">Logs</wa-tab>
 
         <wa-tab-panel name="notes" class="journal-pane__tab-panel">
-          <div class="journal-pane__placeholder">Notes Content (準備中)</div>
+          <notes-view
+            .theme=${this.theme}
+            data-theme=${this.theme}
+          ></notes-view>
         </wa-tab-panel>
 
         <wa-tab-panel name="logs" class="journal-pane__tab-panel">
