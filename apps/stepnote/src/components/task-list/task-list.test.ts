@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import * as fs from "node:fs";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
+import type { LabelsController } from "@/controllers/labels.controller.js";
 import { TaskList } from "./task-list.js";
 
 /**
@@ -67,6 +68,14 @@ import { TaskList } from "./task-list.js";
  *
  * 13. TaskListItem への Issue 件数バインド
  *    - [ ] 13-1. renderTaskItem 呼び出し時に taskListController.getTaskIssueCount から件数がバインドされること
+ *
+ * 14. ラベル選択状態に応じた新規タスク追加ボタン（#task-list-btn-add）の制御
+ *    - 14-1. ラベル未選択時（labelsController 未設定または hasSelectedLabels が false）、新規追加ボタンに disabled 属性が付与されること
+ *    - 14-2. ラベル未選択時、新規追加ボタンのツールチップに「ラベルを選択してください」が表示されること
+ *    - 14-3. ラベル未選択時、handleOpenCreateDialog を呼び出しても isCreateDialogOpen が false のままであること
+ *    - 14-4. ラベル選択中（hasSelectedLabels が true）、新規追加ボタンに disabled 属性が付与されず活性状態であること
+ *    - 14-5. ラベル選択中、新規追加ボタンのツールチップに「新規タスクを追加」が表示されること
+ *    - 14-6. ラベル選択中、handleOpenCreateDialog を呼び出すと isCreateDialogOpen が true になること
  */
 
 describe("TaskList Component (Task List ドメイン独立化)", () => {
@@ -218,6 +227,13 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
     });
 
     it("6-2. 新規追加ボタンのクリックハンドラー実行により、isCreateDialogOpen が true になること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: true }],
+        selectedLabelId: 1,
+        hasSelectedLabels: true,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
       expect(element.isCreateDialogOpen).toBe(false);
       element.handleOpenCreateDialog();
       expect(element.isCreateDialogOpen).toBe(true);
@@ -523,6 +539,90 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       expect(fakeTaskListController.getTaskIssueCount).toHaveBeenCalledWith(10);
       expect(htmlStr).toContain(".issuesDone=3");
       expect(htmlStr).toContain(".issuesTotal=5");
+    });
+  });
+
+  describe("14. ラベル選択状態に応じた新規タスク追加ボタン（#task-list-btn-add）の制御", () => {
+    it("14-1. ラベル未選択時（hasSelectedLabels が false）、新規追加ボタンに disabled 属性が付与されること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: false }],
+        selectedLabelId: undefined,
+        hasSelectedLabels: false,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="task-list-btn-add"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("14-2. ラベル未選択時、新規追加ボタンのツールチップに「ラベルを選択してください」が表示されること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: false }],
+        selectedLabelId: undefined,
+        hasSelectedLabels: false,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-list-btn-add"[^>]*>[\s\S]*?ラベルを選択してください[\s\S]*?<\/wa-tooltip>/,
+      );
+    });
+
+    it("14-3. ラベル未選択時、handleOpenCreateDialog を呼び出しても isCreateDialogOpen が false のままであること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: false }],
+        selectedLabelId: undefined,
+        hasSelectedLabels: false,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      expect(element.isCreateDialogOpen).toBe(false);
+      element.handleOpenCreateDialog();
+      expect(element.isCreateDialogOpen).toBe(false);
+    });
+
+    it("14-4. ラベル選択中（hasSelectedLabels が true）、新規追加ボタンに disabled 属性が付与されず活性状態であること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: true }],
+        selectedLabelId: 1,
+        hasSelectedLabels: true,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="task-list-btn-add"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("14-5. ラベル選択中、新規追加ボタンのツールチップに「新規タスクを追加」が表示されること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: true }],
+        selectedLabelId: 1,
+        hasSelectedLabels: true,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-list-btn-add"[^>]*>[\s\S]*?新規タスクを追加[\s\S]*?<\/wa-tooltip>/,
+      );
+    });
+
+    it("14-6. ラベル選択中、handleOpenCreateDialog を呼び出すと isCreateDialogOpen が true になること", () => {
+      element.labelsController = {
+        state: [{ id: 1, name: "ラベル1", isSelected: true }],
+        selectedLabelId: 1,
+        hasSelectedLabels: true,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as LabelsController;
+
+      expect(element.isCreateDialogOpen).toBe(false);
+      element.handleOpenCreateDialog();
+      expect(element.isCreateDialogOpen).toBe(true);
     });
   });
 });
