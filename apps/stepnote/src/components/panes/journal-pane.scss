@@ -20,6 +20,14 @@
   @include theme-transition;
 }
 
+.journal-pane__empty {
+  @include flex-center;
+  height: 100%;
+  width: 100%;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-m);
+}
+
 .journal-pane__header {
   @include pane-section-header;
   box-sizing: border-box;

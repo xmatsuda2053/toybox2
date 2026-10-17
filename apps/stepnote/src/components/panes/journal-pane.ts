@@ -1,6 +1,10 @@
-import { html, unsafeCSS, type HTMLTemplateResult, LitElement } from "lit";
+import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
+import {
+  SubscriberElement,
+  WithTaskController,
+} from "@/utils/controller-consumers.mixin.js";
 import "@/components/logs/logs-view.js";
 import "@/components/notes/notes-view.js";
 import styles from "./journal-pane.scss?inline";
@@ -8,15 +12,15 @@ import styles from "./journal-pane.scss?inline";
 /**
  * ジャーナルエリア（第5ペイン）コンテナコンポーネント (JournalPane)
  *
- * 画面第5ペインを担当し、課題（Issues）、メモ（Notes）、および作業記録（Logs）の
- * 3つのタブコンテナを提供する。
+ * 画面第5ペインを担当し、メモ（Notes）および作業記録（Logs）の
+ * 2つのタブコンテナを提供する。
  *
  * @export
  * @class JournalPane
- * @extends {LitElement}
+ * @extends {WithTaskController(SubscriberElement)}
  */
 @customElement("journal-pane")
-export class JournalPane extends LitElement {
+export class JournalPane extends WithTaskController(SubscriberElement) {
   public static styles = unsafeCSS(styles);
 
   /**
@@ -37,6 +41,17 @@ export class JournalPane extends LitElement {
       this.activeTab = tabName;
     }
   };
+
+  /**
+   * 空状態テンプレートの描画
+   */
+  private renderEmptyState(): HTMLTemplateResult {
+    return html`
+      <div class="journal-pane__empty">
+        <span>タスクが選択されていません</span>
+      </div>
+    `;
+  }
 
   /**
    * ヘッダー部の描画
@@ -83,6 +98,11 @@ export class JournalPane extends LitElement {
    * メインレンダリング
    */
   public render(): HTMLTemplateResult {
+    const task = this.taskController?.state;
+    if (!task) {
+      return this.renderEmptyState();
+    }
+
     return html`
       <div class="journal-pane">
         ${this.renderHeader()}
