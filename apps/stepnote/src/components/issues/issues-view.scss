@@ -176,6 +176,14 @@
     }
   }
 
+  &__item-id {
+    flex-shrink: 0;
+    font-size: var(--wa-font-size-xs, 12px);
+    font-weight: var(--wa-font-weight-normal, 400);
+    color: var(--wa-color-text-quiet);
+    user-select: none;
+  }
+
   &__item-title {
     flex: 1;
     min-width: 0;

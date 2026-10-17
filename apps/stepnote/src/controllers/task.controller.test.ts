@@ -536,4 +536,126 @@ describe("TaskController (Single Task TDD)", () => {
       expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
   });
+
+  describe("8. システムログ連携仕様", () => {
+    let fakeIssuesRepository: FakeIssuesRepository;
+    let fakeSystemLogService: {
+      logTaskCreated: ReturnType<typeof vi.fn>;
+      logTaskNameChanged: ReturnType<typeof vi.fn>;
+      logTaskStatusChanged: ReturnType<typeof vi.fn>;
+      logTaskDueDateChanged: ReturnType<typeof vi.fn>;
+      logTaskLabelChanged: ReturnType<typeof vi.fn>;
+      logTaskFiscalYearChanged: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(() => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(testTasks);
+      fakeIssuesRepository = new FakeIssuesRepository();
+      fakeSystemLogService = {
+        logTaskCreated: vi.fn().mockResolvedValue(undefined),
+        logTaskNameChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskStatusChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskDueDateChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskLabelChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskFiscalYearChanged: vi.fn().mockResolvedValue(undefined),
+      };
+      controller = new TaskController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        1,
+        fakeIssuesRepository as any,
+        fakeSystemLogService as any,
+      );
+    });
+
+    it("8-1. createTask 実行時に systemLogService.logTaskCreated が呼び出されること", async () => {
+      const newId = await controller.createTask({
+        name: "新規ログテストタスク",
+        dueDate: new Date(2026, 9, 31),
+        fiscalYear: 2026,
+        labelId: 1,
+      });
+
+      expect(fakeSystemLogService.logTaskCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskCreated).toHaveBeenCalledWith(
+        newId,
+        expect.objectContaining({
+          name: "新規ログテストタスク",
+          fiscalYear: 2026,
+        }),
+      );
+    });
+
+    it("8-2. updateSummary でタスク名が変更された場合、logTaskNameChanged が呼び出されること", async () => {
+      await controller.initialized;
+      await controller.updateSummary({ name: "変更後タスク名" });
+
+      expect(fakeSystemLogService.logTaskNameChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskNameChanged).toHaveBeenCalledWith(
+        1,
+        "タスク1",
+        "変更後タスク名",
+      );
+    });
+
+    it("8-3. updateStatus でステータスが変更された場合、logTaskStatusChanged が呼び出されること", async () => {
+      await controller.initialized;
+      await controller.updateStatus(5);
+
+      expect(fakeSystemLogService.logTaskStatusChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskStatusChanged).toHaveBeenCalledWith(
+        1,
+        0,
+        5,
+      );
+    });
+
+    it("8-4. updateSummary で期日が変更された場合、logTaskDueDateChanged が呼び出されること", async () => {
+      await controller.initialized;
+      const newDate = new Date(2026, 11, 31);
+      await controller.updateSummary({ dueDate: newDate });
+
+      expect(fakeSystemLogService.logTaskDueDateChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskDueDateChanged).toHaveBeenCalledWith(
+        1,
+        new Date("2026-04-01"),
+        newDate,
+      );
+    });
+
+    it("8-5. updateProperty でラベルが変更された場合、logTaskLabelChanged が呼び出されること", async () => {
+      await controller.initialized;
+      await controller.updateProperty({ labelId: 2 });
+
+      expect(fakeSystemLogService.logTaskLabelChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskLabelChanged).toHaveBeenCalledWith(
+        1,
+        expect.any(String),
+        expect.any(String),
+        1,
+        2,
+      );
+    });
+
+    it("8-6. updateProperty で年度が変更された場合、logTaskFiscalYearChanged が呼び出されること", async () => {
+      await controller.initialized;
+      await controller.updateProperty({ fiscalYear: 2027 });
+
+      expect(fakeSystemLogService.logTaskFiscalYearChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logTaskFiscalYearChanged).toHaveBeenCalledWith(
+        1,
+        2026,
+        2027,
+      );
+    });
+
+
+    it("8-8. 値に変更がない場合は対応するログメソッドが呼ばれないこと", async () => {
+      await controller.initialized;
+      await controller.updateSummary({ name: "タスク1" });
+
+      expect(fakeSystemLogService.logTaskNameChanged).not.toHaveBeenCalled();
+    });
+  });
 });

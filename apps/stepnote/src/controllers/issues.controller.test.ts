@@ -351,4 +351,105 @@ describe("IssuesController (TDD)", () => {
       expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("6. システムログ連携仕様", () => {
+    let fakeSystemLogService: {
+      logIssueCreated: ReturnType<typeof vi.fn>;
+      logIssueBulkCreated: ReturnType<typeof vi.fn>;
+      logIssueStatusChanged: ReturnType<typeof vi.fn>;
+      logIssueDueDateChanged: ReturnType<typeof vi.fn>;
+      logIssueDeleted: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeIssuesRepository(testIssues);
+      fakeSystemLogService = {
+        logIssueCreated: vi.fn().mockResolvedValue(undefined),
+        logIssueBulkCreated: vi.fn().mockResolvedValue(undefined),
+        logIssueStatusChanged: vi.fn().mockResolvedValue(undefined),
+        logIssueDueDateChanged: vi.fn().mockResolvedValue(undefined),
+        logIssueDeleted: vi.fn().mockResolvedValue(undefined),
+      };
+      controller = new IssuesController(
+        mockHost.host,
+        fakeRepository as any,
+        1,
+        fakeSystemLogService as any,
+      );
+      await controller.initialized;
+    });
+
+    it("6-1. createIssue 実行時に systemLogService.logIssueCreated が呼び出されること", async () => {
+      const dueDate = new Date(2026, 9, 25);
+      const newId = await controller.createIssue({
+        title: "新規Issue",
+        value: "### 新規Issue\n\n",
+        statusCode: 0,
+        dueDate,
+      });
+
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenCalledWith(
+        1,
+        newId,
+        dueDate,
+        0,
+      );
+    });
+
+    it("6-2. createMultipleIssues 実行時に systemLogService.logIssueBulkCreated が呼び出されること", async () => {
+      await controller.createMultipleIssues(["Issue A", "Issue B"]);
+
+      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({ title: "Issue A" }),
+          expect.objectContaining({ title: "Issue B" }),
+        ]),
+      );
+    });
+
+
+    it("6-4. updateIssue でステータスが変更された場合、logIssueStatusChanged が呼び出されること", async () => {
+      await controller.updateIssue(1, { statusCode: 5 });
+
+      expect(fakeSystemLogService.logIssueStatusChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueStatusChanged).toHaveBeenCalledWith(
+        1,
+        1,
+        "Issue 1-1",
+        0,
+        5,
+      );
+    });
+
+    it("6-5. updateIssue で期日が変更された場合、logIssueDueDateChanged が呼び出されること", async () => {
+      const newDate = new Date(2026, 11, 31);
+      await controller.updateIssue(1, { dueDate: newDate });
+
+      expect(fakeSystemLogService.logIssueDueDateChanged).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueDueDateChanged).toHaveBeenCalledWith(
+        1,
+        1,
+        "Issue 1-1",
+        new Date("2026-05-01"),
+        newDate,
+      );
+    });
+
+    it("6-6. deleteIssue 実行時に systemLogService.logIssueDeleted が呼び出されること", async () => {
+      await controller.deleteIssue(1);
+
+      expect(fakeSystemLogService.logIssueDeleted).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueDeleted).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          id: 1,
+          title: "Issue 1-1",
+        }),
+      );
+    });
+  });
 });

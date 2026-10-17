@@ -547,6 +547,7 @@ export class IssuesView extends WithIssuesController(
           @click=${() => this.handleToggleExpand(issue.id!)}
         >
           ${this.renderIssueStatusDropdown(issue, typeName, iconName)}
+          <span class="issues-view__item-id">#${issue.id}</span>
           <span class="issues-view__item-title" title=${displayTitle}>
             ${displayTitle}
           </span>

@@ -290,8 +290,15 @@ export class NotesView extends WithNotesController(
       >
         ${notes.map((note, index) => {
           const title = extractNoteTitle(note.value, index + 1);
+          const isActive = note.id === activeId;
+          const idClass = isActive
+            ? "notes-view__tab-id notes-view__tab-id--active"
+            : "notes-view__tab-id";
           return html`
             <wa-tab slot="nav" panel=${String(note.id)}>
+              ${note.id !== undefined
+                ? html`<span class="${idClass}">#${note.id}</span>`
+                : ""}
               <span class="notes-view__tab-title">${title}</span>
             </wa-tab>
           `;

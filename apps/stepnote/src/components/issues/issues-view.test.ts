@@ -28,6 +28,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 2-7. 各Issueアイテムの期日入力欄（datepicker-input）に対応するツールチップ（wa-tooltip）が配置され、「期限日」と表示されること
  *    - 2-8. 未完了Issueの期限日に応じて、期限切れ・当日・間近の各状態に対応するアイコンおよび修飾クラス（--overdue, --asap, --upcoming）が適用されること
  *    - 2-9. 完了済みIssue（statusCode === 9）については、期限日が過去であっても期限警告のアイコンおよび修飾クラスが適用されないこと
+ *    - 2-10. 各Issueアイテム（.issues-view__item）にID要素（.issues-view__item-id）が描画され、#1 などのIDが表示されること
  *
  * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
  *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
@@ -324,6 +325,14 @@ describe("IssuesView Component", () => {
       expect(htmlStr).not.toMatch(
         /<datepicker-input[^>]*id=["']issues-view-due-20["'][^>]*class=["'][^"']*(?:--overdue|--asap|--upcoming)/,
       );
+    });
+
+    it("2-10. 各Issueアイテム（.issues-view__item）にID表示要素（.issues-view__item-id）が描画され、#1 などのIDが表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__item-id");
+      expect(htmlStr).toContain("#1");
+      expect(htmlStr).toContain("#2");
+      expect(htmlStr).toContain("#3");
     });
   });
 

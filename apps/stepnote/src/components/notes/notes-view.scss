@@ -58,6 +58,17 @@
   }
 }
 
+.notes-view__tab-id {
+  color: var(--wa-color-text-quiet);
+  margin-right: var(--wa-space-2xs, 4px);
+  font-weight: var(--wa-font-weight-normal, 400);
+  user-select: none;
+
+  &--active {
+    color: inherit;
+  }
+}
+
 .notes-view__tab-title {
   @include text-ellipsis;
   display: inline-block;
