@@ -29,6 +29,7 @@ import {
   parseBulkIssuesInput,
   groupAndSortIssues,
 } from "@/utils/task-filter.utils.js";
+import { getTaskDueIconInfo } from "@/utils/task-due.utils.js";
 import styles from "./issues-view.scss?inline";
 
 /**
@@ -395,17 +396,45 @@ export class IssuesView extends WithIssuesController(
     `;
   }
 
+  /** Issue の期限情報（アイコン名および修飾クラス）を取得する */
+  private getIssueDueDisplay(issue: IssueRecord): {
+    icon: string;
+    modifierClass: string;
+  } {
+    if (issue.statusCode === 9 || !issue.dueDate) {
+      return { icon: "calendar-solid-full", modifierClass: "" };
+    }
+    const dueInfo = getTaskDueIconInfo(issue.dueDate);
+    if (!dueInfo) {
+      return { icon: "calendar-solid-full", modifierClass: "" };
+    }
+    return {
+      icon: dueInfo.icon,
+      modifierClass: `issues-view__item-due--${dueInfo.status}`,
+    };
+  }
+
   /** 一覧アイテム内の期日入力（datepicker-input）の描画 */
   private renderDueDateInput(issue: IssueRecord): HTMLTemplateResult {
     const formattedDue = issue.dueDate
       ? format(new Date(issue.dueDate), "yyyy-MM-dd")
       : "";
+    const { icon, modifierClass } = this.getIssueDueDisplay(issue);
+    const dueId = `issues-view-due-${issue.id}`;
+    const itemClass = modifierClass
+      ? `issues-view__item-due ${modifierClass}`
+      : "issues-view__item-due";
 
     return html`
+      <wa-tooltip for="${dueId}" placement="top" trigger="hover">
+        期限日
+      </wa-tooltip>
       <datepicker-input
-        class="issues-view__item-due"
+        id="${dueId}"
+        class="${itemClass}"
         size="s"
         borderless
+        icon="${icon}"
         .value=${formattedDue}
         @click=${(e: MouseEvent) => e.stopPropagation()}
         @datepicker-change=${(

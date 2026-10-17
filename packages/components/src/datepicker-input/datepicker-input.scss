@@ -32,7 +32,7 @@
 
   &__icon {
     font-size: var(--wa-font-size-m);
-    color: var(--wa-color-text-quiet);
+    color: var(--datepicker-icon-color, var(--wa-color-text-quiet));
   }
 }
 
