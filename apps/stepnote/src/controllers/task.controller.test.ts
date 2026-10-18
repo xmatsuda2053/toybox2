@@ -107,6 +107,7 @@ const createMockHost = () => {
  *    - [x] 4-2. updateSummary を実行した際、サマリー項目のみが部分更新されること
  *    - [x] 4-3. updateProperty を実行した際、プロパティ項目のみが部分更新されること
  *    - [x] 4-4. updateStatus を実行した際、statusCode のみが更新されて requestUpdate() が呼ばれること
+ *    - [x] 4-4-2. updateStatus で現在と同じステータスコードが指定された場合、更新処理を行わず早期リターンすること
  *    - [x] 4-5. taskId が undefined の状態で更新メソッドを呼んでもエラーにならず何もしないこと
  *    - [x] 4-6. updateTask 実行時に updatedAt が自動的に設定されること
  *
@@ -379,6 +380,19 @@ describe("TaskController (Single Task TDD)", () => {
       expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
 
+    it("4-4-2. updateStatus で現在と同じステータスコードが指定された場合、更新処理を行わず早期リターンすること", async () => {
+      const updateSpy = vi.spyOn(fakeRepository, "update");
+      mockHost.requestUpdateMock.mockClear();
+
+      // 現在のステータスは 0
+      expect(controller.state?.statusCode).toBe(0);
+
+      await controller.updateStatus(0);
+
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
+
     it("4-5. taskId が undefined の状態で更新メソッドを呼んでもエラーにならず何もしないこと", async () => {
       const emptyController = new TaskController(
         mockHost.host,
@@ -609,6 +623,15 @@ describe("TaskController (Single Task TDD)", () => {
         0,
         5,
       );
+    });
+
+    it("8-3-2. updateStatus で現在と同じステータスコードが指定された場合、logTaskStatusChanged が呼び出されないこと", async () => {
+      await controller.initialized;
+      expect(controller.state?.statusCode).toBe(0);
+
+      await controller.updateStatus(0);
+
+      expect(fakeSystemLogService.logTaskStatusChanged).not.toHaveBeenCalled();
     });
 
     it("8-4. updateSummary で期日が変更された場合、logTaskDueDateChanged が呼び出されること", async () => {
