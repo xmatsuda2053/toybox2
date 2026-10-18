@@ -114,4 +114,17 @@ describe("StepNote Database Schema Tests", () => {
     expect(label).toBeDefined();
     expect(label?.name).toBe(label_origin.name);
   });
+
+  it("Scratchesテーブルにデータを追加・取得が可能であること", async () => {
+    const scratch_origin = {
+      value: "スクラッチメモ",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const id = await db.scratches.add(scratch_origin);
+    const scratch = await db.scratches.get(id);
+    expect(scratch).toBeDefined();
+    expect(scratch?.value).toBe(scratch_origin.value);
+  });
 });

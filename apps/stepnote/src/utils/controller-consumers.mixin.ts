@@ -8,6 +8,7 @@ import {
   notesContext,
   logsContext,
   layoutUIContext,
+  scratchContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -15,6 +16,7 @@ import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller";
+import type { ScratchController } from "@/controllers/scratch.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -222,6 +224,37 @@ export function WithLayoutUIController<T extends LitElementConstructor>(Base: T)
     }
   }
   return LayoutUIConsumerClass;
+}
+
+/**
+ * ScratchController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける scratchController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithScratchController<T extends LitElementConstructor>(Base: T) {
+  class ScratchConsumerClass extends Base {
+    private _scratchController?: ScratchController;
+
+    /** スクラッチ管理コントローラー */
+    public get scratchController(): ScratchController | undefined {
+      return this._scratchController;
+    }
+
+    @consume({ context: scratchContext, subscribe: true })
+    @property({ attribute: false })
+    public set scratchController(controller: ScratchController | undefined) {
+      this._scratchController = this.subscriber.bind(
+        "scratch",
+        this._scratchController,
+        controller,
+      );
+    }
+  }
+  return ScratchConsumerClass;
 }
 
 

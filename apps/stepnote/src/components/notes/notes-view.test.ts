@@ -57,6 +57,11 @@ import { NotesView } from "./notes-view";
  *    - 7-2. notes-view.scss に !important および @extend が一切含まれていないこと
  *    - 7-3. notes-view.scss 全体においてハードコードされたカラーコード（Hex/RGB/RGBA）が 0 件であること
  *    - 7-4. テーマ切替トランジション等のCSS変数指定（--stepnote-transition-theme または @include theme-transition）が定義されていること
+ *
+ * 8. コントローラー注入およびタブID表示制御
+ *    - 8-1. controller プロパティが指定されている場合、渡された controller の state およびメソッドが使用されること
+ *    - 8-2. showTabId プロパティが false の場合、各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画されないこと
+ *    - 8-3. showTabId プロパティのデフォルト値が true であり、ノートID要素が描画されること
  */
 describe("NotesView Component", () => {
   let element: NotesView;
@@ -507,6 +512,65 @@ describe("NotesView Component", () => {
         content.includes("theme-transition") ||
         content.includes("var(--stepnote-transition-theme)");
       expect(hasThemeTransition).toBe(true);
+    });
+  });
+
+  describe("8. コントローラー注入およびタブID表示制御", () => {
+    it("8-1. controller プロパティが指定されている場合、渡された controller の state およびメソッドが使用されること", async () => {
+      const customController = {
+        state: [
+          {
+            id: 991,
+            value: "## カスタムメモ\nコントローラー直接注入テスト",
+            createdAt: new Date("2026-04-01T10:00:00Z"),
+          },
+        ],
+        createNote: vi.fn().mockResolvedValue(992),
+        updateNote: vi.fn().mockResolvedValue(undefined),
+        deleteNote: vi.fn().mockResolvedValue(undefined),
+        subscribe: vi.fn().mockReturnValue(() => {}),
+      };
+
+      (element as any).controller = customController;
+
+      expect(element.effectiveNotes).toHaveLength(1);
+      expect(element.effectiveNotes[0].value).toContain("カスタムメモ");
+
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("カスタムメモ");
+
+      await element.handleCreateNote();
+      expect(customController.createNote).toHaveBeenCalled();
+
+      vi.useFakeTimers();
+      element.handleContentChange(991, "内容変更");
+      vi.advanceTimersByTime(300);
+      expect(customController.updateNote).toHaveBeenCalledWith(991, {
+        value: "内容変更",
+      });
+      vi.useRealTimers();
+
+      element.deletingNoteId = 991;
+      await element.handleConfirmDelete();
+      expect(customController.deleteNote).toHaveBeenCalledWith(991);
+    });
+
+    it("8-2. showTabId プロパティが false の場合、各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画されないこと", () => {
+      (element as any).showTabId = false;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).not.toContain("notes-view__tab-id");
+      expect(htmlStr).toContain("notes-view__tab-title");
+    });
+
+    it("8-3. showTabId プロパティのデフォルト値が true であり、ノートID要素が描画されること", () => {
+      expect((element as any).showTabId ?? true).toBe(true);
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toContain("notes-view__tab-id");
     });
   });
 });

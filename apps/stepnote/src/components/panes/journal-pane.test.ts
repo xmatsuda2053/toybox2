@@ -11,9 +11,9 @@ import { JournalPane } from "./journal-pane.js";
  * 【JournalPane 仕様 (作業記録・履歴 第5ペインコンテナ)】
  *
  * 1. タスク未選択状態（Empty State）の描画
- *    - 1-1. taskController.state が未定義の場合、空状態（.journal-pane__empty）が表示されること
- *    - 1-2. 空状態に「タスクが選択されていません」の案内メッセージが表示されること
- *    - 1-3. 空状態時にヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされないこと
+ *    - 1-1. taskController.state が未定義かつ activeTab が 'logs' の場合、Logs パネル内に空状態（.journal-pane__empty）および案内メッセージが表示されること
+ *    - 1-2. taskController.state が未定義であっても、ヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされ、Scratch タブへの切り替えが可能であること
+ *    - 1-3. taskController.state が未定義であっても、activeTab が 'scratch' の場合は Scratch パネル（notes-view）がレンダリングされること
  *
  * 2. ペイン基本構造とヘッダー描画（タスク選択時）
  *    - 2-1. ルート要素 .journal-pane がレンダリングされること
@@ -25,13 +25,13 @@ import { JournalPane } from "./journal-pane.js";
  *    - 2-7. トグルボタンのクリック（または handleToggleJournalArea の呼び出し）により layoutUIController.toggleJournalArea が呼び出されること
  *
  * 3. タブ領域 (wa-tab-group) の描画
- *    - 3-1. wa-tab-group 内に Logs タブ (wa-tab) が存在し、Notes タブや Issues タブが存在しないこと
+ *    - 3-1. wa-tab-group 内に Logs タブおよび Scratch タブが存在し、Notes タブや Issues タブが存在しないこと
  *    - 3-2. issues パネルおよび issues-view コンポーネントが存在しないこと
- *    - 3-3. notes パネルおよび notes-view コンポーネントが存在しないこと
+ *    - 3-3. scratch パネル (wa-tab-panel[name="scratch"]) 内に notes-view コンポーネントが存在し、.showTabId=${false} および .controller がバインドされていること
  *    - 3-4. logs パネル (wa-tab-panel[name="logs"]) 内に logs-view コンポーネントが存在し、theme が伝播されること
  *    - 3-5. wa-tab-group に active 属性がバインドされ、初期値が 'logs' であること
- *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' で維持・更新されること
- *    - 3-7. handleTabShow 呼び出し時に、切り替え先の子コンポーネント（logs-view）の resetModesToPreview が呼び出されること
+ *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' または 'scratch' で更新されること
+ *    - 3-7. handleTabShow 呼び出し時に、切り替え先の子コンポーネントの resetModesToPreview が呼び出されること
  *    - 3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *
  * 4. BEM設計およびSCSSスタイルの検証
@@ -110,20 +110,24 @@ describe("JournalPane Component", () => {
       mockTaskController.hasTask = false;
     });
 
-    it("1-1. taskController.state が未定義の場合、空状態（.journal-pane__empty）が表示されること", () => {
+    it("1-1. taskController.state が未定義かつ activeTab が 'logs' の場合、Logs パネル内に空状態（.journal-pane__empty）が表示されること", () => {
+      element.activeTab = "logs";
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("journal-pane__empty");
-    });
-
-    it("1-2. 空状態に「タスクが選択されていません」の案内メッセージが表示されること", () => {
-      const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("タスクが選択されていません");
     });
 
-    it("1-3. 空状態時にヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされないこと", () => {
+    it("1-2. taskController.state が未定義であっても、ヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("journal-pane__header");
-      expect(htmlStr).not.toContain("wa-tab-group");
+      expect(htmlStr).toContain("journal-pane__header");
+      expect(htmlStr).toContain("wa-tab-group");
+    });
+
+    it("1-3. taskController.state が未定義であっても、activeTab が 'scratch' の場合は Scratch パネル（notes-view）がレンダリングされること", () => {
+      element.activeTab = "scratch";
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("<notes-view");
+      expect(htmlStr).toContain('panel="scratch"');
     });
   });
 
@@ -183,7 +187,7 @@ describe("JournalPane Component", () => {
   });
 
   describe("3. タブ領域 (wa-tab-group) の描画", () => {
-    it("3-1. wa-tab-group 内に Notes, Logs の順で2つのタブが存在し、Issues タブが存在しないこと", () => {
+    it("3-1. wa-tab-group 内に Logs タブおよび Scratch タブが存在し、Notes タブや Issues タブが存在しないこと", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
@@ -191,10 +195,12 @@ describe("JournalPane Component", () => {
       expect(htmlStr).toContain('class="journal-pane__tab-group"');
 
       expect(htmlStr).toContain('panel="logs"');
+      expect(htmlStr).toContain('panel="scratch"');
       expect(htmlStr).not.toContain('panel="notes"');
       expect(htmlStr).not.toContain('panel="issues"');
 
       expect(htmlStr).toContain(">Logs</wa-tab>");
+      expect(htmlStr).toContain(">Scratch</wa-tab>");
       expect(htmlStr).not.toContain(">Notes</wa-tab>");
       expect(htmlStr).not.toContain(">Issues</wa-tab>");
     });
@@ -207,12 +213,14 @@ describe("JournalPane Component", () => {
       expect(htmlStr).not.toContain("<issues-view");
     });
 
-    it("3-3. notes パネルおよび notes-view コンポーネントが存在しないこと", () => {
+    it("3-3. scratch パネル (wa-tab-panel[name=\"scratch\"]) 内に notes-view コンポーネントが存在し、.showTabId=${false} および .controller がバインドされていること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).not.toContain('name="notes"');
-      expect(htmlStr).not.toContain("<notes-view");
+      expect(htmlStr).toContain('<wa-tab-panel name="scratch"');
+      expect(htmlStr).toContain("<notes-view");
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.showTabId=["']?false["']?/);
+      expect(htmlStr).toContain(".controller=");
     });
 
     it("3-4. logs パネル (wa-tab-panel[name=\"logs\"]) 内に logs-view コンポーネントが存在し、theme が伝播されること", () => {
@@ -234,8 +242,16 @@ describe("JournalPane Component", () => {
       expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?logs["']?/);
     });
 
-    it("3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' で維持・更新されること", () => {
+    it("3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' または 'scratch' で更新されること", () => {
       element.activeTab = "logs";
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", {
+          detail: { name: "scratch" },
+        }) as unknown as CustomEvent<{ name: string }>,
+      );
+
+      expect(element.activeTab).toBe("scratch");
 
       element.handleTabShow(
         new CustomEvent("wa-tab-show", {
@@ -246,12 +262,14 @@ describe("JournalPane Component", () => {
       expect(element.activeTab).toBe("logs");
     });
 
-    it("3-7. handleTabShow 呼び出し時に、子コンポーネント（logs-view）の resetModesToPreview が呼び出されること", () => {
+    it("3-7. handleTabShow 呼び出し時に、切り替え先の子コンポーネント（logs-view または notes-view）の resetModesToPreview が呼び出されること", () => {
       const resetLogsSpy = vi.fn();
+      const resetNotesSpy = vi.fn();
       Object.defineProperty(element, "renderRoot", {
         value: {
           querySelector: vi.fn((sel: string) => {
             if (sel === "logs-view") return { resetModesToPreview: resetLogsSpy };
+            if (sel === "notes-view") return { resetModesToPreview: resetNotesSpy };
             return null;
           }),
         },
@@ -262,6 +280,11 @@ describe("JournalPane Component", () => {
         new CustomEvent("wa-tab-show", { detail: { name: "logs" } }) as unknown as CustomEvent<{ name: string }>,
       );
       expect(resetLogsSpy).toHaveBeenCalledTimes(1);
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "scratch" } }) as unknown as CustomEvent<{ name: string }>,
+      );
+      expect(resetNotesSpy).toHaveBeenCalledTimes(1);
     });
 
     it("3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {

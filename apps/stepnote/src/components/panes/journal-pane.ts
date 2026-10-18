@@ -5,22 +5,25 @@ import {
   SubscriberElement,
   WithTaskController,
   WithLayoutUIController,
+  WithScratchController,
 } from "@/utils/controller-consumers.mixin.js";
 import "@/components/logs/logs-view.js";
+import "@/components/notes/notes-view.js";
 import styles from "./journal-pane.scss?inline";
 
 /**
  * ジャーナルエリア（第5ペイン）コンテナコンポーネント (JournalPane)
  *
- * 画面第5ペインを担当し、作業記録（Logs）のタブコンテナを提供する。
+ * 画面第5ペインを担当し、作業記録（Logs）およびアプリ共通メモ（Scratch）の
+ * タブコンテナを提供する。
  *
  * @export
  * @class JournalPane
- * @extends {WithLayoutUIController(WithTaskController(SubscriberElement))}
+ * @extends {WithScratchController(WithLayoutUIController(WithTaskController(SubscriberElement)))}
  */
 @customElement("journal-pane")
-export class JournalPane extends WithLayoutUIController(
-  WithTaskController(SubscriberElement),
+export class JournalPane extends WithScratchController(
+  WithLayoutUIController(WithTaskController(SubscriberElement)),
 ) {
   public static styles = unsafeCSS(styles);
 
@@ -54,13 +57,15 @@ export class JournalPane extends WithLayoutUIController(
    */
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
     const tabName = e.detail?.name;
-    if (tabName === "logs") {
-      this.activeTab = tabName;
-      const targetEl = this.renderRoot?.querySelector("logs-view") as
-        | (HTMLElement & { resetModesToPreview?: () => void })
-        | null;
-      targetEl?.resetModesToPreview?.();
+    if (tabName !== "logs" && tabName !== "scratch") {
+      return;
     }
+    this.activeTab = tabName;
+    const targetTag = tabName === "logs" ? "logs-view" : "notes-view";
+    const targetEl = this.renderRoot?.querySelector(targetTag) as
+      | (HTMLElement & { resetModesToPreview?: () => void })
+      | null;
+    targetEl?.resetModesToPreview?.();
   };
 
   /**
@@ -71,9 +76,9 @@ export class JournalPane extends WithLayoutUIController(
   };
 
   /**
-   * 空状態テンプレートの描画
+   * Logs パネル未選択時の空状態テンプレート描画
    */
-  private renderEmptyState(): HTMLTemplateResult {
+  private renderEmptyLogs(): HTMLTemplateResult {
     return html`
       <div class="journal-pane__empty">
         <span>タスクが選択されていません</span>
@@ -118,6 +123,41 @@ export class JournalPane extends WithLayoutUIController(
   }
 
   /**
+   * Logs パネルの描画
+   */
+  private renderLogsPanel(): HTMLTemplateResult {
+    const task = this.taskController?.state;
+    return html`
+      <wa-tab-panel name="logs" class="journal-pane__tab-panel">
+        ${task
+          ? html`
+              <logs-view
+                .theme=${this.theme}
+                data-theme=${this.theme}
+              ></logs-view>
+            `
+          : this.renderEmptyLogs()}
+      </wa-tab-panel>
+    `;
+  }
+
+  /**
+   * Scratch パネルの描画
+   */
+  private renderScratchPanel(): HTMLTemplateResult {
+    return html`
+      <wa-tab-panel name="scratch" class="journal-pane__tab-panel">
+        <notes-view
+          .theme=${this.theme}
+          data-theme=${this.theme}
+          .showTabId=${false}
+          .controller=${this.scratchController}
+        ></notes-view>
+      </wa-tab-panel>
+    `;
+  }
+
+  /**
    * タブ領域の描画
    */
   private renderTabGroup(): HTMLTemplateResult {
@@ -128,13 +168,10 @@ export class JournalPane extends WithLayoutUIController(
         @wa-tab-show=${this.handleTabShow}
       >
         <wa-tab slot="nav" panel="logs">Logs</wa-tab>
+        <wa-tab slot="nav" panel="scratch">Scratch</wa-tab>
 
-        <wa-tab-panel name="logs" class="journal-pane__tab-panel">
-          <logs-view
-            .theme=${this.theme}
-            data-theme=${this.theme}
-          ></logs-view>
-        </wa-tab-panel>
+        ${this.renderLogsPanel()}
+        ${this.renderScratchPanel()}
       </wa-tab-group>
     `;
   }
@@ -143,11 +180,6 @@ export class JournalPane extends WithLayoutUIController(
    * メインレンダリング
    */
   public render(): HTMLTemplateResult {
-    const task = this.taskController?.state;
-    if (!task) {
-      return this.renderEmptyState();
-    }
-
     const isOpen = this.isJournalOpen;
     const rootClass = isOpen
       ? "journal-pane"

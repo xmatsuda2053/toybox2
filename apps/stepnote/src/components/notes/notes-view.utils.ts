@@ -1,4 +1,4 @@
-import type { NoteRecord } from "@/db/models/journal.model";
+import type { NoteItemRecord } from "@/types/view/ui.types";
 
 /**
  * ノート本文の1行目からタイトル文字列を抽出する純粋関数。
@@ -34,14 +34,15 @@ export function extractNoteTitle(
  * クエリが空文字・空白のみの場合は全ノートを返却し、
  * クエリが存在する場合はタイトルまたは本文に部分一致（大文字小文字無視）するノートを抽出する。
  *
- * @param {readonly NoteRecord[]} notes ノート一覧
+ * @template T
+ * @param {readonly T[]} notes ノート一覧
  * @param {string} query 検索クエリ文字列
- * @return {NoteRecord[]} 絞り込まれたノート配列
+ * @return {T[]} 絞り込まれたノート配列
  */
-export function filterNotes(
-  notes: readonly NoteRecord[],
+export function filterNotes<T extends NoteItemRecord>(
+  notes: readonly T[],
   query: string,
-): NoteRecord[] {
+): T[] {
   const trimmed = query.trim().toLowerCase();
   if (trimmed.length === 0) {
     return [...notes];
@@ -58,12 +59,13 @@ export function filterNotes(
  * ノート一覧を作成日時の昇順（古い順：ページ1, 2, ...）でソートする純粋関数。
  * 作成日時が同日時または未設定の場合は、レコードIDの昇順で安定ソートする。
  *
- * @param {readonly NoteRecord[]} notes ノート一覧
- * @return {NoteRecord[]} ソート済みノート配列
+ * @template T
+ * @param {readonly T[]} notes ノート一覧
+ * @return {T[]} ソート済みノート配列
  */
-export function sortNotesByCreatedAtAsc(
-  notes: readonly NoteRecord[],
-): NoteRecord[] {
+export function sortNotesByCreatedAtAsc<T extends NoteItemRecord>(
+  notes: readonly T[],
+): T[] {
   return [...notes].sort((a, b) => {
     const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;

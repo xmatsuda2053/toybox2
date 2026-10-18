@@ -5,6 +5,7 @@ import {
   NoteRecord,
   QuickAccessRecord,
   LabelRecord,
+  ScratchRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
 
@@ -65,6 +66,14 @@ export class Database extends Dexie {
   labels!: Table<LabelRecord, number>;
 
   /**
+   * スクラッチ（共通メモ）テーブル
+   *
+   * @type {Table<ScratchRecord, number>}
+   * @memberof Database
+   */
+  scratches!: Table<ScratchRecord, number>;
+
+  /**
    * Creates an instance of Database.
    * @memberof Database
    */
@@ -77,6 +86,9 @@ export class Database extends Dexie {
       notes: "++id, taskId, [taskId+id]",
       quickAccess: "++id",
       labels: "++id, name, isSelected",
+    });
+    this.version(2).stores({
+      scratches: "++id, createdAt",
     });
   }
 }
