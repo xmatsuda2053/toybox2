@@ -7,6 +7,7 @@ import {
   WithNotesController,
   WithLogsController,
   WithLayoutUIController,
+  WithScratchController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -14,6 +15,7 @@ import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller";
+import type { ScratchController } from "@/controllers/scratch.controller";
 
 /**
  * テスト仕様一覧:
@@ -34,10 +36,13 @@ import type { LayoutUIController } from "@/controllers/layout-ui.controller";
  * 6. WithLogsController Mixin
  *    - logsController の getter / setter が提供されること
  *    - logsController 設定時に subscriber.bind が呼び出され、値が保持されること
- * 7. コントローラー解除・再設定時の動作
- *    - 7-1. labelsController に undefined を再設定した際、既存の購読が解除されること
- *    - 7-2. taskController に undefined を再設定した際、既存の購読が解除されること
- *    - 7-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
+ * 7. WithScratchController Mixin
+ *    - scratchController の getter / setter が提供されること
+ *    - scratchController 設定時に subscriber.bind が呼び出され、値が保持されること
+ * 8. コントローラー解除・再設定時の動作
+ *    - 8-1. labelsController に undefined を再設定した際、既存の購読が解除されること
+ *    - 8-2. taskController に undefined を再設定した際、既存の購読が解除されること
+ *    - 8-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと
  */
 
 describe("controller-consumers.mixin", () => {
@@ -162,12 +167,31 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
-  describe("8. コントローラー解除・再設定時の動作", () => {
+  describe("8. WithScratchController Mixin", () => {
+    class DummyScratchElement extends WithScratchController(SubscriberElement) {}
+
+    it("8-1. scratchController の getter / setter が提供され、初期値は undefined であること", () => {
+      const el = new DummyScratchElement();
+      expect(el.scratchController).toBeUndefined();
+    });
+
+    it("8-2. scratchController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
+      const el = new DummyScratchElement();
+      const mockScratchCtrl = {
+        subscribe: vi.fn(),
+      } as unknown as ScratchController;
+
+      el.scratchController = mockScratchCtrl;
+      expect(el.scratchController).toBe(mockScratchCtrl);
+    });
+  });
+
+  describe("9. コントローラー解除・再設定時の動作", () => {
     class DummyConsumerElement extends WithTaskController(
       WithLabelsController(SubscriberElement),
     ) {}
 
-    it("7-1. labelsController に undefined を再設定した際、既存の購読が解除されること", () => {
+    it("9-1. labelsController に undefined を再設定した際、既存の購読が解除されること", () => {
       const el = new DummyConsumerElement();
       const unsubMock = vi.fn();
       const mockLabelsCtrl = {
@@ -182,7 +206,7 @@ describe("controller-consumers.mixin", () => {
       expect(unsubMock).toHaveBeenCalledTimes(1);
     });
 
-    it("7-2. taskController に undefined を再設定した際、既存の購読が解除されること", () => {
+    it("9-2. taskController に undefined を再設定した際、既存の購読が解除されること", () => {
       const el = new DummyConsumerElement();
       const unsubMock = vi.fn();
       const mockTaskCtrl = {
@@ -197,7 +221,7 @@ describe("controller-consumers.mixin", () => {
       expect(unsubMock).toHaveBeenCalledTimes(1);
     });
 
-    it("7-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと", () => {
+    it("9-3. 同一インスタンスを再設定した際、重複して subscribe が呼び出されないこと", () => {
       const el = new DummyConsumerElement();
       const mockLabelsCtrl = {
         subscribe: vi.fn(),

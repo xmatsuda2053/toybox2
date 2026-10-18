@@ -10,7 +10,7 @@ import type {
   SearchInputEventDetail,
   MarkdownDisplayMode,
 } from "@shared/components";
-import type { NoteRecord } from "@/db/models/journal.model";
+import type { NoteItemRecord, NotesManagerController } from "@/types/view/ui.types.js";
 import {
   SubscriberElement,
   WithNotesController,
@@ -42,6 +42,26 @@ export class NotesView extends WithNotesController(
   @property({ type: String, attribute: "data-theme", reflect: true })
   public theme: string = "light";
 
+  private _controller?: NotesManagerController;
+
+  /** 外部から注入されるノート管理コントローラー（未指定時は Context の notesController を使用） */
+  @property({ attribute: false })
+  public get controller(): NotesManagerController | undefined {
+    return this._controller;
+  }
+
+  public set controller(value: NotesManagerController | undefined) {
+    this._controller = this.subscriber.bind<NotesManagerController>(
+      "injectedNotesController",
+      this._controller,
+      value,
+    );
+  }
+
+  /** タブにノートID（#番号）を表示するかどうか */
+  @property({ type: Boolean })
+  public showTabId: boolean = true;
+
   @state()
   public searchQuery: string = "";
 
@@ -60,14 +80,19 @@ export class NotesView extends WithNotesController(
   private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
     new Map();
 
+  /** 現在アクティブなコントローラーを取得する */
+  public get activeController(): NotesManagerController | undefined {
+    return this.controller ?? this.notesController;
+  }
+
   /** ソート済み全ノート一覧を取得する */
-  public get effectiveNotes(): NoteRecord[] {
-    const raw = this.notesController?.state ?? [];
+  public get effectiveNotes(): NoteItemRecord[] {
+    const raw = this.activeController?.state ?? [];
     return sortNotesByCreatedAtAsc(raw);
   }
 
   /** 検索クエリで絞り込まれたノート一覧を取得する */
-  public get filteredNotes(): NoteRecord[] {
+  public get filteredNotes(): NoteItemRecord[] {
     return filterNotes(this.effectiveNotes, this.searchQuery);
   }
 
@@ -89,7 +114,7 @@ export class NotesView extends WithNotesController(
   }
 
   /** 現在アクティブなノートオブジェクトを取得する */
-  public get activeNote(): NoteRecord | undefined {
+  public get activeNote(): NoteItemRecord | undefined {
     const activeId = this.effectiveActiveNoteId;
     if (activeId === undefined) return undefined;
     return this.filteredNotes.find((n) => n.id === activeId);
@@ -108,18 +133,20 @@ export class NotesView extends WithNotesController(
 
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
-    const parentTaskId = this.taskController?.state?.id;
-    if (this.lastTaskId !== parentTaskId) {
-      this.lastTaskId = parentTaskId;
-      this.noteModeMap.clear();
-      this.activeNoteId = undefined;
-    }
-    if (
-      this.notesController &&
-      parentTaskId !== undefined &&
-      this.notesController.taskId !== parentTaskId
-    ) {
-      this.notesController.setTaskId(parentTaskId);
+    if (!this.controller) {
+      const parentTaskId = this.taskController?.state?.id;
+      if (this.lastTaskId !== parentTaskId) {
+        this.lastTaskId = parentTaskId;
+        this.noteModeMap.clear();
+        this.activeNoteId = undefined;
+      }
+      if (
+        this.notesController &&
+        parentTaskId !== undefined &&
+        this.notesController.taskId !== parentTaskId
+      ) {
+        this.notesController.setTaskId(parentTaskId);
+      }
     }
   }
 
@@ -179,9 +206,10 @@ export class NotesView extends WithNotesController(
 
   /** 新規ノート作成ハンドラー（初期値 "## Note\n\n"、エディタモード初期化） */
   public handleCreateNote = async (): Promise<void> => {
-    if (!this.notesController) return;
+    const ctrl = this.activeController;
+    if (!ctrl) return;
 
-    const newId = await this.notesController.createNote({
+    const newId = await ctrl.createNote({
       value: "## Note\n\n",
     });
 
@@ -202,8 +230,9 @@ export class NotesView extends WithNotesController(
     }
 
     const saveAction = async (): Promise<void> => {
-      if (this.notesController) {
-        await this.notesController.updateNote(noteId, { value });
+      const ctrl = this.activeController;
+      if (ctrl) {
+        await ctrl.updateNote(noteId, { value });
       }
       this.debounceTimerMap.delete(noteId);
     };
@@ -225,9 +254,10 @@ export class NotesView extends WithNotesController(
 
   /** 削除確定ハンドラー */
   public handleConfirmDelete = async (): Promise<void> => {
-    if (this.deletingNoteId !== undefined && this.notesController) {
+    const ctrl = this.activeController;
+    if (this.deletingNoteId !== undefined && ctrl) {
       const deletedId = this.deletingNoteId;
-      await this.notesController.deleteNote(deletedId);
+      await ctrl.deleteNote(deletedId);
 
       this.noteModeMap.delete(deletedId);
       if (this.activeNoteId === deletedId) {
@@ -279,7 +309,7 @@ export class NotesView extends WithNotesController(
   }
 
   /** ページタブバー（wa-tab-group）の描画 */
-  private renderTabs(notes: NoteRecord[]): HTMLTemplateResult {
+  private renderTabs(notes: NoteItemRecord[]): HTMLTemplateResult {
     const activeId = this.effectiveActiveNoteId;
 
     return html`
@@ -296,7 +326,7 @@ export class NotesView extends WithNotesController(
             : "notes-view__tab-id";
           return html`
             <wa-tab slot="nav" panel=${String(note.id)}>
-              ${note.id !== undefined
+              ${this.showTabId && note.id !== undefined
                 ? html`<span class="${idClass}">#${note.id}</span>`
                 : ""}
               <span class="notes-view__tab-title">${title}</span>
@@ -308,7 +338,7 @@ export class NotesView extends WithNotesController(
   }
 
   /** Markdown エディタ領域の描画 */
-  private renderEditor(activeNote: NoteRecord): HTMLTemplateResult {
+  private renderEditor(activeNote: NoteItemRecord): HTMLTemplateResult {
     const themeMode = this.theme === "dark" ? "dark" : "light";
 
     return html`

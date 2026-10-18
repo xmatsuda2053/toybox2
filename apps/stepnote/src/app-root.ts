@@ -12,6 +12,7 @@ import {
   notesContext,
   issuesContext,
   themeContext,
+  scratchContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -22,6 +23,7 @@ import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
 import { ThemeController } from "@/controllers/theme.controller.js";
+import { ScratchController } from "@/controllers/scratch.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
@@ -40,6 +42,7 @@ import {
   LogsRepository,
   NotesRepository,
   IssuesRepository,
+  ScratchRepository,
 } from "@/repositories/index.js";
 
 /**
@@ -64,6 +67,7 @@ export class AppRoot extends LitElement {
   public notesController: NotesController;
   public issuesController: IssuesController;
   public themeController: ThemeController;
+  public scratchController: ScratchController;
   public systemLogService: SystemLogService;
 
   constructor() {
@@ -75,6 +79,7 @@ export class AppRoot extends LitElement {
     const labelsRepository = new LabelsRepository();
     const logsRepository = new LogsRepository();
     const notesRepository = new NotesRepository();
+    const scratchRepository = new ScratchRepository();
 
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
@@ -83,6 +88,7 @@ export class AppRoot extends LitElement {
     );
     this.labelsController = new LabelsController(this, labelsRepository);
     this.logsController = new LogsController(this, logsRepository);
+    this.scratchController = new ScratchController(this, scratchRepository);
 
     // 共通システムログサービスの初期化
     this.systemLogService = new SystemLogService(
@@ -164,6 +170,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: themeContext,
       initialValue: this.themeController,
+    });
+    new ContextProvider(this, {
+      context: scratchContext,
+      initialValue: this.scratchController,
     });
   }
 

@@ -1,5 +1,6 @@
 import type { LogsController } from "@/controllers/logs.controller";
 import type { NotesController } from "@/controllers/notes.controller";
+import type { ScratchController } from "@/controllers/scratch.controller";
 import { createContext } from "@lit/context";
 
 /**
@@ -20,4 +21,14 @@ export const logsContext = createContext<LogsController>(
  */
 export const notesContext = createContext<NotesController>(
   Symbol("notes-context"),
+);
+
+/**
+ * ScratchController の Context 定義
+ *
+ * @constant
+ * @type {ReturnType<typeof createContext<ScratchController>>}
+ */
+export const scratchContext = createContext<ScratchController>(
+  Symbol("scratch-context"),
 );

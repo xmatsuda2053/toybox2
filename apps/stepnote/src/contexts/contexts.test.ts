@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { layoutUIContext } from "./layout-ui.context";
 import { taskContext, taskListContext, issuesContext } from "./task.context";
-import { logsContext, notesContext } from "./journal.context";
+import { logsContext, notesContext, scratchContext } from "./journal.context";
 import { labelsContext } from "./labels.context";
 import { quickAccessContext } from "./quick-access.context";
 import { themeContext } from "./theme.context";
@@ -21,8 +21,9 @@ const asSymbol = (context: unknown): symbol => context as symbol;
  * 7. labelsContext が正しく定義され、固有の Symbol キーを持つこと
  * 8. quickAccessContext が正しく定義され、固有の Symbol キーを持つこと
  * 9. themeContext が正しく定義され、固有の Symbol キーを持つこと
- * 10. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
- * 11. index.ts からすべての Context が正しく再エクスポートされていること
+ * 10. scratchContext が正しく定義され、固有の Symbol キーを持つこと
+ * 11. すべての ContextKey の Symbol 記述名（description）が一意であり衝突していないこと
+ * 12. index.ts からすべての Context が正しく再エクスポートされていること
  */
 describe("contexts の定義とエクスポート", () => {
   describe("個別の Context 定義", () => {
@@ -81,6 +82,12 @@ describe("contexts の定義とエクスポート", () => {
       expect(typeof themeContext).toBe("symbol");
       expect(asSymbol(themeContext).description).toBe("theme-context");
     });
+
+    it("scratchContext が正しく定義され、固有の Symbol キーを持つこと", () => {
+      expect(scratchContext).toBeDefined();
+      expect(typeof scratchContext).toBe("symbol");
+      expect(asSymbol(scratchContext).description).toBe("scratch-context");
+    });
   });
 
   describe("ContextKey の一意性検証", () => {
@@ -95,6 +102,7 @@ describe("contexts の定義とエクスポート", () => {
         labelsContext,
         quickAccessContext,
         themeContext,
+        scratchContext,
       ];
       const descriptions = contexts.map((ctx) => asSymbol(ctx).description);
       const uniqueDescriptions = new Set(descriptions);
@@ -116,6 +124,7 @@ describe("contexts の定義とエクスポート", () => {
       expect(allContexts.labelsContext).toBe(labelsContext);
       expect(allContexts.quickAccessContext).toBe(quickAccessContext);
       expect(allContexts.themeContext).toBe(themeContext);
+      expect(allContexts.scratchContext).toBe(scratchContext);
     });
   });
 });
