@@ -19,15 +19,14 @@ import { JournalPane } from "./journal-pane.js";
  *    - 2-2. ヘッダー部 (.journal-pane__header) が存在し、タイトルとして「JOURNAL」(.journal-pane__title) が表示されること
  *
  * 3. タブ領域 (wa-tab-group) の描画
- *    - 3-1. wa-tab-group 内に Notes, Logs の順で2つのタブ (wa-tab) が存在し、Issues タブが存在しないこと
+ *    - 3-1. wa-tab-group 内に Logs タブ (wa-tab) が存在し、Notes タブや Issues タブが存在しないこと
  *    - 3-2. issues パネルおよび issues-view コンポーネントが存在しないこと
- *    - 3-3. notes パネル (wa-tab-panel[name="notes"]) 内に notes-view コンポーネントが存在すること
- *    - 3-4. logs パネル (wa-tab-panel[name="logs"]) 内に logs-view コンポーネントが存在すること
- *    - 3-5. wa-tab-group に active 属性がバインドされ、初期値が 'notes' であること
- *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
- *    - 3-7. notes-view および logs-view に theme が伝播されること
- *    - 3-8. handleTabShow 呼び出し時に、切り替え先の子コンポーネント（notes-view / logs-view）の resetModesToPreview が呼び出されること
- *    - 3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
+ *    - 3-3. notes パネルおよび notes-view コンポーネントが存在しないこと
+ *    - 3-4. logs パネル (wa-tab-panel[name="logs"]) 内に logs-view コンポーネントが存在し、theme が伝播されること
+ *    - 3-5. wa-tab-group に active 属性がバインドされ、初期値が 'logs' であること
+ *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' で維持・更新されること
+ *    - 3-7. handleTabShow 呼び出し時に、切り替え先の子コンポーネント（logs-view）の resetModesToPreview が呼び出されること
+ *    - 3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (journal-pane.scss) が存在し、ルートブロック .journal-pane および主要BEMセレクタ（.journal-pane__empty等）が定義されていること
@@ -121,17 +120,12 @@ describe("JournalPane Component", () => {
       expect(htmlStr).toContain("wa-tab-group");
       expect(htmlStr).toContain('class="journal-pane__tab-group"');
 
-      const notesTabMatch = htmlStr.indexOf('panel="notes"');
-      const logsTabMatch = htmlStr.indexOf('panel="logs"');
-      const issuesTabMatch = htmlStr.indexOf('panel="issues"');
+      expect(htmlStr).toContain('panel="logs"');
+      expect(htmlStr).not.toContain('panel="notes"');
+      expect(htmlStr).not.toContain('panel="issues"');
 
-      expect(notesTabMatch).toBeGreaterThan(-1);
-      expect(logsTabMatch).toBeGreaterThan(-1);
-      expect(issuesTabMatch).toBe(-1);
-      expect(notesTabMatch).toBeLessThan(logsTabMatch);
-
-      expect(htmlStr).toContain(">Notes</wa-tab>");
       expect(htmlStr).toContain(">Logs</wa-tab>");
+      expect(htmlStr).not.toContain(">Notes</wa-tab>");
       expect(htmlStr).not.toContain(">Issues</wa-tab>");
     });
 
@@ -143,36 +137,35 @@ describe("JournalPane Component", () => {
       expect(htmlStr).not.toContain("<issues-view");
     });
 
-    it("3-3. notes パネル (wa-tab-panel[name=\"notes\"]) 内に notes-view コンポーネントが存在すること", () => {
+    it("3-3. notes パネルおよび notes-view コンポーネントが存在しないこと", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toContain('<wa-tab-panel name="notes"');
-      expect(htmlStr).toContain("<notes-view");
+      expect(htmlStr).not.toContain('name="notes"');
+      expect(htmlStr).not.toContain("<notes-view");
     });
 
-    it("3-4. logs パネル (wa-tab-panel[name=\"logs\"]) 内に logs-view コンポーネントが存在すること", () => {
+    it("3-4. logs パネル (wa-tab-panel[name=\"logs\"]) 内に logs-view コンポーネントが存在し、theme が伝播されること", () => {
+      element.theme = "dark";
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toContain('<wa-tab-panel name="logs"');
       expect(htmlStr).toContain("<logs-view");
+      expect(htmlStr).toMatch(/<logs-view[^>]*\.theme=["']?dark["']?/);
+      expect(htmlStr).toMatch(/<logs-view[^>]*data-theme=["']?dark["']?/);
     });
 
-    it("3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'notes'）と連動していること", () => {
-      expect(element.activeTab).toBe("notes");
+    it("3-5. wa-tab-group に active 属性がバインドされ、初期値が 'logs' であること", () => {
+      expect(element.activeTab).toBe("logs");
 
       const template = element.render();
       const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?notes["']?/);
-
-      element.activeTab = "logs";
-      const logsHtml = flattenTemplate(element.render());
-      expect(logsHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?logs["']?/);
+      expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?logs["']?/);
     });
 
-    it("3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
-      expect(element.activeTab).toBe("notes");
+    it("3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' で維持・更新されること", () => {
+      element.activeTab = "logs";
 
       element.handleTabShow(
         new CustomEvent("wa-tab-show", {
@@ -183,13 +176,11 @@ describe("JournalPane Component", () => {
       expect(element.activeTab).toBe("logs");
     });
 
-    it("3-8. handleTabShow 呼び出し時に、子コンポーネント（notes-view / logs-view）の resetModesToPreview が呼び出されること", () => {
-      const resetNotesSpy = vi.fn();
+    it("3-7. handleTabShow 呼び出し時に、子コンポーネント（logs-view）の resetModesToPreview が呼び出されること", () => {
       const resetLogsSpy = vi.fn();
       Object.defineProperty(element, "renderRoot", {
         value: {
           querySelector: vi.fn((sel: string) => {
-            if (sel === "notes-view") return { resetModesToPreview: resetNotesSpy };
             if (sel === "logs-view") return { resetModesToPreview: resetLogsSpy };
             return null;
           }),
@@ -201,20 +192,13 @@ describe("JournalPane Component", () => {
         new CustomEvent("wa-tab-show", { detail: { name: "logs" } }) as unknown as CustomEvent<{ name: string }>,
       );
       expect(resetLogsSpy).toHaveBeenCalledTimes(1);
-
-      element.handleTabShow(
-        new CustomEvent("wa-tab-show", { detail: { name: "notes" } }) as unknown as CustomEvent<{ name: string }>,
-      );
-      expect(resetNotesSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
-      const resetNotesSpy = vi.fn();
+    it("3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
       const resetLogsSpy = vi.fn();
       Object.defineProperty(element, "renderRoot", {
         value: {
           querySelector: vi.fn((sel: string) => {
-            if (sel === "notes-view") return { resetModesToPreview: resetNotesSpy };
             if (sel === "logs-view") return { resetModesToPreview: resetLogsSpy };
             return null;
           }),
@@ -222,27 +206,23 @@ describe("JournalPane Component", () => {
         configurable: true,
       });
 
-      expect(element.activeTab).toBe("notes");
+      expect(element.activeTab).toBe("logs");
 
-      // 子孫コンポーネント（NotesView内のノートID等）からのイベントを模倣
+      // notes タブや子孫コンポーネントからのイベントを模倣
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "notes" } }) as unknown as CustomEvent<{ name: string }>,
+      );
+
+      // activeTab は変更されず、resetModesToPreview も呼ばれないこと
+      expect(element.activeTab).toBe("logs");
+      expect(resetLogsSpy).not.toHaveBeenCalled();
+
       element.handleTabShow(
         new CustomEvent("wa-tab-show", { detail: { name: "203" } }) as unknown as CustomEvent<{ name: string }>,
       );
 
-      // activeTab は変更されず、resetModesToPreview も呼ばれないこと
-      expect(element.activeTab).toBe("notes");
-      expect(resetNotesSpy).not.toHaveBeenCalled();
+      expect(element.activeTab).toBe("logs");
       expect(resetLogsSpy).not.toHaveBeenCalled();
-    });
-
-    it("3-7. notes-view および logs-view に theme が伝播（.theme=${this.theme} および data-theme）されること", () => {
-      element.theme = "dark";
-      const template = element.render();
-      const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<notes-view[^>]*\.theme=["']?dark["']?/);
-      expect(htmlStr).toMatch(/<notes-view[^>]*data-theme=["']?dark["']?/);
-      expect(htmlStr).toMatch(/<logs-view[^>]*\.theme=["']?dark["']?/);
-      expect(htmlStr).toMatch(/<logs-view[^>]*data-theme=["']?dark["']?/);
     });
   });
 

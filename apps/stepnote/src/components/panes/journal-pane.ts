@@ -6,14 +6,12 @@ import {
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
 import "@/components/logs/logs-view.js";
-import "@/components/notes/notes-view.js";
 import styles from "./journal-pane.scss?inline";
 
 /**
  * ジャーナルエリア（第5ペイン）コンテナコンポーネント (JournalPane)
  *
- * 画面第5ペインを担当し、メモ（Notes）および作業記録（Logs）の
- * 2つのタブコンテナを提供する。
+ * 画面第5ペインを担当し、作業記録（Logs）のタブコンテナを提供する。
  *
  * @export
  * @class JournalPane
@@ -30,17 +28,16 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
   public theme: string = "light";
 
   @state()
-  public activeTab: string = "notes";
+  public activeTab: string = "logs";
 
   /**
    * タブ切り替えハンドラー（表示タブの更新および子コンポーネントのプレビューモード初期化）
    */
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
     const tabName = e.detail?.name;
-    if (tabName === "notes" || tabName === "logs") {
+    if (tabName === "logs") {
       this.activeTab = tabName;
-      const targetSelector = tabName === "logs" ? "logs-view" : "notes-view";
-      const targetEl = this.renderRoot?.querySelector(targetSelector) as
+      const targetEl = this.renderRoot?.querySelector("logs-view") as
         | (HTMLElement & { resetModesToPreview?: () => void })
         | null;
       targetEl?.resetModesToPreview?.();
@@ -79,15 +76,7 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
         active=${this.activeTab}
         @wa-tab-show=${this.handleTabShow}
       >
-        <wa-tab slot="nav" panel="notes">Notes</wa-tab>
         <wa-tab slot="nav" panel="logs">Logs</wa-tab>
-
-        <wa-tab-panel name="notes" class="journal-pane__tab-panel">
-          <notes-view
-            .theme=${this.theme}
-            data-theme=${this.theme}
-          ></notes-view>
-        </wa-tab-panel>
 
         <wa-tab-panel name="logs" class="journal-pane__tab-panel">
           <logs-view

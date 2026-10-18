@@ -27,15 +27,16 @@ import { TaskPane } from "./task-pane.js";
  *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
  *
  * 3. タブ領域（wa-tab-group）の描画
- *    - 3-1. wa-tab-group 内に Summary, Issues, Property の順で3つのタブが存在すること
+ *    - 3-1. wa-tab-group 内に Summary, Issues, Notes, Property の順で4つのタブが存在すること
  *    - 3-2. summary パネル内に task-summary コンポーネントがレンダリングされること
  *    - 3-3. issues パネル内に issues-view コンポーネントがレンダリングされ、theme が伝播されること
- *    - 3-4. property パネル内に task-property コンポーネントがレンダリングされること
- *    - 3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること
- *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
- *    - 3-7. handleTabShow 呼び出し時に、子コンポーネント（issues-view 等）の resetModesToPreview が呼び出されること
- *    - 3-8. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
- *    - 3-9. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコン（.task-pane__tab-due-icon）および修飾子クラスが表示されること
+ *    - 3-4. notes パネル内に notes-view コンポーネントがレンダリングされ、theme が伝播されること
+ *    - 3-5. property パネル内に task-property コンポーネントがレンダリングされること
+ *    - 3-6. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること
+ *    - 3-7. handleTabShow 呼び出しにより activeTab プロパティが更新されること
+ *    - 3-8. handleTabShow 呼び出し時に、子コンポーネント（issues-view, notes-view 等）の resetModesToPreview が呼び出されること
+ *    - 3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
+ *    - 3-10. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコン（.task-pane__tab-due-icon）および修飾子クラスが表示されること
  *
  * 4. コントローラー購読（Context連携）
  *    - 4-1. taskController 設定時に controller.subscribe が呼び出されること
@@ -254,17 +255,20 @@ describe("TaskPane Component", () => {
   });
 
   describe("3. タブ領域（wa-tab-group）の描画", () => {
-    it("3-1. wa-tab-group 内に Summary, Issues, Property の順で3つのタブが存在すること", () => {
+    it("3-1. wa-tab-group 内に Summary, Issues, Notes, Property の順で4つのタブが存在すること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("wa-tab-group");
       const summaryIdx = htmlStr.indexOf('panel="summary"');
       const issuesIdx = htmlStr.indexOf('panel="issues"');
+      const notesIdx = htmlStr.indexOf('panel="notes"');
       const propertyIdx = htmlStr.indexOf('panel="property"');
       expect(summaryIdx).toBeGreaterThan(-1);
       expect(issuesIdx).toBeGreaterThan(summaryIdx);
-      expect(propertyIdx).toBeGreaterThan(issuesIdx);
+      expect(notesIdx).toBeGreaterThan(issuesIdx);
+      expect(propertyIdx).toBeGreaterThan(notesIdx);
       expect(htmlStr).toContain(">Summary</wa-tab>");
-      expect(htmlStr).toContain(">Issues</wa-tab>");
+      expect(htmlStr).toContain(">Issues");
+      expect(htmlStr).toContain(">Notes</wa-tab>");
       expect(htmlStr).toContain(">Property</wa-tab>");
     });
 
@@ -282,35 +286,51 @@ describe("TaskPane Component", () => {
       expect(htmlStr).toMatch(/<issues-view[^>]*\.theme=["']?dark["']?/);
     });
 
-    it("3-4. property パネル内に task-property コンポーネントがレンダリングされること", () => {
+    it("3-4. notes パネル内に notes-view コンポーネントがレンダリングされ、theme が伝播されること", () => {
+      element.theme = "dark";
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('<wa-tab-panel name="notes"');
+      expect(htmlStr).toContain("<notes-view");
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.theme=["']?dark["']?/);
+    });
+
+    it("3-5. property パネル内に task-property コンポーネントがレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain('<wa-tab-panel name="property"');
       expect(htmlStr).toContain("task-property");
     });
 
-    it("3-5. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること", () => {
+    it("3-6. wa-tab-group に active 属性がバインドされ、現在の activeTab（初期値 'summary'）と連動していること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?summary["']?/);
 
-      element.activeTab = "property";
-      const propertyHtml = flattenTemplate(element.render());
-      expect(propertyHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?property["']?/);
+      element.activeTab = "notes";
+      const notesHtml = flattenTemplate(element.render());
+      expect(notesHtml).toMatch(/<wa-tab-group[^>]*\bactive=["']?notes["']?/);
     });
 
-    it("3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
+    it("3-7. handleTabShow 呼び出しにより activeTab プロパティが更新されること", () => {
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "notes" } }),
+      );
+      expect(element.activeTab).toBe("notes");
+
       element.handleTabShow(
         new CustomEvent("wa-tab-show", { detail: { name: "property" } }),
       );
       expect(element.activeTab).toBe("property");
     });
 
-    it("3-7. handleTabShow 呼び出し時に、子コンポーネント（issues-view 等）の resetModesToPreview が呼び出されること", () => {
-      const resetSpy = vi.fn();
-      const mockIssuesView = { resetModesToPreview: resetSpy };
+    it("3-8. handleTabShow 呼び出し時に、子コンポーネント（issues-view, notes-view 等）の resetModesToPreview が呼び出されること", () => {
+      const resetIssuesSpy = vi.fn();
+      const resetNotesSpy = vi.fn();
+      const mockIssuesView = { resetModesToPreview: resetIssuesSpy };
+      const mockNotesView = { resetModesToPreview: resetNotesSpy };
       Object.defineProperty(element, "renderRoot", {
         value: {
           querySelector: vi.fn((sel: string) => {
             if (sel === "issues-view") return mockIssuesView;
+            if (sel === "notes-view") return mockNotesView;
             return null;
           }),
         },
@@ -320,16 +340,24 @@ describe("TaskPane Component", () => {
       element.handleTabShow(
         new CustomEvent("wa-tab-show", { detail: { name: "issues" } }),
       );
-      expect(resetSpy).toHaveBeenCalledTimes(1);
+      expect(resetIssuesSpy).toHaveBeenCalledTimes(1);
+
+      element.handleTabShow(
+        new CustomEvent("wa-tab-show", { detail: { name: "notes" } }),
+      );
+      expect(resetNotesSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("3-8. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
-      const resetSpy = vi.fn();
-      const mockIssuesView = { resetModesToPreview: resetSpy };
+    it("3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと", () => {
+      const resetIssuesSpy = vi.fn();
+      const resetNotesSpy = vi.fn();
+      const mockIssuesView = { resetModesToPreview: resetIssuesSpy };
+      const mockNotesView = { resetModesToPreview: resetNotesSpy };
       Object.defineProperty(element, "renderRoot", {
         value: {
           querySelector: vi.fn((sel: string) => {
             if (sel === "issues-view") return mockIssuesView;
+            if (sel === "notes-view") return mockNotesView;
             return null;
           }),
         },
@@ -343,10 +371,11 @@ describe("TaskPane Component", () => {
       );
 
       expect(element.activeTab).toBe("summary");
-      expect(resetSpy).not.toHaveBeenCalled();
+      expect(resetIssuesSpy).not.toHaveBeenCalled();
+      expect(resetNotesSpy).not.toHaveBeenCalled();
     });
 
-    it("3-9. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコンおよび修飾子クラスが表示されること", () => {
+    it("3-10. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコンおよび修飾子クラスが表示されること", () => {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
