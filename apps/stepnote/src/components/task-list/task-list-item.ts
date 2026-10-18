@@ -9,6 +9,7 @@ import {
   dispatchCustomEvent,
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskDueIconInfo } from "@/utils/task-due.utils";
 import taskListItemStyles from "./task-list-item.scss?inline";
 
 /**
@@ -61,6 +62,15 @@ export class TaskListItem extends LitElement {
    */
   @property({ type: Number })
   public issuesTotal: number = 0;
+
+  /**
+   * 紐づく未完了Issueの最優先期限アイコン情報
+   *
+   * @type {TaskDueIconInfo | null}
+   * @memberof TaskListItem
+   */
+  @property({ type: Object })
+  public issuesDueInfo?: TaskDueIconInfo | null;
 
   /**
    * カード本体クリックハンドラー（タスク選択）
@@ -189,6 +199,13 @@ export class TaskListItem extends LitElement {
           ${task?.name ?? ""}
         </span>
         <span class="task-list-item__issues-progress">
+          ${this.issuesDueInfo
+            ? html`<wa-icon
+                class="task-list-item__issues-due-icon task-list-item__issues-due-icon--${this.issuesDueInfo.status}"
+                library="my-icons"
+                name=${this.issuesDueInfo.icon}
+              ></wa-icon>`
+            : null}
           ${this.issuesDone}/${this.issuesTotal}
         </span>
       </div>

@@ -2,8 +2,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
-import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TaskController } from "@/controllers/task.controller.js";
+import type { IssuesController } from "@/controllers/issues.controller.js";
 import { TaskPane } from "./task-pane.js";
 
 /**
@@ -34,6 +35,7 @@ import { TaskPane } from "./task-pane.js";
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが更新されること
  *    - 3-7. handleTabShow 呼び出し時に、子コンポーネント（issues-view 等）の resetModesToPreview が呼び出されること
  *    - 3-8. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
+ *    - 3-9. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコン（.task-pane__tab-due-icon）および修飾子クラスが表示されること
  *
  * 4. コントローラー購読（Context連携）
  *    - 4-1. taskController 設定時に controller.subscribe が呼び出されること
@@ -342,6 +344,81 @@ describe("TaskPane Component", () => {
 
       expect(element.activeTab).toBe("summary");
       expect(resetSpy).not.toHaveBeenCalled();
+    });
+
+    it("3-9. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコンおよび修飾子クラスが表示されること", () => {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const todayDate = new Date(now.getTime());
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const mockIssues: IssueRecord[] = [
+        {
+          id: 1,
+          taskId: 101,
+          statusCode: 0,
+          title: "期限切れIssue",
+          value: "",
+          dueDate: pastDate,
+        },
+      ];
+
+      const mockController = {
+        state: mockIssues,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+      element.issuesController = mockController as unknown as IssuesController;
+
+      // 期限切れIssueが存在する場合 -> fire-solid-full と overdue クラスが表示されること
+      const overdueHtml = flattenTemplate(element.render());
+      expect(overdueHtml).toContain("task-pane__tab-due-icon");
+      expect(overdueHtml).toContain("task-pane__tab-due-icon--overdue");
+      expect(overdueHtml).toContain("fire-solid-full");
+
+      // 期限切れがなく当日期限Issueが存在する場合 -> triangle-exclamation-solid-full と asap クラスが表示されること
+      mockController.state = [
+        {
+          id: 2,
+          taskId: 101,
+          statusCode: 5,
+          title: "当日期限Issue",
+          value: "",
+          dueDate: todayDate,
+        },
+      ];
+      const asapHtml = flattenTemplate(element.render());
+      expect(asapHtml).toContain("task-pane__tab-due-icon--asap");
+      expect(asapHtml).toContain("triangle-exclamation-solid-full");
+
+      // 期限間近Issueが存在する場合 -> calendar-solid-full と upcoming クラスが表示されること
+      mockController.state = [
+        {
+          id: 3,
+          taskId: 101,
+          statusCode: 0,
+          title: "間近Issue",
+          value: "",
+          dueDate: tomorrow,
+        },
+      ];
+      const upcomingHtml = flattenTemplate(element.render());
+      expect(upcomingHtml).toContain("task-pane__tab-due-icon--upcoming");
+      expect(upcomingHtml).toContain("calendar-solid-full");
+
+      // 完了済みのみの場合 -> 期限アイコンが表示されないこと
+      mockController.state = [
+        {
+          id: 4,
+          taskId: 101,
+          statusCode: 9,
+          title: "完了済みIssue",
+          value: "",
+          dueDate: pastDate,
+        },
+      ];
+      const doneHtml = flattenTemplate(element.render());
+      expect(doneHtml).not.toContain("task-pane__tab-due-icon");
     });
   });
 

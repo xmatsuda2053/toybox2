@@ -482,6 +482,7 @@ export class TaskList extends WithIssuesController(
         .labelName=${this.getLabelName(task.labelId)}
         .issuesDone=${counts.done}
         .issuesTotal=${counts.total}
+        .issuesDueInfo=${counts.dueIconInfo}
         @task-select=${this.handleTaskSelect}
         @bookmark-toggle=${this.handleBookmarkToggle}
       ></task-list-item>

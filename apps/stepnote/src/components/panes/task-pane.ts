@@ -13,6 +13,7 @@ import {
   WithTaskController,
   WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
+import { getIssuesDueStatus } from "@/utils/task-due.utils.js";
 import "@/components/task/task-summary.js";
 import "@/components/task/task-property.js";
 import "@/components/issues/issues-view.js";
@@ -345,6 +346,10 @@ export class TaskPane extends WithIssuesController(
    * タブ領域の描画
    */
   private renderTabGroup(): HTMLTemplateResult {
+    const issuesDueInfo = getIssuesDueStatus(
+      this.issuesController?.state ?? [],
+    );
+
     return html`
       <wa-tab-group
         class="task-pane__tab-group"
@@ -352,7 +357,13 @@ export class TaskPane extends WithIssuesController(
         @wa-tab-show=${this.handleTabShow}
       >
         <wa-tab slot="nav" panel="summary">Summary</wa-tab>
-        <wa-tab slot="nav" panel="issues">Issues</wa-tab>
+        <wa-tab slot="nav" panel="issues">Issues${issuesDueInfo
+          ? html`<wa-icon
+              class="task-pane__tab-due-icon task-pane__tab-due-icon--${issuesDueInfo.status}"
+              library="my-icons"
+              name=${issuesDueInfo.icon}
+            ></wa-icon>`
+          : null}</wa-tab>
         <wa-tab slot="nav" panel="property">Property</wa-tab>
 
         <wa-tab-panel name="summary" class="task-pane__tab-panel">

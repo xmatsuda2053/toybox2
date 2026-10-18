@@ -7,6 +7,10 @@ import {
   applyQuickAccessFilter,
   sortTasksByDueDateAndName,
 } from "@/utils/task-filter.utils";
+import {
+  getTaskDueIconInfo,
+  type TaskDueIconInfo,
+} from "@/utils/task-due.utils";
 
 /**
  * タスク一覧の抽出条件オプション
@@ -209,6 +213,8 @@ export class TaskListQuery {
         current.total += 1;
         if (issue.statusCode === 9) {
           current.done += 1;
+        } else {
+          updateTaskIssueDueInfo(current, issue.dueDate);
         }
       }
     }
@@ -223,6 +229,26 @@ export class TaskListQuery {
 export interface TaskIssueCount {
   done: number;
   total: number;
+  dueIconInfo?: TaskDueIconInfo | null;
+}
+
+/**
+ * 未完了Issueの期限ステータスを集計情報へ最優先（overdue > asap > upcoming）で反映する。
+ */
+function updateTaskIssueDueInfo(
+  current: TaskIssueCount,
+  dueDate?: Date | string | null,
+): void {
+  const info = getTaskDueIconInfo(dueDate);
+  if (!info) return;
+
+  if (info.status === "overdue") {
+    current.dueIconInfo = info;
+  } else if (info.status === "asap" && current.dueIconInfo?.status !== "overdue") {
+    current.dueIconInfo = info;
+  } else if (info.status === "upcoming" && !current.dueIconInfo) {
+    current.dueIconInfo = info;
+  }
 }
 
 interface DueAlertCounts {

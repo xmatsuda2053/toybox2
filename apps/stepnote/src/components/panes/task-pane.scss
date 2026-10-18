@@ -140,6 +140,26 @@
   }
 }
 
+.task-pane__tab-due-icon {
+  margin-left: var(--wa-space-3xs, 4px);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.task-pane__tab-due-icon--overdue {
+  color: var(--quick-access-icon-overdue);
+}
+
+.task-pane__tab-due-icon--asap {
+  color: var(--quick-access-icon-asap);
+}
+
+.task-pane__tab-due-icon--upcoming {
+  color: var(--quick-access-icon-upcoming);
+}
+
 .task-pane__tab-panel {
   display: none;
 
