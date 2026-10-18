@@ -273,6 +273,9 @@ export class TaskController extends BaseTaskScopeController<
   public updateStatus = async (
     statusCode: TaskStatusCode,
   ): Promise<void> => {
+    if (this._state?.statusCode === statusCode) {
+      return;
+    }
     if (statusCode === 9) {
       const canComplete = await this.canCompleteTask();
       if (!canComplete) {

@@ -25,6 +25,7 @@ import { TaskPane } from "./task-pane.js";
  *    - 2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること
  *    - 2-11. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること
  *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
+ *    - 2-13. ステータス変更ドロップダウン内の wa-dropdown-item に不要な @click ハンドラーが存在せず、親の wa-select イベントで一元処理されること
  *
  * 3. タブ領域（wa-tab-group）の描画
  *    - 3-1. wa-tab-group 内に Summary, Issues, Notes, Property の順で4つのタブが存在すること
@@ -251,6 +252,11 @@ describe("TaskPane Component", () => {
       await element.handleConfirmDelete();
       expect(mockTaskController.deleteTask).toHaveBeenCalledTimes(1);
       expect(element.isDeleteDialogOpen).toBe(false);
+    });
+
+    it("2-13. ステータス変更ドロップダウン内の wa-dropdown-item に @click が付与されていないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*@click/);
     });
   });
 

@@ -205,11 +205,6 @@ export class TaskPane extends WithIssuesController(
         type="checkbox"
         ?checked=${status.code === currentCode}
         ?disabled=${isDisabled}
-        @click=${() => {
-          if (!isDisabled) {
-            this.handleSelectStatus(status.code);
-          }
-        }}
       >
         <wa-icon
           slot="icon"
@@ -243,7 +238,6 @@ export class TaskPane extends WithIssuesController(
         value="delete"
         variant="danger"
         type="checkbox"
-        @click=${() => this.handleOpenDeleteDialog()}
       >
         <wa-icon
           slot="icon"
