@@ -47,4 +47,25 @@ export class LabelsRepository extends BaseRepository<LabelRecord> {
   public clearAllSelected = async (): Promise<void> => {
     await this.table.toCollection().modify({ isSelected: false });
   };
+
+  /**
+   * 指定したIDのラベルを排他的に選択状態にする。
+   * 既に選択中であっても選択状態を維持し、他のラベルの選択状態は解除される。
+   *
+   * @param {number} id
+   * @return {*} {Promise<void>}
+   * @memberof LabelsRepository
+   */
+  public selectLabel = async (id: number): Promise<void> => {
+    const label: LabelRecord | undefined = await this.getById(id);
+    if (!label) {
+      throw new Error(`Label with id ${id} not found`);
+    }
+
+    await db.transaction("rw", this.table, async () => {
+      await this.table.toCollection().modify({ isSelected: false });
+      await this.table.update(id, { isSelected: true });
+    });
+  };
 }
+

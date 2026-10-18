@@ -26,6 +26,12 @@
  * 4. Note関連システムログフォーマット仕様
  *   - 4-1. Note新規追加時のシステムログ（Note ID）を正しくフォーマットすること
  *   - 4-2. Note削除時のシステムログ（Note ID、削除時タイトル）を正しくフォーマットすること
+ *
+ * 5. システムログ判定仕様 (isSystemLog)
+ *   - 5-1. "### sys:" で始まる文字列の場合は true を返すこと
+ *   - 5-2. 大文字 "### SYS:" や前後に空白がある場合も true を返すこと
+ *   - 5-3. 通常のユーザー入力テキストの場合は false を返すこと
+ *   - 5-4. 空文字の場合は false を返すこと
  */
 
 import { describe, it, expect } from "vitest";
@@ -45,6 +51,7 @@ import {
   formatIssueDeletedLog,
   formatNoteCreatedLog,
   formatNoteDeletedLog,
+  isSystemLog,
 } from "./system-log.utils";
 
 describe("system-log.utils (TDD)", () => {
@@ -244,6 +251,30 @@ describe("system-log.utils (TDD)", () => {
           `- **対象**: Note #5\n` +
           `- **削除時タイトル**: (無題のノート)`,
       );
+    });
+  });
+
+  describe("5. システムログ判定仕様 (isSystemLog)", () => {
+    it("5-1. ### sys: で始まる文字列の場合は true を返すこと", () => {
+      expect(isSystemLog('### sys: タスク作成: "新機能設計"')).toBe(true);
+      expect(isSystemLog("### sys: Issue #10 作成")).toBe(true);
+      expect(isSystemLog("### sys: Note #5 作成")).toBe(true);
+    });
+
+    it("5-2. 大文字 ### SYS: や前後に空白がある場合も true を返すこと", () => {
+      expect(isSystemLog('   ### SYS: タスク名変更: "旧" → "新"  ')).toBe(true);
+      expect(isSystemLog("  ### sys: Issue #12 期日変更")).toBe(true);
+    });
+
+    it("5-3. 通常のユーザー入力テキストの場合は false を返すこと", () => {
+      expect(isSystemLog("本日の作業実績メモです")).toBe(false);
+      expect(isSystemLog("システム開発の課題について検討した")).toBe(false);
+      expect(isSystemLog("sys: 接頭辞のみでマークダウン見出しのない行")).toBe(false);
+    });
+
+    it("5-4. 空文字の場合は false を返すこと", () => {
+      expect(isSystemLog("")).toBe(false);
+      expect(isSystemLog("   ")).toBe(false);
     });
   });
 });

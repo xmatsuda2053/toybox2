@@ -179,5 +179,39 @@ describe("Label Repository Tests", () => {
         "Label with id 99999 not found",
       );
     });
+
+    it("3-6. selectLabel で指定IDのラベルを排他的に選択状態にし、既に選択中であっても選択状態を維持すること", async () => {
+      const id1 = await repository.add({
+        name: "Label 1",
+        description: "Desc 1",
+        isSelected: false,
+      });
+      const id2 = await repository.add({
+        name: "Label 2",
+        description: "Desc 2",
+        isSelected: false,
+      });
+
+      // Label 1 を選択
+      await repository.selectLabel(id1);
+      expect((await repository.getById(id1))?.isSelected).toBe(true);
+      expect((await repository.getById(id2))?.isSelected).toBe(false);
+
+      // 既に選択中の Label 1 を再度 selectLabel しても true のまま
+      await repository.selectLabel(id1);
+      expect((await repository.getById(id1))?.isSelected).toBe(true);
+
+      // Label 2 を選択すると Label 1 は false、Label 2 は true
+      await repository.selectLabel(id2);
+      expect((await repository.getById(id1))?.isSelected).toBe(false);
+      expect((await repository.getById(id2))?.isSelected).toBe(true);
+    });
+
+    it("3-7. selectLabel で存在しないIDを指定した場合、例外がスローされること", async () => {
+      await expect(repository.selectLabel(99999)).rejects.toThrow(
+        "Label with id 99999 not found",
+      );
+    });
   });
 });
+

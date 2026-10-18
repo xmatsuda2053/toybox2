@@ -96,6 +96,24 @@ export class LabelsController extends BaseDataController<
   };
 
   /**
+   * 指定したIDのラベルを選択状態にする。
+   * undefined が指定された場合は全てのラベルの選択状態を解除する。
+   *
+   * @param {(number | undefined)} id 対象ラベルID（未選択時は undefined）
+   * @return {*}  {Promise<void>}
+   * @memberof LabelsController
+   */
+  public selectLabel = async (id: number | undefined): Promise<void> => {
+    if (id === undefined) {
+      await this.clearAllSelected();
+      return;
+    }
+    await this.repository.selectLabel(id);
+    await this.loadState();
+  };
+
+
+  /**
    * 現在選択中のラベルIDの配列を取得する（排他制御により要素数は 0 または 1）
    *
    * @returns {number[]}

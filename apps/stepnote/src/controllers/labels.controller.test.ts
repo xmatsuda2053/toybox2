@@ -58,7 +58,19 @@ class FakeLabelsRepository {
       item.isSelected = false;
     });
   }
+
+  async selectLabel(id: number): Promise<void> {
+    const index = this.data.findIndex((item) => item.id === id);
+    if (index === -1) {
+      throw new Error(`Label with id ${id} not found`);
+    }
+    this.data.forEach((item) => {
+      item.isSelected = false;
+    });
+    this.data[index].isSelected = true;
+  }
 }
+
 
 /**
  * モック作成
@@ -340,4 +352,40 @@ describe("LabelsController (TDD)", () => {
       expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("6. 指定ラベル選択（selectLabel）の検証", () => {
+    beforeEach(async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeLabelsRepository([
+        { id: 1, name: "ラベル1", description: "説明1", isSelected: false },
+        { id: 2, name: "ラベル2", description: "説明2", isSelected: false },
+      ]);
+      controller = new LabelsController(mockHost.host, fakeRepository as any);
+      await controller.initialized;
+    });
+
+    it("6-1. 指定IDを渡した際、そのラベルが排他的に選択状態となり変更が通知されること", async () => {
+      await controller.selectLabel(1);
+      expect(controller.selectedLabelId).toBe(1);
+
+      // 既に選択中であっても維持されること
+      await controller.selectLabel(1);
+      expect(controller.selectedLabelId).toBe(1);
+
+      // 別のIDを指定すると排他的に切り替わること
+      await controller.selectLabel(2);
+      expect(controller.selectedLabelId).toBe(2);
+    });
+
+    it("6-2. undefined を渡した際、すべてのラベルの選択が解除されること", async () => {
+      await controller.selectLabel(1);
+      expect(controller.selectedLabelId).toBe(1);
+
+      await controller.selectLabel(undefined);
+      expect(controller.selectedLabelId).toBeUndefined();
+      expect(controller.hasSelectedLabels).toBe(false);
+    });
+
+  });
 });
+

@@ -210,4 +210,33 @@ describe("QuickAccessController (TDD)", () => {
       expect(listenerMock).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe("5. ステータス一括リセット（resetToAllStatus）の検証", () => {
+    it("5-1. resetToAllStatus 実行時に完了・対応中・開始待ちが true、その他（ブックマーク・未分類・期限）が false となり、変更が通知されること", async () => {
+      // 事前にブックマークと期限切れをON、完了をOFFにしておく
+      await controller.toggleBookmarkSelected();
+      await controller.toggleOverdueSelected();
+      await controller.toggleDoneSelected();
+      expect(controller.state.isBookmarkSelected).toBe(true);
+      expect(controller.state.isOverdueSelected).toBe(true);
+      expect(controller.state.isDoneSelected).toBe(false);
+
+      const listenerMock = vi.fn();
+      controller.subscribe(listenerMock);
+
+      await controller.resetToAllStatus();
+
+      expect(controller.state.isBookmarkSelected).toBe(false);
+
+      expect(controller.state.isUncategorizedSelected).toBe(false);
+      expect(controller.state.isOverdueSelected).toBe(false);
+      expect(controller.state.isAsapSelected).toBe(false);
+      expect(controller.state.isUpcomingSelected).toBe(false);
+      expect(controller.state.isDoneSelected).toBe(true);
+      expect(controller.state.isProgressSelected).toBe(true);
+      expect(controller.state.isPendingSelected).toBe(true);
+      expect(listenerMock).toHaveBeenCalledTimes(1);
+    });
+  });
 });
+

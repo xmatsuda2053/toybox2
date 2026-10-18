@@ -1,5 +1,5 @@
 import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { ContextProvider } from "@lit/context";
 import appRootStyles from "./app-root.scss?inline";
 import {
@@ -31,6 +31,7 @@ import "@/components/navigation/navigation-labels.js";
 import "@/components/task-list/task-list.js";
 import "@/components/panes/task-pane.js";
 import "@/components/panes/journal-pane.js";
+import "@/components/search/global-search-dialog.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -69,6 +70,9 @@ export class AppRoot extends LitElement {
   public themeController: ThemeController;
   public scratchController: ScratchController;
   public systemLogService: SystemLogService;
+
+  @state()
+  public isGlobalSearchOpen = false;
 
   constructor() {
     super();
@@ -195,7 +199,45 @@ export class AppRoot extends LitElement {
       this.syncThemeToHost();
     });
     this.setupControllerSubscriptions();
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", this.handleGlobalKeyDown);
+    }
   }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("keydown", this.handleGlobalKeyDown);
+    }
+  }
+
+
+  public handleOpenGlobalSearch = (): void => {
+    this.isGlobalSearchOpen = true;
+  };
+
+  public handleCloseGlobalSearch = (): void => {
+    this.isGlobalSearchOpen = false;
+    const searchBtn = this.renderRoot?.querySelector<HTMLElement>(
+      "#header-global-search-btn",
+    );
+    searchBtn?.blur();
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        const targetBtn = this.renderRoot?.querySelector<HTMLElement>(
+          "#header-global-search-btn",
+        );
+        targetBtn?.blur();
+      });
+    }
+  };
+
+  public handleGlobalKeyDown = (e: KeyboardEvent): void => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
+    }
+  };
 
   /**
    * 各 Controller 間の状態変更イベントの購読と連携を設定する。
@@ -254,10 +296,28 @@ export class AppRoot extends LitElement {
           StepNote
         </div>
         <div class="header-actions">
+          <wa-tooltip for="header-global-search-btn" placement="bottom" trigger="hover">
+            全体検索 (Ctrl+K)
+          </wa-tooltip>
+          <wa-button
+            id="header-global-search-btn"
+            class="header-global-search-btn"
+            variant="neutral"
+            appearance="plain"
+            size="s"
+            @click=${this.handleOpenGlobalSearch}
+          >
+            <wa-icon
+              library="my-icons"
+              name="magnifying-glass-solid-full"
+              label="全体検索 (Ctrl+K)"
+            ></wa-icon>
+          </wa-button>
           <theme-switcher></theme-switcher>
         </div>
       </header>
     `;
+
   }
 
   /**
@@ -346,6 +406,14 @@ export class AppRoot extends LitElement {
 
         <!-- Footer (下部固定) -->
         <footer class="app-footer">footer</footer>
+
+        <!-- 全体検索モーダル -->
+        <global-search-dialog
+          .open=${this.isGlobalSearchOpen}
+          data-theme=${resolvedTheme}
+          @global-search-close=${this.handleCloseGlobalSearch}
+          @global-search-select=${this.handleCloseGlobalSearch}
+        ></global-search-dialog>
       </div>
     `;
   }

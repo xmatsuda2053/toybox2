@@ -50,7 +50,20 @@
 .header-actions {
   display: flex;
   align-items: center;
+  gap: var(--wa-space-2xs, 4px);
 }
+
+.header-global-search-btn {
+  color: var(--wa-color-text-subtle);
+  cursor: pointer;
+  @include theme-transition;
+
+  &:hover {
+    color: var(--wa-color-text-normal);
+  }
+}
+
+
 
 
 .panes-container {
