@@ -75,6 +75,15 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 7-1. issuesController の通知契機で taskListController.refresh が呼び出され、Task List の件数集計が同期されること
  *    - [x] 7-2. issuesController の通知契機で taskController.refresh が呼び出され、親タスクの完了可否状態が同期されること
  *    - [ ] 7-3. taskController の通知契機で taskListController.refresh が呼び出され、親タスクのステータス変更等が Task List に同期されること
+ *
+ * 【AppRoot 全体検索モーダル連携仕様 (Phase 8)】
+ * 8. 全体検索モーダル（GlobalSearchDialog）との連携
+ *    - [x] 8-1. ヘッダー右側（header-actions）に全体検索アイコンボタン（header-global-search-btn）がレンダリングされること
+ *    - [x] 8-2. 全体検索モーダル要素（global-search-dialog）がレンダリングされ、初期状態は閉じた状態であること
+ *    - [x] 8-3. handleOpenGlobalSearch 実行時に isGlobalSearchOpen が true に更新されること
+ *    - [x] 8-4. Ctrl+K キーボードショートカットで isGlobalSearchOpen の開閉がトグルされること
+ *    - [ ] 8-5. 全体検索アイコンのツールチップ（wa-tooltip）に trigger="hover" が設定され、ダイアログ閉鎖時の不要なツールチップ表示が抑止されていること
+ *    - [ ] 8-6. handleCloseGlobalSearch 実行時に、検索ボタンの blur が呼ばれてフォーカス状態が解除されること
  */
 
 /**
@@ -328,7 +337,71 @@ describe("AppRoot Controller 状態連携仕様", () => {
 
     expect(taskListRefreshSpy).toHaveBeenCalled();
   });
+
+  describe("8. 全体検索モーダル（GlobalSearchDialog）との連携", () => {
+    it("8-1. ヘッダー右側（header-actions）に全体検索アイコンボタン（header-global-search-btn）がレンダリングされること", () => {
+      const template = (appRoot as any).renderHeader();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("header-global-search-btn");
+      expect(htmlStr).toContain('name="magnifying-glass-solid-full"');
+      expect(htmlStr).toContain("全体検索 (Ctrl+K)");
+    });
+
+
+    it("8-2. 全体検索モーダル要素（global-search-dialog）がレンダリングされ、初期状態は閉じた状態であること", () => {
+      const template = appRoot.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("<global-search-dialog");
+      expect((appRoot as any).isGlobalSearchOpen).toBe(false);
+    });
+
+    it("8-3. handleOpenGlobalSearch 実行時に isGlobalSearchOpen が true に更新されること", () => {
+      (appRoot as any).handleOpenGlobalSearch();
+      expect((appRoot as any).isGlobalSearchOpen).toBe(true);
+
+      (appRoot as any).handleCloseGlobalSearch();
+      expect((appRoot as any).isGlobalSearchOpen).toBe(false);
+    });
+
+    it("8-4. Ctrl+K キーボードショートカットで isGlobalSearchOpen の開閉がトグルされること", () => {
+      expect((appRoot as any).isGlobalSearchOpen).toBe(false);
+
+      const event = {
+        key: "k",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(event);
+      expect((appRoot as any).isGlobalSearchOpen).toBe(true);
+      expect(event.preventDefault).toHaveBeenCalled();
+
+      (appRoot as any).handleGlobalKeyDown(event);
+      expect((appRoot as any).isGlobalSearchOpen).toBe(false);
+    });
+
+    it("8-5. 全体検索アイコンのツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、ダイアログ閉鎖時の不要なツールチップ表示が抑止されていること", () => {
+      const template = (appRoot as any).renderHeader();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="header-global-search-btn"[^>]*trigger="hover"/);
+    });
+
+    it("8-6. handleCloseGlobalSearch 実行時に、検索ボタンの blur が呼ばれてフォーカス状態が解除されること", () => {
+      const mockBtn = { blur: vi.fn() };
+      Object.defineProperty(appRoot, "renderRoot", {
+        value: {
+          querySelector: vi.fn().mockReturnValue(mockBtn),
+        },
+        configurable: true,
+      });
+
+      (appRoot as any).handleCloseGlobalSearch();
+      expect(mockBtn.blur).toHaveBeenCalled();
+    });
+  });
 });
+
+
 
 
 

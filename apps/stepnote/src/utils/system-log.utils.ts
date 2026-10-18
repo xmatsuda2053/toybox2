@@ -347,3 +347,14 @@ export function formatNoteDeletedLog(noteId: number, title?: string): string {
     `- **削除時タイトル**: ${titleDisplay}`
   );
 }
+
+/**
+ * 渡された文字列がシステムログ（"### sys:" で始まるフォーマット）であるかを判定する純粋関数
+ *
+ * @export
+ * @param {string} value ログ文字列
+ * @return {boolean} システムログの場合 true
+ */
+export function isSystemLog(value: string): boolean {
+  return /^###\s+sys:/i.test(value.trimStart());
+}

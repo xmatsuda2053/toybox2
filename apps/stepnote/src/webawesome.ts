@@ -6,6 +6,7 @@
  */
 
 // Web Awesome コンポーネント群の一括登録（副作用インポート）
+import "@awesome.me/webawesome/dist/components/badge/badge.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
@@ -29,6 +30,7 @@ import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
  * 登録対象の Web Awesome コンポーネント識別名一覧
  */
 export const WEB_AWESOME_COMPONENTS = [
+  "badge",
   "button",
   "dialog",
   "divider",

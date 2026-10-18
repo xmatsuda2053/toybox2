@@ -117,7 +117,27 @@ export class QuickAccessController extends BaseDataController<
     });
   };
 
+  /**
+   * 全体検索選択追従用: 完了・対応中・開始待ちをすべて ON、ブックマーク・未分類・期限ステータスをすべて OFF に一括設定する。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof QuickAccessController
+   */
+  public resetToAllStatus = async (): Promise<void> => {
+    await this.updateState({
+      isBookmarkSelected: false,
+      isUncategorizedSelected: false,
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: false,
+      isDoneSelected: true,
+      isProgressSelected: true,
+      isPendingSelected: true,
+    });
+  };
+
   // --- 期限フィルター（排他制御トグル） ---
+
 
   /**
    * 期限フィルターを排他的にトグルする共通内部ヘルパー。
