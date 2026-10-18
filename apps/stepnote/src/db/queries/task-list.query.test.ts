@@ -49,6 +49,7 @@ import {
  *    - 6-1. 指定会計年度のタスクに紐づく Issue の完了件数（done）と総件数（total）をタスクIDごとの Map で取得できること
  *    - 6-2. Issue が存在しないタスクは { done: 0, total: 0 } が返ること
  *    - 6-3. 異なる会計年度のタスクに紐づく Issue は集計に含まれないこと
+ *    - 6-4. 未完了Issueの期限ステータス（overdue > asap > upcoming）が集計され、dueIconInfo に最優先ステータス情報が格納されること
  */
 describe("TaskListQuery Tests", () => {
   let query: TaskListQuery;
@@ -1111,5 +1112,45 @@ describe("TaskListQuery Tests", () => {
       const countsMap = await query.getTaskIssueCounts(2026);
       expect(countsMap.has(otherYearTaskId)).toBe(false);
     });
+
+    it("6-4. 未完了Issueの期限ステータス（overdue > asap > upcoming）が集計され、dueIconInfo に最優先ステータス情報が格納されること", async () => {
+      const task4Id = await db.tasks.add({
+        name: "タスク4",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      // 期限切れ（overdue）の未完了Issueを追加
+      await db.issues.add({
+        taskId: task4Id,
+        statusCode: 0,
+        title: "期限切れIssue",
+        value: "",
+        dueDate: overdueDate,
+      });
+      // 期限当日（asap）の未完了Issueを追加
+      await db.issues.add({
+        taskId: task4Id,
+        statusCode: 5,
+        title: "当日Issue",
+        value: "",
+        dueDate: asapDate,
+      });
+
+      const countsMap = await query.getTaskIssueCounts(2026);
+      const task4Count = countsMap.get(task4Id);
+      expect(task4Count).toBeDefined();
+      expect(task4Count?.dueIconInfo).toEqual({
+        icon: "fire-solid-full",
+        status: "overdue",
+      });
+    });
   });
 });
+

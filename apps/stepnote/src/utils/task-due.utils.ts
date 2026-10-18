@@ -1,4 +1,5 @@
 import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
+import type { IssueRecord } from "@/db/models/task.model";
 
 /**
  * 期限ステータス種別
@@ -50,3 +51,43 @@ export function getTaskDueIconInfo(
 
   return null;
 }
+
+/**
+ * 複数のIssueレコードから未完了のものを対象に、最も緊急度の高い期限ステータスアイコン情報を取得する。
+ * （優先度: overdue > asap > upcoming）
+ * 該当する未完了Issueが存在しない場合は null を返す。
+ *
+ * @param {readonly IssueRecord[]} issues 対象Issue配列
+ * @returns {TaskDueIconInfo | null} 最優先の期限アイコン情報または null
+ */
+export function getIssuesDueStatus(
+  issues: readonly IssueRecord[],
+): TaskDueIconInfo | null {
+  let hasAsap = false;
+  let hasUpcoming = false;
+
+  for (const issue of issues) {
+    if (issue.statusCode === 9) continue;
+    const dueInfo = getTaskDueIconInfo(issue.dueDate);
+    if (!dueInfo) continue;
+
+    if (dueInfo.status === "overdue") {
+      return dueInfo;
+    }
+    if (dueInfo.status === "asap") {
+      hasAsap = true;
+    } else if (dueInfo.status === "upcoming") {
+      hasUpcoming = true;
+    }
+  }
+
+  if (hasAsap) {
+    return { icon: "triangle-exclamation-solid-full", status: "asap" };
+  }
+  if (hasUpcoming) {
+    return { icon: "calendar-solid-full", status: "upcoming" };
+  }
+
+  return null;
+}
+

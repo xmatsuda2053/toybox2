@@ -17,6 +17,7 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 2-2. ステータスコードに応じたステータスアイコン修飾子クラス（0: task-list-item__status-icon--pending, 5: task-list-item__status-icon--progress, 9: task-list-item__status-icon--done）が付与されること
  *    - 2-3. タスク名（.task-list-item__title）が正しく描画されること
  *    - 2-4. Issue件数・進捗（issuesDone / issuesTotal）が 1行目（.task-list-item__row--header）内に表示されること
+ *    - 2-5. issuesDueInfo が設定されている場合、1行目の進捗部分（.task-list-item__issues-progress）内に期限アイコン（.task-list-item__issues-due-icon）および修飾子クラスがレンダリングされること（未設定時は非表示）
  *
  * 3. 2行目（メタ部: ブックマークボタン、期限日および期限状態、所属ラベル）
  *    - 3-1. ブックマークボタン（.task-list-item__btn-bookmark）が 2行目に配置され、bookmark: true のときアクティブ状態となること
@@ -122,6 +123,33 @@ describe("TaskListItem Component", () => {
       const progressIndex = htmlStr.indexOf("task-list-item__issues-progress");
       expect(progressIndex).toBeGreaterThan(headerIndex);
       expect(progressIndex).toBeLessThan(metaIndex);
+    });
+
+    it("2-5. issuesDueInfo が設定されている場合、1行目の進捗部分内に期限アイコンおよび修飾子クラスがレンダリングされること（未設定時は非表示）", () => {
+      // 未設定時はアイコンが存在しないこと
+      expect(flattenTemplate(element.render())).not.toContain("task-list-item__issues-due-icon");
+
+      // 設定時（overdue）
+      element.issuesDueInfo = { icon: "fire-solid-full", status: "overdue" };
+      const overdueHtml = flattenTemplate(element.render());
+      expect(overdueHtml).toContain("task-list-item__issues-due-icon");
+      expect(overdueHtml).toContain("task-list-item__issues-due-icon--overdue");
+      expect(overdueHtml).toContain("fire-solid-full");
+
+      // 設定時（asap）
+      element.issuesDueInfo = {
+        icon: "triangle-exclamation-solid-full",
+        status: "asap",
+      };
+      const asapHtml = flattenTemplate(element.render());
+      expect(asapHtml).toContain("task-list-item__issues-due-icon--asap");
+      expect(asapHtml).toContain("triangle-exclamation-solid-full");
+
+      // 設定時（upcoming）
+      element.issuesDueInfo = { icon: "calendar-solid-full", status: "upcoming" };
+      const upcomingHtml = flattenTemplate(element.render());
+      expect(upcomingHtml).toContain("task-list-item__issues-due-icon--upcoming");
+      expect(upcomingHtml).toContain("calendar-solid-full");
     });
   });
 

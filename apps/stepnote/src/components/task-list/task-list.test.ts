@@ -29,7 +29,7 @@ import { TaskList } from "./task-list.js";
  * 5. BEM設計およびSCSSスタイルの検証
  *    - [ ] 5-1. SCSSスタイルシート（task-list.scss）が存在し、ルートブロック .task-list および主要要素のBEMセレクタが定義されていること
  *    - [ ] 5-2. 背景色に正式なデザイントークン（--wa-color-surface-default）が適用されていること
- *    - [ ] 5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .task-list に最小幅（min-width: 280px）が設定されていること
+ *    - [ ] 5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .task-list に最小幅（min-width: 290px）が設定されていること
  *    - [ ] 5-4. テンプレートおよびSCSSから旧クラス名（pane-task-list*）が完全に排除されていること
  *    - [ ] 5-5. 検索エリア（task-list__search）に境界線（border-bottom）が設定されておらず、一覧リストと一体感のあるデザインになっていること
  *
@@ -193,12 +193,12 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       expect(scssContent).not.toContain("--stepnote-border-color");
     });
 
-    it("5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .task-list に最小幅（min-width: 280px）が設定されていること", () => {
+    it("5-3. 縮小アニメーション時のレイアウト崩れを防止するため、ルート要素 .task-list に最小幅（min-width: 290px）が設定されていること", () => {
       const scssPath = new URL("./task-list.scss", import.meta.url);
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       const rootBlockMatch = scssContent.match(/\.task-list\s*\{[\s\S]*?\n\}/);
       expect(rootBlockMatch).not.toBeNull();
-      expect(rootBlockMatch![0]).toMatch(/min-width:\s*var\(--stepnote-pane-task-list-width,\s*280px\)/);
+      expect(rootBlockMatch![0]).toMatch(/min-width:\s*var\(--stepnote-pane-task-list-width,\s*290px\)/);
     });
 
     it("5-4. テンプレートおよびSCSSから旧クラス名（pane-task-list*）が完全に排除されていること", () => {

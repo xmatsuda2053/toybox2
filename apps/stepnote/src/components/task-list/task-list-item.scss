@@ -171,6 +171,28 @@
   color: var(--wa-color-text-quiet);
   font-family: inherit;
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-list-item__issues-due-icon {
+  flex-shrink: 0;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.task-list-item__issues-due-icon--overdue {
+  color: var(--quick-access-icon-overdue);
+}
+
+.task-list-item__issues-due-icon--asap {
+  color: var(--quick-access-icon-asap);
+}
+
+.task-list-item__issues-due-icon--upcoming {
+  color: var(--quick-access-icon-upcoming);
 }
 
 .task-list-item__divider {
