@@ -37,10 +37,6 @@ export class MarkdownPreview extends LitElement {
   @property({ type: String, attribute: "light-theme" })
   public lightTheme: MarkdownLightThemeVariant = "default";
 
-  /** 入力内容に応じた自動伸長（Auto-grow）モード */
-  @property({ type: Boolean, reflect: true, attribute: "auto-height" })
-  public autoHeight = false;
-
   /** プラグインやサニタイズのカスタマイズ設定 (DI) */
   @property({ type: Object })
   public processorOptions?: MarkdownProcessorOptions;
@@ -198,13 +194,9 @@ export class MarkdownPreview extends LitElement {
       this.getAttribute?.("data-theme") === "dark" ||
       Boolean(this.classList?.contains?.("wa-dark"));
     const currentTheme = isDark ? "dark" : "light";
-    const autoHeightClass = this.autoHeight
-      ? "markdown-preview--auto-height"
-      : "";
-
     return html`
       <div
-        class="markdown-preview ${this.isLoading ? "markdown-preview--loading" : ""} ${autoHeightClass}"
+        class="markdown-preview ${this.isLoading ? "markdown-preview--loading" : ""}"
       >
         ${this.renderedHtml
           ? html`<div

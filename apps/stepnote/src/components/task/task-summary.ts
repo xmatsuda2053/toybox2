@@ -48,11 +48,7 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
   @state()
   public descriptionMode: MarkdownDisplayMode = "edit";
 
-  /**
-   * Markdown 詳細説明のコンテンツ展開モードフラグ
-   */
-  @state()
-  public isContentExpand: boolean = false;
+
 
   private _lastTaskId?: number;
 
@@ -145,14 +141,7 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
     this.debouncedUpdateDescription(description);
   };
 
-  /**
-   * Markdown 詳細説明の高さモード切替ハンドラー
-   */
-  public handleHeightModeChange = (
-    e: CustomEvent<{ autoHeight: boolean }>,
-  ): void => {
-    this.isContentExpand = e.detail?.autoHeight ?? false;
-  };
+
 
   /**
    * タスクの期限情報（アイコン名および修飾クラス）を取得する
@@ -282,7 +271,6 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
           .darkTheme=${"soft"}
           @markdown-change=${(e: CustomEvent<{ value: string }>) =>
             this.handleDescriptionChange(e.detail.value)}
-          @height-mode-change=${this.handleHeightModeChange}
         ></markdown-editor-preview>
       </div>
     `;
@@ -307,12 +295,8 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
       return this.renderEmptyState();
     }
 
-    const expandClass = this.isContentExpand
-      ? "task-summary--content-expand"
-      : "";
-
     return html`
-      <div class="task-summary ${expandClass}">
+      <div class="task-summary">
         ${this.renderNameField()} ${this.renderDueDateField()}
         ${this.renderContactsField()} ${this.renderDescriptionField()}
       </div>

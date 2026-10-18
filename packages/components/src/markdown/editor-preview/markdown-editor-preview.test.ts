@@ -56,34 +56,32 @@
  *   - renderToolbarBasicActions() により見出し・太字・リスト・タスクリスト等の主要書式ボタンが描画されること
  *   - renderToolbarSecondaryActions() により番号付きリスト・引用・コード等のセカンダリ書式ボタンが描画されること
  *   - renderExtensionMenu() によりミートボールメニューおよび拡張・レスポンシブメニューが描画されること
- *   - renderAutoHeightButton() により自動伸長トグルボタンが描画されること
  *   - renderHelpButton() により構文ヘルプボタンが描画されること
  *   - renderModeSwitchTabs() によりモード切替タブグループが描画されること
  *   - renderHelpBasicTable() により基本記法チートシートテーブルが描画されること
  *   - renderHelpExtensionTable() により拡張機能テーブルが描画されること
- *   - commitHeightMode() により高さモードの確定と height-mode-change イベントが単一箇所で発火されること
  * 15. 拡張配列およびプロセッサオプションの参照安定性（メモ化・不要な再描画防止）
  *   - extensions および customExtensions が変更されない限り、effectiveEditorExtensions は同一の配列参照を返すこと
  *   - extensions および processorOptions が変更されない限り、effectiveProcessorOptions は同一のオブジェクト参照を返すこと
  * 16. テーマモード制御（themeMode）と視覚スタイルの保護
  *   - themeMode プロパティが指定された場合、指定されたテーマが優先されること
  *   - SCSS において :host([data-theme="dark"]) の背景色が透明に設定され、角丸の遮蔽を防止すること
- * 17. 高さモード（auto-height）における領域フィットと伸縮保護
- *   - auto-height モード時、内部コンテナおよび body が親要素の flex: 1 / min-height: 100% を尊重し、領域末尾まで伸長可能であること
- * 18. サイズ制御モードのトグルとボタンタイトル・アイコン（固定表示／全表示）
- *   - autoHeight=false の時、トグルボタンの title と aria-label が「全表示」、アイコンが expand-solid-full であること
- *   - autoHeight=true の時、トグルボタンの title と aria-label が「固定表示」、アイコンが compress-solid-full であること
- *   - コンテンツ展開モード時、:host([auto-height]) が height: auto となりコンテンツ高さに追従すること
- * 19. 全表示（コンテンツ展開）モードにおけるヘッダーの sticky スクロール追従仕様
- *   - SCSS においてコンテンツ展開モード時（:host([auto-height]) または .markdown-editor-preview--auto-height）、親コンテナの overflow: visible が指定され、外側スクロールコンテナへの sticky 伝播が有効であること
- *   - SCSS においてコンテンツ展開モード時、.markdown-editor-preview__header に対し position: sticky; top: 0; が指定されていること
- *   - SCSS においてヘッダー上部に角丸（border-top-left-radius / border-top-right-radius）が指定され、視覚的完全性が維持されていること
+ * 17. 固定フィット表示における領域フィットと伸縮保護
+ *   - :host、内部コンテナおよび body が親要素の flex: 1 / min-height: 100% を尊重し、領域末尾まで伸長可能であること
+ * 18. 全表示（autoHeight）モードの完全廃止と常時固定フィット表示
+ *   - autoHeight / allowAutoHeight プロパティが定義されていない（undefined）こと
+ *   - ヘッダー内に全表示トグルボタン（markdown-editor-preview__auto-height-btn）が描画されないこと
+ *   - ルート要素に markdown-editor-preview--auto-height クラスが付与されないこと
+ * 19. SCSSにおける全表示モードおよび sticky ヘッダースタイルの完全排除
+ *   - SCSS において .markdown-editor-preview--auto-height や :host([auto-height]) が存在しないこと
+ *   - SCSS において .markdown-editor-preview__auto-height-btn が存在しないこと
+ *   - SCSS において .markdown-editor-preview--animating が存在しないこと
  * 20. ヘッダーボタンのコンパクト設計およびコンテナクエリ閾値仕様
  *   - SCSS において .markdown-editor-preview__toolbar-btn の min-width / min-height が 24px、アイコンフォントサイズが 15px にコンパクト化されていること
  *   - SCSS において .markdown-editor-preview__mode-btn の min-height が 24px にコンパクト化されていること
  *   - SCSS においてコンテナクエリ閾値が @container editor-preview (max-width: 430px) に最適化されていること
  * 21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様
- *   - ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること
+ *   - ヘッダー右側エリアにおいて、全表示ボタンが存在せず「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること
  *   - エディタ操作メニューが wa-dropdown（placement='bottom-end'）としてレンダリングされること
  *   - メニューボタンが slot='trigger' として配置され、アイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
  *   - wa-dropdown 内に「コピー（value='copy'）」「整形（value='format'）」「構文ヘルプ（value='help'）」の各 wa-dropdown-item が含まれること
@@ -588,61 +586,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-  describe("コンテンツ連動型自動伸長（Auto-grow）モードおよび高さモード切替仕様", () => {
-    it("autoHeight プロパティがデフォルトで false であること", () => {
-      expect((element as any).autoHeight).toBe(false);
-    });
 
-    it("autoHeight が true の場合、コンポーネントルートに markdown-editor-preview--auto-height クラスが付与されること", () => {
-      (element as any).autoHeight = true;
-      const htmlStr = flattenTemplate(element.render());
-
-      expect(htmlStr).toContain("markdown-editor-preview--auto-height");
-    });
-
-    it("allowAutoHeight が true の場合、ヘッダーに高さモード切替ボタンがレンダリングされること", () => {
-      (element as any).allowAutoHeight = true;
-      const htmlStr = flattenTemplate(element.render());
-
-      expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
-      expect(htmlStr).toContain("expand-solid-full");
-    });
-
-    it("allowAutoHeight が false の場合、ヘッダーに高さモード切替ボタンがレンダリングされないこと", () => {
-      (element as any).allowAutoHeight = false;
-      const htmlStr = flattenTemplate(element.render());
-
-      expect(htmlStr).not.toContain("markdown-editor-preview__auto-height-btn");
-    });
-
-    it("toggleAutoHeight() を実行すると autoHeight がトグルされ、height-mode-change イベントが発行されること", () => {
-      let emittedDetail: { autoHeight: boolean } | null = null;
-      element.addEventListener("height-mode-change", (e: Event) => {
-        emittedDetail = (e as CustomEvent<{ autoHeight: boolean }>).detail;
-      });
-
-      (element as any).toggleAutoHeight();
-      expect((element as any).autoHeight).toBe(true);
-      expect(emittedDetail).toEqual({ autoHeight: true });
-
-      (element as any).toggleAutoHeight();
-      expect((element as any).autoHeight).toBe(false);
-      expect(emittedDetail).toEqual({ autoHeight: false });
-    });
-
-    it("SCSS にて auto-height 有効時に height: auto かつ内部スクロール抑止（overflow: visible）となるスタイルが定義されていること", () => {
-      const scssPath = new URL(
-        "./markdown-editor-preview.scss",
-        import.meta.url,
-      );
-      const scssContent = fs.readFileSync(scssPath, "utf-8");
-
-      expect(scssContent).toContain(".markdown-editor-preview--auto-height");
-      expect(scssContent).toMatch(
-        /\.markdown-editor-preview--auto-height[\s\S]*?height:\s*auto/,
-      );
-    });
-  });
 
   describe("固定高さ（height）プロパティ仕様", () => {
     it("height プロパティが未指定の場合、デフォルトで undefined であり、render() に固定高さスタイルが含まれないこと", () => {
@@ -671,35 +615,10 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect((element as any).effectiveHeight).toBe("600px");
     });
 
-    it("autoHeight=true の場合、height が設定されていても固定高さスタイルがクリアされ自動伸長が優先されること", () => {
-      (element as any).height = "400px";
-      (element as any).autoHeight = true;
-      let htmlStr = flattenTemplate(element.render());
 
-      expect(htmlStr).not.toContain("height: 400px");
-      expect((element as any).effectiveHeight).toBeUndefined();
-
-      // autoHeight を false に戻すと元の固定サイズに復帰すること
-      (element as any).autoHeight = false;
-      htmlStr = flattenTemplate(element.render());
-
-      expect(htmlStr).toContain("height: 400px");
-      expect((element as any).effectiveHeight).toBe("400px");
-    });
   });
 
-  describe("サイズモード切替アニメーション（Smooth Transition）仕様", () => {
-    it("SCSS にて高さトランジション（transition: height）およびアニメーション中スタイル（.markdown-editor-preview--animating）が定義されていること", () => {
-      const scssPath = new URL(
-        "./markdown-editor-preview.scss",
-        import.meta.url,
-      );
-      const scssContent = fs.readFileSync(scssPath, "utf-8");
-
-      expect(scssContent).toContain("markdown-editor-preview--animating");
-      expect(scssContent).toMatch(/transition:[\s\S]*?height/);
-    });
-
+  describe("アクセシビリティ（prefers-reduced-motion）仕様", () => {
     it("prefers-reduced-motion メディアクエリにおいてトランジションが無効化されること", () => {
       const scssPath = new URL(
         "./markdown-editor-preview.scss",
@@ -711,16 +630,6 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(scssContent).toMatch(
         /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?transition:\s*none/,
       );
-    });
-
-    it("isTransitioning 状態が管理され、アニメーション中は .markdown-editor-preview--animating クラスがレンダリングされること", () => {
-      expect((element as any).isTransitioning).toBe(false);
-      let htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("markdown-editor-preview--animating");
-
-      (element as any).isTransitioning = true;
-      htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("markdown-editor-preview--animating");
     });
   });
 
@@ -753,12 +662,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain("markdown-editor-preview__extension-menu");
     });
 
-    it("renderAutoHeightButton() により自動伸長トグルボタンが描画されること", () => {
-      element.allowAutoHeight = true;
-      const result = (element as any).renderAutoHeightButton();
-      const htmlStr = flattenTemplate(result);
-      expect(htmlStr).toContain("markdown-editor-preview__auto-height-btn");
-    });
+
 
     it("renderActionMenu() によりエディタ操作メニューが描画され、構文ヘルプ項目が含まれること", () => {
       const result = (element as any).renderActionMenu();
@@ -789,20 +693,6 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       const htmlStr = flattenTemplate(result);
       expect(htmlStr).toContain("拡張機能・独自タグ");
       expect(htmlStr).toContain(customBadgeExtension.label);
-    });
-
-    it("commitHeightMode() により高さモードが確定され、isTransitioning がリセットされ、イベントが発火すること", () => {
-      let eventDetail: any = null;
-      element.addEventListener("height-mode-change", (e: any) => {
-        eventDetail = e.detail;
-      });
-
-      (element as any).isTransitioning = true;
-      (element as any).commitHeightMode(true);
-
-      expect(element.autoHeight).toBe(true);
-      expect((element as any).isTransitioning).toBe(false);
-      expect(eventDetail).toEqual({ autoHeight: true });
     });
   });
 
@@ -875,52 +765,43 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-  describe("18. サイズ制御モードのトグルとボタンタイトル・アイコン（固定表示／全表示）", () => {
-    it("autoHeight=false（親要素フィットモード）の時、トグルボタンの title と aria-label が「全表示」、アイコンが expand-solid-full であること", () => {
-      element.autoHeight = false;
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/title=["']全表示["']/);
-      expect(htmlStr).toMatch(/aria-label=["']全表示["']/);
-      expect(htmlStr).toContain("expand-solid-full");
+  describe("18. 全表示（autoHeight）モードの完全廃止と常時固定フィット表示", () => {
+    it("autoHeight プロパティが定義されていない（undefined）こと", () => {
+      expect((element as any).autoHeight).toBeUndefined();
     });
 
-    it("autoHeight=true（コンテンツ展開モード）の時、トグルボタンの title と aria-label が「固定表示」、アイコンが compress-solid-full であること", () => {
-      element.autoHeight = true;
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/title=["']固定表示["']/);
-      expect(htmlStr).toMatch(/aria-label=["']固定表示["']/);
-      expect(htmlStr).toContain("compress-solid-full");
+    it("allowAutoHeight プロパティが定義されていない（undefined）こと", () => {
+      expect((element as any).allowAutoHeight).toBeUndefined();
     });
 
-    it("コンテンツ展開モード時（方針A）、:host([auto-height]) が height: auto かつ flex: none となりコンテンツ高さに追従すること", () => {
-      const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
-      const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toMatch(
-        /:host\(\[auto-height\]\)[^{]*\{[^}]*height:\s*auto;/,
-      );
-      expect(scssContent).toMatch(
-        /:host\(\[auto-height\]\)[^{]*\{[^}]*flex:\s*none;/,
-      );
+    it("ヘッダー内に全表示トグルボタン（markdown-editor-preview__auto-height-btn）が描画されないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("markdown-editor-preview__auto-height-btn");
+      expect(htmlStr).not.toContain("expand-solid-full");
+      expect(htmlStr).not.toContain("compress-solid-full");
+    });
+
+    it("ルート要素に markdown-editor-preview--auto-height クラスが付与されないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toContain("markdown-editor-preview--auto-height");
     });
   });
 
-  describe("19. 全表示（コンテンツ展開）モードにおけるヘッダーの sticky スクロール追従仕様", () => {
+  describe("19. SCSSにおける全表示モードおよび sticky ヘッダースタイルの完全排除", () => {
     const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
     const scssContent = fs.readFileSync(scssPath, "utf-8");
 
-    it("コンテンツ展開モード時、親コンテナに overflow: visible が指定され外側スクロールコンテナへの sticky 伝播が有効であること", () => {
-      expect(scssContent).toMatch(
-        /:host\(\[auto-height\]\)[\s\S]*?overflow:\s*visible;|\.markdown-editor-preview--auto-height[\s\S]*?overflow:\s*visible;/,
-      );
+    it("SCSS において .markdown-editor-preview--auto-height や :host([auto-height]) が存在しないこと", () => {
+      expect(scssContent).not.toContain(".markdown-editor-preview--auto-height");
+      expect(scssContent).not.toContain(":host([auto-height])");
     });
 
-    it("コンテンツ展開モード時、.markdown-editor-preview__header に対し position: sticky; top: 0; が指定されていること", () => {
-      expect(scssContent).toMatch(/position:\s*sticky;[\s\S]*?top:\s*0;/);
+    it("SCSS において .markdown-editor-preview__auto-height-btn が存在しないこと", () => {
+      expect(scssContent).not.toContain("markdown-editor-preview__auto-height-btn");
     });
 
-    it("ヘッダー上部に角丸（border-top-left-radius / border-top-right-radius）が指定され、視覚的完全性が維持されていること", () => {
-      expect(scssContent).toMatch(/border-top-left-radius:\s*\d+px;/);
-      expect(scssContent).toMatch(/border-top-right-radius:\s*\d+px;/);
+    it("SCSS において .markdown-editor-preview--animating が存在しないこと", () => {
+      expect(scssContent).not.toContain("markdown-editor-preview--animating");
     });
   });
 
@@ -957,8 +838,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様", () => {
-    it("ヘッダー右側エリアにおいて、「サイズ制御ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること", () => {
-      element.allowAutoHeight = true;
+    it("ヘッダー右側エリアにおいて、全表示ボタンが存在せず「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること", () => {
       const htmlStr = flattenTemplate(element.render());
       const autoHeightIdx = htmlStr.indexOf(
         "markdown-editor-preview__auto-height-btn",
@@ -970,10 +850,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
         "markdown-editor-preview__action-menu-btn",
       );
 
-      expect(autoHeightIdx).toBeGreaterThan(-1);
+      expect(autoHeightIdx).toBe(-1);
       expect(modeGroupIdx).toBeGreaterThan(-1);
       expect(actionMenuIdx).toBeGreaterThan(-1);
-      expect(autoHeightIdx).toBeLessThan(modeGroupIdx);
       expect(modeGroupIdx).toBeLessThan(actionMenuIdx);
     });
 

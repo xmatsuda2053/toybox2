@@ -27,17 +27,7 @@
   background-color: transparent;
 }
 
-/* 自動伸長（Auto-grow）モード */
-:host([auto-height]),
-.markdown-preview--auto-height {
-  height: auto;
-  overflow: visible;
 
-  &.markdown-preview {
-    height: auto;
-    overflow-y: visible;
-  }
-}
 
 /* テーマ別 color-scheme 明示指定（OSダークモードによるチェックボックス暗化を防止） */
 :host([data-theme="light"]) .markdown-preview__body.markdown-body,
