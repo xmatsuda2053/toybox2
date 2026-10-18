@@ -17,7 +17,7 @@ import { TaskContact, type ContactsChangeEventDetail } from "./task-contact.js";
  * 2. 一覧表示（1件以上）の描画
  *    - 2-1. contacts に要素がある場合、行（.task-contact__row）が件数分レンダリングされること
  *    - 2-2. 各行に 所属（div）、氏名（name）、連絡先（tel）の入力欄が存在し、値が反映されること
- *    - 2-3. 各行に削除用アイコン（wa-icon.task-contact__btn-remove）が存在し、wa-button による過度な幅占有が排除されていること
+ *    - 2-3. 各行に削除用アイコン（wa-icon.task-contact__btn-remove）が存在し、name="circle-xmark-solid-full" が設定されていること
  *    - 2-4. 一覧時にもフッター領域（.task-contact__footer）が出力されず、無駄な余白が排除されていること
  *    - 2-5. 要素が存在する場合、空状態メッセージ（.task-contact__empty）が存在しないこと
  *    - 2-6. 所属、氏名、連絡先のラベル（.task-contact__label）が存在せず、プレースホルダーのみで明示されていること
@@ -105,10 +105,10 @@ describe("TaskContact Component", () => {
       expect(htmlStr).toContain("090-9876-5432");
     });
 
-    it("2-3. 各行に削除用アイコン（wa-icon.task-contact__btn-remove）が存在し、wa-button による過度な幅占有が排除されていること", () => {
+    it("2-3. 各行に削除用アイコン（wa-icon.task-contact__btn-remove）が存在し、name=\"circle-xmark-solid-full\" が設定されていること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*class="[^"]*task-contact__btn-remove[^"]*"[^>]*name="trash-solid-full"/,
+        /<wa-icon[^>]*class="[^"]*task-contact__btn-remove[^"]*"[^>]*name="circle-xmark-solid-full"/,
       );
       expect(htmlStr).not.toMatch(
         /<wa-button[^>]*class="[^"]*task-contact__btn-remove/,
