@@ -72,7 +72,7 @@ describe("system-log.utils (TDD)", () => {
       });
 
       expect(log).toBe(
-        `### SYSTEM: タスク作成: "新機能設計"\n\n` +
+        `### sys: タスク作成: "新機能設計"\n\n` +
           `- **タスク名**: 新機能設計\n` +
           `- **期日**: 2026-10-31\n` +
           `- **ラベル**: 開発\n` +
@@ -85,7 +85,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatTaskNameChangedLog("旧タスク名", "新タスク名");
 
       expect(log).toBe(
-        `### SYSTEM: タスク名変更: "旧タスク名" → "新タスク名"\n\n` +
+        `### sys: タスク名変更: "旧タスク名" → "新タスク名"\n\n` +
           `- **項目**: タスク名\n` +
           `- **変更前**: 旧タスク名\n` +
           `- **変更後**: 新タスク名`,
@@ -96,7 +96,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatTaskStatusChangedLog(0, 5);
 
       expect(log).toBe(
-        `### SYSTEM: タスクステータス変更: 開始待ち → 対応中\n\n` +
+        `### sys: タスクステータス変更: 開始待ち → 対応中\n\n` +
           `- **項目**: タスクステータス\n` +
           `- **変更前**: 開始待ち (0)\n` +
           `- **変更後**: 対応中 (5)`,
@@ -110,7 +110,7 @@ describe("system-log.utils (TDD)", () => {
       );
 
       expect(log).toBe(
-        `### SYSTEM: タスク期日変更: 2026-10-20 → 2026-10-31\n\n` +
+        `### sys: タスク期日変更: 2026-10-20 → 2026-10-31\n\n` +
           `- **項目**: タスク期日\n` +
           `- **変更前**: 2026-10-20\n` +
           `- **変更後**: 2026-10-31`,
@@ -121,7 +121,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatTaskLabelChangedLog("バックログ", "進行中", 1, 3);
 
       expect(log).toBe(
-        `### SYSTEM: タスクラベル変更: バックログ → 進行中\n\n` +
+        `### sys: タスクラベル変更: バックログ → 進行中\n\n` +
           `- **項目**: ラベル\n` +
           `- **変更前**: バックログ (ID: 1)\n` +
           `- **変更後**: 進行中 (ID: 3)`,
@@ -132,7 +132,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatTaskFiscalYearChangedLog(2025, 2026);
 
       expect(log).toBe(
-        `### SYSTEM: タスク年度変更: 2025年度 → 2026年度\n\n` +
+        `### sys: タスク年度変更: 2025年度 → 2026年度\n\n` +
           `- **項目**: 年度\n` +
           `- **変更前**: 2025年度\n` +
           `- **変更後**: 2026年度`,
@@ -145,7 +145,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatIssueCreatedLog(12, new Date(2026, 9, 25), 0);
 
       expect(log).toBe(
-        `### SYSTEM: Issue #12 作成\n\n` +
+        `### sys: Issue #12 作成\n\n` +
           `- **対象**: Issue #12\n` +
           `- **期日**: 2026-10-25\n` +
           `- **初期ステータス**: 開始待ち (0)`,
@@ -160,7 +160,7 @@ describe("system-log.utils (TDD)", () => {
       ]);
 
       expect(log).toBe(
-        `### SYSTEM: Issue一括作成: 3件 (#12, #13, #14)\n\n` +
+        `### sys: Issue一括作成: 3件 (#12, #13, #14)\n\n` +
           `- **作成件数**: 3件\n` +
           `- **作成されたIssue**:\n` +
           `  - Issue #12: API設計\n` +
@@ -174,7 +174,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatIssueStatusChangedLog(12, "API設計", 0, 9);
 
       expect(log).toBe(
-        `### SYSTEM: Issue #12 ステータス変更: 開始待ち → 完了\n\n` +
+        `### sys: Issue #12 ステータス変更: 開始待ち → 完了\n\n` +
           `- **対象**: Issue #12 ("API設計")\n` +
           `- **項目**: ステータス\n` +
           `- **変更前**: 開始待ち (0)\n` +
@@ -191,7 +191,7 @@ describe("system-log.utils (TDD)", () => {
       );
 
       expect(log).toBe(
-        `### SYSTEM: Issue #12 期日変更: 2026-10-22 → 2026-10-25\n\n` +
+        `### sys: Issue #12 期日変更: 2026-10-22 → 2026-10-25\n\n` +
           `- **対象**: Issue #12 ("API設計")\n` +
           `- **項目**: 期日\n` +
           `- **変更前**: 2026-10-22\n` +
@@ -208,7 +208,7 @@ describe("system-log.utils (TDD)", () => {
       });
 
       expect(log).toBe(
-        `### SYSTEM: Issue #12 削除: "API設計"\n\n` +
+        `### sys: Issue #12 削除: "API設計"\n\n` +
           `- **対象**: Issue #12\n` +
           `- **タイトル**: API設計\n` +
           `- **削除時ステータス**: 対応中 (5)\n` +
@@ -222,7 +222,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatNoteCreatedLog(5);
 
       expect(log).toBe(
-        `### SYSTEM: Note #5 作成\n\n` + `- **対象**: Note #5`,
+        `### sys: Note #5 作成\n\n` + `- **対象**: Note #5`,
       );
     });
 
@@ -230,7 +230,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatNoteDeletedLog(5, "定例ミーティング議事録");
 
       expect(log).toBe(
-        `### SYSTEM: Note #5 削除: "定例ミーティング議事録"\n\n` +
+        `### sys: Note #5 削除: "定例ミーティング議事録"\n\n` +
           `- **対象**: Note #5\n` +
           `- **削除時タイトル**: 定例ミーティング議事録`,
       );
@@ -240,7 +240,7 @@ describe("system-log.utils (TDD)", () => {
       const log = formatNoteDeletedLog(5);
 
       expect(log).toBe(
-        `### SYSTEM: Note #5 削除\n\n` +
+        `### sys: Note #5 削除\n\n` +
           `- **対象**: Note #5\n` +
           `- **削除時タイトル**: (無題のノート)`,
       );
