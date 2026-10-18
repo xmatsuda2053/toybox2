@@ -158,7 +158,7 @@ export class TaskContact extends LitElement {
         <wa-icon
           class="task-contact__btn-remove"
           library="my-icons"
-          name="trash-solid-full"
+          name="circle-xmark-solid-full"
           aria-label="削除"
           role="button"
           tabindex="0"

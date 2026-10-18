@@ -65,6 +65,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("phone-solid-full")).toBe(true);
       expect(hasIcon("terminal-solid-full")).toBe(true);
       expect(hasIcon("trash-solid-full")).toBe(true);
+      expect(hasIcon("circle-xmark-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }
@@ -83,6 +84,10 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const chevronSvg = getIconSvg("chevron-right");
       expect(chevronSvg).toBeDefined();
       expect(chevronSvg).toContain("<svg");
+
+      const circleXmarkSvg = getIconSvg("circle-xmark-solid-full");
+      expect(circleXmarkSvg).toBeDefined();
+      expect(circleXmarkSvg).toContain("<svg");
     });
 
     it("未登録のアイコン名に対して getIconSvg が undefined を返すこと", () => {
