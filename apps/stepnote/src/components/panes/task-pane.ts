@@ -17,13 +17,14 @@ import { getIssuesDueStatus } from "@/utils/task-due.utils.js";
 import "@/components/task/task-summary.js";
 import "@/components/task/task-property.js";
 import "@/components/issues/issues-view.js";
+import "@/components/notes/notes-view.js";
 import styles from "./task-pane.scss?inline";
 
 /**
  * タスクエリア（第4ペイン）コンテナコンポーネント (TaskPane)
  *
  * 画面第4ペインを担当し、タスクの基本ヘッダー（ID、ステータス、IDコピー）および
- * 2つのタブ（Summary, Property）のコンテナを提供する。
+ * 4つのタブ（Summary, Issues, Notes, Property）のコンテナを提供する。
  *
  * @export
  * @class TaskPane
@@ -132,17 +133,22 @@ export class TaskPane extends WithIssuesController(
   public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
     const tabName = e.detail?.name;
     if (
-      tabName === "summary" ||
-      tabName === "issues" ||
-      tabName === "property"
+      tabName !== "summary" &&
+      tabName !== "issues" &&
+      tabName !== "notes" &&
+      tabName !== "property"
     ) {
-      this.activeTab = tabName;
-      if (tabName === "issues") {
-        const issuesView = this.renderRoot?.querySelector("issues-view") as
-          | (HTMLElement & { resetModesToPreview?: () => void })
-          | null;
-        issuesView?.resetModesToPreview?.();
-      }
+      return;
+    }
+
+    this.activeTab = tabName;
+    if (tabName === "issues" || tabName === "notes") {
+      const targetSelector =
+        tabName === "issues" ? "issues-view" : "notes-view";
+      const targetView = this.renderRoot?.querySelector(targetSelector) as
+        | (HTMLElement & { resetModesToPreview?: () => void })
+        | null;
+      targetView?.resetModesToPreview?.();
     }
   };
 
@@ -364,6 +370,7 @@ export class TaskPane extends WithIssuesController(
               name=${issuesDueInfo.icon}
             ></wa-icon>`
           : null}</wa-tab>
+        <wa-tab slot="nav" panel="notes">Notes</wa-tab>
         <wa-tab slot="nav" panel="property">Property</wa-tab>
 
         <wa-tab-panel name="summary" class="task-pane__tab-panel">
@@ -372,6 +379,10 @@ export class TaskPane extends WithIssuesController(
 
         <wa-tab-panel name="issues" class="task-pane__tab-panel">
           <issues-view .theme=${this.theme}></issues-view>
+        </wa-tab-panel>
+
+        <wa-tab-panel name="notes" class="task-pane__tab-panel">
+          <notes-view .theme=${this.theme}></notes-view>
         </wa-tab-panel>
 
         <wa-tab-panel name="property" class="task-pane__tab-panel">
