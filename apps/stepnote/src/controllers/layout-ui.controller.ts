@@ -20,6 +20,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isQuickAccessOpen: true,
     isNavigationAreaOpen: true,
     isNavigationListAreaOpen: true,
+    isJournalAreaOpen: true,
   };
 
   /**
@@ -85,6 +86,20 @@ export class LayoutUIController extends BaseReactiveController<void> {
   };
 
   /**
+   * ジャーナルエリアの開閉・縮小状態を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
+   *
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public toggleJournalArea = (): void => {
+    this._state = {
+      ...this._state,
+      isJournalAreaOpen: !this._state.isJournalAreaOpen,
+    };
+    this.notify();
+  };
+
+  /**
    * QUICK ACCESS の 開閉状態を明示的に設定し、ホストおよび全購読コンポーネントへ再描画を要求する。
    *
    * @param {boolean} isOpen
@@ -128,6 +143,22 @@ export class LayoutUIController extends BaseReactiveController<void> {
     this._state = {
       ...this._state,
       isNavigationListAreaOpen: isOpen,
+    };
+    this.notify();
+  };
+
+  /**
+   * ジャーナルエリア の 開閉・縮小状態を明示的に設定し、ホストおよび全購読コンポーネントへ再描画を要求する。
+   *
+   * @param {boolean} isOpen
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public setJournalAreaOpen = (isOpen: boolean): void => {
+    if (this._state.isJournalAreaOpen === isOpen) return;
+    this._state = {
+      ...this._state,
+      isJournalAreaOpen: isOpen,
     };
     this.notify();
   };

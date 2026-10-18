@@ -57,6 +57,8 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 5-1. Navigation ペインおよび Task List ペインに開閉アニメーション用の共通クラス（pane-collapsible）が付与されていること
  *    - [x] 5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List（task-list）に hidden 属性が付与されること
  *    - [x] 5-3. isNavigationListAreaOpen が true の場合、Navigation ペインおよび Task List ペインに hidden 属性が付与されないこと
+ *    - [ ] 5-4. isJournalAreaOpen が false の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されること
+ *    - [ ] 5-5. isJournalAreaOpen が true の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されないこと
  *
  * 【AppRoot Header Theme Switcher 仕様 (Phase 4)】
  * 6. ヘッダーのテーマ切り替えドロップダウンの配置と状態連動
@@ -249,6 +251,18 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).not.toMatch(/class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/);
       expect(htmlStr).not.toMatch(/class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/);
+    });
+
+    it("5-4. isJournalAreaOpen が false の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されること", () => {
+      (appRoot.layoutUIController as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(false);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(/class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/);
+    });
+
+    it("5-5. isJournalAreaOpen が true の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されないこと", () => {
+      (appRoot.layoutUIController as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(true);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).not.toMatch(/class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/);
     });
   });
 });

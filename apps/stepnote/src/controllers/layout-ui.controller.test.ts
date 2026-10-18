@@ -22,9 +22,10 @@ const createMockHost = () => {
  * 仕様 2:QUICK ACCESS の開閉状態の反転およびホストへの再描画通知が正しく行われること。
  * 仕様 3:ナビゲーションエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
  * 仕様 4:ナビゲーションリストエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
- * 仕様 5:各セッターメソッドで明示的に値を設定した場合、正しく反映されること。
- * 仕様 6:すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。
- * 仕様 7:subscribe で登録されたリスナー関数が状態変更時に呼び出され、解除関数で購読解除できること。
+ * 仕様 5:Journalエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。
+ * 仕様 6:各セッターメソッドで明示的に値を設定した場合、正しく反映されること。
+ * 仕様 7:すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。
+ * 仕様 8:subscribe で登録されたリスナー関数が状態変更時に呼び出され、解除関数で購読解除できること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -35,6 +36,7 @@ describe("layout-ui.controller", () => {
         isQuickAccessOpen: true,
         isNavigationAreaOpen: true,
         isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
       });
     });
   });
@@ -84,6 +86,21 @@ describe("layout-ui.controller", () => {
       expect(controller.state.isNavigationListAreaOpen).toBe(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(2);
     });
+
+    it("Journalエリアの開閉状態の反転およびホストへの再描画通知が正しく行われること。", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // 初期値 true -> false に反転
+      (controller as unknown as { toggleJournalArea: () => void }).toggleJournalArea();
+      expect((controller.state as unknown as { isJournalAreaOpen: boolean }).isJournalAreaOpen).toBe(false);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(1);
+
+      // false -> true に反転
+      (controller as unknown as { toggleJournalArea: () => void }).toggleJournalArea();
+      expect((controller.state as unknown as { isJournalAreaOpen: boolean }).isJournalAreaOpen).toBe(true);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("明示的な値の設定の検証", () => {
@@ -100,7 +117,10 @@ describe("layout-ui.controller", () => {
       controller.setNavigationListAreaOpen(false);
       expect(controller.state.isNavigationListAreaOpen).toBe(false);
 
-      expect(requestUpdateMock).toHaveBeenCalledTimes(3);
+      (controller as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(false);
+      expect((controller.state as unknown as { isJournalAreaOpen: boolean }).isJournalAreaOpen).toBe(false);
+
+      expect(requestUpdateMock).toHaveBeenCalledTimes(4);
     });
 
     it("すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。", () => {
@@ -114,6 +134,9 @@ describe("layout-ui.controller", () => {
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
 
       controller.setNavigationListAreaOpen(true);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(0);
+
+      (controller as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(true);
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
     });
   });

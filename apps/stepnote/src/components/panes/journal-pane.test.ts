@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model.js";
 import type { TaskController } from "@/controllers/task.controller.js";
+import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { JournalPane } from "./journal-pane.js";
 
 /**
@@ -17,6 +18,11 @@ import { JournalPane } from "./journal-pane.js";
  * 2. ペイン基本構造とヘッダー描画（タスク選択時）
  *    - 2-1. ルート要素 .journal-pane がレンダリングされること
  *    - 2-2. ヘッダー部 (.journal-pane__header) が存在し、タイトルとして「JOURNAL」(.journal-pane__title) が表示されること
+ *    - 2-3. ヘッダー部 (.journal-pane__header) 内に右端アクション領域（.journal-pane__actions）、開閉トグルボタン（wa-button[class*='journal-pane__toggle-btn']）、ツールチップ（wa-tooltip）、および chevron-right アイコンがレンダリングされること
+ *    - 2-4. isJournalAreaOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ツールチップが「ジャーナルを閉じる」となること
+ *    - 2-5. isJournalAreaOpen が false（閉・縮小状態）の際、アイコンに is-closed クラスが付与され、ツールチップが「ジャーナルを開く」となること
+ *    - 2-6. isJournalAreaOpen が false（閉・縮小状態）の際、ルート要素に journal-pane--collapsed クラスが付与され、タイトルおよびタブ群がレンダリングされないこと
+ *    - 2-7. トグルボタンのクリック（または handleToggleJournalArea の呼び出し）により layoutUIController.toggleJournalArea が呼び出されること
  *
  * 3. タブ領域 (wa-tab-group) の描画
  *    - 3-1. wa-tab-group 内に Logs タブ (wa-tab) が存在し、Notes タブや Issues タブが存在しないこと
@@ -37,12 +43,25 @@ import { JournalPane } from "./journal-pane.js";
  *    - 4-6. journal-pane.scss において .journal-pane__tab-group に flex: 1, min-height: 0 が設定されていること
  *    - 4-7. journal-pane.scss において .journal-pane__tab-panel がデフォルトで display: none となり、&[active] にのみ display: flex が指定されていること
  *    - 4-8. テンプレートおよびSCSSから旧クラス名（pane-journal*）が完全に排除されていること
+ *    - 4-9. journal-pane.scss において .journal-pane__toggle-btn, .journal-pane__toggle-icon, .journal-pane--collapsed が定義されていること
+ *    - 4-10. journal-pane.scss において .journal-pane__toggle-icon の .is-open に rotate(0deg)、.is-closed に rotate(90deg) が設定されていること
+ *    - 4-11. journal-pane.scss において .journal-pane__actions に幅固定（--stepnote-pane-menu-width）、margin-left: auto、flex-shrink: 0 が指定され、縮小時スタイルに justify-content: center が含まれないこと
  */
 describe("JournalPane Component", () => {
   let element: JournalPane;
   let mockTaskController: {
     state: TaskRecord | undefined;
     hasTask: boolean;
+    subscribe: ReturnType<typeof vi.fn>;
+  };
+  let mockLayoutUIController: {
+    state: {
+      isQuickAccessOpen: boolean;
+      isNavigationAreaOpen: boolean;
+      isNavigationListAreaOpen: boolean;
+      isJournalAreaOpen: boolean;
+    };
+    toggleJournalArea: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
   let unsubscribeMock: ReturnType<typeof vi.fn>;
@@ -67,10 +86,22 @@ describe("JournalPane Component", () => {
       hasTask: true,
       subscribe: vi.fn().mockReturnValue(unsubscribeMock),
     };
+    mockLayoutUIController = {
+      state: {
+        isQuickAccessOpen: true,
+        isNavigationAreaOpen: true,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
+      },
+      toggleJournalArea: vi.fn(),
+      subscribe: vi.fn().mockReturnValue(unsubscribeMock),
+    };
 
     element = new JournalPane();
     (element as unknown as { taskController: unknown }).taskController =
       mockTaskController as unknown as TaskController;
+    (element as unknown as { layoutUIController: unknown }).layoutUIController =
+      mockLayoutUIController as unknown as LayoutUIController;
   });
 
   describe("1. タスク未選択状態（Empty State）の描画", () => {
@@ -109,6 +140,45 @@ describe("JournalPane Component", () => {
       expect(htmlStr).toContain('class="journal-pane__header"');
       expect(htmlStr).toContain('class="journal-pane__title"');
       expect(htmlStr).toContain("JOURNAL");
+    });
+
+    it("2-3. ヘッダー部 (.journal-pane__header) 内に右端アクション領域（.journal-pane__actions）、開閉トグルボタン（wa-button[class*='journal-pane__toggle-btn']）、ツールチップ（wa-tooltip）、および chevron-right アイコンがレンダリングされること", () => {
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("journal-pane__actions");
+      expect(htmlStr).toContain("journal-pane__toggle-btn");
+      expect(htmlStr).toContain("wa-tooltip");
+      expect(htmlStr).toContain("chevron-right");
+    });
+
+    it("2-4. isJournalAreaOpen が true（開状態）の際、アイコンに is-open クラスが付与され、ツールチップが「ジャーナルを閉じる」となること", () => {
+      mockLayoutUIController.state.isJournalAreaOpen = true;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("is-open");
+      expect(htmlStr).toContain("ジャーナルを閉じる");
+    });
+
+    it("2-5. isJournalAreaOpen が false（閉・縮小状態）の際、アイコンに is-closed クラスが付与され、ツールチップが「ジャーナルを開く」となること", () => {
+      mockLayoutUIController.state.isJournalAreaOpen = false;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("is-closed");
+      expect(htmlStr).toContain("ジャーナルを開く");
+    });
+
+    it("2-6. isJournalAreaOpen が false（閉・縮小状態）の際、ルート要素に journal-pane--collapsed クラスが付与され、タイトルおよびタブ群がレンダリングされないこと", () => {
+      mockLayoutUIController.state.isJournalAreaOpen = false;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("journal-pane--collapsed");
+      expect(htmlStr).not.toContain("journal-pane__title");
+      expect(htmlStr).not.toContain("wa-tab-group");
+    });
+
+    it("2-7. トグルボタンのクリック（または handleToggleJournalArea の呼び出し）により layoutUIController.toggleJournalArea が呼び出されること", () => {
+      (element as unknown as { handleToggleJournalArea: () => void }).handleToggleJournalArea();
+      expect(mockLayoutUIController.toggleJournalArea).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -284,6 +354,24 @@ describe("JournalPane Component", () => {
       expect(htmlStr).not.toContain('class="pane-journal"');
 
       expect(scssContent).not.toMatch(/\.pane-journal\b/);
+    });
+
+    it("4-9. journal-pane.scss において .journal-pane__toggle-btn, .journal-pane__toggle-icon, .journal-pane--collapsed が定義されていること", () => {
+      expect(scssContent).toMatch(/\.journal-pane__toggle-btn\b/);
+      expect(scssContent).toMatch(/\.journal-pane__toggle-icon\b/);
+      expect(scssContent).toMatch(/\.journal-pane--collapsed\b/);
+    });
+
+    it("4-10. journal-pane.scss において .journal-pane__toggle-icon の .is-open に rotate(0deg)、.is-closed に rotate(90deg) が設定されていること", () => {
+      expect(scssContent).toMatch(/\.is-open\s*\{[\s\S]*?transform:\s*rotate\(0deg\);/);
+      expect(scssContent).toMatch(/\.is-closed\s*\{[\s\S]*?transform:\s*rotate\(90deg\);/);
+    });
+
+    it("4-11. journal-pane.scss において .journal-pane__actions に幅固定（--stepnote-pane-menu-width）、margin-left: auto、flex-shrink: 0 が指定され、縮小時スタイルに justify-content: center が含まれないこと", () => {
+      expect(scssContent).toMatch(/\.journal-pane__actions\s*\{[\s\S]*?width:\s*var\(--stepnote-pane-menu-width/);
+      expect(scssContent).toMatch(/\.journal-pane__actions\s*\{[\s\S]*?margin-left:\s*auto;/);
+      expect(scssContent).toMatch(/\.journal-pane__actions\s*\{[\s\S]*?flex-shrink:\s*0;/);
+      expect(scssContent).not.toMatch(/\.journal-pane--collapsed[\s\S]*?justify-content:\s*center;/);
     });
   });
 });

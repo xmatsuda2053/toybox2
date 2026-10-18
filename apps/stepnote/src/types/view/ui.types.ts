@@ -8,4 +8,6 @@ export interface LayoutState {
   isNavigationAreaOpen: boolean;
   /** ナビゲーションリストエリア (ナビゲーションエリア + TASK LIST) の左右開閉状態 */
   isNavigationListAreaOpen: boolean;
+  /** ジャーナルエリア (JOURNAL) の左右開閉・縮小状態 */
+  isJournalAreaOpen: boolean;
 }

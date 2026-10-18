@@ -58,14 +58,14 @@ trigger: always_on
       - **Notes タブ**: メモ・備忘録ノートの一覧表示および追加。
       - **Property タブ**: 年度、ラベル、ブックマーク等のメタ属性情報の表示・編集。
   - **5. Journal（第5ペイン: 作業記録・履歴）**:
-    - Task ペインと**横幅を均等（1:1）に分割**して常時表示する（ドロワー開閉等の非表示化は行わない）。
+    - 通常時は Task ペインと**横幅を均等（1:1）に分割**して表示する。ヘッダー右端の開閉トグルボタンにより、画面右端に幅45pxの細いバーへ縮小（折りたたみ）および再展開が可能。縮小時、Taskペインは画面右端まで自動拡大する。
     - 内部は Task 側と縦位置（ベースライン）を揃えるためタブ構造を維持しつつ、**Logs タブ** による画面構成とし、タブ下のコンテンツ領域で垂直スクロール可能とする。
       - **Logs タブ**: 作業実績・行動履歴ログの一覧表示および追加。
 
 ## 3. 開閉状態管理（LayoutUIController）
 
-- Navigation Area および Task List Area の表示・非表示、ならびに Quick Access の上下開閉状態は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
-- Lit コンポーネント側に直接開閉フラグを持たせず、`LayoutState`（`isNavigationAreaOpen`, `isNavigationListAreaOpen`, `isQuickAccessOpen`）を通じて制御すること。
+- Navigation Area および Task List Area の表示・非表示、Quick Access の上下開閉状態、ならびに Journal Area の開閉・縮小状態は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
+- Lit コンポーネント側に直接開閉フラグを持たせず、`LayoutState`（`isNavigationAreaOpen`, `isNavigationListAreaOpen`, `isQuickAccessOpen`, `isJournalAreaOpen`）を通じて制御すること。
 
 ## 4. アーキテクチャ・層の責務分離（Pure Lit ＋ Dexie）
 
