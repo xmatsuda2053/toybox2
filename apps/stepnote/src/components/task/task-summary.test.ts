@@ -55,11 +55,11 @@ import { TaskSummary } from "./task-summary.js";
  *    - 6-2. markdown-editor-preview に .darkTheme='soft' が設定されていること
  *    - 6-3. markdown-editor-preview に .titleText='タスク概要' が設定されていること
  *
- * 7. Markdown エディタのサイズ制御モード連携（親要素フィット / コンテンツ展開）
- *    - 7-1. 初期状態では isContentExpand=false であり、.task-summary--content-expand クラスが付与されないこと（親要素フィットモード）
- *    - 7-2. markdown-editor-preview から height-mode-change イベント（autoHeight: true）を受信した際、isContentExpand が true となり .task-summary--content-expand クラスが付与されること
- *    - 7-3. markdown-editor-preview から height-mode-change イベント（autoHeight: false）を受信した際、isContentExpand が false に戻ること
- *    - 7-4. task-summary.scss において .task-summary--content-expand およびそのフィールドで height: auto が指定され、親要素側でのスクロールが有効化されること
+ * 7. Markdown エディタの常時固定フィット表示（isContentExpandおよびheight-mode-changeの非保持）
+ *    - 7-1. isContentExpand プロパティが定義されていない（undefined）こと
+ *    - 7-2. handleHeightModeChange メソッドが定義されていない（undefined）こと
+ *    - 7-3. レンダリング結果に task-summary--content-expand クラスが付与されないこと
+ *    - 7-4. task-summary.scss に .task-summary--content-expand が存在しないこと
  */
 describe("TaskSummary Component", () => {
   let element: TaskSummary;
@@ -406,50 +406,26 @@ describe("TaskSummary Component", () => {
     });
   });
 
-  describe("7. Markdown エディタのサイズ制御モード連携（親要素フィット / コンテンツ展開）", () => {
-    it("7-1. 初期状態では isContentExpand=false であり、.task-summary--content-expand クラスが付与されないこと（親要素フィットモード）", () => {
+  describe("7. Markdown エディタの常時固定フィット表示（isContentExpandおよびheight-mode-changeの非保持）", () => {
+    it("7-1. isContentExpand プロパティが定義されていない（undefined）こと", () => {
+      expect((element as any).isContentExpand).toBeUndefined();
+    });
+
+    it("7-2. handleHeightModeChange メソッドが定義されていない（undefined）こと", () => {
+      expect((element as any).handleHeightModeChange).toBeUndefined();
+    });
+
+    it("7-3. レンダリング結果に task-summary--content-expand クラスが付与されないこと", () => {
       element.taskController = mockTaskController as unknown as TaskController;
       const result = element.render();
       const htmlStr = flattenTemplate(result);
       expect(htmlStr).not.toContain("task-summary--content-expand");
     });
 
-    it("7-2. markdown-editor-preview から height-mode-change イベント（autoHeight: true）を受信した際、isContentExpand が true となり .task-summary--content-expand クラスが付与されること", () => {
-      element.taskController = mockTaskController as unknown as TaskController;
-      element.handleHeightModeChange(
-        new CustomEvent("height-mode-change", {
-          detail: { autoHeight: true },
-        }),
-      );
-      const result = element.render();
-      const htmlStr = flattenTemplate(result);
-      expect(htmlStr).toContain("task-summary--content-expand");
-      expect(element.isContentExpand).toBe(true);
-    });
-
-    it("7-3. markdown-editor-preview から height-mode-change イベント（autoHeight: false）を受信した際、isContentExpand が false に戻ること", () => {
-      element.taskController = mockTaskController as unknown as TaskController;
-      element.isContentExpand = true;
-      element.handleHeightModeChange(
-        new CustomEvent("height-mode-change", {
-          detail: { autoHeight: false },
-        }),
-      );
-      const result = element.render();
-      const htmlStr = flattenTemplate(result);
-      expect(htmlStr).not.toContain("task-summary--content-expand");
-      expect(element.isContentExpand).toBe(false);
-    });
-
-    it("7-4. task-summary.scss において .task-summary--content-expand およびそのフィールドで height: auto が指定され、親要素側でのスクロールが有効化されること", () => {
+    it("7-4. task-summary.scss に .task-summary--content-expand が存在しないこと", () => {
       const scssPath = path.resolve(__dirname, "task-summary.scss");
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
-        /\.task-summary--content-expand[\s\S]*?height:\s*auto;/,
-      );
-      expect(content).toMatch(
-        /\.task-summary--content-expand[\s\S]*?\.task-summary__field--description[\s\S]*?flex:\s*none;/,
-      );
+      expect(content).not.toContain("task-summary--content-expand");
     });
   });
 });

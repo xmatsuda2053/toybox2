@@ -19,20 +19,7 @@
   @include theme-transition;
 }
 
-.task-summary--content-expand {
-  height: auto;
-  min-height: 100%;
 
-  .task-summary__field--description {
-    flex: none;
-    height: auto;
-  }
-
-  .task-summary__description {
-    flex: none;
-    height: auto;
-  }
-}
 
 .task-summary--empty {
   display: flex;
