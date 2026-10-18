@@ -57,7 +57,7 @@ export function formatTaskCreatedLog(params: {
   const statusLabel = getStatusLabel(params.statusCode);
 
   return (
-    `### SYSTEM: タスク作成: "${params.name}"\n\n` +
+    `### sys: タスク作成: "${params.name}"\n\n` +
     `- **タスク名**: ${params.name}\n` +
     `- **期日**: ${dueDateStr}\n` +
     `- **ラベル**: ${params.labelName}\n` +
@@ -79,7 +79,7 @@ export function formatTaskNameChangedLog(
   after: string,
 ): string {
   return (
-    `### SYSTEM: タスク名変更: "${before}" → "${after}"\n\n` +
+    `### sys: タスク名変更: "${before}" → "${after}"\n\n` +
     `- **項目**: タスク名\n` +
     `- **変更前**: ${before}\n` +
     `- **変更後**: ${after}`
@@ -102,7 +102,7 @@ export function formatTaskStatusChangedLog(
   const afterLabel = getStatusLabel(after);
 
   return (
-    `### SYSTEM: タスクステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
+    `### sys: タスクステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
     `- **項目**: タスクステータス\n` +
     `- **変更前**: ${beforeLabel} (${before})\n` +
     `- **変更後**: ${afterLabel} (${after})`
@@ -125,7 +125,7 @@ export function formatTaskDueDateChangedLog(
   const afterStr = formatDateString(after);
 
   return (
-    `### SYSTEM: タスク期日変更: ${beforeStr} → ${afterStr}\n\n` +
+    `### sys: タスク期日変更: ${beforeStr} → ${afterStr}\n\n` +
     `- **項目**: タスク期日\n` +
     `- **変更前**: ${beforeStr}\n` +
     `- **変更後**: ${afterStr}`
@@ -152,7 +152,7 @@ export function formatTaskLabelChangedLog(
   const afterIdSuffix = afterId !== undefined ? ` (ID: ${afterId})` : "";
 
   return (
-    `### SYSTEM: タスクラベル変更: ${beforeLabel} → ${afterLabel}\n\n` +
+    `### sys: タスクラベル変更: ${beforeLabel} → ${afterLabel}\n\n` +
     `- **項目**: ラベル\n` +
     `- **変更前**: ${beforeLabel}${beforeIdSuffix}\n` +
     `- **変更後**: ${afterLabel}${afterIdSuffix}`
@@ -172,7 +172,7 @@ export function formatTaskFiscalYearChangedLog(
   afterYear: number,
 ): string {
   return (
-    `### SYSTEM: タスク年度変更: ${beforeYear}年度 → ${afterYear}年度\n\n` +
+    `### sys: タスク年度変更: ${beforeYear}年度 → ${afterYear}年度\n\n` +
     `- **項目**: 年度\n` +
     `- **変更前**: ${beforeYear}年度\n` +
     `- **変更後**: ${afterYear}年度`
@@ -197,7 +197,7 @@ export function formatIssueCreatedLog(
   const statusLabel = getStatusLabel(statusCode);
 
   return (
-    `### SYSTEM: Issue #${issueId} 作成\n\n` +
+    `### sys: Issue #${issueId} 作成\n\n` +
     `- **対象**: Issue #${issueId}\n` +
     `- **期日**: ${dueDateStr}\n` +
     `- **初期ステータス**: ${statusLabel} (${statusCode})`
@@ -221,7 +221,7 @@ export function formatIssueBulkCreatedLog(
     .join("\n");
 
   return (
-    `### SYSTEM: Issue一括作成: ${count}件 (${idList})\n\n` +
+    `### sys: Issue一括作成: ${count}件 (${idList})\n\n` +
     `- **作成件数**: ${count}件\n` +
     `- **作成されたIssue**:\n` +
     `${issueLines}`
@@ -249,7 +249,7 @@ export function formatIssueStatusChangedLog(
   const afterLabel = getStatusLabel(after);
 
   return (
-    `### SYSTEM: Issue #${issueId} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
+    `### sys: Issue #${issueId} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
     `- **対象**: Issue #${issueId} ("${title}")\n` +
     `- **項目**: ステータス\n` +
     `- **変更前**: ${beforeLabel} (${before})\n` +
@@ -277,7 +277,7 @@ export function formatIssueDueDateChangedLog(
   const afterStr = formatDateString(after);
 
   return (
-    `### SYSTEM: Issue #${issueId} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
+    `### sys: Issue #${issueId} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
     `- **対象**: Issue #${issueId} ("${title}")\n` +
     `- **項目**: 期日\n` +
     `- **変更前**: ${beforeStr}\n` +
@@ -308,7 +308,7 @@ export function formatIssueDeletedLog(issue: {
   const idDisplay = issue.id !== undefined ? ` #${issue.id}` : "";
 
   return (
-    `### SYSTEM: Issue${idDisplay} 削除: "${issue.title}"\n\n` +
+    `### sys: Issue${idDisplay} 削除: "${issue.title}"\n\n` +
     `- **対象**: Issue${idDisplay}\n` +
     `- **タイトル**: ${issue.title}\n` +
     `- **削除時ステータス**: ${statusLabel} (${issue.statusCode})\n` +
@@ -325,7 +325,7 @@ export function formatIssueDeletedLog(issue: {
  */
 export function formatNoteCreatedLog(noteId: number): string {
   return (
-    `### SYSTEM: Note #${noteId} 作成\n\n` + `- **対象**: Note #${noteId}`
+    `### sys: Note #${noteId} 作成\n\n` + `- **対象**: Note #${noteId}`
   );
 }
 
@@ -342,7 +342,7 @@ export function formatNoteDeletedLog(noteId: number, title?: string): string {
   const headerSuffix = title?.trim() ? `: "${title.trim()}"` : "";
 
   return (
-    `### SYSTEM: Note #${noteId} 削除${headerSuffix}\n\n` +
+    `### sys: Note #${noteId} 削除${headerSuffix}\n\n` +
     `- **対象**: Note #${noteId}\n` +
     `- **削除時タイトル**: ${titleDisplay}`
   );
