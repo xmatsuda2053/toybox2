@@ -255,14 +255,20 @@ export class AppRoot extends LitElement {
    *
    * @private
    * @param {boolean} isOpen ナビゲーションリストエリアが開いているかどうか
+   * @param {boolean} isJournalOpen ジャーナルエリアが開いているかどうか
    * @param {string} resolvedTheme 適用中の解決済みテーマ名
    * @return {HTMLTemplateResult}
    * @memberof AppRoot
    */
   private renderPanes(
     isOpen: boolean,
+    isJournalOpen: boolean,
     resolvedTheme: string,
   ): HTMLTemplateResult {
+    const journalPaneClass = isJournalOpen
+      ? "journal-pane"
+      : "journal-pane journal-pane--collapsed";
+
     return html`
       <div class="panes-container">
         <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
@@ -297,8 +303,11 @@ export class AppRoot extends LitElement {
         </main>
 
         <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-        <aside class="journal-pane">
-          <journal-pane data-theme=${resolvedTheme}></journal-pane>
+        <aside class="${journalPaneClass}">
+          <journal-pane
+            data-theme=${resolvedTheme}
+            .isJournalAreaOpen=${isJournalOpen}
+          ></journal-pane>
         </aside>
       </div>
     `;
@@ -313,6 +322,7 @@ export class AppRoot extends LitElement {
    */
   override render() {
     const isOpen = this.layoutUIController.state.isNavigationListAreaOpen;
+    const isJournalOpen = this.layoutUIController.state.isJournalAreaOpen;
     const resolvedTheme = this.themeController.resolvedTheme;
     const themeClass = resolvedTheme === "dark" ? "wa-dark" : "wa-light";
 
@@ -322,7 +332,7 @@ export class AppRoot extends LitElement {
         ${this.renderHeader()}
 
         <!-- Panes (中央5ペイン領域) -->
-        ${this.renderPanes(isOpen, resolvedTheme)}
+        ${this.renderPanes(isOpen, isJournalOpen, resolvedTheme)}
 
         <!-- Footer (下部固定) -->
         <footer class="app-footer">footer</footer>

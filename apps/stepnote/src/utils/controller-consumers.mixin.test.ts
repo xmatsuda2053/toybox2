@@ -6,12 +6,14 @@ import {
   WithIssuesController,
   WithNotesController,
   WithLogsController,
+  WithLayoutUIController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
+import type { LayoutUIController } from "@/controllers/layout-ui.controller";
 
 /**
  * テスト仕様一覧:
@@ -141,7 +143,26 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
-  describe("7. コントローラー解除・再設定時の動作", () => {
+  describe("7. WithLayoutUIController Mixin", () => {
+    class DummyLayoutUIElement extends WithLayoutUIController(SubscriberElement) {}
+
+    it("7-1. layoutUIController の getter / setter が提供され、初期値は undefined であること", () => {
+      const el = new DummyLayoutUIElement();
+      expect(el.layoutUIController).toBeUndefined();
+    });
+
+    it("7-2. layoutUIController 設定時に subscriber.bind を通じてインスタンスが設定されること", () => {
+      const el = new DummyLayoutUIElement();
+      const mockLayoutUICtrl = {
+        subscribe: vi.fn(),
+      } as unknown as LayoutUIController;
+
+      el.layoutUIController = mockLayoutUICtrl;
+      expect(el.layoutUIController).toBe(mockLayoutUICtrl);
+    });
+  });
+
+  describe("8. コントローラー解除・再設定時の動作", () => {
     class DummyConsumerElement extends WithTaskController(
       WithLabelsController(SubscriberElement),
     ) {}

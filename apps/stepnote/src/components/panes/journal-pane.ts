@@ -1,9 +1,10 @@
-import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import { html, unsafeCSS, nothing, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
 import {
   SubscriberElement,
   WithTaskController,
+  WithLayoutUIController,
 } from "@/utils/controller-consumers.mixin.js";
 import "@/components/logs/logs-view.js";
 import styles from "./journal-pane.scss?inline";
@@ -15,11 +16,19 @@ import styles from "./journal-pane.scss?inline";
  *
  * @export
  * @class JournalPane
- * @extends {WithTaskController(SubscriberElement)}
+ * @extends {WithLayoutUIController(WithTaskController(SubscriberElement))}
  */
 @customElement("journal-pane")
-export class JournalPane extends WithTaskController(SubscriberElement) {
+export class JournalPane extends WithLayoutUIController(
+  WithTaskController(SubscriberElement),
+) {
   public static styles = unsafeCSS(styles);
+
+  /**
+   * ジャーナルエリアの開閉・縮小状態（Props指定優先、未指定時はlayoutUIControllerから取得）
+   */
+  @property({ type: Boolean })
+  public isJournalAreaOpen?: boolean;
 
   /**
    * カラーテーマ ("light" | "dark")
@@ -29,6 +38,16 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
 
   @state()
   public activeTab: string = "logs";
+
+  /**
+   * ジャーナルエリアの開閉状態を解決する。
+   */
+  public get isJournalOpen(): boolean {
+    if (this.isJournalAreaOpen !== undefined) {
+      return this.isJournalAreaOpen;
+    }
+    return this.layoutUIController?.state.isJournalAreaOpen ?? true;
+  }
 
   /**
    * タブ切り替えハンドラー（表示タブの更新および子コンポーネントのプレビューモード初期化）
@@ -42,6 +61,13 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
         | null;
       targetEl?.resetModesToPreview?.();
     }
+  };
+
+  /**
+   * ジャーナルエリアの開閉・縮小状態を切り替える。
+   */
+  public handleToggleJournalArea = (): void => {
+    this.layoutUIController?.toggleJournalArea();
   };
 
   /**
@@ -59,9 +85,34 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
    * ヘッダー部の描画
    */
   private renderHeader(): HTMLTemplateResult {
+    const isOpen = this.isJournalOpen;
+    const toggleTooltip = isOpen ? "ジャーナルを閉じる" : "ジャーナルを開く";
+
     return html`
       <div class="journal-pane__header">
-        <span class="journal-pane__title">JOURNAL</span>
+        ${isOpen
+          ? html`<span class="journal-pane__title">JOURNAL</span>`
+          : nothing}
+        <div class="journal-pane__actions">
+          <wa-tooltip for="journal-pane-toggle-btn" placement="left">
+            ${toggleTooltip}
+          </wa-tooltip>
+          <wa-button
+            id="journal-pane-toggle-btn"
+            class="journal-pane__toggle-btn"
+            variant="neutral"
+            appearance="plain"
+            size="s"
+            @click=${this.handleToggleJournalArea}
+          >
+            <wa-icon
+              library="my-icons"
+              name="chevron-right"
+              class="journal-pane__toggle-icon ${isOpen ? "is-open" : "is-closed"}"
+              label=${toggleTooltip}
+            ></wa-icon>
+          </wa-button>
+        </div>
       </div>
     `;
   }
@@ -97,10 +148,15 @@ export class JournalPane extends WithTaskController(SubscriberElement) {
       return this.renderEmptyState();
     }
 
+    const isOpen = this.isJournalOpen;
+    const rootClass = isOpen
+      ? "journal-pane"
+      : "journal-pane journal-pane--collapsed";
+
     return html`
-      <div class="journal-pane">
+      <div class="${rootClass}">
         ${this.renderHeader()}
-        ${this.renderTabGroup()}
+        ${isOpen ? this.renderTabGroup() : nothing}
       </div>
     `;
   }

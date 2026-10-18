@@ -7,12 +7,14 @@ import {
   issuesContext,
   notesContext,
   logsContext,
+  layoutUIContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
+import type { LayoutUIController } from "@/controllers/layout-ui.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -190,4 +192,36 @@ export function WithLogsController<T extends LitElementConstructor>(Base: T) {
   }
   return LogsConsumerClass;
 }
+
+/**
+ * LayoutUIController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける layoutUIController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithLayoutUIController<T extends LitElementConstructor>(Base: T) {
+  class LayoutUIConsumerClass extends Base {
+    private _layoutUIController?: LayoutUIController;
+
+    /** レイアウト管理コントローラー */
+    public get layoutUIController(): LayoutUIController | undefined {
+      return this._layoutUIController;
+    }
+
+    @consume({ context: layoutUIContext, subscribe: true })
+    @property({ attribute: false })
+    public set layoutUIController(controller: LayoutUIController | undefined) {
+      this._layoutUIController = this.subscriber.bind(
+        "layoutUI",
+        this._layoutUIController,
+        controller,
+      );
+    }
+  }
+  return LayoutUIConsumerClass;
+}
+
 

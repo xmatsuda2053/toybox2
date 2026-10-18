@@ -115,12 +115,23 @@
   @include pane-border-right;
 }
 
-/* 5. Journal (第5ペイン): Task と均等分割 (1:1) */
+/* 5. Journal (第5ペイン): 通常時は Task と均等分割 (1:1)、縮小時は固定 45px */
 .journal-pane {
   flex: 1 1 0%;
   min-width: 0;
-  overflow-y: auto;
+  overflow: hidden;
   @include theme-transition;
+  transition:
+    flex 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    var(--stepnote-transition-theme);
+
+  &.journal-pane--collapsed {
+    flex: 0 0 var(--stepnote-pane-menu-width, 45px);
+    width: var(--stepnote-pane-menu-width, 45px);
+    min-width: var(--stepnote-pane-menu-width, 45px);
+  }
 }
 
 /* 共通コラプシブル（開閉ペイン）スタイル: 個別ペイン定義より後に配置しカスケード優先 */
