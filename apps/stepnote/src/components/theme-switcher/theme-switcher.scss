@@ -3,8 +3,19 @@
 :host {
   display: inline-flex;
   align-items: center;
+  @include theme-transition;
 }
 
-.btn-theme-dropdown {
+.theme-switcher {
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-switcher__btn {
   @include flex-center;
+  @include theme-transition;
+}
+
+.theme-switcher__btn--active {
+  font-weight: var(--wa-font-weight-semibold, 600);
 }
