@@ -78,12 +78,11 @@ import { AppRoot } from "./app-root.js";
  *
  * 【AppRoot 全体検索モーダル連携仕様 (Phase 8)】
  * 8. 全体検索モーダル（GlobalSearchDialog）との連携
- *    - [x] 8-1. ヘッダー右側（header-actions）に全体検索アイコンボタン（header-global-search-btn）がレンダリングされること
+ *    - [ ] 8-1. ヘッダー中央（header-search）に全体検索トリガーボタン（header-global-search-trigger）がレンダリングされ、アイコン・プレースホルダー・Ctrl Kバッジが表示されること
  *    - [x] 8-2. 全体検索モーダル要素（global-search-dialog）がレンダリングされ、初期状態は閉じた状態であること
  *    - [x] 8-3. handleOpenGlobalSearch 実行時に isGlobalSearchOpen が true に更新されること
  *    - [x] 8-4. Ctrl+K キーボードショートカットで isGlobalSearchOpen の開閉がトグルされること
- *    - [ ] 8-5. 全体検索アイコンのツールチップ（wa-tooltip）に trigger="hover" が設定され、ダイアログ閉鎖時の不要なツールチップ表示が抑止されていること
- *    - [ ] 8-6. handleCloseGlobalSearch 実行時に、検索ボタンの blur が呼ばれてフォーカス状態が解除されること
+ *    - [ ] 8-5. handleCloseGlobalSearch 実行時に、検索トリガーボタン（#header-global-search-trigger）の blur が呼ばれてフォーカス状態が解除されること
  */
 
 /**
@@ -339,14 +338,17 @@ describe("AppRoot Controller 状態連携仕様", () => {
   });
 
   describe("8. 全体検索モーダル（GlobalSearchDialog）との連携", () => {
-    it("8-1. ヘッダー右側（header-actions）に全体検索アイコンボタン（header-global-search-btn）がレンダリングされること", () => {
+    it("8-1. ヘッダー中央（header-search）に全体検索トリガーボタン（header-global-search-trigger）がレンダリングされ、アイコン・プレースホルダー・Ctrl Kバッジが表示されること", () => {
       const template = (appRoot as any).renderHeader();
       const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toContain("header-global-search-btn");
+      expect(htmlStr).toContain("header-search");
+      expect(htmlStr).toContain('id="header-global-search-trigger"');
+      expect(htmlStr).toContain("header-search-trigger");
       expect(htmlStr).toContain('name="magnifying-glass-solid-full"');
-      expect(htmlStr).toContain("全体検索 (Ctrl+K)");
+      expect(htmlStr).toContain("全体を検索...");
+      expect(htmlStr).toContain("Ctrl K");
+      expect(htmlStr).not.toContain("header-global-search-btn");
     });
-
 
     it("8-2. 全体検索モーダル要素（global-search-dialog）がレンダリングされ、初期状態は閉じた状態であること", () => {
       const template = appRoot.render();
@@ -380,23 +382,25 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect((appRoot as any).isGlobalSearchOpen).toBe(false);
     });
 
-    it("8-5. 全体検索アイコンのツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、ダイアログ閉鎖時の不要なツールチップ表示が抑止されていること", () => {
-      const template = (appRoot as any).renderHeader();
-      const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="header-global-search-btn"[^>]*trigger="hover"/);
-    });
+    it("8-5. handleCloseGlobalSearch 実行時に、検索トリガーボタン（#header-global-search-trigger）の blur が呼ばれてフォーカス状態が解除されること", () => {
+      const mockTrigger = { blur: vi.fn() };
+      const querySelectorSpy = vi.fn().mockImplementation((selector: string) => {
+        if (selector === "#header-global-search-trigger") {
+          return mockTrigger;
+        }
+        return null;
+      });
 
-    it("8-6. handleCloseGlobalSearch 実行時に、検索ボタンの blur が呼ばれてフォーカス状態が解除されること", () => {
-      const mockBtn = { blur: vi.fn() };
       Object.defineProperty(appRoot, "renderRoot", {
         value: {
-          querySelector: vi.fn().mockReturnValue(mockBtn),
+          querySelector: querySelectorSpy,
         },
         configurable: true,
       });
 
       (appRoot as any).handleCloseGlobalSearch();
-      expect(mockBtn.blur).toHaveBeenCalled();
+      expect(querySelectorSpy).toHaveBeenCalledWith("#header-global-search-trigger");
+      expect(mockTrigger.blur).toHaveBeenCalled();
     });
   });
 });

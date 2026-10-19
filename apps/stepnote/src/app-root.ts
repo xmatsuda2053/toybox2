@@ -218,16 +218,16 @@ export class AppRoot extends LitElement {
 
   public handleCloseGlobalSearch = (): void => {
     this.isGlobalSearchOpen = false;
-    const searchBtn = this.renderRoot?.querySelector<HTMLElement>(
-      "#header-global-search-btn",
+    const searchTrigger = this.renderRoot?.querySelector<HTMLElement>(
+      "#header-global-search-trigger",
     );
-    searchBtn?.blur();
+    searchTrigger?.blur();
     if (typeof window !== "undefined") {
       window.requestAnimationFrame(() => {
-        const targetBtn = this.renderRoot?.querySelector<HTMLElement>(
-          "#header-global-search-btn",
+        const targetTrigger = this.renderRoot?.querySelector<HTMLElement>(
+          "#header-global-search-trigger",
         );
-        targetBtn?.blur();
+        targetTrigger?.blur();
       });
     }
   };
@@ -295,29 +295,30 @@ export class AppRoot extends LitElement {
           <wa-icon library="my-icons" name="cubes-stacked-solid-full"></wa-icon>
           StepNote
         </div>
-        <div class="header-actions">
-          <wa-tooltip for="header-global-search-btn" placement="bottom" trigger="hover">
-            全体検索 (Ctrl+K)
-          </wa-tooltip>
-          <wa-button
-            id="header-global-search-btn"
-            class="header-global-search-btn"
-            variant="neutral"
-            appearance="plain"
-            size="s"
+        <div class="header-search">
+          <button
+            type="button"
+            id="header-global-search-trigger"
+            class="header-search-trigger"
+            aria-label="全体検索 (Ctrl+K)"
             @click=${this.handleOpenGlobalSearch}
           >
-            <wa-icon
-              library="my-icons"
-              name="magnifying-glass-solid-full"
-              label="全体検索 (Ctrl+K)"
-            ></wa-icon>
-          </wa-button>
+            <div class="header-search-trigger__lead">
+              <wa-icon
+                library="my-icons"
+                name="magnifying-glass-solid-full"
+                class="header-search-trigger__icon"
+              ></wa-icon>
+              <span class="header-search-trigger__placeholder">全体を検索...</span>
+            </div>
+            <kbd class="header-search-trigger__shortcut">Ctrl K</kbd>
+          </button>
+        </div>
+        <div class="header-actions">
           <theme-switcher></theme-switcher>
         </div>
       </header>
     `;
-
   }
 
   /**

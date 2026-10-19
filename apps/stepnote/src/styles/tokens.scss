@@ -26,7 +26,7 @@
   --wa-border-style: solid;
 
   /* StepNote アプリケーション固有レイアウトトークン */
-  --stepnote-header-height: 30px;
+  --stepnote-header-height: 48px;
   --stepnote-footer-height: 30px;
   --stepnote-pane-menu-width: 45px;
   --stepnote-pane-navigation-width: 220px;
@@ -108,6 +108,11 @@
   --stepnote-markdown-blockquote-border: var(--wa-color-surface-border);
   --stepnote-markdown-blockquote-text: var(--wa-color-text-quiet);
   --stepnote-markdown-checkbox-accent: var(--wa-color-brand-60, #0969da);
+
+  /* 全体検索トリガーバー用デザイントークン（Light モード: 画面背景と統一） */
+  --stepnote-header-search-bg: var(--wa-color-surface-default);
+  --stepnote-header-search-border: var(--wa-color-surface-border);
+  --stepnote-header-search-border-hover: #8c959f;
 }
 
 /* --------------------------------------------------------------------------
@@ -197,6 +202,11 @@
   --stepnote-markdown-blockquote-border: var(--stepnote-dialog-border);
   --stepnote-markdown-blockquote-text: var(--wa-color-text-quiet);
   --stepnote-markdown-checkbox-accent: var(--wa-color-brand-70, #218bff);
+
+  /* 全体検索トリガーバー用デザイントークン（Dark モード: 画面背景と統一） */
+  --stepnote-header-search-bg: var(--wa-color-surface-default);
+  --stepnote-header-search-border: var(--wa-color-surface-border);
+  --stepnote-header-search-border-hover: #60677a;
 }
 
 /* --------------------------------------------------------------------------
