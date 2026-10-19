@@ -76,9 +76,9 @@ export class JournalPane extends WithScratchController(
   };
 
   /**
-   * Logs パネル未選択時の空状態テンプレート描画
+   * 空状態テンプレートの描画
    */
-  private renderEmptyLogs(): HTMLTemplateResult {
+  private renderEmptyState(): HTMLTemplateResult {
     return html`
       <div class="journal-pane__empty">
         <span>タスクが選択されていません</span>
@@ -126,17 +126,12 @@ export class JournalPane extends WithScratchController(
    * Logs パネルの描画
    */
   private renderLogsPanel(): HTMLTemplateResult {
-    const task = this.taskController?.state;
     return html`
       <wa-tab-panel name="logs" class="journal-pane__tab-panel">
-        ${task
-          ? html`
-              <logs-view
-                .theme=${this.theme}
-                data-theme=${this.theme}
-              ></logs-view>
-            `
-          : this.renderEmptyLogs()}
+        <logs-view
+          .theme=${this.theme}
+          data-theme=${this.theme}
+        ></logs-view>
       </wa-tab-panel>
     `;
   }
@@ -180,6 +175,11 @@ export class JournalPane extends WithScratchController(
    * メインレンダリング
    */
   public render(): HTMLTemplateResult {
+    const task = this.taskController?.state;
+    if (!task) {
+      return this.renderEmptyState();
+    }
+
     const isOpen = this.isJournalOpen;
     const rootClass = isOpen
       ? "journal-pane"
