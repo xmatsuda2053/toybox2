@@ -11,9 +11,9 @@ import { JournalPane } from "./journal-pane.js";
  * 【JournalPane 仕様 (作業記録・履歴 第5ペインコンテナ)】
  *
  * 1. タスク未選択状態（Empty State）の描画
- *    - 1-1. taskController.state が未定義かつ activeTab が 'logs' の場合、Logs パネル内に空状態（.journal-pane__empty）および案内メッセージが表示されること
- *    - 1-2. taskController.state が未定義であっても、ヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされ、Scratch タブへの切り替えが可能であること
- *    - 1-3. taskController.state が未定義であっても、activeTab が 'scratch' の場合は Scratch パネル（notes-view）がレンダリングされること
+ *    - 1-1. taskController.state が未定義の場合、空状態要素（.journal-pane__empty）および案内メッセージ「タスクが選択されていません」が表示されること
+ *    - 1-2. taskController.state が未定義の場合、タブ群（wa-tab-group）およびヘッダー（.journal-pane__header）がレンダリングされないこと
+ *    - 1-3. taskController.state が未定義の場合、子ビューコンポーネント（logs-view, notes-view）がレンダリングされないこと
  *
  * 2. ペイン基本構造とヘッダー描画（タスク選択時）
  *    - 2-1. ルート要素 .journal-pane がレンダリングされること
@@ -110,24 +110,22 @@ describe("JournalPane Component", () => {
       mockTaskController.hasTask = false;
     });
 
-    it("1-1. taskController.state が未定義かつ activeTab が 'logs' の場合、Logs パネル内に空状態（.journal-pane__empty）が表示されること", () => {
-      element.activeTab = "logs";
+    it("1-1. taskController.state が未定義の場合、空状態要素（.journal-pane__empty）および案内メッセージ「タスクが選択されていません」が表示されること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("journal-pane__empty");
       expect(htmlStr).toContain("タスクが選択されていません");
     });
 
-    it("1-2. taskController.state が未定義であっても、ヘッダー（.journal-pane__header）およびタブ群（wa-tab-group）がレンダリングされること", () => {
+    it("1-2. taskController.state が未定義の場合、タブ群（wa-tab-group）およびヘッダー（.journal-pane__header）がレンダリングされないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("journal-pane__header");
-      expect(htmlStr).toContain("wa-tab-group");
+      expect(htmlStr).not.toContain("wa-tab-group");
+      expect(htmlStr).not.toContain("journal-pane__header");
     });
 
-    it("1-3. taskController.state が未定義であっても、activeTab が 'scratch' の場合は Scratch パネル（notes-view）がレンダリングされること", () => {
-      element.activeTab = "scratch";
+    it("1-3. taskController.state が未定義の場合、子ビューコンポーネント（logs-view, notes-view）がレンダリングされないこと", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("<notes-view");
-      expect(htmlStr).toContain('panel="scratch"');
+      expect(htmlStr).not.toContain("<logs-view");
+      expect(htmlStr).not.toContain("<notes-view");
     });
   });
 
