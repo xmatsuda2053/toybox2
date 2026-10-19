@@ -31,7 +31,7 @@ trigger: always_on
 画面全体は上下の **「Header」「Footer」** と、中央の **5ペイン（Panes Container）** で構成する。
 
 - **Header（上部バー）**:
-  - `height` は固定サイズ（30px）とし、画面上部に常時固定表示する。
+  - `height` は固定サイズ（48px）とし、画面上部に常時固定表示する。
 - **Footer（下部バー）**:
   - `height` は固定サイズ（30px）とし、画面下部に常時固定表示する。
 - **Panes Container（中央・5ペイン領域）**:
