@@ -27,9 +27,9 @@ import {
 
 describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
   describe("1. 定数・コンポーネント一覧仕様", () => {
-    it("WEB_AWESOME_COMPONENTS に 19 種類の Web Awesome コンポーネント名が定義されていること", () => {
+    it("WEB_AWESOME_COMPONENTS に 20 種類の Web Awesome コンポーネント名が定義されていること", () => {
       expect(WEB_AWESOME_COMPONENTS).toBeDefined();
-      expect(WEB_AWESOME_COMPONENTS.length).toBe(19);
+      expect(WEB_AWESOME_COMPONENTS.length).toBe(20);
     });
 
     it("定義されたすべてのコンポーネント名が小文字の英数字およびハイフンで構成されていること", () => {
@@ -42,6 +42,7 @@ describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
       const required = [
         "badge",
         "button",
+        "button-group",
         "dialog",
         "divider",
         "dropdown",

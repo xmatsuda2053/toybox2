@@ -10,9 +10,43 @@ import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
 import themeSwitcherStyles from "./theme-switcher.scss?inline";
 
 /**
- * テーマ切り替えドロップダウンコンポーネント (ThemeSwitcher)
+ * テーマオプション定義
+ */
+interface ThemeOption {
+  readonly value: ThemeMode;
+  readonly id: string;
+  readonly label: string;
+  readonly icon: string;
+}
+
+/**
+ * テーマ選択肢一覧（Light -> Dark -> System）
+ */
+const THEME_OPTIONS: readonly ThemeOption[] = [
+  {
+    value: "light",
+    id: "btn-theme-light",
+    label: "ライト",
+    icon: "sun-solid-full",
+  },
+  {
+    value: "dark",
+    id: "btn-theme-dark",
+    label: "ダーク",
+    icon: "moon-solid-full",
+  },
+  {
+    value: "system",
+    id: "btn-theme-system",
+    label: "システム",
+    icon: "display-solid-full",
+  },
+] as const;
+
+/**
+ * テーマ切り替えセグメントボタングループコンポーネント (ThemeSwitcher)
  *
- * ヘッダー等に配置され、System / Light / Dark の 3 値切り替えドロップダウンを提供する。
+ * ヘッダー等に配置され、Light / Dark / System の 3 値切り替えボタングループを提供する。
  *
  * @export
  * @class ThemeSwitcher
@@ -48,103 +82,72 @@ export class ThemeSwitcher extends LitElement {
   }
 
   /**
-   * ドロップダウンでテーマが選択されたときのハンドラー
+   * ボタンクリックでテーマが変更されたときのハンドラー
    */
-  public handleThemeSelect = (
-    event: CustomEvent<{ item: { value: string } }>,
-  ): void => {
-    const value = event.detail.item.value as ThemeMode;
-    this.themeController?.setTheme(value);
+  public handleThemeChange = (theme: ThemeMode): void => {
+    this.themeController?.setTheme(theme);
     this.requestUpdate();
   };
 
   /**
-   * 現在選択中のテーマに応じたアイコン名を取得する。
-   */
-  public get currentThemeIcon(): string {
-    const theme = this.themeController?.theme ?? "system";
-    switch (theme) {
-      case "light":
-        return "sun-solid-full";
-      case "dark":
-        return "moon-solid-full";
-      case "system":
-      default:
-        return "display-solid-full";
-    }
-  }
-
-  /**
-   * 現在選択中のテーマに応じたアクセシビリティラベルを取得する。
-   */
-  public get currentThemeLabel(): string {
-    const theme = this.themeController?.theme ?? "system";
-    switch (theme) {
-      case "light":
-        return "テーマ: ライト";
-      case "dark":
-        return "テーマ: ダーク";
-      case "system":
-      default:
-        return "テーマ: システム";
-    }
-  }
-
-  /**
-   * テーマ選択ドロップダウンの各アイテムを描画する。
+   * 単一のテーマ切り替えボタンを描画する。
    *
    * @private
-   * @param {ThemeMode} value テーマ値
-   * @param {string} label 表示ラベル
-   * @param {string} iconName アイコン名
+   * @param {ThemeOption} option テーマ選択肢
    * @param {ThemeMode} currentTheme 現在選択中のテーマ
    * @return {HTMLTemplateResult}
    * @memberof ThemeSwitcher
    */
-  private renderThemeItem(
-    value: ThemeMode,
-    label: string,
-    iconName: string,
+  private renderThemeButton(
+    option: ThemeOption,
     currentTheme: ThemeMode,
   ): HTMLTemplateResult {
-    const isChecked = currentTheme === value;
+    const isActive = currentTheme === option.value;
+    const appearance = isActive ? "filled" : "plain";
+    const ariaPressed = isActive ? "true" : "false";
+    const className = isActive
+      ? "theme-switcher__btn theme-switcher__btn--active"
+      : "theme-switcher__btn";
+
     return html`
-      <wa-dropdown-item
-        value="${value}"
-        type="checkbox"
-        .checked=${isChecked}
-        ?checked=${isChecked}
+      <wa-button
+        id="${option.id}"
+        class="${className}"
+        variant="neutral"
+        appearance="${appearance}"
+        size="s"
+        aria-pressed="${ariaPressed}"
+        @click=${() => this.handleThemeChange(option.value)}
       >
-        <wa-icon slot="icon" library="my-icons" name=${iconName}></wa-icon>
-        ${label}
-      </wa-dropdown-item>
+        <wa-icon library="my-icons" name="${option.icon}"></wa-icon>
+      </wa-button>
     `;
+  }
+
+  /**
+   * 各ボタンに対応するツールチップ群を描画する。
+   *
+   * @private
+   * @return {HTMLTemplateResult[]}
+   * @memberof ThemeSwitcher
+   */
+  private renderTooltips(): HTMLTemplateResult[] {
+    return THEME_OPTIONS.map(
+      (option) =>
+        html`<wa-tooltip for="${option.id}">${option.label}</wa-tooltip>`,
+    );
   }
 
   override render() {
     const currentTheme = this.themeController?.theme ?? "system";
 
     return html`
-      <wa-dropdown placement="bottom-end" @wa-select=${this.handleThemeSelect}>
-        <wa-button
-          id="btn-theme-dropdown"
-          class="btn-theme-dropdown"
-          slot="trigger"
-          variant="neutral"
-          appearance="plain"
-          size="s"
-        >
-          <wa-icon
-            library="my-icons"
-            name=${this.currentThemeIcon}
-            label=${this.currentThemeLabel}
-          ></wa-icon>
-        </wa-button>
-        ${this.renderThemeItem("light", "ライト", "sun-solid-full", currentTheme)}
-        ${this.renderThemeItem("dark", "ダーク", "moon-solid-full", currentTheme)}
-        <wa-divider></wa-divider>
-        ${this.renderThemeItem("system", "システム", "display-solid-full", currentTheme)}
-      </wa-dropdown>
+      <wa-button-group label="テーマ切り替え" class="theme-switcher">
+        ${THEME_OPTIONS.map((option) =>
+          this.renderThemeButton(option, currentTheme),
+        )}
+      </wa-button-group>
+      ${this.renderTooltips()}
     `;
   }
 }

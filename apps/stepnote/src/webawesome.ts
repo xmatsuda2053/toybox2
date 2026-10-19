@@ -8,6 +8,7 @@
 // Web Awesome コンポーネント群の一括登録（副作用インポート）
 import "@awesome.me/webawesome/dist/components/badge/badge.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
+import "@awesome.me/webawesome/dist/components/button-group/button-group.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
 import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
@@ -32,6 +33,7 @@ import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 export const WEB_AWESOME_COMPONENTS = [
   "badge",
   "button",
+  "button-group",
   "dialog",
   "divider",
   "dropdown",
