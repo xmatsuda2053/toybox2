@@ -114,6 +114,7 @@ const createMockHost = () => {
  *    - [x] 4-5. ラベルが選択されている場合、selectedLabelId は選択中のラベルIDを返すこと
  *    - [x] 4-6. ラベルが選択されている場合、hasSelectedLabels は true を返すこと
  *    - [x] 4-7. toggleLabel や clearAllSelected で選択状態が変わった際、ゲッターの戻り値も排他的に連動すること
+ *    - [x] 4-8. ラベルが0件の場合は hasLabels が false を返し、1件以上の場合は true を返すこと
  *
  * 5. 状態購読（subscribe）の検証
  *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
@@ -323,6 +324,18 @@ describe("LabelsController (TDD)", () => {
         expect(controller.selectedLabelIds).toEqual([]);
         expect(controller.selectedLabelId).toBeUndefined();
         expect(controller.hasSelectedLabels).toBe(false);
+      });
+
+      it("4-8. ラベルが0件の場合は hasLabels が false を返し、1件以上の場合は true を返すこと", async () => {
+        const emptyRepo = new FakeLabelsRepository([]);
+        const emptyController = new LabelsController(
+          mockHost.host,
+          emptyRepo as any,
+        );
+        await emptyController.initialized;
+        expect(emptyController.hasLabels).toBe(false);
+
+        expect(controller.hasLabels).toBe(true);
       });
     });
   });

@@ -216,6 +216,23 @@ export class TaskList extends WithIssuesController(
   public isCreateDialogOpen: boolean = false;
 
   /**
+   * 登録済みのラベルが存在するか判定する
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof TaskList
+   */
+  public get hasLabels(): boolean {
+    if (!this.labelsController) {
+      return false;
+    }
+    return (
+      this.labelsController.hasLabels ??
+      ((this.labelsController.state?.length ?? 0) > 0)
+    );
+  }
+
+  /**
    * ラベルが選択されているか判定する
    *
    * @readonly
@@ -230,7 +247,7 @@ export class TaskList extends WithIssuesController(
    * 新規タスク作成ダイアログを開く
    */
   public handleOpenCreateDialog = (): void => {
-    if (!this.hasSelectedLabel) {
+    if (!this.hasLabels) {
       return;
     }
     this.isCreateDialogOpen = true;
@@ -352,9 +369,9 @@ export class TaskList extends WithIssuesController(
    */
   private renderHeader(): HTMLTemplateResult {
     const currentYear = this.currentFiscalYear;
-    const isAddDisabled = !this.hasSelectedLabel;
+    const isAddDisabled = !this.hasLabels;
     const addTooltip = isAddDisabled
-      ? "ラベルを選択してください"
+      ? "ラベルを登録してください"
       : "新規タスクを追加";
 
     return html`
