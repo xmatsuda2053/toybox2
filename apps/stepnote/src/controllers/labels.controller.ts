@@ -142,6 +142,17 @@ export class LabelsController extends BaseDataController<
   }
 
   /**
+   * 登録済みのラベルが1件以上存在するか判定する
+   *
+   * @returns {boolean}
+   * @readonly
+   * @memberof LabelsController
+   */
+  public get hasLabels(): boolean {
+    return this._state.length > 0;
+  }
+
+  /**
    * 選択中のラベルが存在するか判定する
    *
    * @returns {boolean}
