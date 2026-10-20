@@ -20,8 +20,13 @@
   width: 100%;
 }
 
-.app-menu__toggle-btn {
+.app-menu__toggle-btn,
+.app-menu__zen-btn {
   @include flex-center;
+}
+
+.app-menu__zen-icon {
+  display: inline-block;
 }
 
 .app-menu__toggle-icon {
