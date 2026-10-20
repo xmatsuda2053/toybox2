@@ -10,6 +10,8 @@ export interface LayoutState {
   isNavigationListAreaOpen: boolean;
   /** ジャーナルエリア (JOURNAL) の左右開閉・縮小状態 */
   isJournalAreaOpen: boolean;
+  /** 集中モード (Zen Mode) の有効・無効状態 */
+  isZenMode: boolean;
 }
 
 /**

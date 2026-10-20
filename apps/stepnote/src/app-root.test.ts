@@ -55,6 +55,8 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 4-1. panes-container 内に app-menu コンポーネントがレンダリングされること
  *    - [x] 4-2. isNavigationListAreaOpen の状態（開状態: true）が app-menu のプロパティへ反映されること
  *    - [x] 4-3. isNavigationListAreaOpen の状態（閉状態: false）が app-menu のプロパティへ反映されること
+ *    - [x] 4-4. isZenMode の状態（通常時: false）が app-menu のプロパティへ反映されること
+ *    - [x] 4-5. isZenMode の状態（集中モード時: true）が app-menu のプロパティへ反映されること
  *
  * 5. パネル非表示レイアウト連動とコラプシブルクラス付与
  *    - [x] 5-1. Navigation ペインおよび Task List ペインに開閉アニメーション用の共通クラス（pane-collapsible）が付与されていること
@@ -247,6 +249,18 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(false);
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toContain(".isNavigationListAreaOpen=false");
+    });
+
+    it("4-4. isZenMode の状態（通常時: false）が app-menu のプロパティへ反映されること", () => {
+      expect(appRoot.layoutUIController.state.isZenMode).toBe(false);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain(".isZenMode=false");
+    });
+
+    it("4-5. isZenMode の状態（集中モード時: true）が app-menu のプロパティへ反映されること", () => {
+      appRoot.layoutUIController.setZenMode(true);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain(".isZenMode=true");
     });
   });
 

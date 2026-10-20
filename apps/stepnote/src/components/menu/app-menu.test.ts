@@ -22,16 +22,27 @@ import { AppMenu } from "./app-menu.js";
  * 4. 簡易BEM設計とクラス付与
  *    - [ ] 4-1. 各要素に簡易BEMクラス（app-menu__*）が付与されていること
  *    - [ ] 4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること
+ *
+ * 5. 集中モード切替ボタンのレンダリングとアクセシビリティ
+ *    - [ ] 5-1. app-menu__primary 内に集中モード切替ボタン（wa-button#app-menu-zen-btn）、ツールチップ（wa-tooltip）、アイコン（wa-icon）がレンダリングされること
+ *    - [ ] 5-2. isZenMode が false（通常表示）の際、ツールチップ文言が「集中モードを有効化（左右ペインを折りたたむ）」であり、アイコン名が expand-solid-full であること
+ *    - [ ] 5-3. isZenMode が true（集中モード）の際、ツールチップ文言が「集中モードを解除（元のレイアウトに復帰）」であり、アイコン名が compress-solid-full であること
+ *
+ * 6. 集中モード切替ボタンクリックによる LayoutUIController 連動
+ *    - [ ] 6-1. handleToggleZenMode の呼び出しにより layoutUIController.toggleZenMode が実行されること
  */
 
 describe("AppMenu Component", () => {
   let appMenu: AppMenu;
-  let mockLayoutUIController: Partial<LayoutUIController>;
+  let mockLayoutUIController: Partial<LayoutUIController> & {
+    toggleZenMode?: () => void;
+  };
 
   beforeEach(() => {
     appMenu = new AppMenu();
     mockLayoutUIController = {
       toggleNavigationListArea: vi.fn(),
+      toggleZenMode: vi.fn(),
     };
     appMenu.layoutUIController = mockLayoutUIController as LayoutUIController;
   });
@@ -86,6 +97,8 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toContain("app-menu__secondary");
       expect(htmlStr).toContain("app-menu__toggle-btn");
       expect(htmlStr).toContain("app-menu__toggle-icon");
+      expect(htmlStr).toContain("app-menu__zen-btn");
+      expect(htmlStr).toContain("app-menu__zen-icon");
     });
 
     it("4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること", () => {
@@ -105,6 +118,42 @@ describe("AppMenu Component", () => {
       expect(scssContent).not.toContain("menu-secondary");
       expect(scssContent).not.toContain("btn-toggle-sidebar");
       expect(scssContent).not.toContain("icon-toggle-sidebar");
+    });
+  });
+
+  describe("5. 集中モード切替ボタンのレンダリングとアクセシビリティ", () => {
+    it("5-1. app-menu__primary 内に集中モード切替ボタン（wa-button#app-menu-zen-btn）、ツールチップ（wa-tooltip）、アイコン（wa-icon）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("app-menu-zen-btn");
+      expect(htmlStr).toContain("app-menu__zen-btn");
+      expect(htmlStr).toContain("app-menu__zen-icon");
+    });
+
+    it("5-2. isZenMode が false（通常表示）の際、ツールチップ文言が「集中モードを有効化（左右ペインを折りたたむ）」であり、アイコン名が expand-solid-full であること", () => {
+      (appMenu as unknown as { isZenMode: boolean }).isZenMode = false;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("集中モードを有効化（左右ペインを折りたたむ）");
+      expect(htmlStr).toContain("expand-solid-full");
+    });
+
+    it("5-3. isZenMode が true（集中モード）の際、ツールチップ文言が「集中モードを解除（元のレイアウトに復帰）」であり、アイコン名が compress-solid-full であること", () => {
+      (appMenu as unknown as { isZenMode: boolean }).isZenMode = true;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("集中モードを解除（元のレイアウトに復帰）");
+      expect(htmlStr).toContain("compress-solid-full");
+    });
+  });
+
+  describe("6. 集中モード切替ボタンクリックによる LayoutUIController 連動", () => {
+    it("6-1. handleToggleZenMode の呼び出しにより layoutUIController.toggleZenMode が実行されること", () => {
+      expect(
+        typeof (appMenu as unknown as { handleToggleZenMode: () => void })
+          .handleToggleZenMode,
+      ).toBe("function");
+      (
+        appMenu as unknown as { handleToggleZenMode: () => void }
+      ).handleToggleZenMode();
+      expect(mockLayoutUIController.toggleZenMode).toHaveBeenCalledTimes(1);
     });
   });
 });

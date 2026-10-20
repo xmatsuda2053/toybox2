@@ -334,6 +334,7 @@ export class AppRoot extends LitElement {
   private renderPanes(
     isOpen: boolean,
     isJournalOpen: boolean,
+    isZenMode: boolean,
     resolvedTheme: string,
   ): HTMLTemplateResult {
     const journalPaneClass = isJournalOpen
@@ -347,6 +348,7 @@ export class AppRoot extends LitElement {
           class="app-menu"
           data-theme=${resolvedTheme}
           .isNavigationListAreaOpen=${isOpen}
+          .isZenMode=${isZenMode}
         ></app-menu>
 
         <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
@@ -394,6 +396,7 @@ export class AppRoot extends LitElement {
   override render() {
     const isOpen = this.layoutUIController.state.isNavigationListAreaOpen;
     const isJournalOpen = this.layoutUIController.state.isJournalAreaOpen;
+    const isZenMode = this.layoutUIController.state.isZenMode;
     const resolvedTheme = this.themeController.resolvedTheme;
     const themeClass = resolvedTheme === "dark" ? "wa-dark" : "wa-light";
 
@@ -403,7 +406,7 @@ export class AppRoot extends LitElement {
         ${this.renderHeader()}
 
         <!-- Panes (中央5ペイン領域) -->
-        ${this.renderPanes(isOpen, isJournalOpen, resolvedTheme)}
+        ${this.renderPanes(isOpen, isJournalOpen, isZenMode, resolvedTheme)}
 
         <!-- Footer (下部固定) -->
         <footer class="app-footer">footer</footer>

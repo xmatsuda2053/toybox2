@@ -21,6 +21,19 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isNavigationAreaOpen: true,
     isNavigationListAreaOpen: true,
     isJournalAreaOpen: true,
+    isZenMode: false,
+  };
+
+  /**
+   * 集中モード突入直前の開閉状態スナップショット
+   *
+   * @private
+   * @type {({ isNavigationListAreaOpen: boolean; isJournalAreaOpen: boolean } | undefined)}
+   * @memberof LayoutUIController
+   */
+  private _previousLayoutState?: {
+    isNavigationListAreaOpen: boolean;
+    isJournalAreaOpen: boolean;
   };
 
   /**
@@ -41,6 +54,34 @@ export class LayoutUIController extends BaseReactiveController<void> {
    */
   constructor(host: ReactiveControllerHost) {
     super(host);
+  }
+
+  /**
+   * ナビゲーションリストまたはジャーナルの開閉変更を適用し、必要に応じて集中モードを解除する。
+   *
+   * @private
+   * @param {{ isNavigationListAreaOpen?: boolean; isJournalAreaOpen?: boolean }} updates
+   * @memberof LayoutUIController
+   */
+  private updatePaneOpenState(updates: {
+    isNavigationListAreaOpen?: boolean;
+    isJournalAreaOpen?: boolean;
+  }): void {
+    const nextNav =
+      updates.isNavigationListAreaOpen ?? this._state.isNavigationListAreaOpen;
+    const nextJournal =
+      updates.isJournalAreaOpen ?? this._state.isJournalAreaOpen;
+    const shouldExitZen = this._state.isZenMode && (nextNav || nextJournal);
+
+    this._state = {
+      ...this._state,
+      ...updates,
+      isZenMode: shouldExitZen ? false : this._state.isZenMode,
+    };
+    if (shouldExitZen) {
+      this._previousLayoutState = undefined;
+    }
+    this.notify();
   }
 
   /**
@@ -78,11 +119,9 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public toggleNavigationListArea = (): void => {
-    this._state = {
-      ...this._state,
+    this.updatePaneOpenState({
       isNavigationListAreaOpen: !this._state.isNavigationListAreaOpen,
-    };
-    this.notify();
+    });
   };
 
   /**
@@ -92,10 +131,52 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public toggleJournalArea = (): void => {
-    this._state = {
-      ...this._state,
+    this.updatePaneOpenState({
       isJournalAreaOpen: !this._state.isJournalAreaOpen,
-    };
+    });
+  };
+
+  /**
+   * 集中モード（Zen Mode）の有効・無効を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
+   *
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public toggleZenMode = (): void => {
+    this.setZenMode(!this._state.isZenMode);
+  };
+
+  /**
+   * 集中モード（Zen Mode）の有効・無効を明示的に設定する。
+   *
+   * @param {boolean} enabled
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public setZenMode = (enabled: boolean): void => {
+    if (this._state.isZenMode === enabled) return;
+
+    if (enabled) {
+      this._previousLayoutState = {
+        isNavigationListAreaOpen: this._state.isNavigationListAreaOpen,
+        isJournalAreaOpen: this._state.isJournalAreaOpen,
+      };
+      this._state = {
+        ...this._state,
+        isZenMode: true,
+        isNavigationListAreaOpen: false,
+        isJournalAreaOpen: false,
+      };
+    } else {
+      const prev = this._previousLayoutState;
+      this._state = {
+        ...this._state,
+        isZenMode: false,
+        isNavigationListAreaOpen: prev?.isNavigationListAreaOpen ?? true,
+        isJournalAreaOpen: prev?.isJournalAreaOpen ?? true,
+      };
+      this._previousLayoutState = undefined;
+    }
     this.notify();
   };
 
@@ -139,12 +220,13 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setNavigationListAreaOpen = (isOpen: boolean): void => {
-    if (this._state.isNavigationListAreaOpen === isOpen) return;
-    this._state = {
-      ...this._state,
-      isNavigationListAreaOpen: isOpen,
-    };
-    this.notify();
+    if (
+      this._state.isNavigationListAreaOpen === isOpen &&
+      (!this._state.isZenMode || !isOpen)
+    ) {
+      return;
+    }
+    this.updatePaneOpenState({ isNavigationListAreaOpen: isOpen });
   };
 
   /**
@@ -155,11 +237,12 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setJournalAreaOpen = (isOpen: boolean): void => {
-    if (this._state.isJournalAreaOpen === isOpen) return;
-    this._state = {
-      ...this._state,
-      isJournalAreaOpen: isOpen,
-    };
-    this.notify();
+    if (
+      this._state.isJournalAreaOpen === isOpen &&
+      (!this._state.isZenMode || !isOpen)
+    ) {
+      return;
+    }
+    this.updatePaneOpenState({ isJournalAreaOpen: isOpen });
   };
 }
