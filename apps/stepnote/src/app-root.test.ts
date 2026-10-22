@@ -92,7 +92,7 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 9-2. handleOpenTaskCreate 実行時、ラベルが1件以上存在すれば isTaskCreateDialogOpen が true に更新されること
  *    - [ ] 9-3. handleOpenTaskCreate 実行時、ラベルが0件の場合は isTaskCreateDialogOpen が false のままであること
  *    - [ ] 9-4. handleCloseTaskCreate 実行時に isTaskCreateDialogOpen が false に更新されること
- *    - [ ] 9-5. Ctrl+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）
+ *    - [ ] 9-5. Alt+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）
  *    - [ ] 9-6. handleTaskCreated 実行時に isTaskCreateDialogOpen が false となり、taskListController.refresh および selectTask が実行されること
  *    - [ ] 9-7. request-task-create イベント受信時に handleOpenTaskCreate が呼ばれること
  */
@@ -455,29 +455,49 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
     });
 
-    it("9-5. Ctrl+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）", () => {
+    it("9-5. Alt+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制され、Ctrl+Nや単一nでは反応しないこと）", () => {
       vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
       (appRoot as any).isTaskCreateDialogOpen = false;
 
-      const event = {
+      // Alt+N でダイアログが開くこと
+      const altNEvent = {
+        key: "n",
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(altNEvent);
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(true);
+      expect(altNEvent.preventDefault).toHaveBeenCalled();
+
+      // 旧ショートカット Ctrl+N では開かないこと
+      (appRoot as any).isTaskCreateDialogOpen = false;
+      const ctrlNEvent = {
         key: "n",
         ctrlKey: true,
         preventDefault: vi.fn(),
       } as unknown as KeyboardEvent;
+      (appRoot as any).handleGlobalKeyDown(ctrlNEvent);
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
 
-      (appRoot as any).handleGlobalKeyDown(event);
-      expect((appRoot as any).isTaskCreateDialogOpen).toBe(true);
-      expect(event.preventDefault).toHaveBeenCalled();
+      // 修飾キーなしの単一 n では開かないこと
+      (appRoot as any).isTaskCreateDialogOpen = false;
+      const singleNEvent = {
+        key: "n",
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      (appRoot as any).handleGlobalKeyDown(singleNEvent);
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
 
-      // ラベルが0件の場合
+      // ラベルが0件の場合は Alt+N でも開かないこと
       vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(false);
       (appRoot as any).isTaskCreateDialogOpen = false;
-      const event2 = {
+      const altNEvent2 = {
         key: "n",
-        ctrlKey: true,
+        altKey: true,
         preventDefault: vi.fn(),
       } as unknown as KeyboardEvent;
-      (appRoot as any).handleGlobalKeyDown(event2);
+      (appRoot as any).handleGlobalKeyDown(altNEvent2);
       expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
     });
 
