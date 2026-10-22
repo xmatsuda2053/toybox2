@@ -268,7 +268,7 @@ export class AppRoot extends LitElement {
       return;
     }
 
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "n") {
       e.preventDefault();
       this.handleOpenTaskCreate();
     }

@@ -137,7 +137,7 @@ export class AppMenu extends WithLayoutUIController(
    */
   private renderTaskCreateButton(hasLabels: boolean) {
     const createTooltip = hasLabels
-      ? "新規タスクを作成"
+      ? "新規タスクを作成 (Alt+N)"
       : "ラベルを登録してください";
 
     return html`

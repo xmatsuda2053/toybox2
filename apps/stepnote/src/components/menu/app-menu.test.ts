@@ -34,7 +34,7 @@ import { AppMenu } from "./app-menu.js";
  * 7. クイック新規タスク作成ボタンのレンダリングとアクセシビリティ
  *    - [ ] 7-1. app-menu__primary 内に新規タスク作成ボタン（wa-button#app-menu-task-create-btn）、ツールチップ、アイコン（plus-solid-full）がレンダリングされること
  *    - [ ] 7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること
- *    - [ ] 7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成」であること
+ *    - [ ] 7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成 (Alt+N)」であること
  *    - [ ] 7-4. hasLabels が false の際、ボタンが無効化（disabled属性あり）され、ツールチップ文言が「ラベルを登録してください」であること
  *
  * 8. クイック新規タスク作成ボタンクリックによるカスタムイベント発行
@@ -188,13 +188,13 @@ describe("AppMenu Component", () => {
       expect(zenIndex).toBeGreaterThan(createIndex);
     });
 
-    it("7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成」であること", () => {
+    it("7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成 (Alt+N)」であること", () => {
       (appMenu as any).labelsController = {
         hasLabels: true,
       };
       const htmlStr = flattenTemplate(appMenu.render());
       expect(htmlStr).toMatch(
-        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?新規タスクを作成[\s\S]*?<\/wa-tooltip>/,
+        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?新規タスクを作成 \(Alt\+N\)[\s\S]*?<\/wa-tooltip>/,
       );
       expect(htmlStr).not.toMatch(
         /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
