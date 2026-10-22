@@ -27,10 +27,11 @@ const createMockHost = () => {
  * 仕様 7:すでに同じ状態がセットされた場合は不要な再描画通知が行われないこと。
  * 仕様 8:subscribe で登録されたリスナー関数が状態変更時に呼び出され、解除関数で購読解除できること。
  * 仕様 9:集中モード（Zen Mode）の初期状態が false であること。
- * 仕様 10:toggleZenMode の実行により集中モードが有効化され（isZenMode: true）、直前の開閉状態が記憶され、左右ペインが一括で閉じられること。
- * 仕様 11:集中モード有効時に再度 toggleZenMode を実行すると集中モードが解除され（isZenMode: false）、突入直前の開閉状態へ復元されること。
+ * 仕様 10:toggleZenMode の実行により集中モードが有効化され（isZenMode: true）、左右ペインが一括で閉じられること。
+ * 仕様 11:集中モード有効時に再度 toggleZenMode を実行すると集中モードが解除され（isZenMode: false）、常に左右両ペイン（サイドパネルおよびJournal）が展開されること。
  * 仕様 12:setZenMode で明示的に集中モードを設定でき、同じ状態の場合は不要な通知が行われないこと。
  * 仕様 13:集中モード有効時に個別トグル操作が行われた場合、集中モードが自動的に解除（isZenMode: false）されること。
+ * 仕様 13-3:集中モード中にサイドパネルを開いた後、再度集中モードをON/OFFした際、Journalが外れず左右両ペインが揃って展開されること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -192,36 +193,26 @@ describe("layout-ui.controller", () => {
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
     });
 
-    it("仕様 11: 集中モード有効時に再度 toggleZenMode を実行すると解除され、突入直前の開閉状態へ復元されること", () => {
+    it("仕様 11: 集中モード解除（OFF）時に、直前の開閉状態にかかわらず常に左右両ペイン（サイドパネルおよびJournal）が展開されること", () => {
       const { host } = createMockHost();
       const controller = new LayoutUIController(host);
 
-      // 初期状態：サイドバー開、ジャーナル閉 のカスタム状態で準備
+      // 事前にジャーナルを閉じた状態にしておく
       controller.setJournalAreaOpen(false);
       expect(controller.state.isNavigationListAreaOpen).toBe(true);
       expect(controller.state.isJournalAreaOpen).toBe(false);
 
-      // 集中モード ON
+      // 集中モード ON（両ペイン閉）
       (controller as unknown as { toggleZenMode: () => void }).toggleZenMode();
-      const zenState = controller.state as unknown as {
-        isZenMode: boolean;
-        isNavigationListAreaOpen: boolean;
-        isJournalAreaOpen: boolean;
-      };
-      expect(zenState.isZenMode).toBe(true);
-      expect(zenState.isNavigationListAreaOpen).toBe(false);
-      expect(zenState.isJournalAreaOpen).toBe(false);
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
 
-      // 集中モード OFF（突入前の状態へ復帰）
+      // 集中モード OFF（両ペインが確実に開状態に展開されること）
       (controller as unknown as { toggleZenMode: () => void }).toggleZenMode();
-      const restoredState = controller.state as unknown as {
-        isZenMode: boolean;
-        isNavigationListAreaOpen: boolean;
-        isJournalAreaOpen: boolean;
-      };
-      expect(restoredState.isZenMode).toBe(false);
-      expect(restoredState.isNavigationListAreaOpen).toBe(true);
-      expect(restoredState.isJournalAreaOpen).toBe(false);
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(false);
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(controller.state.isJournalAreaOpen).toBe(true);
     });
 
     it("仕様 12: setZenMode で明示的に集中モードを設定でき、同じ状態の場合は不要な通知が行われないこと", () => {
@@ -266,6 +257,36 @@ describe("layout-ui.controller", () => {
       controller.setJournalAreaOpen(true);
       expect(controller.state.isJournalAreaOpen).toBe(true);
       expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(false);
+    });
+
+    it("仕様 13-3: 集中モード中にサイドパネルを開いた後、再度集中モードをON/OFFした際、Journalが外れず左右両ペインが揃って展開されること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // 1. 集中モード ON
+      (controller as unknown as { toggleZenMode: () => void }).toggleZenMode();
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      // 2. サイドパネルを開く（個別操作により集中モードは自動解除）
+      controller.toggleNavigationListArea();
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(false);
+
+      // 3. 再度集中モード ON
+      (controller as unknown as { toggleZenMode: () => void }).toggleZenMode();
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      // 4. 集中モード OFF（解除）
+      (controller as unknown as { toggleZenMode: () => void }).toggleZenMode();
+      expect((controller.state as unknown as { isZenMode: boolean }).isZenMode).toBe(false);
+      // Journalが閉じたまま取り残されず、サイドパネル・Journalの双方が開くこと
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(controller.state.isJournalAreaOpen).toBe(true);
     });
   });
 });
