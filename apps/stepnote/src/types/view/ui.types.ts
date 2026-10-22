@@ -12,6 +12,8 @@ export interface LayoutState {
   isJournalAreaOpen: boolean;
   /** 集中モード (Zen Mode) の有効・無効状態 */
   isZenMode: boolean;
+  /** 全画面スクラッチモード (Scratch Mode) の有効・無効状態 */
+  isScratchMode: boolean;
 }
 
 /**

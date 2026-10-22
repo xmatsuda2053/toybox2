@@ -99,6 +99,12 @@
     outline: var(--wa-border-width-s) var(--wa-border-style)
       var(--wa-color-brand-60, #0969da);
   }
+
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
 
 .header-search-trigger__lead {
@@ -222,6 +228,14 @@
     width: var(--stepnote-pane-menu-width, 45px);
     min-width: var(--stepnote-pane-menu-width, 45px);
   }
+}
+
+/* 6. Scratch (全画面Scratchペイン): Menuペイン以外の全幅を占有 */
+.pane-scratch {
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* 共通コラプシブル（開閉ペイン）スタイル: 個別ペイン定義より後に配置しカスケード優先 */
