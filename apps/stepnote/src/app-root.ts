@@ -32,6 +32,7 @@ import "@/components/task-list/task-list.js";
 import "@/components/panes/task-pane.js";
 import "@/components/panes/journal-pane.js";
 import "@/components/search/global-search-dialog.js";
+import "@/components/task-list/task-create-dialog.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -74,8 +75,14 @@ export class AppRoot extends LitElement {
   @state()
   public isGlobalSearchOpen = false;
 
+  @state()
+  public isTaskCreateDialogOpen = false;
+
   constructor() {
     super();
+    this.addEventListener("request-task-create", () => {
+      this.handleOpenTaskCreate();
+    });
 
     // 1. Controller インスタンスの生成と初期化
     const taskRepository = new TaskRepository();
@@ -232,10 +239,38 @@ export class AppRoot extends LitElement {
     }
   };
 
+  public handleOpenTaskCreate = (): void => {
+    if (!this.labelsController.hasLabels) {
+      return;
+    }
+    this.isTaskCreateDialogOpen = true;
+  };
+
+  public handleCloseTaskCreate = (): void => {
+    this.isTaskCreateDialogOpen = false;
+  };
+
+  public handleTaskCreated = async (
+    event?: CustomEvent<{ taskId?: number }>,
+  ): Promise<void> => {
+    this.isTaskCreateDialogOpen = false;
+    await this.taskListController.refresh();
+    if (event?.detail?.taskId !== undefined) {
+      await this.taskListController.selectTask(event.detail.taskId);
+    }
+    this.requestUpdate();
+  };
+
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+      e.preventDefault();
+      this.handleOpenTaskCreate();
     }
   };
 
@@ -262,6 +297,10 @@ export class AppRoot extends LitElement {
         this.taskListController.refresh(),
         this.taskController.refresh(),
       ]);
+    });
+
+    this.labelsController.subscribe(() => {
+      this.requestUpdate();
     });
   }
 
@@ -418,6 +457,15 @@ export class AppRoot extends LitElement {
           @global-search-close=${this.handleCloseGlobalSearch}
           @global-search-select=${this.handleCloseGlobalSearch}
         ></global-search-dialog>
+
+        <!-- 新規タスク作成モーダル -->
+        <task-create-dialog
+          .open=${this.isTaskCreateDialogOpen}
+          .fiscalYear=${getCurrentFiscalYear()}
+          data-theme=${resolvedTheme}
+          @dialog-close=${this.handleCloseTaskCreate}
+          @task-created=${this.handleTaskCreated}
+        ></task-create-dialog>
       </div>
     `;
   }

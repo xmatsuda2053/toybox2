@@ -85,6 +85,16 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 8-3. handleOpenGlobalSearch 実行時に isGlobalSearchOpen が true に更新されること
  *    - [x] 8-4. Ctrl+K キーボードショートカットで isGlobalSearchOpen の開閉がトグルされること
  *    - [ ] 8-5. handleCloseGlobalSearch 実行時に、検索トリガーボタン（#header-global-search-trigger）の blur が呼ばれてフォーカス状態が解除されること
+ *
+ * 【AppRoot 新規タスク作成ダイアログ連携仕様 (Phase 9)】
+ * 9. 新規タスク作成モーダル（TaskCreateDialog）との連携
+ *    - [ ] 9-1. 新規タスク作成ダイアログ要素（task-create-dialog）がレンダリングされ、初期状態は閉じた状態であること
+ *    - [ ] 9-2. handleOpenTaskCreate 実行時、ラベルが1件以上存在すれば isTaskCreateDialogOpen が true に更新されること
+ *    - [ ] 9-3. handleOpenTaskCreate 実行時、ラベルが0件の場合は isTaskCreateDialogOpen が false のままであること
+ *    - [ ] 9-4. handleCloseTaskCreate 実行時に isTaskCreateDialogOpen が false に更新されること
+ *    - [ ] 9-5. Ctrl+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）
+ *    - [ ] 9-6. handleTaskCreated 実行時に isTaskCreateDialogOpen が false となり、taskListController.refresh および selectTask が実行されること
+ *    - [ ] 9-7. request-task-create イベント受信時に handleOpenTaskCreate が呼ばれること
  */
 
 /**
@@ -415,6 +425,90 @@ describe("AppRoot Controller 状態連携仕様", () => {
       (appRoot as any).handleCloseGlobalSearch();
       expect(querySelectorSpy).toHaveBeenCalledWith("#header-global-search-trigger");
       expect(mockTrigger.blur).toHaveBeenCalled();
+    });
+  });
+
+  describe("9. 新規タスク作成モーダル（TaskCreateDialog）との連携", () => {
+    it("9-1. 新規タスク作成ダイアログ要素（task-create-dialog）がレンダリングされ、初期状態は閉じた状態であること", () => {
+      const template = appRoot.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("<task-create-dialog");
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
+    });
+
+    it("9-2. handleOpenTaskCreate 実行時、ラベルが1件以上存在すれば isTaskCreateDialogOpen が true に更新されること", () => {
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
+      (appRoot as any).handleOpenTaskCreate();
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(true);
+    });
+
+    it("9-3. handleOpenTaskCreate 実行時、ラベルが0件の場合は isTaskCreateDialogOpen が false のままであること", () => {
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(false);
+      (appRoot as any).isTaskCreateDialogOpen = false;
+      (appRoot as any).handleOpenTaskCreate();
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
+    });
+
+    it("9-4. handleCloseTaskCreate 実行時に isTaskCreateDialogOpen が false に更新されること", () => {
+      (appRoot as any).isTaskCreateDialogOpen = true;
+      (appRoot as any).handleCloseTaskCreate();
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
+    });
+
+    it("9-5. Ctrl+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）", () => {
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
+      (appRoot as any).isTaskCreateDialogOpen = false;
+
+      const event = {
+        key: "n",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(event);
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(true);
+      expect(event.preventDefault).toHaveBeenCalled();
+
+      // ラベルが0件の場合
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(false);
+      (appRoot as any).isTaskCreateDialogOpen = false;
+      const event2 = {
+        key: "n",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      (appRoot as any).handleGlobalKeyDown(event2);
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
+    });
+
+    it("9-6. handleTaskCreated 実行時に isTaskCreateDialogOpen が false となり、taskListController.refresh および selectTask が実行されること", async () => {
+      (appRoot as any).isTaskCreateDialogOpen = true;
+      const refreshSpy = vi
+        .spyOn(appRoot.taskListController, "refresh")
+        .mockResolvedValue(undefined);
+      const selectTaskSpy = vi
+        .spyOn(appRoot.taskListController, "selectTask")
+        .mockResolvedValue(undefined);
+
+      const customEvent = new CustomEvent("task-created", {
+        detail: { taskId: 42 },
+      });
+      await (appRoot as any).handleTaskCreated(customEvent);
+
+      expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
+      expect(refreshSpy).toHaveBeenCalled();
+      expect(selectTaskSpy).toHaveBeenCalledWith(42);
+    });
+
+    it("9-7. request-task-create イベント受信時に handleOpenTaskCreate が呼ばれること", () => {
+      const openSpy = vi.spyOn(appRoot as any, "handleOpenTaskCreate");
+      appRoot.dispatchEvent(
+        new CustomEvent("request-task-create", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      expect(openSpy).toHaveBeenCalled();
     });
   });
 });
