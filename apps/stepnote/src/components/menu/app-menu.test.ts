@@ -40,6 +40,18 @@ import { AppMenu } from "./app-menu.js";
  * 8. クイック新規タスク作成ボタンクリックによるカスタムイベント発行
  *    - [ ] 8-1. hasLabels が true の際、handleCreateTask の呼び出しによりカスタムイベント request-task-create がディスパッチされること
  *    - [ ] 8-2. hasLabels が false の際、handleCreateTask を実行してもイベントがディスパッチされないこと
+ *
+ * 9. スクラッチモード切替ボタンのレンダリングとアクセシビリティ
+ *    - [ ] 9-1. app-menu__primary 内にスクラッチ切替ボタン（wa-button#app-menu-scratch-btn）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='pen-to-square-solid-full']）がレンダリングされること
+ *    - [ ] 9-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順であること
+ *    - [ ] 9-3. isScratchMode が false の際、ツールチップ文言が「スクラッチモード（アプリ共通メモ）を開く」であること
+ *    - [ ] 9-4. isScratchMode が true の際、ツールチップ文言が「スクラッチモードを終了」であり、ボタンに is-active クラスが付与されること
+ *
+ * 10. スクラッチモード切替ボタンクリックによる LayoutUIController 連動
+ *    - [ ] 10-1. handleToggleScratchMode の呼び出しにより layoutUIController.toggleScratchMode が実行されること
+ *
+ * 11. スクラッチモード有効時における他のボタンの無効化（disabled）
+ *    - [ ] 11-1. isScratchMode が true の際、開閉ボタン（#app-menu-toggle-btn）、新規タスク作成ボタン（#app-menu-task-create-btn）、集中モードボタン（#app-menu-zen-btn）に disabled 属性が付与されること
  */
 
 describe("AppMenu Component", () => {
@@ -236,6 +248,91 @@ describe("AppMenu Component", () => {
       const dispatchSpy = vi.spyOn(appMenu, "dispatchEvent");
       (appMenu as any).handleCreateTask();
       expect(dispatchSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("9. スクラッチモード切替ボタンのレンダリングとアクセシビリティ", () => {
+    it("9-1. app-menu__primary 内にスクラッチ切替ボタン（wa-button#app-menu-scratch-btn）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='pen-to-square-solid-full']）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-scratch-btn"[^>]*class="[^"]*app-menu__scratch-btn[^"]*"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-scratch-btn"[^>]*>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*name="pen-to-square-solid-full"[^>]*class="[^"]*app-menu__scratch-icon[^"]*"/,
+      );
+    });
+
+    it("9-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順であること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      const toggleIndex = htmlStr.indexOf('id="app-menu-toggle-btn"');
+      const createIndex = htmlStr.indexOf('id="app-menu-task-create-btn"');
+      const scratchIndex = htmlStr.indexOf('id="app-menu-scratch-btn"');
+      const zenIndex = htmlStr.indexOf('id="app-menu-zen-btn"');
+
+      expect(toggleIndex).toBeGreaterThan(-1);
+      expect(createIndex).toBeGreaterThan(toggleIndex);
+      expect(scratchIndex).toBeGreaterThan(createIndex);
+      expect(zenIndex).toBeGreaterThan(scratchIndex);
+    });
+
+    it("9-3. isScratchMode が false の際、ツールチップ文言が「スクラッチモード（アプリ共通メモ）を開く」であること", () => {
+      (appMenu as any).isScratchMode = false;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-scratch-btn"[^>]*>[\s\S]*?スクラッチモード（アプリ共通メモ）を開く[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-scratch-btn"[^>]*class="[^"]*is-active[^"]*"/,
+      );
+    });
+
+    it("9-4. isScratchMode が true の際、ツールチップ文言が「スクラッチモードを終了」であり、ボタンに is-active クラスが付与されること", () => {
+      (appMenu as any).isScratchMode = true;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-scratch-btn"[^>]*>[\s\S]*?スクラッチモードを終了[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-scratch-btn"[^>]*class="[^"]*is-active[^"]*"/,
+      );
+    });
+  });
+
+  describe("10. スクラッチモード切替ボタンクリックによる LayoutUIController 連動", () => {
+    it("10-1. handleToggleScratchMode の呼び出しにより layoutUIController.toggleScratchMode が実行されること", () => {
+      const toggleScratchModeMock = vi.fn();
+      mockLayoutUIController = {
+        ...mockLayoutUIController,
+        toggleScratchMode: toggleScratchModeMock,
+      } as any;
+      appMenu.layoutUIController = mockLayoutUIController as any;
+
+      (appMenu as any).handleToggleScratchMode();
+      expect(toggleScratchModeMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("11. スクラッチモード有効時における他のボタンの無効化（disabled）", () => {
+    it("11-1. isScratchMode が true の際、開閉ボタン、新規タスク作成ボタン、集中モードボタンに disabled 属性が付与されること", () => {
+      (appMenu as any).isScratchMode = true;
+      (appMenu as any).labelsController = { hasLabels: true };
+      const htmlStr = flattenTemplate(appMenu.render());
+
+      // 開閉ボタンが無効化
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-toggle-btn"[^>]*\bdisabled\b/,
+      );
+      // 新規タスク作成ボタンが無効化
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
+      );
+      // 集中モードボタンが無効化
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-zen-btn"[^>]*\bdisabled\b/,
+      );
     });
   });
 });

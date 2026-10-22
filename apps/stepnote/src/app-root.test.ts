@@ -95,6 +95,13 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 9-5. Alt+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制されること）
  *    - [ ] 9-6. handleTaskCreated 実行時に isTaskCreateDialogOpen が false となり、taskListController.refresh および selectTask が実行されること
  *    - [ ] 9-7. request-task-create イベント受信時に handleOpenTaskCreate が呼ばれること
+ *
+ * 【AppRoot 全画面Scratchモード仕様 (Phase 10)】
+ * 10. 全画面Scratchモード（Scratch Mode）連携
+ *    - [ ] 10-1. isScratchMode が true の際、panes-container 内に scratch-pane がレンダリングされ、Navigation, TaskList, Task, Journal ペインが非表示となること
+ *    - [ ] 10-2. isScratchMode の状態が app-menu の .isScratchMode プロパティへ反映されること
+ *    - [ ] 10-3. isScratchMode が true の際、ヘッダーの全体検索ボタン（#header-global-search-trigger）が無効化（disabled属性）されること
+ *    - [ ] 10-4. isScratchMode が true の際、Ctrl+K による全体検索および Alt+N による新規タスク作成のキーボードショートカットが抑止されること
  */
 
 /**
@@ -529,6 +536,71 @@ describe("AppRoot Controller 状態連携仕様", () => {
         }),
       );
       expect(openSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("10. 全画面Scratchモード（Scratch Mode）連携", () => {
+    it("10-1. isScratchMode が true の際、panes-container 内に scratch-pane がレンダリングされ、Navigation, TaskList, Task, Journal ペインが非表示となること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      const htmlStr = flattenTemplate(appRoot.render());
+
+      expect(htmlStr).toMatch(/<scratch-pane/);
+      expect(htmlStr).not.toMatch(/<aside[^>]*class="[^"]*pane-navigation/);
+      expect(htmlStr).not.toMatch(/<task-list/);
+      expect(htmlStr).not.toMatch(/<task-pane/);
+      expect(htmlStr).not.toMatch(/<journal-pane/);
+    });
+
+    it("10-2. isScratchMode の状態が app-menu の .isScratchMode プロパティへ反映されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      const htmlStr = flattenTemplate(appRoot.render());
+      // .isScratchMode=${true} が app-menu に渡されていること
+      expect(htmlStr).toMatch(/<app-menu/);
+    });
+
+    it("10-3. isScratchMode が true の際、ヘッダーの全体検索ボタンが無効化（disabled属性）されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(
+        /<button[^>]*id="header-global-search-trigger"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("10-4. isScratchMode が true の際、Ctrl+K による全体検索および Alt+N による新規タスク作成のキーボードショートカットが抑止されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      (appRoot as any).labelsController = { hasLabels: true };
+
+      // Ctrl+K の抑止確認
+      const ctrlKEvent = {
+        key: "k",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      (appRoot as any).handleGlobalKeyDown(ctrlKEvent);
+      expect(appRoot.isGlobalSearchOpen).toBe(false);
+      expect(ctrlKEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Alt+N の抑止確認
+      const altNEvent = {
+        key: "n",
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      (appRoot as any).handleGlobalKeyDown(altNEvent);
+      expect(appRoot.isTaskCreateDialogOpen).toBe(false);
+      expect(altNEvent.preventDefault).not.toHaveBeenCalled();
     });
   });
 });

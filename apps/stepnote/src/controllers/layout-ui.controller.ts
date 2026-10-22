@@ -22,9 +22,8 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isNavigationListAreaOpen: true,
     isJournalAreaOpen: true,
     isZenMode: false,
+    isScratchMode: false,
   };
-
-
 
   /**
    * 画面開閉の状態（読み取り専用）
@@ -57,6 +56,8 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isNavigationListAreaOpen?: boolean;
     isJournalAreaOpen?: boolean;
   }): void {
+    if (this._state.isScratchMode) return;
+
     const nextNav =
       updates.isNavigationListAreaOpen ?? this._state.isNavigationListAreaOpen;
     const nextJournal =
@@ -141,7 +142,9 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setZenMode = (enabled: boolean): void => {
-    if (this._state.isZenMode === enabled) return;
+    if (this._state.isScratchMode || this._state.isZenMode === enabled) {
+      return;
+    }
 
     if (enabled) {
       this._state = {
@@ -156,6 +159,46 @@ export class LayoutUIController extends BaseReactiveController<void> {
         isZenMode: false,
         isNavigationListAreaOpen: true,
         isJournalAreaOpen: true,
+      };
+    }
+    this.notify();
+  };
+
+  /**
+   * 全画面スクラッチモード（Scratch Mode）の有効・無効を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
+   *
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public toggleScratchMode = (): void => {
+    this.setScratchMode(!this._state.isScratchMode);
+  };
+
+  /**
+   * 全画面スクラッチモード（Scratch Mode）の有効・無効を明示的に設定する。
+   *
+   * @param {boolean} enabled
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public setScratchMode = (enabled: boolean): void => {
+    if (this._state.isScratchMode === enabled) return;
+
+    if (enabled) {
+      this._state = {
+        ...this._state,
+        isScratchMode: true,
+        isNavigationListAreaOpen: false,
+        isJournalAreaOpen: false,
+        isZenMode: false,
+      };
+    } else {
+      this._state = {
+        ...this._state,
+        isScratchMode: false,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
+        isZenMode: false,
       };
     }
     this.notify();

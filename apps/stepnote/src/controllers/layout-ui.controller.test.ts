@@ -32,6 +32,11 @@ const createMockHost = () => {
  * 仕様 12:setZenMode で明示的に集中モードを設定でき、同じ状態の場合は不要な通知が行われないこと。
  * 仕様 13:集中モード有効時に個別トグル操作が行われた場合、集中モードが自動的に解除（isZenMode: false）されること。
  * 仕様 13-3:集中モード中にサイドパネルを開いた後、再度集中モードをON/OFFした際、Journalが外れず左右両ペインが揃って展開されること。
+ * 仕様 14:スクラッチモード（Scratch Mode）の初期状態が false であること。
+ * 仕様 15:toggleScratchMode の実行によりスクラッチモードが有効化され（isScratchMode: true）、左右ペインが一括で閉じられ（isNavigationListAreaOpen: false, isJournalAreaOpen: false）、集中モードも解除されること。
+ * 仕様 16:スクラッチモード有効時に再度 toggleScratchMode を実行するとスクラッチモードが解除され（isScratchMode: false）、常に左右両ペイン（サイドパネルおよびJournal）が展開された標準状態へ復帰すること。
+ * 仕様 17:setScratchMode で明示的にスクラッチモードを設定でき、同じ状態の場合は不要な通知が行われないこと。
+ * 仕様 18:スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode を呼び出しても状態が変更されずガードされること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -44,6 +49,7 @@ describe("layout-ui.controller", () => {
         isNavigationListAreaOpen: true,
         isJournalAreaOpen: true,
         isZenMode: false,
+        isScratchMode: false,
       });
     });
   });
@@ -287,6 +293,103 @@ describe("layout-ui.controller", () => {
       // Journalが閉じたまま取り残されず、サイドパネル・Journalの双方が開くこと
       expect(controller.state.isNavigationListAreaOpen).toBe(true);
       expect(controller.state.isJournalAreaOpen).toBe(true);
+    });
+  });
+
+  describe("スクラッチモード（Scratch Mode）の検証", () => {
+    it("仕様 14: スクラッチモードの初期状態が false であること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(false);
+    });
+
+    it("仕様 15: toggleScratchMode の実行によりスクラッチモードが有効化され、左右ペインが一括で閉じられ、集中モードも解除されること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // 先に集中モードにしておく
+      controller.setZenMode(true);
+      expect(controller.state.isZenMode).toBe(true);
+
+      (controller as unknown as { toggleScratchMode: () => void }).toggleScratchMode();
+
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+      expect(controller.state.isZenMode).toBe(false);
+      expect(requestUpdateMock).toHaveBeenCalled();
+    });
+
+    it("仕様 16: スクラッチモード有効時に再度 toggleScratchMode を実行するとスクラッチモードが解除され、常に左右両ペインが展開された標準状態へ復帰すること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // 1. スクラッチモード有効化
+      (controller as unknown as { toggleScratchMode: () => void }).toggleScratchMode();
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      // 2. スクラッチモード解除
+      (controller as unknown as { toggleScratchMode: () => void }).toggleScratchMode();
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(false);
+      // 常に左右両ペインが展開された標準状態に戻ること
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(controller.state.isJournalAreaOpen).toBe(true);
+      expect(controller.state.isZenMode).toBe(false);
+    });
+
+    it("仕様 17: setScratchMode で明示的にスクラッチモードを設定でき、同じ状態の場合は不要な通知が行われないこと", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      (controller as unknown as { setScratchMode: (enabled: boolean) => void }).setScratchMode(true);
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(true);
+      const callCount = requestUpdateMock.mock.calls.length;
+
+      // 同じ状態 (true) を再度セットしても通知されないこと
+      (controller as unknown as { setScratchMode: (enabled: boolean) => void }).setScratchMode(true);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(callCount);
+
+      // false に戻す
+      (controller as unknown as { setScratchMode: (enabled: boolean) => void }).setScratchMode(false);
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(false);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(callCount + 1);
+    });
+
+    it("仕様 18: スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode を呼び出しても状態が変更されずガードされること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // スクラッチモード有効化
+      (controller as unknown as { setScratchMode: (enabled: boolean) => void }).setScratchMode(true);
+      expect(
+        (controller.state as unknown as { isScratchMode: boolean }).isScratchMode,
+      ).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      // 各種操作を試行しても状態が変わらないこと
+      controller.toggleNavigationListArea();
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+
+      controller.toggleJournalArea();
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      controller.toggleZenMode();
+      expect(controller.state.isZenMode).toBe(false);
     });
   });
 });

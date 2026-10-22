@@ -43,6 +43,15 @@ export class AppMenu extends WithLayoutUIController(
   public isZenMode: boolean = false;
 
   /**
+   * 全画面スクラッチモード（Scratch Mode）の有効・無効状態
+   *
+   * @type {boolean}
+   * @memberof AppMenu
+   */
+  @property({ type: Boolean })
+  public isScratchMode: boolean = false;
+
+  /**
    * 登録済みのラベルが存在するか判定する
    *
    * @readonly
@@ -78,6 +87,15 @@ export class AppMenu extends WithLayoutUIController(
   };
 
   /**
+   * 全画面スクラッチモード（Scratch Mode）の有効・無効状態を切り替える。
+   *
+   * @memberof AppMenu
+   */
+  public handleToggleScratchMode = (): void => {
+    this.layoutUIController?.toggleScratchMode();
+  };
+
+  /**
    * 新規タスク作成ダイアログの表示リクエストイベントを発行する。
    *
    * @memberof AppMenu
@@ -99,9 +117,10 @@ export class AppMenu extends WithLayoutUIController(
    *
    * @private
    * @param {boolean} isOpen
+   * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderSidebarToggleButton(isOpen: boolean) {
+  private renderSidebarToggleButton(isOpen: boolean, isDisabled: boolean = false) {
     const toggleTooltip = isOpen
       ? "サイドパネルを閉じる"
       : "サイドパネルを開く";
@@ -116,6 +135,7 @@ export class AppMenu extends WithLayoutUIController(
         variant="neutral"
         appearance="plain"
         size="s"
+        ?disabled=${isDisabled}
         @click=${this.handleToggleNavigationList}
       >
         <wa-icon
@@ -133,9 +153,10 @@ export class AppMenu extends WithLayoutUIController(
    *
    * @private
    * @param {boolean} hasLabels
+   * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderTaskCreateButton(hasLabels: boolean) {
+  private renderTaskCreateButton(hasLabels: boolean, isDisabled: boolean = false) {
     const createTooltip = hasLabels
       ? "新規タスクを作成 (Alt+N)"
       : "ラベルを登録してください";
@@ -150,7 +171,7 @@ export class AppMenu extends WithLayoutUIController(
         variant="neutral"
         appearance="plain"
         size="s"
-        ?disabled=${!hasLabels}
+        ?disabled=${!hasLabels || isDisabled}
         @click=${this.handleCreateTask}
       >
         <wa-icon
@@ -164,13 +185,48 @@ export class AppMenu extends WithLayoutUIController(
   }
 
   /**
+   * スクラッチモード切替ボタンを描画する。
+   *
+   * @private
+   * @param {boolean} isScratch
+   * @memberof AppMenu
+   */
+  private renderScratchButton(isScratch: boolean) {
+    const scratchTooltip = isScratch
+      ? "スクラッチモードを終了"
+      : "スクラッチモード（アプリ共通メモ）を開く";
+
+    return html`
+      <wa-tooltip for="app-menu-scratch-btn" placement="right">
+        ${scratchTooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-scratch-btn"
+        class="app-menu__scratch-btn ${isScratch ? "is-active" : ""}"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        @click=${this.handleToggleScratchMode}
+      >
+        <wa-icon
+          library="my-icons"
+          name="pen-to-square-solid-full"
+          class="app-menu__scratch-icon"
+          label=${scratchTooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
    * 集中モード切替ボタンを描画する。
    *
    * @private
    * @param {boolean} isZen
+   * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderZenModeButton(isZen: boolean) {
+  private renderZenModeButton(isZen: boolean, isDisabled: boolean = false) {
     const zenTooltip = isZen
       ? "集中モードを解除（元のレイアウトに復帰）"
       : "集中モードを有効化（左右ペインを折りたたむ）";
@@ -186,6 +242,7 @@ export class AppMenu extends WithLayoutUIController(
         variant="neutral"
         appearance="plain"
         size="s"
+        ?disabled=${isDisabled}
         @click=${this.handleToggleZenMode}
       >
         <wa-icon
@@ -202,9 +259,13 @@ export class AppMenu extends WithLayoutUIController(
     return html`
       <!-- 上部エリア (メイン機能群) -->
       <div class="app-menu__primary">
-        ${this.renderSidebarToggleButton(this.isNavigationListAreaOpen)}
-        ${this.renderTaskCreateButton(this.hasLabels)}
-        ${this.renderZenModeButton(this.isZenMode)}
+        ${this.renderSidebarToggleButton(
+          this.isNavigationListAreaOpen,
+          this.isScratchMode,
+        )}
+        ${this.renderTaskCreateButton(this.hasLabels, this.isScratchMode)}
+        ${this.renderScratchButton(this.isScratchMode)}
+        ${this.renderZenModeButton(this.isZenMode, this.isScratchMode)}
       </div>
 
       <!-- 下部エリア (将来の補助機能群) -->

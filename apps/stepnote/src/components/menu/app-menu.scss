@@ -22,13 +22,22 @@
 
 .app-menu__toggle-btn,
 .app-menu__zen-btn,
-.app-menu__task-create-btn {
+.app-menu__task-create-btn,
+.app-menu__scratch-btn {
   @include flex-center;
 }
 
 .app-menu__zen-icon,
-.app-menu__task-create-icon {
+.app-menu__task-create-icon,
+.app-menu__scratch-icon {
   display: inline-block;
+}
+
+.app-menu__scratch-btn {
+  &.is-active {
+    color: var(--wa-color-brand-contrast);
+    background-color: var(--wa-color-brand);
+  }
 }
 
 .app-menu__toggle-icon {
