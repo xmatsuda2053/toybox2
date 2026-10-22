@@ -1,8 +1,10 @@
-import { LitElement, html, unsafeCSS } from "lit";
+import { html, unsafeCSS } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { consume } from "@lit/context";
-import { layoutUIContext } from "@/contexts/index.js";
-import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
+import {
+  SubscriberElement,
+  WithLabelsController,
+  WithLayoutUIController,
+} from "@/utils/controller-consumers.mixin.js";
 import appMenuStyles from "./app-menu.scss?inline";
 
 /**
@@ -14,10 +16,12 @@ import appMenuStyles from "./app-menu.scss?inline";
  *
  * @export
  * @class AppMenu
- * @extends {LitElement}
+ * @extends {WithLayoutUIController(WithLabelsController(SubscriberElement))}
  */
 @customElement("app-menu")
-export class AppMenu extends LitElement {
+export class AppMenu extends WithLayoutUIController(
+  WithLabelsController(SubscriberElement),
+) {
   public static override styles = unsafeCSS(appMenuStyles);
 
   /**
@@ -39,13 +43,21 @@ export class AppMenu extends LitElement {
   public isZenMode: boolean = false;
 
   /**
-   * レイアウト状態管理コントローラー
+   * 登録済みのラベルが存在するか判定する
    *
-   * @type {LayoutUIController}
+   * @readonly
+   * @type {boolean}
    * @memberof AppMenu
    */
-  @consume({ context: layoutUIContext, subscribe: true })
-  public layoutUIController?: LayoutUIController;
+  public get hasLabels(): boolean {
+    if (!this.labelsController) {
+      return false;
+    }
+    return (
+      this.labelsController.hasLabels ??
+      ((this.labelsController.state?.length ?? 0) > 0)
+    );
+  }
 
   /**
    * サイドパネル（ナビゲーションおよびタスク一覧）の開閉状態を切り替える。
@@ -63,6 +75,23 @@ export class AppMenu extends LitElement {
    */
   public handleToggleZenMode = (): void => {
     this.layoutUIController?.toggleZenMode();
+  };
+
+  /**
+   * 新規タスク作成ダイアログの表示リクエストイベントを発行する。
+   *
+   * @memberof AppMenu
+   */
+  public handleCreateTask = (): void => {
+    if (!this.hasLabels) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent("request-task-create", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
   /**
@@ -94,6 +123,41 @@ export class AppMenu extends LitElement {
           name="chevron-right"
           class="app-menu__toggle-icon ${isOpen ? "is-open" : "is-closed"}"
           label=${toggleTooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
+   * クイック新規タスク作成ボタンを描画する。
+   *
+   * @private
+   * @param {boolean} hasLabels
+   * @memberof AppMenu
+   */
+  private renderTaskCreateButton(hasLabels: boolean) {
+    const createTooltip = hasLabels
+      ? "新規タスクを作成"
+      : "ラベルを登録してください";
+
+    return html`
+      <wa-tooltip for="app-menu-task-create-btn" placement="right">
+        ${createTooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-task-create-btn"
+        class="app-menu__task-create-btn"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        ?disabled=${!hasLabels}
+        @click=${this.handleCreateTask}
+      >
+        <wa-icon
+          library="my-icons"
+          name="plus-solid-full"
+          class="app-menu__task-create-icon"
+          label=${createTooltip}
         ></wa-icon>
       </wa-button>
     `;
@@ -139,6 +203,7 @@ export class AppMenu extends LitElement {
       <!-- 上部エリア (メイン機能群) -->
       <div class="app-menu__primary">
         ${this.renderSidebarToggleButton(this.isNavigationListAreaOpen)}
+        ${this.renderTaskCreateButton(this.hasLabels)}
         ${this.renderZenModeButton(this.isZenMode)}
       </div>
 

@@ -30,6 +30,16 @@ import { AppMenu } from "./app-menu.js";
  *
  * 6. 集中モード切替ボタンクリックによる LayoutUIController 連動
  *    - [ ] 6-1. handleToggleZenMode の呼び出しにより layoutUIController.toggleZenMode が実行されること
+ *
+ * 7. クイック新規タスク作成ボタンのレンダリングとアクセシビリティ
+ *    - [ ] 7-1. app-menu__primary 内に新規タスク作成ボタン（wa-button#app-menu-task-create-btn）、ツールチップ、アイコン（plus-solid-full）がレンダリングされること
+ *    - [ ] 7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること
+ *    - [ ] 7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成」であること
+ *    - [ ] 7-4. hasLabels が false の際、ボタンが無効化（disabled属性あり）され、ツールチップ文言が「ラベルを登録してください」であること
+ *
+ * 8. クイック新規タスク作成ボタンクリックによるカスタムイベント発行
+ *    - [ ] 8-1. hasLabels が true の際、handleCreateTask の呼び出しによりカスタムイベント request-task-create がディスパッチされること
+ *    - [ ] 8-2. hasLabels が false の際、handleCreateTask を実行してもイベントがディスパッチされないこと
  */
 
 describe("AppMenu Component", () => {
@@ -99,6 +109,8 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toContain("app-menu__toggle-icon");
       expect(htmlStr).toContain("app-menu__zen-btn");
       expect(htmlStr).toContain("app-menu__zen-icon");
+      expect(htmlStr).toContain("app-menu__task-create-btn");
+      expect(htmlStr).toContain("app-menu__task-create-icon");
     });
 
     it("4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること", () => {
@@ -154,6 +166,76 @@ describe("AppMenu Component", () => {
         appMenu as unknown as { handleToggleZenMode: () => void }
       ).handleToggleZenMode();
       expect(mockLayoutUIController.toggleZenMode).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("7. クイック新規タスク作成ボタンのレンダリングとアクセシビリティ", () => {
+    it("7-1. app-menu__primary 内に新規タスク作成ボタン（wa-button#app-menu-task-create-btn）、ツールチップ、アイコン（plus-solid-full）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("app-menu-task-create-btn");
+      expect(htmlStr).toContain("app-menu__task-create-btn");
+      expect(htmlStr).toContain("app-menu__task-create-icon");
+      expect(htmlStr).toContain("plus-solid-full");
+    });
+
+    it("7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
+      const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
+      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
+      expect(toggleIndex).toBeGreaterThan(-1);
+      expect(createIndex).toBeGreaterThan(toggleIndex);
+      expect(zenIndex).toBeGreaterThan(createIndex);
+    });
+
+    it("7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成」であること", () => {
+      (appMenu as any).labelsController = {
+        hasLabels: true,
+      };
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?新規タスクを作成[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("7-4. hasLabels が false の際、ボタンが無効化（disabled属性あり）され、ツールチップ文言が「ラベルを登録してください」であること", () => {
+      (appMenu as any).labelsController = {
+        hasLabels: false,
+      };
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?ラベルを登録してください[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
+      );
+    });
+  });
+
+  describe("8. クイック新規タスク作成ボタンクリックによるカスタムイベント発行", () => {
+    it("8-1. hasLabels が true の際、handleCreateTask の呼び出しによりカスタムイベント request-task-create がディスパッチされること", () => {
+      (appMenu as any).labelsController = {
+        hasLabels: true,
+      };
+      const dispatchSpy = vi.spyOn(appMenu, "dispatchEvent");
+      (appMenu as any).handleCreateTask();
+      expect(dispatchSpy).toHaveBeenCalled();
+      const dispatchedEvent = dispatchSpy.mock.calls[0][0] as CustomEvent;
+      expect(dispatchedEvent.type).toBe("request-task-create");
+      expect(dispatchedEvent.bubbles).toBe(true);
+      expect(dispatchedEvent.composed).toBe(true);
+    });
+
+    it("8-2. hasLabels が false の際、handleCreateTask を実行してもイベントがディスパッチされないこと", () => {
+      (appMenu as any).labelsController = {
+        hasLabels: false,
+      };
+      const dispatchSpy = vi.spyOn(appMenu, "dispatchEvent");
+      (appMenu as any).handleCreateTask();
+      expect(dispatchSpy).not.toHaveBeenCalled();
     });
   });
 });

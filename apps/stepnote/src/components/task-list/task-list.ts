@@ -1,5 +1,5 @@
 import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { consume } from "@lit/context";
 import "@lit-labs/virtualizer";
 import "@shared/components";
@@ -23,7 +23,6 @@ import {
   WithTaskController,
   WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
-import "./task-create-dialog.js";
 import "./task-list-item.js";
 import taskListStyles from "./task-list.scss?inline";
 
@@ -207,31 +206,12 @@ export class TaskList extends WithIssuesController(
   public searchKeyword: string = "";
 
   /**
-   * 新規タスク作成ダイアログの開閉状態
-   *
-   * @type {boolean}
-   * @memberof TaskList
-   */
-  @state()
-  public isCreateDialogOpen: boolean = false;
-
-  /**
    * 登録済みのラベルが存在するか判定する
    *
    * @readonly
    * @type {boolean}
    * @memberof TaskList
    */
-  public get hasLabels(): boolean {
-    if (!this.labelsController) {
-      return false;
-    }
-    return (
-      this.labelsController.hasLabels ??
-      ((this.labelsController.state?.length ?? 0) > 0)
-    );
-  }
-
   /**
    * ラベルが選択されているか判定する
    *
@@ -242,39 +222,6 @@ export class TaskList extends WithIssuesController(
   public get hasSelectedLabel(): boolean {
     return this.labelsController?.hasSelectedLabels ?? false;
   }
-
-  /**
-   * 新規タスク作成ダイアログを開く
-   */
-  public handleOpenCreateDialog = (): void => {
-    if (!this.hasLabels) {
-      return;
-    }
-    this.isCreateDialogOpen = true;
-  };
-
-  /**
-   * 新規タスク作成ダイアログを閉じる
-   */
-  public handleCloseCreateDialog = (): void => {
-    this.isCreateDialogOpen = false;
-  };
-
-  /**
-   * タスク作成完了イベントハンドラー
-   */
-  public handleTaskCreated = async (
-    event?: CustomEvent<{ taskId?: number }>,
-  ): Promise<void> => {
-    this.isCreateDialogOpen = false;
-    if (this.taskListController) {
-      await this.taskListController.refresh();
-      if (event?.detail?.taskId !== undefined) {
-        await this.taskListController.selectTask(event.detail.taskId);
-      }
-    }
-    this.requestUpdate();
-  };
 
   /**
    * 検索入力ハンドラー（共通 search-input の search-input カスタムイベント）
@@ -369,39 +316,12 @@ export class TaskList extends WithIssuesController(
    */
   private renderHeader(): HTMLTemplateResult {
     const currentYear = this.currentFiscalYear;
-    const isAddDisabled = !this.hasLabels;
-    const addTooltip = isAddDisabled
-      ? "ラベルを登録してください"
-      : "新規タスクを追加";
 
     return html`
       <header class="task-list__header">
         <span class="task-list__title">LIST ${currentYear}</span>
         <div class="task-list__actions">
           ${this.renderFiscalYearDropdown(currentYear)}
-
-          <wa-tooltip
-            for="task-list-btn-add"
-            placement="bottom"
-            trigger="hover"
-          >
-            ${addTooltip}
-          </wa-tooltip>
-          <wa-button
-            id="task-list-btn-add"
-            class="task-list__btn-add"
-            variant="neutral"
-            appearance="plain"
-            size="m"
-            ?disabled=${isAddDisabled}
-            @click=${this.handleOpenCreateDialog}
-          >
-            <wa-icon
-              library="my-icons"
-              name="plus-solid-full"
-              label=${addTooltip}
-            ></wa-icon>
-          </wa-button>
         </div>
       </header>
     `;
@@ -534,13 +454,6 @@ export class TaskList extends WithIssuesController(
     return html`
       <div class="task-list">
         ${this.renderHeader()} ${this.renderSearch()} ${this.renderList()}
-        <task-create-dialog
-          ?open=${this.isCreateDialogOpen}
-          .fiscalYear=${this.currentFiscalYear}
-          data-theme=${this.getAttribute("data-theme") ?? ""}
-          @dialog-close=${this.handleCloseCreateDialog}
-          @task-created=${this.handleTaskCreated}
-        ></task-create-dialog>
       </div>
     `;
   }
