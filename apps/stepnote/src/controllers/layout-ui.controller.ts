@@ -24,17 +24,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isZenMode: false,
   };
 
-  /**
-   * 集中モード突入直前の開閉状態スナップショット
-   *
-   * @private
-   * @type {({ isNavigationListAreaOpen: boolean; isJournalAreaOpen: boolean } | undefined)}
-   * @memberof LayoutUIController
-   */
-  private _previousLayoutState?: {
-    isNavigationListAreaOpen: boolean;
-    isJournalAreaOpen: boolean;
-  };
+
 
   /**
    * 画面開閉の状態（読み取り専用）
@@ -78,9 +68,6 @@ export class LayoutUIController extends BaseReactiveController<void> {
       ...updates,
       isZenMode: shouldExitZen ? false : this._state.isZenMode,
     };
-    if (shouldExitZen) {
-      this._previousLayoutState = undefined;
-    }
     this.notify();
   }
 
@@ -157,10 +144,6 @@ export class LayoutUIController extends BaseReactiveController<void> {
     if (this._state.isZenMode === enabled) return;
 
     if (enabled) {
-      this._previousLayoutState = {
-        isNavigationListAreaOpen: this._state.isNavigationListAreaOpen,
-        isJournalAreaOpen: this._state.isJournalAreaOpen,
-      };
       this._state = {
         ...this._state,
         isZenMode: true,
@@ -168,14 +151,12 @@ export class LayoutUIController extends BaseReactiveController<void> {
         isJournalAreaOpen: false,
       };
     } else {
-      const prev = this._previousLayoutState;
       this._state = {
         ...this._state,
         isZenMode: false,
-        isNavigationListAreaOpen: prev?.isNavigationListAreaOpen ?? true,
-        isJournalAreaOpen: prev?.isJournalAreaOpen ?? true,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
       };
-      this._previousLayoutState = undefined;
     }
     this.notify();
   };
