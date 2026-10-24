@@ -25,6 +25,7 @@ import compress_solid_full from "./assets/icons/compress-solid-full.svg?raw";
 import copy_solid_full from "./assets/icons/copy-solid-full.svg?raw";
 import cubes_stacked_solid_full from "./assets/icons/cubes-stacked-solid-full.svg?raw";
 import display_solid_full from "./assets/icons/display-solid-full.svg?raw";
+import download_solid_full from "./assets/icons/download-solid-full.svg?raw";
 import ellipsis_solid_full from "./assets/icons/ellipsis-solid-full.svg?raw";
 import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid-full.svg?raw";
 import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
@@ -65,6 +66,7 @@ import tag_solid_full from "./assets/icons/tag-solid-full.svg?raw";
 import terminal_solid_full from "./assets/icons/terminal-solid-full.svg?raw";
 import trash_solid_full from "./assets/icons/trash-solid-full.svg?raw";
 import triangle_exclamation_solid_full from "./assets/icons/triangle-exclamation-solid-full.svg?raw";
+import upload_solid_full from "./assets/icons/upload-solid-full.svg?raw";
 import user_solid_full from "./assets/icons/user-solid-full.svg?raw";
 import wand_magic_sparkles_solid_full from "./assets/icons/wand-magic-sparkles-solid-full.svg?raw";
 import xmark_solid_full from "./assets/icons/xmark-solid-full.svg?raw";
@@ -100,6 +102,7 @@ export const icons: Record<string, string> = {
   "copy-solid-full": copy_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
   "display-solid-full": display_solid_full,
+  "download-solid-full": download_solid_full,
   "ellipsis-solid-full": ellipsis_solid_full,
   "ellipsis-vertical-solid-full": ellipsis_vertical_solid_full,
   "expand-solid-full": expand_solid_full,
@@ -141,6 +144,7 @@ export const icons: Record<string, string> = {
   "terminal-solid-full": terminal_solid_full,
   "trash-solid-full": trash_solid_full,
   "triangle-exclamation-solid-full": triangle_exclamation_solid_full,
+  "upload-solid-full": upload_solid_full,
   "user-solid-full": user_solid_full,
   "wand-magic-sparkles-solid-full": wand_magic_sparkles_solid_full,
   "xmark-solid-full": xmark_solid_full,

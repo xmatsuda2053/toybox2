@@ -56,6 +56,16 @@ import { AppMenu } from "./app-menu.js";
  * 12. 各種ボタンアイコンのサイズスタイル仕様（SCSS）
  *    - [ ] 12-1. 新規タスク作成・スクラッチ・集中モードアイコンにサイズアップ用のデザイントークン（--wa-font-size-l）が指定されていること
  *    - [ ] 12-2. シェブロン形状の視覚的バランスを整えるため、開閉トグルアイコンに --wa-font-size-m が指定されていること
+ *
+ * 13. 下部システムボタン（エクスポート・インポート）のレンダリング仕様
+ *    - [ ] 13-1. app-menu__secondary 内にエクスポートボタン、インポートボタン、ファイル入力要素がレンダリングされること
+ *    - [ ] 13-2. エクスポートボタンに download-solid-full アイコン、インポートボタンに upload-solid-full アイコンが描画されること
+ *    - [ ] 13-3. app-menu.scss でエクスポート・インポートアイコンに --wa-font-size-l が指定されていること
+ *
+ * 14. システムボタンのアクション仕様
+ *    - [ ] 14-1. handleExportDatabase の呼び出しによりカスタムイベント request-database-export がディスパッチされること
+ *    - [ ] 14-2. handleImportDatabase の呼び出しによりファイル選択インプットがクリックされること
+ *    - [ ] 14-3. handleFileSelected の呼び出しによりカスタムイベント request-database-import がファイル付きでディスパッチされること
  */
 
 describe("AppMenu Component", () => {
@@ -358,6 +368,81 @@ describe("AppMenu Component", () => {
       );
       expect(toggleMatch).not.toBeNull();
       expect(toggleMatch![0]).toMatch(/font-size:\s*var\(--wa-font-size-m/);
+    });
+  });
+
+  describe("13. 下部システムボタン（エクスポート・インポート）のレンダリング仕様", () => {
+    it("13-1. app-menu__secondary 内にエクスポートボタン、インポートボタン、ファイル入力要素がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("app-menu-export-btn");
+      expect(htmlStr).toContain("app-menu__export-btn");
+      expect(htmlStr).toContain("app-menu-import-btn");
+      expect(htmlStr).toContain("app-menu__import-btn");
+      expect(htmlStr).toContain("app-menu-import-input");
+    });
+
+    it("13-2. エクスポートボタンに download-solid-full アイコン、インポートボタンに upload-solid-full アイコンが描画されること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toContain("download-solid-full");
+      expect(htmlStr).toContain("upload-solid-full");
+    });
+
+    it("13-3. app-menu.scss でエクスポート・インポートアイコンに --wa-font-size-l が指定されていること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toContain(".app-menu__export-icon");
+      expect(scss).toContain(".app-menu__import-icon");
+    });
+  });
+
+  describe("14. システムボタンのアクション仕様", () => {
+    it("14-1. handleExportDatabase の呼び出しによりカスタムイベント request-database-export がディスパッチされること", () => {
+      let dispatchedEvent: CustomEvent | null = null;
+      appMenu.addEventListener("request-database-export", (e) => {
+        dispatchedEvent = e as CustomEvent;
+      });
+
+      (appMenu as any).handleExportDatabase();
+      expect(dispatchedEvent).not.toBeNull();
+      expect(dispatchedEvent!.type).toBe("request-database-export");
+    });
+
+    it("14-2. handleImportDatabase の呼び出しによりファイル選択インプットがクリックされること", () => {
+      const mockInput = { click: vi.fn() };
+      Object.defineProperty(appMenu, "renderRoot", {
+        value: {
+          querySelector: (selector: string) =>
+            selector === "#app-menu-import-input" ? mockInput : null,
+        },
+        configurable: true,
+      });
+
+      (appMenu as any).handleImportDatabase();
+      expect(mockInput.click).toHaveBeenCalledTimes(1);
+    });
+
+    it("14-3. handleFileSelected の呼び出しによりカスタムイベント request-database-import がファイル付きでディスパッチされること", () => {
+      let dispatchedEvent: CustomEvent<{ file: File }> | null = null;
+      appMenu.addEventListener("request-database-import", (e) => {
+        dispatchedEvent = e as CustomEvent<{ file: File }>;
+      });
+
+      const mockFile = new File(['{"test":1}'], "backup.json", {
+        type: "application/json",
+      });
+      const mockEvent = {
+        target: {
+          files: [mockFile],
+          value: "C:\\fakepath\\backup.json",
+        },
+      } as unknown as Event;
+
+      (appMenu as any).handleFileSelected(mockEvent);
+      expect(dispatchedEvent).not.toBeNull();
+      expect(dispatchedEvent!.detail.file).toBe(mockFile);
+      expect((mockEvent.target as HTMLInputElement).value).toBe("");
     });
   });
 });
