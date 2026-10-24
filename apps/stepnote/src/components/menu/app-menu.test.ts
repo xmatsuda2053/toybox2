@@ -52,6 +52,10 @@ import { AppMenu } from "./app-menu.js";
  *
  * 11. スクラッチモード有効時における他のボタンの無効化（disabled）
  *    - [ ] 11-1. isScratchMode が true の際、開閉ボタン（#app-menu-toggle-btn）、新規タスク作成ボタン（#app-menu-task-create-btn）、集中モードボタン（#app-menu-zen-btn）に disabled 属性が付与されること
+ *
+ * 12. 各種ボタンアイコンのサイズスタイル仕様（SCSS）
+ *    - [ ] 12-1. 新規タスク作成・スクラッチ・集中モードアイコンにサイズアップ用のデザイントークン（--wa-font-size-l）が指定されていること
+ *    - [ ] 12-2. シェブロン形状の視覚的バランスを整えるため、開閉トグルアイコンに --wa-font-size-m が指定されていること
  */
 
 describe("AppMenu Component", () => {
@@ -333,6 +337,27 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toMatch(
         /<wa-button[^>]*id="app-menu-zen-btn"[^>]*\bdisabled\b/,
       );
+    });
+  });
+
+  describe("12. 各種ボタンアイコンのサイズスタイル仕様（SCSS）", () => {
+    const scssPath = new URL("./app-menu.scss", import.meta.url);
+
+    it("12-1. 新規タスク作成・スクラッチ・集中モードアイコンにサイズアップ用のデザイントークン（--wa-font-size-l）が指定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(/font-size:\s*var\(--wa-font-size-l/);
+      expect(scss).toContain(".app-menu__task-create-icon");
+      expect(scss).toContain(".app-menu__scratch-icon");
+      expect(scss).toContain(".app-menu__zen-icon");
+    });
+
+    it("12-2. シェブロン形状の視覚的バランスを整えるため、開閉トグルアイコンに --wa-font-size-m が指定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      const toggleMatch = scss.match(
+        /\.app-menu__toggle-icon\s*\{[\s\S]*?\n\}/,
+      );
+      expect(toggleMatch).not.toBeNull();
+      expect(toggleMatch![0]).toMatch(/font-size:\s*var\(--wa-font-size-m/);
     });
   });
 });

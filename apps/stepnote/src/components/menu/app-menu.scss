@@ -31,6 +31,7 @@
 .app-menu__task-create-icon,
 .app-menu__scratch-icon {
   display: inline-block;
+  font-size: var(--wa-font-size-l, 18px);
 }
 
 .app-menu__scratch-btn {
@@ -42,6 +43,7 @@
 
 .app-menu__toggle-icon {
   display: inline-block;
+  font-size: var(--wa-font-size-m, 16px);
   transition: transform 0.2s ease;
 
   &.is-open {
