@@ -4963,8 +4963,20 @@
     "test_file": "apps/stepnote/src/app-root.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 14,
+      "completed_at": "2026-10-24T20:56:00+09:00",
+      "issue_number": 292,
+      "pr_number": 293,
+      "commit_hash": "51f3236",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1528,
+      "metrics_after": {
+        "function_lines": 10
+      }
+    }
   },
   {
     "id": "REF-157",
@@ -4982,8 +4994,20 @@
     "test_file": "apps/stepnote/src/app-root.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 14,
+      "completed_at": "2026-10-24T20:56:00+09:00",
+      "issue_number": 292,
+      "pr_number": 293,
+      "commit_hash": "51f3236",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1528,
+      "metrics_after": {
+        "function_lines": 42
+      }
+    }
   },
   {
     "id": "REF-158",
@@ -6084,8 +6108,21 @@
     "test_file": "apps/stepnote/src/services/database-backup.service.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 14,
+      "completed_at": "2026-10-24T20:56:00+09:00",
+      "issue_number": 292,
+      "pr_number": 293,
+      "commit_hash": "51f3236",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1528,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-216",
