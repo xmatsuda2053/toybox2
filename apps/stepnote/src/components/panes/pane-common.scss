@@ -14,8 +14,6 @@
   @include flex-between;
   height: 48px;
   padding-inline: var(--wa-space-s, 12px);
-  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
-    var(--wa-color-surface-border);
   flex-shrink: 0;
   user-select: none;
   @include theme-transition;

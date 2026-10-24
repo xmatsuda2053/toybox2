@@ -5,7 +5,7 @@ import * as fs from "node:fs";
  * StepNote Panes 共通セクションスタイル仕様テスト（pane-common.test.ts）
  *
  * 【仕様 1: pane-common.scss の Mixin 定義】
- * - 1-1: @mixin pane-section-header が定義され、ヘッダー高さ・枠線・余白が指定されていること
+ * - 1-1: @mixin pane-section-header が定義され、ヘッダー高さ・余白が指定され、下枠線（border-bottom）が指定されていないこと
  * - 1-2: @mixin pane-section-title が定義され、フォントサイズ・太字・レタースペーシング・text-ellipsis が指定されていること
  * - 1-3: 既存の .section-header および .section-title クラスが対応する Mixin を @include していること
  *
@@ -54,7 +54,7 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
   );
 
   describe("1. pane-common.scss の Mixin 定義", () => {
-    it("仕様 1-1: @mixin pane-section-header が定義され、ヘッダー高さ・枠線・余白が指定されていること", () => {
+    it("仕様 1-1: @mixin pane-section-header が定義され、ヘッダー高さ・余白が指定され、下枠線（border-bottom）が指定されていないこと", () => {
       const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
       expect(scss).toMatch(/@mixin\s+pane-section-header\s*\{/);
 
@@ -63,7 +63,7 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
       const content = match![0];
       expect(content).toContain("@include flex-between");
       expect(content).toMatch(/height:\s*48px;/);
-      expect(content).toContain("var(--wa-color-surface-border)");
+      expect(content).not.toContain("border-bottom");
     });
 
     it("仕様 1-2: @mixin pane-section-title が定義され、フォントサイズ・太字・レタースペーシング・text-ellipsis が指定されていること", () => {
