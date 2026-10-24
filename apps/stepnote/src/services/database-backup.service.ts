@@ -1,4 +1,5 @@
 import type { Dexie } from "dexie";
+import { format } from "@shared/utils";
 
 // Node.js（Vitest）環境における dexie-export-import の self 参照エラーを防止
 if (typeof globalThis.self === "undefined") {
@@ -13,14 +14,7 @@ if (typeof globalThis.self === "undefined") {
  * @returns フォーマット済みファイル名
  */
 export function generateBackupFileName(date: Date = new Date()): string {
-  const pad = (n: number): string => n.toString().padStart(2, "0");
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  const seconds = pad(date.getSeconds());
-  return `stepnote_backup_${year}${month}${day}_${hours}${minutes}${seconds}.json`;
+  return `stepnote_backup_${format(date, "yyyyMMdd_HHmmss")}.json`;
 }
 
 /**

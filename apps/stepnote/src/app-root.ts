@@ -62,17 +62,17 @@ import {
 @customElement("app-root")
 export class AppRoot extends LitElement {
   // 1. 各 Controller のインスタンス
-  public layoutUIController: LayoutUIController;
-  public quickAccessController: QuickAccessController;
-  public labelsController: LabelsController;
-  public taskController: TaskController;
-  public taskListController: TaskListController;
-  public logsController: LogsController;
-  public notesController: NotesController;
-  public issuesController: IssuesController;
-  public themeController: ThemeController;
-  public scratchController: ScratchController;
-  public systemLogService: SystemLogService;
+  public layoutUIController!: LayoutUIController;
+  public quickAccessController!: QuickAccessController;
+  public labelsController!: LabelsController;
+  public taskController!: TaskController;
+  public taskListController!: TaskListController;
+  public logsController!: LogsController;
+  public notesController!: NotesController;
+  public issuesController!: IssuesController;
+  public themeController!: ThemeController;
+  public scratchController!: ScratchController;
+  public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
 
   @state()
@@ -85,6 +85,18 @@ export class AppRoot extends LitElement {
     super();
     this.databaseBackupService = new DatabaseBackupService();
 
+    this.setupEventListeners();
+    this.setupControllers();
+    this.registerContextProviders();
+  }
+
+  /**
+   * ルートコンポーネントが処理するカスタムイベントリスナーを登録する。
+   *
+   * @private
+   * @memberof AppRoot
+   */
+  private setupEventListeners(): void {
     this.addEventListener("request-task-create", () => {
       this.handleOpenTaskCreate();
     });
@@ -94,8 +106,15 @@ export class AppRoot extends LitElement {
     this.addEventListener("request-database-import", (e: Event) => {
       this.handleImportDatabase(e as CustomEvent<{ file: File }>);
     });
+  }
 
-    // 1. Controller インスタンスの生成と初期化
+  /**
+   * Controller および Service インスタンスを生成・初期化する。
+   *
+   * @private
+   * @memberof AppRoot
+   */
+  private setupControllers(): void {
     const taskRepository = new TaskRepository();
     const issuesRepository = new IssuesRepository();
     const labelsRepository = new LabelsRepository();
@@ -145,9 +164,6 @@ export class AppRoot extends LitElement {
       this.systemLogService,
     );
     this.themeController = new ThemeController(this);
-
-    // 2. @lit/context Provider による Context 配給の登録
-    this.registerContextProviders();
   }
 
   /**
@@ -451,6 +467,60 @@ export class AppRoot extends LitElement {
   }
 
   /**
+   * Navigation ペイン（第2ペイン）を描画する。
+   *
+   * @private
+   * @param {boolean} isOpen ナビゲーションリストエリアが開いているかどうか
+   * @param {string} resolvedTheme 適用中の解決済みテーマ名
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderNavigationAside(
+    isOpen: boolean,
+    resolvedTheme: string,
+  ): HTMLTemplateResult {
+    return html`
+      <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
+        <navigation-quick-access
+          class="navigation-quick-access"
+          data-theme=${resolvedTheme}
+        ></navigation-quick-access>
+        <navigation-labels
+          class="navigation-labels"
+          data-theme=${resolvedTheme}
+        ></navigation-labels>
+      </aside>
+    `;
+  }
+
+  /**
+   * Journal ペイン（第5ペイン）を描画する。
+   *
+   * @private
+   * @param {boolean} isJournalOpen ジャーナルエリアが開いているかどうか
+   * @param {string} resolvedTheme 適用中の解決済みテーマ名
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderJournalAside(
+    isJournalOpen: boolean,
+    resolvedTheme: string,
+  ): HTMLTemplateResult {
+    const journalPaneClass = isJournalOpen
+      ? "journal-pane"
+      : "journal-pane journal-pane--collapsed";
+
+    return html`
+      <aside class="${journalPaneClass}">
+        <journal-pane
+          data-theme=${resolvedTheme}
+          .isJournalAreaOpen=${isJournalOpen}
+        ></journal-pane>
+      </aside>
+    `;
+  }
+
+  /**
    * 5ペイン（中央コンテンツ領域）の HTML テンプレートを描画する。
    *
    * @private
@@ -478,10 +548,6 @@ export class AppRoot extends LitElement {
       );
     }
 
-    const journalPaneClass = isJournalOpen
-      ? "journal-pane"
-      : "journal-pane journal-pane--collapsed";
-
     return html`
       <div class="panes-container">
         <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
@@ -494,16 +560,7 @@ export class AppRoot extends LitElement {
         ></app-menu>
 
         <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
-        <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
-          <navigation-quick-access
-            class="navigation-quick-access"
-            data-theme=${resolvedTheme}
-          ></navigation-quick-access>
-          <navigation-labels
-            class="navigation-labels"
-            data-theme=${resolvedTheme}
-          ></navigation-labels>
-        </aside>
+        ${this.renderNavigationAside(isOpen, resolvedTheme)}
 
         <!-- 3. Task List (第3ペイン) -->
         <task-list
@@ -518,12 +575,7 @@ export class AppRoot extends LitElement {
         </main>
 
         <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-        <aside class="${journalPaneClass}">
-          <journal-pane
-            data-theme=${resolvedTheme}
-            .isJournalAreaOpen=${isJournalOpen}
-          ></journal-pane>
-        </aside>
+        ${this.renderJournalAside(isJournalOpen, resolvedTheme)}
       </div>
     `;
   }
