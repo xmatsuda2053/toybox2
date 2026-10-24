@@ -113,6 +113,55 @@ export class AppMenu extends WithLayoutUIController(
   };
 
   /**
+   * データベースエクスポートのリクエストイベントを発行する。
+   *
+   * @memberof AppMenu
+   */
+  public handleExportDatabase = (): void => {
+    this.dispatchEvent(
+      new CustomEvent("request-database-export", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
+  /**
+   * データベースインポート用のファイル選択ダイアログを開く。
+   *
+   * @memberof AppMenu
+   */
+  public handleImportDatabase = (): void => {
+    const input = this.renderRoot.querySelector<HTMLInputElement>(
+      "#app-menu-import-input",
+    );
+    input?.click();
+  };
+
+  /**
+   * インポートファイル選択時の処理。
+   *
+   * @memberof AppMenu
+   * @param {Event} event
+   */
+  public handleFileSelected = (event: Event): void => {
+    const target = event.target as HTMLInputElement;
+    const file = target?.files?.[0];
+    if (file) {
+      this.dispatchEvent(
+        new CustomEvent("request-database-import", {
+          detail: { file },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+    if (target) {
+      target.value = "";
+    }
+  };
+
+  /**
    * サイドパネル開閉トグルボタンを描画する。
    *
    * @private
@@ -255,6 +304,93 @@ export class AppMenu extends WithLayoutUIController(
     `;
   }
 
+  /**
+   * データベースエクスポートボタンを描画する。
+   *
+   * @private
+   * @param {boolean} isDisabled
+   * @memberof AppMenu
+   */
+  private renderExportButton(isDisabled: boolean = false) {
+    const tooltip = "データベースをエクスポート";
+    return html`
+      <wa-tooltip for="app-menu-export-btn" placement="right">
+        ${tooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-export-btn"
+        class="app-menu__btn app-menu__export-btn"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        ?disabled=${isDisabled}
+        @click=${this.handleExportDatabase}
+      >
+        <wa-icon
+          library="my-icons"
+          name="download-solid-full"
+          class="app-menu__export-icon"
+          label=${tooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
+   * データベースインポートボタンを描画する。
+   *
+   * @private
+   * @param {boolean} isDisabled
+   * @memberof AppMenu
+   */
+  private renderImportButton(isDisabled: boolean = false) {
+    const tooltip = "データベースをインポート";
+    return html`
+      <wa-tooltip for="app-menu-import-btn" placement="right">
+        ${tooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-import-btn"
+        class="app-menu__btn app-menu__import-btn"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        ?disabled=${isDisabled}
+        @click=${this.handleImportDatabase}
+      >
+        <wa-icon
+          library="my-icons"
+          name="upload-solid-full"
+          class="app-menu__import-icon"
+          label=${tooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
+   * 下部補助機能エリア（システムボタン群）を描画する。
+   *
+   * @private
+   * @memberof AppMenu
+   */
+  private renderSecondary() {
+    return html`
+      <div class="app-menu__secondary">
+        ${this.renderExportButton(this.isScratchMode)}
+        ${this.renderImportButton(this.isScratchMode)}
+        <input
+          id="app-menu-import-input"
+          class="app-menu__import-input"
+          type="file"
+          accept=".json"
+          hidden
+          @change=${this.handleFileSelected}
+        />
+      </div>
+    `;
+  }
+
   override render() {
     return html`
       <!-- 上部エリア (メイン機能群) -->
@@ -268,8 +404,8 @@ export class AppMenu extends WithLayoutUIController(
         ${this.renderZenModeButton(this.isZenMode, this.isScratchMode)}
       </div>
 
-      <!-- 下部エリア (将来の補助機能群) -->
-      <div class="app-menu__secondary"></div>
+      <!-- 下部エリア (システムボタン群) -->
+      ${this.renderSecondary()}
     `;
   }
 }

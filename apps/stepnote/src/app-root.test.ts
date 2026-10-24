@@ -603,6 +603,43 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect(altNEvent.preventDefault).not.toHaveBeenCalled();
     });
   });
+
+  describe("11. データベースバックアップ（エクスポート・インポート）連携", () => {
+    it("11-1. request-database-export イベント受信時に handleExportDatabase が呼ばれ、exportDatabase が実行されること", async () => {
+      const exportSpy = vi
+        .spyOn(appRoot.databaseBackupService, "exportDatabase")
+        .mockResolvedValue(new Blob());
+
+      appRoot.dispatchEvent(
+        new CustomEvent("request-database-export", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      // 非同期ハンドラの完了を待機
+      await (appRoot as any).handleExportDatabase();
+      expect(exportSpy).toHaveBeenCalled();
+    });
+
+    it("11-2. request-database-import イベント受信時に handleImportDatabase が呼ばれ、importDatabase が実行されること", async () => {
+      const importSpy = vi
+        .spyOn(appRoot.databaseBackupService, "importDatabase")
+        .mockResolvedValue(undefined);
+
+      const mockFile = new File(['{"test":1}'], "backup.json", {
+        type: "application/json",
+      });
+
+      await (appRoot as any).handleImportDatabase(
+        new CustomEvent("request-database-import", {
+          detail: { file: mockFile },
+        }),
+      );
+
+      expect(importSpy).toHaveBeenCalledWith(expect.anything(), mockFile);
+    });
+  });
 });
 
 

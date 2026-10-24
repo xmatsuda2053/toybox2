@@ -38,6 +38,7 @@ import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
 import { SystemLogService } from "@/services/system-log.service.js";
+import { DatabaseBackupService } from "@/services/database-backup.service.js";
 import {
   QuickAccessRepository,
   LabelsRepository,
@@ -72,6 +73,7 @@ export class AppRoot extends LitElement {
   public themeController: ThemeController;
   public scratchController: ScratchController;
   public systemLogService: SystemLogService;
+  public databaseBackupService: DatabaseBackupService;
 
   @state()
   public isGlobalSearchOpen = false;
@@ -81,8 +83,16 @@ export class AppRoot extends LitElement {
 
   constructor() {
     super();
+    this.databaseBackupService = new DatabaseBackupService();
+
     this.addEventListener("request-task-create", () => {
       this.handleOpenTaskCreate();
+    });
+    this.addEventListener("request-database-export", () => {
+      this.handleExportDatabase();
+    });
+    this.addEventListener("request-database-import", (e: Event) => {
+      this.handleImportDatabase(e as CustomEvent<{ file: File }>);
     });
 
     // 1. Controller インスタンスの生成と初期化
@@ -260,6 +270,42 @@ export class AppRoot extends LitElement {
       await this.taskListController.selectTask(event.detail.taskId);
     }
     this.requestUpdate();
+  };
+
+  /**
+   * データベースの全テーブルをエクスポートする。
+   *
+   * @memberof AppRoot
+   */
+  public handleExportDatabase = async (): Promise<void> => {
+    try {
+      await this.databaseBackupService.exportDatabase(db);
+    } catch (error) {
+      console.error("データベースのエクスポートに失敗しました:", error);
+    }
+  };
+
+  /**
+   * 選択されたバックアップファイルからデータベースをインポートし、画面を再読み込みする。
+   *
+   * @memberof AppRoot
+   * @param {CustomEvent<{ file: File }>} event
+   */
+  public handleImportDatabase = async (
+    event: CustomEvent<{ file: File }>,
+  ): Promise<void> => {
+    const file = event.detail?.file;
+    if (!file) {
+      return;
+    }
+    try {
+      await this.databaseBackupService.importDatabase(db, file);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("データベースのインポートに失敗しました:", error);
+    }
   };
 
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
