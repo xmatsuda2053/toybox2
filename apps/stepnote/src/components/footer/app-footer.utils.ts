@@ -8,29 +8,18 @@ import type { TaskStatusCode } from "../../types/domain/task-status.type.js";
  */
 
 /**
- * バイト数を人間が読みやすい形式（B, KB, MB, GB）にフォーマットする。
+ * バイト数をメガバイト（MB）単位（小数点第2位固定）にフォーマットする。
  *
- * @param bytes フォーマット対象のバイト数（未定義または0以下の場合は '0 KB'）
- * @returns フォーマット済み文字列（例: "2.4 MB", "0 KB"）
+ * @param bytes フォーマット対象のバイト数（未定義または0以下の場合は '0.00 MB'）
+ * @returns フォーマット済み文字列（例: "0.04 MB", "1.50 MB", "0.00 MB"）
  */
 export function formatStorageSize(bytes?: number | null): string {
-  if (bytes === undefined || bytes === null || bytes === 0 || isNaN(bytes)) {
-    return "0 KB";
-  }
-  if (bytes < 1024) {
-    return `${bytes} B`;
+  if (bytes === undefined || bytes === null || bytes <= 0 || isNaN(bytes)) {
+    return "0.00 MB";
   }
 
-  const units = ["KB", "MB", "GB", "TB"];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-
-  return `${value.toFixed(1)} ${units[unitIndex]}`;
+  const megabytes = bytes / (1024 * 1024);
+  return `${megabytes.toFixed(2)} MB`;
 }
 
 /**

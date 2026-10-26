@@ -4,6 +4,7 @@ import { flattenTemplate } from "@shared/utils";
 import { AppFooter } from "./app-footer.js";
 import { TASK_STATUS_CODE } from "../../constants/task-status.constants.js";
 import type { TaskListController } from "../../controllers/task-list.controller.js";
+import type { TaskController } from "../../controllers/task.controller.js";
 
 /**
  * 【AppFooter コンポーネント仕様 (app-footer.test.ts)】
@@ -20,8 +21,8 @@ import type { TaskListController } from "../../controllers/task-list.controller.
  *    - 1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタン (wa-button#footer-btn-shortcuts) および wa-tooltip がレンダリングされること
  *
  * 2. ストレージ推定使用量の表示
- *    - 2-1. storageUsage が設定されている場合、フォーマットされた文字列 (例: "2.4 MB") が表示されること
- *    - 2-2. storageUsage が 0 または未設定の場合、"0 KB" が表示されること
+ *    - 2-1. storageUsage が設定されている場合、フォーマットされた文字列 (例: "2.40 MB") が表示されること
+ *    - 2-2. storageUsage が 0 または未設定の場合、"0.00 MB" が表示されること
  *
  * 3. ライフサイクル・初期化
  *    - 3-1. connectedCallback 実行時に updateStorageUsage が呼び出され、使用量が反映されること
@@ -32,6 +33,10 @@ import type { TaskListController } from "../../controllers/task-list.controller.
  *
  * 5. イベント発火
  *    - 5-1. handleShortcutHelpClick 実行時に request-shortcut-help カスタムイベントが発火されること
+ *
+ * 6. コントローラー状態更新とストレージ使用量の連動
+ *    - 6-1. 各種コントローラー（task, logs, notes, issues, scratch, labels, taskList）の更新通知契機でストレージ使用量更新がトリガーされること
+ *    - 6-2. コントローラーが subscribe 経由で変更通知を発行した際、requestStorageUpdate が呼び出されること
  */
 
 describe("AppFooter Component", () => {
@@ -135,13 +140,13 @@ describe("AppFooter Component", () => {
     it("2-1. storageUsage が設定されている場合、フォーマットされた文字列が表示されること", () => {
       footer.storageUsage = 2.4 * 1024 * 1024;
       const htmlStr = flattenTemplate(footer.render());
-      expect(htmlStr).toContain("2.4 MB");
+      expect(htmlStr).toContain("2.40 MB");
     });
 
-    it("2-2. storageUsage が 0 または未設定の場合、'0 KB' が表示されること", () => {
+    it("2-2. storageUsage が 0 または未設定の場合、'0.00 MB' が表示されること", () => {
       footer.storageUsage = undefined;
       const htmlStr = flattenTemplate(footer.render());
-      expect(htmlStr).toContain("0 KB");
+      expect(htmlStr).toContain("0.00 MB");
     });
   });
 
@@ -185,6 +190,35 @@ describe("AppFooter Component", () => {
       footer.addEventListener("request-shortcut-help", listener);
       footer.handleShortcutHelpClick();
       expect(listener).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("6. コントローラー状態更新とストレージ使用量の連動", () => {
+    it("6-1. 各種コントローラーの更新通知契機でストレージ使用量更新がトリガーされること", () => {
+      const requestSpy = vi.spyOn(footer, "requestStorageUpdate");
+
+      // コントローラー更新ハンドラーを呼び出し
+      footer.handleControllerDataChange();
+
+      expect(requestSpy).toHaveBeenCalled();
+    });
+
+    it("6-2. コントローラーが subscribe 経由で変更通知を発行した際、requestStorageUpdate が呼び出されること", () => {
+      let listener: (() => void) | undefined;
+      const mockController = {
+        subscribe: vi.fn((cb: () => void) => {
+          listener = cb;
+          return () => {};
+        }),
+      };
+
+      footer.taskController = mockController as unknown as TaskController;
+      const requestSpy = vi.spyOn(footer, "requestStorageUpdate");
+
+      expect(mockController.subscribe).toHaveBeenCalled();
+      listener?.();
+
+      expect(requestSpy).toHaveBeenCalled();
     });
   });
 });

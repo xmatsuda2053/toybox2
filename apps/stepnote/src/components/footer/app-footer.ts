@@ -1,5 +1,6 @@
 import { html, unsafeCSS } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { debounce } from "@shared/utils";
 import appFooterStyles from "./app-footer.scss?inline";
 import {
   formatStorageSize,
@@ -10,22 +11,48 @@ import {
 } from "./app-footer.utils.js";
 import {
   SubscriberElement,
+  WithLabelsController,
+  WithScratchController,
+  WithIssuesController,
+  WithNotesController,
+  WithLogsController,
+  WithTaskController,
   WithTaskListController,
 } from "../../utils/controller-consumers.mixin.js";
 import type { TaskRecord } from "../../db/models/task.model.js";
+import type { TaskListController } from "../../controllers/task-list.controller.js";
+import type { TaskController } from "../../controllers/task.controller.js";
+import type { LogsController } from "../../controllers/logs.controller.js";
+import type { NotesController } from "../../controllers/notes.controller.js";
+import type { IssuesController } from "../../controllers/issues.controller.js";
+import type { ScratchController } from "../../controllers/scratch.controller.js";
+import type { LabelsController } from "../../controllers/labels.controller.js";
 
 /**
  * StepNote フッターコンポーネント (AppFooter)
  *
  * 画面最下部に位置し、データ保全・ストレージインジケーター（アイデア1）、
  * タスク進捗サマリー（アイデア2）、ショートカットヘルプ（アイデア5）を提供するステータスバー。
+ * 各種データコントローラーの更新を購読し、ストレージ容量をリアルタイムに自動更新する。
  *
  * @export
  * @class AppFooter
- * @extends {WithTaskListController(SubscriberElement)}
+ * @extends {WithLabelsController(WithScratchController(WithIssuesController(WithNotesController(WithLogsController(WithTaskController(WithTaskListController(SubscriberElement)))))))}
  */
 @customElement("app-footer")
-export class AppFooter extends WithTaskListController(SubscriberElement) {
+export class AppFooter extends WithLabelsController(
+  WithScratchController(
+    WithIssuesController(
+      WithNotesController(
+        WithLogsController(
+          WithTaskController(
+            WithTaskListController(SubscriberElement),
+          ),
+        ),
+      ),
+    ),
+  ),
+) {
   public static override styles = unsafeCSS(appFooterStyles);
 
   /**
@@ -59,11 +86,111 @@ export class AppFooter extends WithTaskListController(SubscriberElement) {
   public completedTaskCount?: number;
 
   /**
+   * デバウンスされたストレージ使用量更新リクエスト
+   */
+  public requestStorageUpdate = debounce(() => {
+    void this.updateStorageUsage();
+  }, 300);
+
+  /**
+   * 各種コントローラーのデータ更新通知ハンドラー
+   */
+  public handleControllerDataChange = (): void => {
+    this.requestUpdate();
+    this.requestStorageUpdate();
+  };
+
+  /**
    * コンポーネントが DOM に接続された際のライフサイクルコールバック。
    */
   public override connectedCallback(): void {
     super.connectedCallback();
     void this.updateStorageUsage();
+  }
+
+  /**
+   * コンポーネントが DOM から切断された際のライフサイクルコールバック。
+   */
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.requestStorageUpdate.cancel();
+  }
+
+  public override get taskListController(): TaskListController | undefined {
+    return super.taskListController;
+  }
+
+  public override set taskListController(controller: TaskListController | undefined) {
+    super.taskListController = controller;
+    if (controller) {
+      this.subscriber.subscribe("taskList-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get taskController(): TaskController | undefined {
+    return super.taskController;
+  }
+
+  public override set taskController(controller: TaskController | undefined) {
+    super.taskController = controller;
+    if (controller) {
+      this.subscriber.subscribe("task-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get logsController(): LogsController | undefined {
+    return super.logsController;
+  }
+
+  public override set logsController(controller: LogsController | undefined) {
+    super.logsController = controller;
+    if (controller) {
+      this.subscriber.subscribe("logs-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get notesController(): NotesController | undefined {
+    return super.notesController;
+  }
+
+  public override set notesController(controller: NotesController | undefined) {
+    super.notesController = controller;
+    if (controller) {
+      this.subscriber.subscribe("notes-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get issuesController(): IssuesController | undefined {
+    return super.issuesController;
+  }
+
+  public override set issuesController(controller: IssuesController | undefined) {
+    super.issuesController = controller;
+    if (controller) {
+      this.subscriber.subscribe("issues-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get scratchController(): ScratchController | undefined {
+    return super.scratchController;
+  }
+
+  public override set scratchController(controller: ScratchController | undefined) {
+    super.scratchController = controller;
+    if (controller) {
+      this.subscriber.subscribe("scratch-storage", controller, this.handleControllerDataChange);
+    }
+  }
+
+  public override get labelsController(): LabelsController | undefined {
+    return super.labelsController;
+  }
+
+  public override set labelsController(controller: LabelsController | undefined) {
+    super.labelsController = controller;
+    if (controller) {
+      this.subscriber.subscribe("labels-storage", controller, this.handleControllerDataChange);
+    }
   }
 
   /**

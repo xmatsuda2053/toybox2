@@ -46,30 +46,29 @@ describe("AppFooter Utilities", () => {
   });
 
   describe("1. formatStorageSize", () => {
-    it("1-1. undefined または null の場合は '0 KB' を返すこと", () => {
-      expect(formatStorageSize(undefined)).toBe("0 KB");
-      expect(formatStorageSize(null as unknown as number)).toBe("0 KB");
+    it("1-1. undefined または null の場合は '0.00 MB' を返すこと", () => {
+      expect(formatStorageSize(undefined)).toBe("0.00 MB");
+      expect(formatStorageSize(null as unknown as number)).toBe("0.00 MB");
     });
 
-    it("1-2. 0 バイトの場合は '0 KB' を返すこと", () => {
-      expect(formatStorageSize(0)).toBe("0 KB");
+    it("1-2. 0 バイトの場合は '0.00 MB' を返すこと", () => {
+      expect(formatStorageSize(0)).toBe("0.00 MB");
     });
 
-    it("1-3. 1024 バイト未満の場合は 'B' 単位でフォーマットされること", () => {
-      expect(formatStorageSize(500)).toBe("500 B");
+    it("1-3. 1024 バイト未満（例: 500 バイト）の場合、'0.00 MB' を返すこと", () => {
+      expect(formatStorageSize(500)).toBe("0.00 MB");
     });
 
-    it("1-4. KB 単位の数値が適切にフォーマットされること", () => {
-      expect(formatStorageSize(1024)).toBe("1.0 KB");
-      expect(formatStorageSize(1536)).toBe("1.5 KB");
+    it("1-4. 45 KB（46,080 バイト）の場合、'0.04 MB' を返すこと", () => {
+      expect(formatStorageSize(46080)).toBe("0.04 MB");
     });
 
-    it("1-5. MB 単位の数値が適切にフォーマットされること", () => {
-      expect(formatStorageSize(2.4 * 1024 * 1024)).toBe("2.4 MB");
+    it("1-5. 1.5 MB（1,572,864 バイト）の場合、'1.50 MB' を返すこと", () => {
+      expect(formatStorageSize(1.5 * 1024 * 1024)).toBe("1.50 MB");
     });
 
-    it("1-6. GB 単位の数値が適切にフォーマットされること", () => {
-      expect(formatStorageSize(1.2 * 1024 * 1024 * 1024)).toBe("1.2 GB");
+    it("1-6. 10 MB（10,485,760 バイト）の場合、'10.00 MB' を返すこと", () => {
+      expect(formatStorageSize(10 * 1024 * 1024)).toBe("10.00 MB");
     });
   });
 
