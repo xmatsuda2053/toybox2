@@ -12,6 +12,7 @@ import {
   crosshairCursor,
   highlightActiveLine,
   keymap,
+  type KeyBinding,
 } from "@codemirror/view";
 import {
   EditorState,
@@ -66,6 +67,7 @@ export type MarkdownActionType =
   | "heading"
   | "bold"
   | "italic"
+  | "strikethrough"
   | "bullet-list"
   | "ordered-list"
   | "task-list"
@@ -73,6 +75,51 @@ export type MarkdownActionType =
   | "code"
   | "link"
   | "table";
+
+export interface MarkdownKeymapTarget {
+  insertMarkdown: (action: MarkdownActionType) => void;
+}
+
+/**
+ * Markdown ショートカット用の CodeMirror キーマップ定義を生成する純粋関数
+ *
+ * @param target Markdown アクション実行対象
+ * @returns KeyBinding 配列
+ */
+export function createMarkdownKeymap(
+  target: MarkdownKeymapTarget,
+): readonly KeyBinding[] {
+  return [
+    {
+      key: "Mod-b",
+      run: () => {
+        target.insertMarkdown("bold");
+        return true;
+      },
+    },
+    {
+      key: "Mod-i",
+      run: () => {
+        target.insertMarkdown("italic");
+        return true;
+      },
+    },
+    {
+      key: "Mod-Shift-x",
+      run: () => {
+        target.insertMarkdown("strikethrough");
+        return true;
+      },
+    },
+    {
+      key: "Mod-Shift-t",
+      run: () => {
+        target.insertMarkdown("table");
+        return true;
+      },
+    },
+  ];
+}
 
 /**
  * Markdown エディタコンポーネント (<markdown-editor>)
@@ -225,6 +272,7 @@ export class MarkdownEditor extends LitElement {
       highlightActiveLine(),
       keymap.of([
         indentWithTab,
+        ...createMarkdownKeymap(this),
         ...defaultKeymap,
         ...historyKeymap,
         ...foldKeymap,

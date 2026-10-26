@@ -341,17 +341,31 @@ export class AppRoot extends LitElement {
   };
 
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
+    // 全画面スクラッチモード切替（スクラッチモード中であっても通常画面へ復帰できるよう最優先で判定）
+    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      this.layoutUIController.toggleScratchMode();
+      return;
+    }
+
     if (this.layoutUIController.state.isScratchMode) {
       return;
     }
 
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+    // 集中モード切替
+    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      this.layoutUIController.toggleZenMode();
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
       e.preventDefault();
       this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
       return;
     }
 
-    if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key === "/") {
       e.preventDefault();
       this.handleToggleShortcutHelp();
       return;
