@@ -238,6 +238,7 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
 
       expect(htmlStr).toContain("app-header");
       expect(htmlStr).toContain("app-footer");
+      expect(htmlStr).toContain("<app-footer");
     });
   });
 });
