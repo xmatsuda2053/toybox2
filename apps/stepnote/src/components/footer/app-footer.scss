@@ -83,3 +83,24 @@
   font-size: 10px;
   user-select: none;
 }
+
+.app-footer__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wa-color-text-quiet);
+  cursor: pointer;
+  @include theme-transition;
+
+  &:hover {
+    color: var(--wa-color-text-loud);
+  }
+
+  &::part(base) {
+    min-height: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border: none;
+    background: transparent;
+  }
+}

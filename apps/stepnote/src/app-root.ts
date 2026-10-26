@@ -35,6 +35,7 @@ import "@/components/panes/scratch-pane.js";
 import "@/components/search/global-search-dialog.js";
 import "@/components/task-list/task-create-dialog.js";
 import "@/components/footer/app-footer.js";
+import "@/components/help/shortcut-help-drawer.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -82,6 +83,9 @@ export class AppRoot extends LitElement {
   @state()
   public isTaskCreateDialogOpen = false;
 
+  @state()
+  public isShortcutHelpOpen = false;
+
   constructor() {
     super();
     this.databaseBackupService = new DatabaseBackupService();
@@ -106,6 +110,9 @@ export class AppRoot extends LitElement {
     });
     this.addEventListener("request-database-import", (e: Event) => {
       this.handleImportDatabase(e as CustomEvent<{ file: File }>);
+    });
+    this.addEventListener("request-shortcut-help", () => {
+      this.handleToggleShortcutHelp();
     });
   }
 
@@ -325,6 +332,14 @@ export class AppRoot extends LitElement {
     }
   };
 
+  public handleToggleShortcutHelp = (): void => {
+    this.isShortcutHelpOpen = !this.isShortcutHelpOpen;
+  };
+
+  public handleCloseShortcutHelp = (): void => {
+    this.isShortcutHelpOpen = false;
+  };
+
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
     if (this.layoutUIController.state.isScratchMode) {
       return;
@@ -333,6 +348,12 @@ export class AppRoot extends LitElement {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+      e.preventDefault();
+      this.handleToggleShortcutHelp();
       return;
     }
 
@@ -629,6 +650,13 @@ export class AppRoot extends LitElement {
           @dialog-close=${this.handleCloseTaskCreate}
           @task-created=${this.handleTaskCreated}
         ></task-create-dialog>
+
+        <!-- ショートカットヘルプ Drawer -->
+        <shortcut-help-drawer
+          .open=${this.isShortcutHelpOpen}
+          data-theme=${resolvedTheme}
+          @drawer-close=${this.handleCloseShortcutHelp}
+        ></shortcut-help-drawer>
       </div>
     `;
   }
