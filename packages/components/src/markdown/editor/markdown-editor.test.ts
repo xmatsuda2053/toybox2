@@ -36,7 +36,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { MarkdownEditor } from "./markdown-editor.js";
+import { MarkdownEditor, createMarkdownKeymap } from "./markdown-editor.js";
 import { EditorView } from "@codemirror/view";
 
 describe("MarkdownEditor (<markdown-editor>)", () => {
@@ -106,6 +106,47 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
       editor.value = "宿題をする";
       editor.insertMarkdown("task-list");
       expect(editor.value).toContain("- [ ] ");
+    });
+
+    it("insertMarkdown('strikethrough') により取り消し線構文が挿入されること", () => {
+      editor.insertMarkdown("strikethrough");
+      expect(editor.value).toContain("~~取り消し線~~");
+    });
+  });
+
+  describe("Markdownキーボードショートカット (createMarkdownKeymap)", () => {
+    it("Mod-b, Mod-i, Mod-Shift-x, Mod-Shift-t のキーバインディングが登録されていること", () => {
+      const mockEditor = { insertMarkdown: vi.fn() };
+      const keybindings = createMarkdownKeymap(mockEditor);
+
+      const keys = keybindings.map((b) => b.key);
+      expect(keys).toContain("Mod-b");
+      expect(keys).toContain("Mod-i");
+      expect(keys).toContain("Mod-Shift-x");
+      expect(keys).toContain("Mod-Shift-t");
+    });
+
+    it("各キーバインディングの実行により、対応する insertMarkdown が呼び出され true を返すこと", () => {
+      const mockEditor = { insertMarkdown: vi.fn() };
+      const keybindings = createMarkdownKeymap(mockEditor);
+
+      const bindingModB = keybindings.find((b) => b.key === "Mod-b");
+      const bindingModI = keybindings.find((b) => b.key === "Mod-i");
+      const bindingModShiftX = keybindings.find((b) => b.key === "Mod-Shift-x");
+      const bindingModShiftT = keybindings.find((b) => b.key === "Mod-Shift-t");
+
+      const dummyView = {} as unknown as EditorView;
+      expect(bindingModB?.run?.(dummyView)).toBe(true);
+      expect(mockEditor.insertMarkdown).toHaveBeenCalledWith("bold");
+
+      expect(bindingModI?.run?.(dummyView)).toBe(true);
+      expect(mockEditor.insertMarkdown).toHaveBeenCalledWith("italic");
+
+      expect(bindingModShiftX?.run?.(dummyView)).toBe(true);
+      expect(mockEditor.insertMarkdown).toHaveBeenCalledWith("strikethrough");
+
+      expect(bindingModShiftT?.run?.(dummyView)).toBe(true);
+      expect(mockEditor.insertMarkdown).toHaveBeenCalledWith("table");
     });
   });
 

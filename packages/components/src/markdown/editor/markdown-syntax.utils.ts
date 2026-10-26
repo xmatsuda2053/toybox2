@@ -28,6 +28,8 @@ export function getFallbackMarkdownText(
       return currentText ? `**${currentText}**` : "**太字**";
     case "italic":
       return currentText ? `*${currentText}*` : "*斜体*";
+    case "strikethrough":
+      return currentText ? `~~${currentText}~~` : "~~取り消し線~~";
     case "heading":
       return `### ${currentText || "見出し"}`;
     case "bullet-list":
@@ -131,6 +133,14 @@ function formatItalic(
   return formatSurroundingDelimiter(selectedText, from, to, "*", "斜体");
 }
 
+function formatStrikethrough(
+  selectedText: string,
+  from: number,
+  to: number,
+): SurroundingSyntaxResult {
+  return formatSurroundingDelimiter(selectedText, from, to, "~~", "取り消し線");
+}
+
 function formatCode(
   selectedText: string,
   from: number,
@@ -201,6 +211,8 @@ export function getSurroundingSyntax(
       return formatBold(selectedText, from, to);
     case "italic":
       return formatItalic(selectedText, from, to);
+    case "strikethrough":
+      return formatStrikethrough(selectedText, from, to);
     case "code":
       return formatCode(selectedText, from, to);
     case "link":

@@ -110,6 +110,13 @@ import { AppRoot } from "./app-root.js";
  *    - [x] 12-3. handleCloseShortcutHelp 実行時に isShortcutHelpOpen が false に更新されること
  *    - [x] 12-4. Ctrl+/ キーボードショートカットで isShortcutHelpOpen の開閉がトグルされること
  *    - [x] 12-5. isScratchMode が true の際、Ctrl+/ によるショートカットヘルプ表示が抑止されること
+ *
+ * 【AppRoot ビュー・ペイン切替ショートカット仕様 (Phase 13)】
+ * 13. ビュー・ペイン切替キーボードショートカット
+ *    - [ ] 13-1. Ctrl+Alt+Z 押下時に layoutUIController.toggleZenMode が呼び出され、preventDefault が実行されること
+ *    - [ ] 13-2. Ctrl+Alt+S 押下時に layoutUIController.toggleScratchMode が呼び出され、preventDefault が実行されること
+ *    - [ ] 13-3. isScratchMode が true の際、Ctrl+Alt+Z による集中モード切替は抑止されること
+ *    - [ ] 13-4. isScratchMode が true の際でも、Ctrl+Alt+S によるスクラッチパッド解除が実行できること
  */
 
 /**
@@ -722,6 +729,84 @@ describe("AppRoot Controller 状態連携仕様", () => {
       (appRoot as any).handleGlobalKeyDown(ctrlSlashEvent);
       expect(appRoot.isShortcutHelpOpen).toBe(false);
       expect(ctrlSlashEvent.preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("13. ビュー・ペイン切替キーボードショートカット", () => {
+    it("13-1. Ctrl+Alt+Z 押下時に layoutUIController.toggleZenMode が呼び出され、preventDefault が実行されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: false,
+      };
+      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+
+      const ctrlAltZEvent = {
+        key: "z",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlAltZEvent);
+      expect(toggleZenSpy).toHaveBeenCalled();
+      expect(ctrlAltZEvent.preventDefault).toHaveBeenCalled();
+    });
+
+    it("13-2. Ctrl+Alt+S 押下時に layoutUIController.toggleScratchMode が呼び出され、preventDefault が実行されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: false,
+      };
+      const toggleScratchSpy = vi.spyOn(appRoot.layoutUIController, "toggleScratchMode");
+
+      const ctrlAltSEvent = {
+        key: "s",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlAltSEvent);
+      expect(toggleScratchSpy).toHaveBeenCalled();
+      expect(ctrlAltSEvent.preventDefault).toHaveBeenCalled();
+    });
+
+    it("13-3. isScratchMode が true の際、Ctrl+Alt+Z による集中モード切替は抑止されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+
+      const ctrlAltZEvent = {
+        key: "z",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlAltZEvent);
+      expect(toggleZenSpy).not.toHaveBeenCalled();
+      expect(ctrlAltZEvent.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it("13-4. isScratchMode が true の際でも、Ctrl+Alt+S によるスクラッチパッド解除が実行できること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      const toggleScratchSpy = vi.spyOn(appRoot.layoutUIController, "toggleScratchMode");
+
+      const ctrlAltSEvent = {
+        key: "s",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlAltSEvent);
+      expect(toggleScratchSpy).toHaveBeenCalled();
+      expect(ctrlAltSEvent.preventDefault).toHaveBeenCalled();
     });
   });
 });

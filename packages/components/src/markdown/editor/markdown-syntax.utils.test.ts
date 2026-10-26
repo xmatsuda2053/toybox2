@@ -45,10 +45,12 @@ describe("markdown-syntax.utils", () => {
       expect(getFallbackMarkdownText("code", "")).toBe("`コード`");
       expect(getFallbackMarkdownText("link", "")).toBe("[リンク](url)");
       expect(getFallbackMarkdownText("table", "")).toContain("| 列1 | 列2 | 列3 |");
+      expect(getFallbackMarkdownText("strikethrough", "")).toBe("~~取り消し線~~");
     });
 
     it("現在のテキストが存在する場合、そのテキストを装飾して返すこと", () => {
       expect(getFallbackMarkdownText("bold", "重要")).toBe("**重要**");
+      expect(getFallbackMarkdownText("strikethrough", "不要")).toBe("~~不要~~");
       expect(getFallbackMarkdownText("heading", "セクション1")).toBe("### セクション1");
       expect(getFallbackMarkdownText("link", "公式サイト")).toBe("[公式サイト](url)");
     });
@@ -85,6 +87,20 @@ describe("markdown-syntax.utils", () => {
       expect(result.insertText).toBe("**太字**");
       expect(result.anchor).toBe(7); // 5 + 2
       expect(result.head).toBe(9); // 5 + 4
+    });
+
+    it("strikethrough: テキスト選択ありの場合は文字列を ~~ で囲み、選択範囲を内側に設定すること", () => {
+      const result = getSurroundingSyntax("strikethrough", "hello", 10, 15);
+      expect(result.insertText).toBe("~~hello~~");
+      expect(result.anchor).toBe(12); // 10 + 2
+      expect(result.head).toBe(17); // 15 + 2
+    });
+
+    it("strikethrough: テキスト選択なしの場合は ~~取り消し線~~ を挿入し、取り消し線テキストを選択状態にすること", () => {
+      const result = getSurroundingSyntax("strikethrough", "", 5, 5);
+      expect(result.insertText).toBe("~~取り消し線~~");
+      expect(result.anchor).toBe(7); // 5 + 2
+      expect(result.head).toBe(12); // 5 + 2 + 5
     });
 
     it("code: 改行を含まない単行テキストはインラインコードにすること", () => {
