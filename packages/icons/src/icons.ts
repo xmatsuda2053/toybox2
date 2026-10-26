@@ -6,6 +6,7 @@ import arrows_up_down_solid_full from "./assets/icons/arrows-up-down-solid-full.
 import bars_solid_full from "./assets/icons/bars-solid-full.svg?raw";
 import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
 import bold_solid_full from "./assets/icons/bold-solid-full.svg?raw";
+import book_open_solid_full from "./assets/icons/book-open-solid-full.svg?raw";
 import bookmark_solid_full from "./assets/icons/bookmark-solid-full.svg?raw";
 import building_solid_full from "./assets/icons/building-solid-full.svg?raw";
 import calendar_check_solid_full from "./assets/icons/calendar-check-solid-full.svg?raw";
@@ -24,6 +25,7 @@ import code_solid_full from "./assets/icons/code-solid-full.svg?raw";
 import compress_solid_full from "./assets/icons/compress-solid-full.svg?raw";
 import copy_solid_full from "./assets/icons/copy-solid-full.svg?raw";
 import cubes_stacked_solid_full from "./assets/icons/cubes-stacked-solid-full.svg?raw";
+import database_solid_full from "./assets/icons/database-solid-full.svg?raw";
 import display_solid_full from "./assets/icons/display-solid-full.svg?raw";
 import download_solid_full from "./assets/icons/download-solid-full.svg?raw";
 import ellipsis_solid_full from "./assets/icons/ellipsis-solid-full.svg?raw";
@@ -80,6 +82,7 @@ export const icons: Record<string, string> = {
   "bars-solid-full": bars_solid_full,
   "blockquote-left": blockquote_left,
   "bold-solid-full": bold_solid_full,
+  "book-open-solid-full": book_open_solid_full,
   "bookmark-solid-full": bookmark_solid_full,
   "building-solid-full": building_solid_full,
   "calendar-check-solid-full": calendar_check_solid_full,
@@ -101,6 +104,7 @@ export const icons: Record<string, string> = {
   "compress": compress_solid_full,
   "copy-solid-full": copy_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
+  "database-solid-full": database_solid_full,
   "display-solid-full": display_solid_full,
   "download-solid-full": download_solid_full,
   "ellipsis-solid-full": ellipsis_solid_full,

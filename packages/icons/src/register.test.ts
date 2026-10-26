@@ -68,6 +68,8 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("circle-xmark-solid-full")).toBe(true);
       expect(hasIcon("download-solid-full")).toBe(true);
       expect(hasIcon("upload-solid-full")).toBe(true);
+      expect(hasIcon("database-solid-full")).toBe(true);
+      expect(hasIcon("book-open-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }

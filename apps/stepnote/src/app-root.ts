@@ -34,6 +34,7 @@ import "@/components/panes/journal-pane.js";
 import "@/components/panes/scratch-pane.js";
 import "@/components/search/global-search-dialog.js";
 import "@/components/task-list/task-create-dialog.js";
+import "@/components/footer/app-footer.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
@@ -610,7 +611,7 @@ export class AppRoot extends LitElement {
         )}
 
         <!-- Footer (下部固定) -->
-        <footer class="app-footer">footer</footer>
+        <app-footer class="app-footer"></app-footer>
 
         <!-- 全体検索モーダル -->
         <global-search-dialog

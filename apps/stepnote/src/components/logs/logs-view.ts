@@ -405,7 +405,7 @@ export class LogsView extends WithLogsController(
   private renderEmptyState(): HTMLTemplateResult {
     return html`
       <div class="logs-view__empty">
-        <wa-icon name="book-open-solid-full"></wa-icon>
+        <wa-icon library="my-icons" name="book-open-solid-full"></wa-icon>
         <span>作業ログがありません</span>
       </div>
     `;
