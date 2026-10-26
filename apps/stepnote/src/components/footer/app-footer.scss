@@ -58,7 +58,9 @@
   @include theme-transition;
 }
 
-.app-footer__status-item--saved {
+.app-footer__status-item--saved,
+.app-footer__status-item--year,
+.app-footer__status-item--tasks {
   color: var(--wa-color-text-quiet);
 }
 
