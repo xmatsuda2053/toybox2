@@ -4,6 +4,7 @@ import { consume } from "@lit/context";
 import {
   labelsContext,
   taskContext,
+  taskListContext,
   issuesContext,
   notesContext,
   logsContext,
@@ -12,6 +13,7 @@ import {
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
+import type { TaskListController } from "@/controllers/task-list.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
@@ -255,6 +257,37 @@ export function WithScratchController<T extends LitElementConstructor>(Base: T) 
     }
   }
   return ScratchConsumerClass;
+}
+
+/**
+ * TaskListController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける taskListController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithTaskListController<T extends LitElementConstructor>(Base: T) {
+  class TaskListConsumerClass extends Base {
+    private _taskListController?: TaskListController;
+
+    /** タスク一覧管理コントローラー */
+    public get taskListController(): TaskListController | undefined {
+      return this._taskListController;
+    }
+
+    @consume({ context: taskListContext, subscribe: true })
+    @property({ attribute: false })
+    public set taskListController(controller: TaskListController | undefined) {
+      this._taskListController = this.subscriber.bind(
+        "taskList",
+        this._taskListController,
+        controller,
+      );
+    }
+  }
+  return TaskListConsumerClass;
 }
 
 

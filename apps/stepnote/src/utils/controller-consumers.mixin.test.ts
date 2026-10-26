@@ -3,6 +3,7 @@ import {
   SubscriberElement,
   WithLabelsController,
   WithTaskController,
+  WithTaskListController,
   WithIssuesController,
   WithNotesController,
   WithLogsController,
@@ -11,6 +12,7 @@ import {
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
+import type { TaskListController } from "@/controllers/task-list.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
@@ -186,6 +188,28 @@ describe("controller-consumers.mixin", () => {
     });
   });
 
+  describe("8. WithTaskListController Mixin", () => {
+    class DummyTaskListElement extends WithTaskListController(
+      SubscriberElement,
+    ) {}
+
+    it("8-1. taskListController の getter / setter が提供され、初期値は undefined であること", () => {
+      const el = new DummyTaskListElement();
+      expect(el.taskListController).toBeUndefined();
+    });
+
+    it("8-2. taskListController 設定時に subscriber.bind が呼び出され、値が保持されること", () => {
+      const el = new DummyTaskListElement();
+      const mockTaskListCtrl = {
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      } as unknown as TaskListController;
+
+      el.taskListController = mockTaskListCtrl;
+      expect(el.taskListController).toBe(mockTaskListCtrl);
+      expect(mockTaskListCtrl.subscribe).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("9. コントローラー解除・再設定時の動作", () => {
     class DummyConsumerElement extends WithTaskController(
       WithLabelsController(SubscriberElement),
@@ -236,3 +260,4 @@ describe("controller-consumers.mixin", () => {
     });
   });
 });
+
