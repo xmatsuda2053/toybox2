@@ -37,15 +37,16 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 4-3. markdown-editor-preview の内容変更（handleContentChange）は 300ms デバウンスされ、入力中は updateLog が呼ばれず、300ms 経過後に1度だけ呼び出されること
  *    - 4-4. handleContentChange が連続で呼び出された場合、前回のタイマーがキャンセルされ、最後の入力から 300ms 後に1度だけ呼び出されること
  *    - 4-5. disconnectedCallback 実行時に保留中のデバウンスタイマーがクリアされ、300ms 経過しても updateLog が呼ばれないこと
- *    - 4-6. 削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が表示されること
- *    - 4-7. 削除確定（handleConfirmDelete）で logsController.deleteLog が呼び出され、展開状態から除外されること
- *    - 4-8. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること
- *    - 4-9. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること
- *    - 4-10. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること
- *    - 4-11. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること
- *    - 4-12. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
- *    - 4-13. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセット（logModeMap が初期化）され、展開状態もクリアされること
- *    - 4-14. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること
+ *    - 4-6. ログ展開時の markdown-editor-preview に .showDeleteButton=${true} および @markdown-delete が設定され、無効な属性（deleteAction）が設定されていないこと
+ *    - 4-7. 削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が表示されること
+ *    - 4-8. 削除確定（handleConfirmDelete）で logsController.deleteLog が呼び出され、展開状態から除外されること
+ *    - 4-9. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること
+ *    - 4-10. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること
+ *    - 4-11. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること
+ *    - 4-12. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること
+ *    - 4-13. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
+ *    - 4-14. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセット（logModeMap が初期化）され、展開状態もクリアされること
+ *    - 4-15. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること
  *
  * 5. 新規ログ作成 (Create Log)
  *    - 5-1. 新規追加ボタンクリック（handleCreateLog）で logsController.createLog が見出しレベル ### のテンプレートで呼び出され、作成されたログが自動展開されること
@@ -315,7 +316,18 @@ describe("LogsView Component", () => {
       expect(mockLogsController.updateLog).not.toHaveBeenCalled();
     });
 
-    it("4-6. 削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が表示されること", () => {
+    it("4-6. ログ展開時の markdown-editor-preview に .showDeleteButton=${true} および @markdown-delete が設定され、無効な属性（deleteAction）が設定されていないこと", () => {
+      element.handleToggleExpand(101);
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.showDeleteButton=["']?true["']?/);
+      expect(htmlStr).toContain("@markdown-delete");
+      expect(htmlStr).not.toContain('deleteAction="enabled"');
+      expect(htmlStr).not.toContain("@markdown-request-delete");
+    });
+
+    it("4-7. 削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が表示されること", () => {
       element.handleRequestDelete(101);
       expect(element.isDeleteDialogOpen).toBe(true);
       expect(element.deletingLogId).toBe(101);
@@ -324,7 +336,7 @@ describe("LogsView Component", () => {
       expect(htmlStr).toContain("logs-view__delete-dialog");
     });
 
-    it("4-7. 削除確定（handleConfirmDelete）で logsController.deleteLog が呼び出され、展開状態から除外されること", async () => {
+    it("4-8. 削除確定（handleConfirmDelete）で logsController.deleteLog が呼び出され、展開状態から除外されること", async () => {
       element.handleRequestDelete(101);
       await element.handleConfirmDelete();
 
@@ -333,14 +345,14 @@ describe("LogsView Component", () => {
       expect(element.expandedLogIds.has(101)).toBe(false);
     });
 
-    it("4-8. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること", () => {
+    it("4-9. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること", () => {
       element.theme = "dark";
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.darkTheme=["']?soft["']?/);
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.themeMode=["']?dark["']?/);
     });
 
-    it("4-9. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること", () => {
+    it("4-10. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること", () => {
       element.handleToggleExpand(101);
       let template = element.render();
       let htmlStr = flattenTemplate(template);
@@ -352,7 +364,7 @@ describe("LogsView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
     });
 
-    it("4-10. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること", async () => {
+    it("4-11. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること", async () => {
       mockLogsController.createLog.mockImplementation(async (log: { value: string; createdAt: Date; updatedAt: Date }) => {
         const id = 103;
         mockLogsController.state.push({
@@ -374,14 +386,14 @@ describe("LogsView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
     });
 
-    it("4-11. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること", async () => {
+    it("4-12. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること", async () => {
       element.logModeMap.set(101, "edit");
       element.handleRequestDelete(101);
       await element.handleConfirmDelete();
       expect(element.logModeMap.has(101)).toBe(false);
     });
 
-    it("4-12. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
+    it("4-13. ログ詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
       element.handleModeChange(101, "edit");
       expect(element.logModeMap.get(101)).toBe("edit");
 
@@ -395,7 +407,7 @@ describe("LogsView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
     });
 
-    it("4-13. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
+    it("4-14. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
       element.handleModeChange(101, "edit");
       expect(element.expandedLogIds.has(101)).toBe(true);
       expect(element.logModeMap.get(101)).toBe("edit");
@@ -411,7 +423,7 @@ describe("LogsView Component", () => {
       expect(element.logModeMap.size).toBe(0);
     });
 
-    it("4-14. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること", () => {
+    it("4-15. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること", () => {
       element.logModeMap.set(101, "edit");
       element.logModeMap.set(102, "edit");
 

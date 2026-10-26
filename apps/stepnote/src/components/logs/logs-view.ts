@@ -323,14 +323,15 @@ export class LogsView extends WithLogsController(
               .mode=${currentMode}
               .themeMode=${themeMode}
               .darkTheme=${"soft"}
-              deleteAction="enabled"
+              .showDeleteButton=${true}
+              ?show-delete-button=${true}
               @mode-change=${(e: CustomEvent<{ mode: MarkdownDisplayMode }>) =>
                 log.id !== undefined &&
                 this.handleModeChange(log.id, e.detail.mode)}
               @markdown-change=${(e: CustomEvent<{ value: string }>) =>
                 log.id !== undefined &&
                 this.handleContentChange(log.id, e.detail.value)}
-              @markdown-request-delete=${() =>
+              @markdown-delete=${() =>
                 log.id !== undefined && this.handleRequestDelete(log.id)}
             ></markdown-editor-preview>
           </div>
