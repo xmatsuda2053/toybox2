@@ -21,6 +21,11 @@ import {
   filterNotes,
   sortNotesByCreatedAtAsc,
 } from "./notes-view.utils.js";
+import {
+  KeyedDebounceManager,
+  DeleteDialogState,
+  extractSearchQuery,
+} from "@/utils/view-state.utils.js";
 import styles from "./notes-view.scss?inline";
 
 /**
@@ -77,8 +82,9 @@ export class NotesView extends WithNotesController(
   @state()
   public noteModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
-  private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
-    new Map();
+  private readonly debounceManager = new KeyedDebounceManager();
+
+  private readonly deleteDialog = new DeleteDialogState();
 
   /** 現在アクティブなコントローラーを取得する */
   public get activeController(): NotesManagerController | undefined {
@@ -152,10 +158,7 @@ export class NotesView extends WithNotesController(
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    for (const timer of this.debounceTimerMap.values()) {
-      clearTimeout(timer);
-    }
-    this.debounceTimerMap.clear();
+    this.debounceManager.clear();
   }
 
   /** 全ノートのエディタモードをプレビューモードへリセットする */
@@ -168,11 +171,7 @@ export class NotesView extends WithNotesController(
   public handleSearchInput = (
     eventOrQuery: CustomEvent<SearchInputEventDetail> | string,
   ): void => {
-    const query =
-      typeof eventOrQuery === "string"
-        ? eventOrQuery
-        : (eventOrQuery.detail?.keyword ?? "");
-    this.searchQuery = query;
+    this.searchQuery = extractSearchQuery(eventOrQuery);
   };
 
   /** タブ選択ハンドラー（別ノートへの切り替え時のみプレビューモードで初期化） */
@@ -224,30 +223,28 @@ export class NotesView extends WithNotesController(
     noteId: number,
     value: string,
   ): void => {
-    const existingTimer = this.debounceTimerMap.get(noteId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    const saveAction = async (): Promise<void> => {
-      const ctrl = this.activeController;
-      if (ctrl) {
-        await ctrl.updateNote(noteId, { value });
-      }
-      this.debounceTimerMap.delete(noteId);
-    };
-
-    this.debounceTimerMap.set(noteId, setTimeout(saveAction, 300));
+    this.debounceManager.debounce(
+      noteId,
+      async () => {
+        const ctrl = this.activeController;
+        if (ctrl) {
+          await ctrl.updateNote(noteId, { value });
+        }
+      },
+      300,
+    );
   };
 
   /** 削除リクエストハンドラー（ダイアログを開く） */
   public handleRequestDelete = (noteId: number): void => {
-    this.deletingNoteId = noteId;
-    this.isDeleteDialogOpen = true;
+    this.deleteDialog.open(noteId);
+    this.isDeleteDialogOpen = this.deleteDialog.isOpen;
+    this.deletingNoteId = this.deleteDialog.deletingId;
   };
 
   /** 削除確認ダイアログを閉じる */
   public handleCloseDeleteDialog = (): void => {
+    this.deleteDialog.close();
     this.isDeleteDialogOpen = false;
     this.deletingNoteId = undefined;
   };
