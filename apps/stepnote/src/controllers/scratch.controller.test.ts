@@ -177,4 +177,38 @@ describe("ScratchController Tests", () => {
       expect(fakeRepo.data).toHaveLength(1);
     });
   });
+
+  describe("5. タイトル（title）自動抽出・同期の検証", () => {
+    it("5-1. createNote で title を指定しなかった場合、value の1行目から title が自動抽出されて保存されること", async () => {
+      const { host } = createMockHost();
+      const controller = new ScratchController(
+        host,
+        fakeRepo as unknown as ScratchRepository,
+      );
+      await controller.initialized;
+
+      await controller.createNote({
+        value: "## スクラッチタイトル\nメモ本文",
+      });
+
+      const created = controller.state.find((item) => item.value.includes("メモ本文"));
+      expect(created?.title).toBe("スクラッチタイトル");
+    });
+
+    it("5-2. updateNote で value を更新した場合、新しい value から title が自動更新されること", async () => {
+      const { host } = createMockHost();
+      const controller = new ScratchController(
+        host,
+        fakeRepo as unknown as ScratchRepository,
+      );
+      await controller.initialized;
+
+      await controller.updateNote(1, {
+        value: "# 更新されたスクラッチ見出し\n本文",
+      });
+
+      const updated = controller.state.find((item) => item.id === 1);
+      expect(updated?.title).toBe("更新されたスクラッチ見出し");
+    });
+  });
 });

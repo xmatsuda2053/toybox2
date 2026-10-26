@@ -378,7 +378,7 @@ export class LogsView extends WithLogsController(
     const isExpanded = this.expandedLogIds.has(log.id);
     const isCollapsing = this.collapsingLogId === log.id;
     const hasBottom = index < total - 1;
-    const title = extractLogTitle(log.value);
+    const title = log.title || extractLogTitle(log.value);
     const rowClass = isExpanded
       ? "logs-view__row logs-view__row--expanded"
       : "logs-view__row";

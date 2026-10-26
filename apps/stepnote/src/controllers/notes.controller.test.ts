@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
 import { NotesController } from "@/controllers/notes.controller";
+import type { NotesRepository } from "@/repositories/notes.repository";
 import type { NoteRecord } from "@/db/models/journal.model";
 
 /**
@@ -339,6 +340,44 @@ describe("NotesController (TDD)", () => {
         1,
         "Note 1-1",
       );
+    });
+  });
+
+  describe("7. タイトル（title）自動抽出・同期の検証", () => {
+    it("7-1. createNote で title を指定しなかった場合、value の1行目から title が自動抽出されて保存されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeNotesRepository([]);
+      controller = new NotesController(
+        mockHost.host,
+        fakeRepository as unknown as NotesRepository,
+        1,
+      );
+      await controller.initialized;
+
+      await controller.createNote({
+        value: "## 自動抽出ノートタイトル\n本文テキスト",
+      });
+
+      expect(controller.state).toHaveLength(1);
+      expect(controller.state[0].title).toBe("自動抽出ノートタイトル");
+    });
+
+    it("7-2. updateNote で value を更新した場合、新しい value から title が自動更新されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeNotesRepository(testNotes);
+      controller = new NotesController(
+        mockHost.host,
+        fakeRepository as unknown as NotesRepository,
+        1,
+      );
+      await controller.initialized;
+
+      await controller.updateNote(1, {
+        value: "# 更新されたノート見出し\n本文",
+      });
+
+      const updated = controller.state.find((item) => item.id === 1);
+      expect(updated?.title).toBe("更新されたノート見出し");
     });
   });
 });

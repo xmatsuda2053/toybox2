@@ -338,4 +338,42 @@ describe("LogsController (TDD)", () => {
       expect(listenerMock).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("6. タイトル（title）自動抽出・同期の検証", () => {
+    it("6-1. createLog で title を指定しなかった場合、value の1行目から title が自動抽出されて保存されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeLogsRepository([]);
+      controller = new LogsController(
+        mockHost.host,
+        fakeRepository as unknown as LogsRepository,
+        1,
+      );
+      await controller.initialized;
+
+      await controller.createLog({
+        value: "## 自動抽出ログタイトル\n本文テキスト",
+      });
+
+      expect(controller.state).toHaveLength(1);
+      expect(controller.state[0].title).toBe("自動抽出ログタイトル");
+    });
+
+    it("6-2. updateLog で value を更新した場合、新しい value から title が自動更新されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeLogsRepository(testLogs);
+      controller = new LogsController(
+        mockHost.host,
+        fakeRepository as unknown as LogsRepository,
+        1,
+      );
+      await controller.initialized;
+
+      await controller.updateLog(1, {
+        value: "# 更新された見出し\n本文",
+      });
+
+      const updated = controller.state.find((item) => item.id === 1);
+      expect(updated?.title).toBe("更新された見出し");
+    });
+  });
 });

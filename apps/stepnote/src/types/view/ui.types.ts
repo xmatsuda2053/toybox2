@@ -21,6 +21,7 @@ export interface LayoutState {
  */
 export interface NoteItemRecord {
   id?: number;
+  title?: string;
   value: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -31,8 +32,8 @@ export interface NoteItemRecord {
  */
 export interface NotesManagerController {
   readonly state: ReadonlyArray<NoteItemRecord>;
-  createNote: (data: { value: string }) => Promise<number | undefined>;
-  updateNote: (id: number, data: { value: string }) => Promise<void>;
+  createNote: (data: { value: string; title?: string }) => Promise<number | undefined>;
+  updateNote: (id: number, data: { value: string; title?: string }) => Promise<void>;
   deleteNote: (id: number) => Promise<void>;
   subscribe: (listener: () => void) => () => void;
 }

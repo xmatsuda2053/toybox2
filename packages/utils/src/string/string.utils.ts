@@ -29,3 +29,32 @@ export function isBlank(val: string | null | undefined): boolean {
 export function isNotBlank(val: string | null | undefined): val is string {
   return !isBlank(val);
 }
+
+/**
+ * Markdown 本文の1行目からタイトル文字列を抽出する。
+ *
+ * 先頭の見出し記号（# 等）および前後の空白文字を除去し、
+ * 空文字または無効値の場合はフォールバック文字列を返却する。
+ *
+ * @export
+ * @param {(string | null | undefined)} value - Markdown 本文文字列
+ * @param {string} [fallback=""] - タイトルが抽出できない場合のフォールバック文字列
+ * @return {string} 抽出されたタイトル文字列
+ */
+export function extractMarkdownTitle(
+  value: string | null | undefined,
+  fallback: string = "",
+): string {
+  if (!isNotBlank(value)) {
+    return fallback;
+  }
+
+  const firstLine = value.split(/\r?\n/)[0]?.trim() ?? "";
+  const titleWithoutHeading = firstLine.replace(/^#+\s*/, "").trim();
+
+  if (!titleWithoutHeading) {
+    return fallback;
+  }
+
+  return titleWithoutHeading;
+}

@@ -7,6 +7,8 @@
 export interface ScratchRecord {
   /** レコードID（自動採番） */
   id?: number;
+  /** タイトル（Markdown1行目から抽出または明示指定） */
+  title?: string;
   /** 記録内容 */
   value: string;
   /** 作成日時 */

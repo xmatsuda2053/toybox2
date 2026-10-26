@@ -1,4 +1,5 @@
 import type { NoteItemRecord } from "@/types/view/ui.types";
+import { extractMarkdownTitle } from "@shared/utils";
 
 /**
  * ノート本文の1行目からタイトル文字列を抽出する純粋関数。
@@ -14,18 +15,9 @@ export function extractNoteTitle(
   value: string,
   fallbackIndex?: number,
 ): string {
-  const firstLine = value.split(/\r?\n/)[0] ?? "";
-  const cleaned = firstLine.replace(/^#+\s*/, "").trim();
-
-  if (cleaned.length > 0) {
-    return cleaned;
-  }
-
-  if (fallbackIndex !== undefined) {
-    return `ページ ${fallbackIndex}`;
-  }
-
-  return "(無題のメモ)";
+  const fallback =
+    fallbackIndex !== undefined ? `ページ ${fallbackIndex}` : "(無題のメモ)";
+  return extractMarkdownTitle(value, fallback);
 }
 
 /**
@@ -49,7 +41,7 @@ export function filterNotes<T extends NoteItemRecord>(
   }
 
   return notes.filter((note) => {
-    const title = extractNoteTitle(note.value).toLowerCase();
+    const title = (note.title ?? extractNoteTitle(note.value)).toLowerCase();
     const content = note.value.toLowerCase();
     return title.includes(trimmed) || content.includes(trimmed);
   });

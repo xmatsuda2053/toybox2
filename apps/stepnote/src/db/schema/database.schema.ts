@@ -8,6 +8,7 @@ import {
   ScratchRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
+import { extractMarkdownTitle } from "@shared/utils";
 
 /**
  * StepNote アプリケーションの IndexedDB データベーススキーマ定義
@@ -90,6 +91,38 @@ export class Database extends Dexie {
     this.version(2).stores({
       scratches: "++id, createdAt",
     });
+    this.version(3)
+      .stores({
+        logs: "++id, taskId, [taskId+id], title",
+        notes: "++id, taskId, [taskId+id], title",
+        scratches: "++id, createdAt, title",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table<LogRecord>("logs")
+          .toCollection()
+          .modify((log) => {
+            if (!log.title) {
+              log.title = extractMarkdownTitle(log.value, "(無題のログ)");
+            }
+          });
+        await tx
+          .table<NoteRecord>("notes")
+          .toCollection()
+          .modify((note) => {
+            if (!note.title) {
+              note.title = extractMarkdownTitle(note.value, "(無題のメモ)");
+            }
+          });
+        await tx
+          .table<ScratchRecord>("scratches")
+          .toCollection()
+          .modify((scratch) => {
+            if (!scratch.title) {
+              scratch.title = extractMarkdownTitle(scratch.value, "(無題のメモ)");
+            }
+          });
+      });
   }
 }
 

@@ -1,6 +1,7 @@
 import type { ReactiveControllerHost } from "lit";
 import type { ScratchRepository } from "@/repositories/scratch.repository";
 import type { ScratchRecord } from "@/db/models/scratch.model";
+import { extractMarkdownTitle } from "@shared/utils";
 import { BaseDataController } from "./base-reactive.controller";
 
 /**
@@ -48,10 +49,12 @@ export class ScratchController extends BaseDataController<
     data: Omit<ScratchRecord, "id">,
   ): Promise<number | undefined> => {
     const now = new Date();
+    const title = data.title ?? extractMarkdownTitle(data.value, "(無題のメモ)");
     const itemData = {
       createdAt: now,
       updatedAt: now,
       ...data,
+      title,
     };
     const newId = await this.repository.add(itemData);
     await this.loadState();
@@ -71,9 +74,17 @@ export class ScratchController extends BaseDataController<
     id: number,
     data: Partial<Omit<ScratchRecord, "id">>,
   ): Promise<void> => {
+    const title =
+      data.title !== undefined
+        ? data.title
+        : data.value !== undefined
+          ? extractMarkdownTitle(data.value, "(無題のメモ)")
+          : undefined;
+
     const updateData = {
       updatedAt: new Date(),
       ...data,
+      ...(title !== undefined ? { title } : {}),
     };
     await this.repository.update(id, updateData);
     await this.loadState();
