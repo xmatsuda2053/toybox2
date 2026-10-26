@@ -23,6 +23,7 @@ import {
   TASK_STATUS_MAP,
   TASK_STATUS_ICON_MAP,
 } from "@/constants/task-status.constants.js";
+import { WithDialogBase } from "@/utils/dialog-element.mixin.js";
 import styles from "./global-search-dialog.scss?inline";
 
 
@@ -34,19 +35,11 @@ import styles from "./global-search-dialog.scss?inline";
  *
  * @export
  * @class GlobalSearchDialog
- * @extends {LitElement}
+ * @extends {WithDialogBase(LitElement)}
  */
 @customElement("global-search-dialog")
-export class GlobalSearchDialog extends LitElement {
+export class GlobalSearchDialog extends WithDialogBase(LitElement) {
   public static override styles = unsafeCSS(styles);
-
-  /** ダイアログの開閉状態 */
-  @property({ type: Boolean, reflect: true })
-  public open = false;
-
-  /** 適用テーマ（light / dark） */
-  @property({ type: String, attribute: "data-theme", reflect: true })
-  public dataTheme?: string;
 
   @consume({ context: taskListContext, subscribe: true })
   @property({ attribute: false })
@@ -82,9 +75,8 @@ export class GlobalSearchDialog extends LitElement {
    * モーダルを閉じる処理
    */
   public handleClose = (): void => {
-    this.open = false;
     this.selectedIndex = -1;
-    dispatchCustomEvent(this, "global-search-close");
+    this.closeDialog("global-search-close");
   };
 
   override updated(changedProperties: PropertyValues<this>): void {

@@ -18,6 +18,7 @@ import {
   WithLabelsController,
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
+import { WithDialogBase } from "@/utils/dialog-element.mixin.js";
 import styles from "./task-create-dialog.scss?inline";
 
 /**
@@ -28,25 +29,13 @@ import styles from "./task-create-dialog.scss?inline";
  *
  * @export
  * @class TaskCreateDialog
- * @extends {WithTaskController(WithLabelsController(SubscriberElement))}
+ * @extends {WithDialogBase(WithTaskController(WithLabelsController(SubscriberElement)))}
  */
 @customElement("task-create-dialog")
-export class TaskCreateDialog extends WithTaskController(
-  WithLabelsController(SubscriberElement),
+export class TaskCreateDialog extends WithDialogBase(
+  WithTaskController(WithLabelsController(SubscriberElement)),
 ) {
   public static styles = unsafeCSS(styles);
-
-  /**
-   * ダイアログの開閉状態
-   */
-  @property({ type: Boolean, reflect: true })
-  public open = false;
-
-  /**
-   * 適用テーマ（light / dark）
-   */
-  @property({ type: String, attribute: "data-theme", reflect: true })
-  public dataTheme?: string;
 
   /**
    * 表示対象の会計年度（初期値）
@@ -159,8 +148,7 @@ export class TaskCreateDialog extends WithTaskController(
       return;
     }
     this.resetForm();
-    this.open = false;
-    dispatchCustomEvent(this, "dialog-close");
+    this.closeDialog("dialog-close");
   };
 
   /**
