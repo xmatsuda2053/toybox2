@@ -6920,10 +6920,11 @@
               .mode=${a}
               .themeMode=${r}
               .darkTheme=${`soft`}
-              deleteAction="enabled"
+              .showDeleteButton=${!0}
+              ?show-delete-button=${!0}
               @mode-change=${t=>e.id!==void 0&&this.handleModeChange(e.id,t.detail.mode)}
               @markdown-change=${t=>e.id!==void 0&&this.handleContentChange(e.id,t.detail.value)}
-              @markdown-request-delete=${()=>e.id!==void 0&&this.handleRequestDelete(e.id)}
+              @markdown-delete=${()=>e.id!==void 0&&this.handleRequestDelete(e.id)}
             ></markdown-editor-preview>
           </div>
         </div>
