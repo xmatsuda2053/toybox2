@@ -1,0 +1,104 @@
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: block;
+}
+
+.shortcut-help-drawer {
+  --size: 380px;
+
+  &::part(panel) {
+    background-color: var(--wa-color-surface-default);
+    color: var(--wa-color-text-default);
+    font-family: inherit;
+    @include theme-transition;
+  }
+
+  &::part(header) {
+    padding: var(--wa-space-m, 16px);
+    border-bottom: var(--wa-border-width-s, 1px) var(--wa-border-style, solid) var(--wa-color-surface-border);
+  }
+
+  &::part(title) {
+    font-size: var(--wa-font-size-m, 14px);
+    font-weight: 600;
+    color: var(--wa-color-text-loud);
+  }
+
+  &::part(body) {
+    padding: var(--wa-space-m, 16px);
+    overflow-y: auto;
+    @include custom-scrollbar;
+  }
+}
+
+.shortcut-help-drawer__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-l, 20px);
+}
+
+.shortcut-help-drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s, 10px);
+}
+
+.shortcut-help-drawer__title {
+  font-size: var(--wa-font-size-xs, 11px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--wa-color-text-quiet);
+  margin: 0;
+}
+
+.shortcut-help-drawer__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs, 6px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcut-help-drawer__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--wa-space-xs, 8px);
+  border-radius: var(--wa-border-radius-m, 6px);
+  background-color: var(--wa-color-surface-raised);
+  @include theme-transition;
+}
+
+.shortcut-help-drawer__desc {
+  font-size: var(--wa-font-size-s, 12px);
+  color: var(--wa-color-text-default);
+}
+
+.shortcut-help-drawer__keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.shortcut-help-drawer__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--wa-color-text-loud);
+  background-color: var(--wa-color-surface-default);
+  border: var(--wa-border-width-s, 1px) var(--wa-border-style, solid) var(--wa-color-surface-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--wa-color-surface-border);
+  user-select: none;
+}

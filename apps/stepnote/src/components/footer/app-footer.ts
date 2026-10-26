@@ -264,12 +264,50 @@ export class AppFooter extends WithTaskListController(SubscriberElement) {
   }
 
   /**
+   * ショートカットヘルプボタンのクリックハンドラー。
+   */
+  public handleShortcutHelpClick(): void {
+    this.dispatchEvent(
+      new CustomEvent("request-shortcut-help", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * ショートカットヘルプボタンのレンダリング。
+   */
+  private renderShortcutHelpButton() {
+    return html`
+      <wa-button
+        id="footer-btn-shortcuts"
+        appearance="plain"
+        size="small"
+        class="app-footer__btn app-footer__btn--shortcuts"
+        aria-label="キーボードショートカット"
+        @click=${this.handleShortcutHelpClick}
+      >
+        <wa-icon
+          library="my-icons"
+          name="question-solid-full"
+          class="app-footer__icon"
+        ></wa-icon>
+      </wa-button>
+      <wa-tooltip for="footer-btn-shortcuts" placement="top" trigger="hover">
+        キーボードショートカット (Ctrl+/)
+      </wa-tooltip>
+    `;
+  }
+
+  /**
    * 右ゾーン（システム状態・ショートカットヘルプ）のレンダリング。
    */
   protected renderSystemZone() {
     return html`
       <div class="app-footer__system">
         <slot name="system"></slot>
+        ${this.renderShortcutHelpButton()}
       </div>
     `;
   }

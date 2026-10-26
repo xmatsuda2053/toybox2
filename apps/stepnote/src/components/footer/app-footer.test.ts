@@ -17,6 +17,7 @@ import type { TaskListController } from "../../controllers/task-list.controller.
  *    - 1-6. 左ゾーンに年度インジケーター (wa-icon[name="calendar-solid-full"]) がレンダリングされること
  *    - 1-7. 左ゾーンにタスク進捗カウンター (wa-icon[name="list-check-solid-full"]) がレンダリングされること
  *    - 1-8. 年度およびタスク進捗に wa-tooltip（trigger="hover", placement="top"）が設定されること
+ *    - 1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタン (wa-button#footer-btn-shortcuts) および wa-tooltip がレンダリングされること
  *
  * 2. ストレージ推定使用量の表示
  *    - 2-1. storageUsage が設定されている場合、フォーマットされた文字列 (例: "2.4 MB") が表示されること
@@ -28,6 +29,9 @@ import type { TaskListController } from "../../controllers/task-list.controller.
  * 4. タスク進捗・年度の表示
  *    - 4-1. fiscalYear が設定されている場合、年度アイコンと数値が表示されること
  *    - 4-2. taskListController が注入されている場合、タスク進捗（X/Y Tasks (Z%)）が表示されること
+ *
+ * 5. イベント発火
+ *    - 5-1. handleShortcutHelpClick 実行時に request-shortcut-help カスタムイベントが発火されること
  */
 
 describe("AppFooter Component", () => {
@@ -114,6 +118,17 @@ describe("AppFooter Component", () => {
       );
       expect(htmlStr).toContain("表示中: 8件 / 総タスク: 12件");
     });
+
+    it("1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタンおよび wa-tooltip がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(footer.render());
+      expect(htmlStr).toContain('id="footer-btn-shortcuts"');
+      expect(htmlStr).toContain("question-solid-full");
+      expect(htmlStr).toContain('library="my-icons"');
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="footer-btn-shortcuts"[^>]*placement="top"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toContain("キーボードショートカット (Ctrl+/)");
+    });
   });
 
   describe("2. ストレージ推定使用量の表示", () => {
@@ -161,6 +176,15 @@ describe("AppFooter Component", () => {
       footer.taskListController = mockController as unknown as TaskListController;
       const htmlStr = flattenTemplate(footer.render());
       expect(htmlStr).toContain("2/3 Tasks (33%)");
+    });
+  });
+
+  describe("5. イベント発火", () => {
+    it("5-1. handleShortcutHelpClick 実行時に request-shortcut-help カスタムイベントが発火されること", () => {
+      const listener = vi.fn();
+      footer.addEventListener("request-shortcut-help", listener);
+      footer.handleShortcutHelpClick();
+      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -102,6 +102,14 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 10-2. isScratchMode の状態が app-menu の .isScratchMode プロパティへ反映されること
  *    - [ ] 10-3. isScratchMode が true の際、ヘッダーの全体検索ボタン（#header-global-search-trigger）が無効化（disabled属性）されること
  *    - [ ] 10-4. isScratchMode が true の際、Ctrl+K による全体検索および Alt+N による新規タスク作成のキーボードショートカットが抑止されること
+ *
+ * 【AppRoot ショートカットヘルプ連携仕様 (Phase 12)】
+ * 12. ショートカットヘルプ連携（Shortcut Help Drawer）
+ *    - [x] 12-1. shortcut-help-drawer コンポーネントがレンダリングされること
+ *    - [x] 12-2. request-shortcut-help イベント受信時に handleToggleShortcutHelp が呼ばれ、isShortcutHelpOpen がトグルすること
+ *    - [x] 12-3. handleCloseShortcutHelp 実行時に isShortcutHelpOpen が false に更新されること
+ *    - [x] 12-4. Ctrl+/ キーボードショートカットで isShortcutHelpOpen の開閉がトグルされること
+ *    - [x] 12-5. isScratchMode が true の際、Ctrl+/ によるショートカットヘルプ表示が抑止されること
  */
 
 /**
@@ -639,6 +647,81 @@ describe("AppRoot Controller 状態連携仕様", () => {
       );
 
       expect(importSpy).toHaveBeenCalledWith(expect.anything(), mockFile);
+    });
+  });
+
+  describe("12. ショートカットヘルプ連携（Shortcut Help Drawer）", () => {
+    it("12-1. shortcut-help-drawer コンポーネントがレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(/<shortcut-help-drawer/);
+    });
+
+    it("12-2. request-shortcut-help イベント受信時に handleToggleShortcutHelp が呼ばれ、isShortcutHelpOpen がトグルすること", () => {
+      const toggleSpy = vi.spyOn(appRoot as any, "handleToggleShortcutHelp");
+      appRoot.isShortcutHelpOpen = false;
+
+      appRoot.dispatchEvent(
+        new CustomEvent("request-shortcut-help", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      expect(toggleSpy).toHaveBeenCalled();
+      expect(appRoot.isShortcutHelpOpen).toBe(true);
+
+      appRoot.dispatchEvent(
+        new CustomEvent("request-shortcut-help", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      expect(appRoot.isShortcutHelpOpen).toBe(false);
+    });
+
+    it("12-3. handleCloseShortcutHelp 実行時に isShortcutHelpOpen が false に更新されること", () => {
+      appRoot.isShortcutHelpOpen = true;
+      appRoot.handleCloseShortcutHelp();
+      expect(appRoot.isShortcutHelpOpen).toBe(false);
+    });
+
+    it("12-4. Ctrl+/ キーボードショートカットで isShortcutHelpOpen の開閉がトグルされること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: false,
+      };
+      appRoot.isShortcutHelpOpen = false;
+
+      const ctrlSlashEvent = {
+        key: "/",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlSlashEvent);
+      expect(appRoot.isShortcutHelpOpen).toBe(true);
+      expect(ctrlSlashEvent.preventDefault).toHaveBeenCalled();
+
+      (appRoot as any).handleGlobalKeyDown(ctrlSlashEvent);
+      expect(appRoot.isShortcutHelpOpen).toBe(false);
+    });
+
+    it("12-5. isScratchMode が true の際、Ctrl+/ によるショートカットヘルプ表示が抑止されること", () => {
+      (appRoot.layoutUIController as any)._state = {
+        ...appRoot.layoutUIController.state,
+        isScratchMode: true,
+      };
+      appRoot.isShortcutHelpOpen = false;
+
+      const ctrlSlashEvent = {
+        key: "/",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      (appRoot as any).handleGlobalKeyDown(ctrlSlashEvent);
+      expect(appRoot.isShortcutHelpOpen).toBe(false);
+      expect(ctrlSlashEvent.preventDefault).not.toHaveBeenCalled();
     });
   });
 });
