@@ -31,6 +31,13 @@ import {
   groupAndSortIssues,
 } from "@/utils/task-filter.utils.js";
 import { getTaskDueIconInfo } from "@/utils/task-due.utils.js";
+import {
+  KeyedDebounceManager,
+  ExclusiveAccordionController,
+  DeleteDialogState,
+  resetModesToPreview,
+  extractSearchQuery,
+} from "@/utils/view-state.utils.js";
 import styles from "./issues-view.scss?inline";
 
 /**
@@ -76,25 +83,28 @@ export class IssuesView extends WithIssuesController(
   @state()
   public issueModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
-  private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
-    new Map();
+  private readonly accordion = new ExclusiveAccordionController();
 
-  private collapseTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly deleteDialog = new DeleteDialogState();
+
+  private readonly debounceManager = new KeyedDebounceManager();
 
   private lastTaskId?: number;
 
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
+    this.syncParentTaskState();
+  }
+
+  /** 親タスク切り替え時の状態初期化およびコントローラー同期 */
+  private syncParentTaskState(): void {
     const parentTaskId = this.taskController?.state?.id;
     if (this.lastTaskId !== parentTaskId) {
       this.lastTaskId = parentTaskId;
+      this.accordion.reset();
       this.expandedIssueIds = new Set();
       this.collapsingIssueId = null;
       this.issueModeMap.clear();
-      if (this.collapseTimer) {
-        clearTimeout(this.collapseTimer);
-        this.collapseTimer = null;
-      }
     }
     if (
       this.issuesController &&
@@ -107,63 +117,36 @@ export class IssuesView extends WithIssuesController(
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    for (const timer of this.debounceTimerMap.values()) {
-      clearTimeout(timer);
-    }
-    this.debounceTimerMap.clear();
-
-    if (this.collapseTimer) {
-      clearTimeout(this.collapseTimer);
-      this.collapseTimer = null;
-    }
+    this.debounceManager.clear();
+    this.accordion.reset();
   }
 
   /** 全 Issue のエディタモードをプレビューモードへリセットする */
   public resetModesToPreview(): void {
-    for (const key of this.issueModeMap.keys()) {
-      this.issueModeMap.set(key, "preview");
-    }
+    resetModesToPreview(this.issueModeMap);
     this.requestUpdate();
   }
 
   /** 検索入力ハンドラー */
   public handleSearchInput = (
-    event: CustomEvent<SearchInputEventDetail>,
+    eventOrQuery: CustomEvent<SearchInputEventDetail> | string,
   ): void => {
-    this.searchKeyword = event.detail?.keyword ?? "";
+    this.searchKeyword = extractSearchQuery(eventOrQuery);
   };
 
   /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移、プレビューモード初期化） */
   public handleToggleExpand = (issueId: number): void => {
-    if (this.collapseTimer) {
-      clearTimeout(this.collapseTimer);
-      this.collapseTimer = null;
-    }
+    this.accordion.expandedIds = new Set(this.expandedIssueIds);
+    this.accordion.collapsingId = this.collapsingIssueId;
 
-    const nextSet = new Set(this.expandedIssueIds);
-    const currentlyExpanded = Array.from(nextSet)[0];
+    this.accordion.toggle(
+      issueId,
+      (id) => this.issueModeMap.set(id, "preview"),
+      (id) => this.handleDetailAnimationEnd(id),
+    );
 
-    if (currentlyExpanded === issueId) {
-      nextSet.clear();
-      this.collapsingIssueId = issueId;
-      this.collapseTimer = setTimeout(() => {
-        this.handleDetailAnimationEnd(issueId);
-      }, 320);
-    } else {
-      if (currentlyExpanded !== undefined) {
-        this.collapsingIssueId = currentlyExpanded;
-        this.collapseTimer = setTimeout(() => {
-          this.handleDetailAnimationEnd(currentlyExpanded);
-        }, 320);
-      } else if (this.collapsingIssueId === issueId) {
-        this.collapsingIssueId = null;
-      }
-      nextSet.clear();
-      nextSet.add(issueId);
-      this.issueModeMap.set(issueId, "preview");
-    }
-
-    this.expandedIssueIds = nextSet;
+    this.expandedIssueIds = this.accordion.expandedIds;
+    this.collapsingIssueId = this.accordion.collapsingId;
   };
 
   /** エディタ表示モード変更ハンドラー */
@@ -177,11 +160,7 @@ export class IssuesView extends WithIssuesController(
 
   /** 詳細パネルのアニメーション終了ハンドラー（アンマウントクリーンアップ） */
   public handleDetailAnimationEnd = (issueId: number): void => {
-    if (this.collapsingIssueId === issueId) {
-      if (this.collapseTimer) {
-        clearTimeout(this.collapseTimer);
-        this.collapseTimer = null;
-      }
+    if (this.accordion.handleAnimationEnd(issueId)) {
       this.collapsingIssueId = null;
       this.requestUpdate();
     }
@@ -252,30 +231,28 @@ export class IssuesView extends WithIssuesController(
 
   /** Markdown 内容変更ハンドラー（300ms デバウンス自動保存、1行目をタイトルに同期） */
   public handleContentChange = (issueId: number, value: string): void => {
-    const existingTimer = this.debounceTimerMap.get(issueId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    const saveAction = async (): Promise<void> => {
-      if (this.issuesController) {
-        const title = extractIssueTitle(value);
-        await this.issuesController.updateIssue(issueId, { title, value });
-      }
-      this.debounceTimerMap.delete(issueId);
-    };
-
-    this.debounceTimerMap.set(issueId, setTimeout(saveAction, 300));
+    this.debounceManager.debounce(
+      issueId,
+      async () => {
+        if (this.issuesController) {
+          const title = extractIssueTitle(value);
+          await this.issuesController.updateIssue(issueId, { title, value });
+        }
+      },
+      300,
+    );
   };
 
   /** 削除リクエストハンドラー（ダイアログを開く） */
   public handleRequestDelete = (issueId: number): void => {
-    this.deletingIssueId = issueId;
-    this.isDeleteDialogOpen = true;
+    this.deleteDialog.open(issueId);
+    this.isDeleteDialogOpen = this.deleteDialog.isOpen;
+    this.deletingIssueId = this.deleteDialog.deletingId;
   };
 
   /** 削除確認ダイアログを閉じる */
   public handleCloseDeleteDialog = (): void => {
+    this.deleteDialog.close();
     this.isDeleteDialogOpen = false;
     this.deletingIssueId = undefined;
   };
@@ -288,6 +265,7 @@ export class IssuesView extends WithIssuesController(
       const nextSet = new Set(this.expandedIssueIds);
       nextSet.delete(this.deletingIssueId);
       this.expandedIssueIds = nextSet;
+      this.accordion.expandedIds = nextSet;
     }
     this.handleCloseDeleteDialog();
   };

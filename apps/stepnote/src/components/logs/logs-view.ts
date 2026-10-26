@@ -21,6 +21,13 @@ import {
   formatLogDate,
   sortLogsByCreatedAtDesc,
 } from "./logs-view.utils.js";
+import {
+  KeyedDebounceManager,
+  ExclusiveAccordionController,
+  DeleteDialogState,
+  resetModesToPreview,
+  extractSearchQuery,
+} from "@/utils/view-state.utils.js";
 import styles from "./logs-view.scss?inline";
 
 /**
@@ -61,10 +68,11 @@ export class LogsView extends WithLogsController(
   @state()
   public logModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
-  private debounceTimerMap: Map<number, ReturnType<typeof setTimeout>> =
-    new Map();
+  private readonly debounceManager = new KeyedDebounceManager();
 
-  private collapseTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly accordion = new ExclusiveAccordionController();
+
+  private readonly deleteDialog = new DeleteDialogState();
 
   private lastTaskId?: number;
 
@@ -73,13 +81,10 @@ export class LogsView extends WithLogsController(
     const parentTaskId = this.taskController?.state?.id;
     if (this.lastTaskId !== parentTaskId) {
       this.lastTaskId = parentTaskId;
+      this.accordion.reset();
       this.expandedLogIds = new Set();
       this.collapsingLogId = null;
       this.logModeMap.clear();
-      if (this.collapseTimer) {
-        clearTimeout(this.collapseTimer);
-        this.collapseTimer = null;
-      }
     }
     if (
       this.logsController &&
@@ -92,22 +97,13 @@ export class LogsView extends WithLogsController(
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    for (const timer of this.debounceTimerMap.values()) {
-      clearTimeout(timer);
-    }
-    this.debounceTimerMap.clear();
-
-    if (this.collapseTimer) {
-      clearTimeout(this.collapseTimer);
-      this.collapseTimer = null;
-    }
+    this.debounceManager.clear();
+    this.accordion.reset();
   }
 
   /** 全ログのエディタモードをプレビューモードへリセットする */
   public resetModesToPreview(): void {
-    for (const key of this.logModeMap.keys()) {
-      this.logModeMap.set(key, "preview");
-    }
+    resetModesToPreview(this.logModeMap);
     this.requestUpdate();
   }
 
@@ -115,44 +111,22 @@ export class LogsView extends WithLogsController(
   public handleSearchInput = (
     eventOrQuery: CustomEvent<SearchInputEventDetail> | string,
   ): void => {
-    const query =
-      typeof eventOrQuery === "string"
-        ? eventOrQuery
-        : (eventOrQuery.detail?.keyword ?? "");
-    this.searchQuery = query;
+    this.searchQuery = extractSearchQuery(eventOrQuery);
   };
 
   /** インライン詳細の開閉トグルハンドラー（排他展開および折りたたみアニメーション遷移、プレビューモード初期化） */
   public handleToggleExpand = (logId: number): void => {
-    if (this.collapseTimer) {
-      clearTimeout(this.collapseTimer);
-      this.collapseTimer = null;
-    }
+    this.accordion.expandedIds = new Set(this.expandedLogIds);
+    this.accordion.collapsingId = this.collapsingLogId;
 
-    const nextSet = new Set(this.expandedLogIds);
-    const currentlyExpanded = Array.from(nextSet)[0];
+    this.accordion.toggle(
+      logId,
+      (id) => this.logModeMap.set(id, "preview"),
+      (id) => this.handleDetailAnimationEnd(id),
+    );
 
-    if (currentlyExpanded === logId) {
-      nextSet.clear();
-      this.collapsingLogId = logId;
-      this.collapseTimer = setTimeout(() => {
-        this.handleDetailAnimationEnd(logId);
-      }, 320);
-    } else {
-      if (currentlyExpanded !== undefined) {
-        this.collapsingLogId = currentlyExpanded;
-        this.collapseTimer = setTimeout(() => {
-          this.handleDetailAnimationEnd(currentlyExpanded);
-        }, 320);
-      } else if (this.collapsingLogId === logId) {
-        this.collapsingLogId = null;
-      }
-      nextSet.clear();
-      nextSet.add(logId);
-      this.logModeMap.set(logId, "preview");
-    }
-
-    this.expandedLogIds = nextSet;
+    this.expandedLogIds = this.accordion.expandedIds;
+    this.collapsingLogId = this.accordion.collapsingId;
   };
 
   /** エディタ表示モード変更ハンドラー */
@@ -166,11 +140,7 @@ export class LogsView extends WithLogsController(
 
   /** 詳細パネルのアニメーション終了ハンドラー（アンマウントクリーンアップ） */
   public handleDetailAnimationEnd = (logId: number): void => {
-    if (this.collapsingLogId === logId) {
-      if (this.collapseTimer) {
-        clearTimeout(this.collapseTimer);
-        this.collapseTimer = null;
-      }
+    if (this.accordion.handleAnimationEnd(logId)) {
       this.collapsingLogId = null;
       this.requestUpdate();
     }
@@ -198,29 +168,27 @@ export class LogsView extends WithLogsController(
     logId: number,
     value: string,
   ): void => {
-    const existingTimer = this.debounceTimerMap.get(logId);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    const saveAction = async (): Promise<void> => {
-      if (this.logsController) {
-        await this.logsController.updateLog(logId, { value });
-      }
-      this.debounceTimerMap.delete(logId);
-    };
-
-    this.debounceTimerMap.set(logId, setTimeout(saveAction, 300));
+    this.debounceManager.debounce(
+      logId,
+      async () => {
+        if (this.logsController) {
+          await this.logsController.updateLog(logId, { value });
+        }
+      },
+      300,
+    );
   };
 
   /** ログ削除リクエストハンドラー（ダイアログを開く） */
   public handleRequestDelete = (logId: number): void => {
-    this.deletingLogId = logId;
-    this.isDeleteDialogOpen = true;
+    this.deleteDialog.open(logId);
+    this.isDeleteDialogOpen = this.deleteDialog.isOpen;
+    this.deletingLogId = this.deleteDialog.deletingId;
   };
 
   /** 削除確認ダイアログを閉じる */
   public handleCloseDeleteDialog = (): void => {
+    this.deleteDialog.close();
     this.isDeleteDialogOpen = false;
     this.deletingLogId = undefined;
   };
@@ -233,6 +201,7 @@ export class LogsView extends WithLogsController(
       const nextSet = new Set(this.expandedLogIds);
       nextSet.delete(this.deletingLogId);
       this.expandedLogIds = nextSet;
+      this.accordion.expandedIds = nextSet;
     }
     this.handleCloseDeleteDialog();
   };
