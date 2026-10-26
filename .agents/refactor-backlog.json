@@ -5120,8 +5120,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-164",
@@ -5139,8 +5152,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-165",
@@ -5177,8 +5203,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-167",
@@ -5234,8 +5273,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-170",
@@ -5253,8 +5305,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-171",
@@ -5291,8 +5356,21 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-173",
@@ -5519,8 +5597,21 @@
     "test_file": "apps/stepnote/src/components/logs/logs-view.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 15,
+      "completed_at": "2026-10-26T14:16:00+09:00",
+      "issue_number": 294,
+      "pr_number": 295,
+      "commit_hash": "d678220",
+      "prompt_turns": 4,
+      "regressions_detected": 0,
+      "tests_passed": 1544,
+      "metrics_after": {
+        "duplicated_lines": 0,
+        "tokens": 0
+      }
+    }
   },
   {
     "id": "REF-185",
