@@ -1,4 +1,5 @@
 import type { LogRecord } from "@/db/models/journal.model";
+import { extractMarkdownTitle } from "@shared/utils";
 
 /**
  * ログ本文の1行目からタイトル文字列を抽出する。
@@ -9,18 +10,7 @@ import type { LogRecord } from "@/db/models/journal.model";
  * @return {string} 抽出されたタイトル
  */
 export function extractLogTitle(value: string): string {
-  if (!value || typeof value !== "string") {
-    return "(無題のログ)";
-  }
-
-  const firstLine = value.split(/\r?\n/)[0]?.trim() ?? "";
-  const titleWithoutHeading = firstLine.replace(/^#+\s*/, "").trim();
-
-  if (!titleWithoutHeading) {
-    return "(無題のログ)";
-  }
-
-  return titleWithoutHeading;
+  return extractMarkdownTitle(value, "(無題のログ)");
 }
 
 /**
@@ -42,7 +32,7 @@ export function filterLogs(
   }
 
   return logs.filter((log) => {
-    const title = extractLogTitle(log.value).toLowerCase();
+    const title = (log.title ?? extractLogTitle(log.value)).toLowerCase();
     const body = (log.value || "").toLowerCase();
     return title.includes(normalizedQuery) || body.includes(normalizedQuery);
   });

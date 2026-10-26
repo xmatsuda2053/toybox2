@@ -316,7 +316,7 @@ export class NotesView extends WithNotesController(
         @wa-tab-show=${this.handleTabShow}
       >
         ${notes.map((note, index) => {
-          const title = extractNoteTitle(note.value, index + 1);
+          const title = note.title || extractNoteTitle(note.value, index + 1);
           const isActive = note.id === activeId;
           const idClass = isActive
             ? "notes-view__tab-id notes-view__tab-id--active"

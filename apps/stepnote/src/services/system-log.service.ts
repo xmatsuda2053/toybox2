@@ -1,6 +1,7 @@
 import type { LogsRepository } from "@/repositories/logs.repository";
 import type { LogsController } from "@/controllers/logs.controller";
 import type { TaskStatusCode } from "@/types/domain/task-status.type";
+import { extractMarkdownTitle } from "@shared/utils";
 import {
   formatTaskCreatedLog,
   formatTaskNameChangedLog,
@@ -61,8 +62,10 @@ export class SystemLogService {
     content: string,
   ): Promise<number | undefined> {
     const now = new Date();
+    const title = extractMarkdownTitle(content, "(無題のログ)");
     const id = await this.logsRepository.add({
       taskId,
+      title,
       value: content,
       createdAt: now,
       updatedAt: now,

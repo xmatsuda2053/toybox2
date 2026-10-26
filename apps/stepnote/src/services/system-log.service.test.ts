@@ -64,9 +64,17 @@ describe("SystemLogService (TDD)", () => {
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const callArg = fakeLogsRepository.add.mock.calls[0][0];
       expect(callArg.taskId).toBe(1);
+      expect(callArg.title).toBe("テストログ内容");
       expect(callArg.value).toBe("テストログ内容");
       expect(callArg.createdAt).toBeInstanceOf(Date);
       expect(callArg.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it("1-4. recordLog 呼び出し時に Markdown 見出しから title が自動抽出されて LogsRepository.add に渡されること", async () => {
+      await service.recordLog(1, "### sys: タスク更新: \"テスト\"\n\n詳細内容");
+
+      const callArg = fakeLogsRepository.add.mock.calls[0][0];
+      expect(callArg.title).toBe("sys: タスク更新: \"テスト\"");
     });
 
     it("1-2. LogsController が設定されている場合、ログ追加後に logsController.refresh() が呼び出されること", async () => {
