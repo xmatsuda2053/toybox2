@@ -31,6 +31,7 @@
  *   - 各ツールバーボタンに適切な wa-icon が配置されていること
  *   - preview モード時は書式ツールバーが非表示となること
  * 10. 拡張機能パッケージ (Feature Extension) の統合と伝播
+ *   - 未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color）が登録されていること
  *   - extensions プロパティが保持されること
  *   - extensions 内の processor (remarkPlugins, rehypePlugins, sanitizeSchemaModifier) が適切に合成・伝播されること
  *   - extensions 内の editorExtensions が適切に合成・伝播されること
@@ -126,7 +127,9 @@ import type { Plugin } from "unified";
 import type { Root as MdastRoot } from "mdast";
 import { EditorView } from "@codemirror/view";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
+import { colorExtension } from "../extensions/color.extension.js";
 import type { MarkdownFeatureExtension } from "../types.js";
+import { DEFAULT_MARKDOWN_EXTENSIONS } from "./markdown-editor-preview.js";
 
 describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   let element: MarkdownEditorPreview;
@@ -310,6 +313,14 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("拡張機能パッケージ (Feature Extension) の統合と伝播", () => {
+    it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color）が登録されていること", () => {
+      const defaultPreview = new MarkdownEditorPreview();
+      expect(defaultPreview.extensions).toHaveLength(2);
+      expect(defaultPreview.extensions).toEqual([...DEFAULT_MARKDOWN_EXTENSIONS]);
+      expect(defaultPreview.extensions).toContain(customBadgeExtension);
+      expect(defaultPreview.extensions).toContain(colorExtension);
+    });
+
     it("extensions プロパティが保持されること", () => {
       element.extensions = [customBadgeExtension];
       expect(element.extensions).toHaveLength(1);

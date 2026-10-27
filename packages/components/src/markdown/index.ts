@@ -4,5 +4,6 @@ export * from "./preview/markdown-preview.js";
 export * from "./editor/markdown-editor.js";
 export * from "./editor-preview/markdown-editor-preview.js";
 export * from "./extensions/custom-badge.extension.js";
+export * from "./extensions/color.extension.js";
 export * from "./formatter/markdown-formatter.js";
 
