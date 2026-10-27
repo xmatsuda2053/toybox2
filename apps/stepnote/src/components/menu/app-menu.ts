@@ -5,6 +5,7 @@ import {
   WithLabelsController,
   WithLayoutUIController,
 } from "@/utils/controller-consumers.mixin.js";
+import "@/components/task-list/task-create-button.js";
 import appMenuStyles from "./app-menu.scss?inline";
 
 /**
@@ -201,35 +202,18 @@ export class AppMenu extends WithLayoutUIController(
    * クイック新規タスク作成ボタンを描画する。
    *
    * @private
-   * @param {boolean} hasLabels
    * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderTaskCreateButton(hasLabels: boolean, isDisabled: boolean = false) {
-    const createTooltip = hasLabels
-      ? "新規タスクを作成 (Alt+N)"
-      : "ラベルを登録してください";
-
+  private renderTaskCreateButton(isDisabled: boolean = false) {
     return html`
-      <wa-tooltip for="app-menu-task-create-btn" placement="right">
-        ${createTooltip}
-      </wa-tooltip>
-      <wa-button
-        id="app-menu-task-create-btn"
+      <task-create-button
+        buttonId="app-menu-task-create-btn"
         class="app-menu__task-create-btn"
-        variant="neutral"
-        appearance="plain"
         size="s"
-        ?disabled=${!hasLabels || isDisabled}
-        @click=${this.handleCreateTask}
-      >
-        <wa-icon
-          library="my-icons"
-          name="plus-solid-full"
-          class="app-menu__task-create-icon"
-          label=${createTooltip}
-        ></wa-icon>
-      </wa-button>
+        placement="right"
+        ?disabled=${isDisabled}
+      ></task-create-button>
     `;
   }
 
@@ -399,7 +383,7 @@ export class AppMenu extends WithLayoutUIController(
           this.isNavigationListAreaOpen,
           this.isScratchMode,
         )}
-        ${this.renderTaskCreateButton(this.hasLabels, this.isScratchMode)}
+        ${this.renderTaskCreateButton(this.isScratchMode)}
         ${this.renderScratchButton(this.isScratchMode)}
         ${this.renderZenModeButton(this.isZenMode, this.isScratchMode)}
       </div>

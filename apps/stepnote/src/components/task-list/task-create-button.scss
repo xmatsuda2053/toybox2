@@ -1,0 +1,16 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-create-btn {
+  @include flex-center;
+
+  &__icon {
+    font-size: var(--wa-font-size-l);
+  }
+}

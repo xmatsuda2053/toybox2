@@ -23,6 +23,7 @@ import {
   WithTaskController,
   WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
+import "./task-create-button.js";
 import "./task-list-item.js";
 import taskListStyles from "./task-list.scss?inline";
 
@@ -322,6 +323,11 @@ export class TaskList extends WithIssuesController(
         <span class="task-list__title">LIST ${currentYear}</span>
         <div class="task-list__actions">
           ${this.renderFiscalYearDropdown(currentYear)}
+          <task-create-button
+            buttonId="task-list-btn-add"
+            size="m"
+            placement="bottom"
+          ></task-create-button>
         </div>
       </header>
     `;

@@ -31,11 +31,11 @@ import { AppMenu } from "./app-menu.js";
  * 6. 集中モード切替ボタンクリックによる LayoutUIController 連動
  *    - [ ] 6-1. handleToggleZenMode の呼び出しにより layoutUIController.toggleZenMode が実行されること
  *
- * 7. クイック新規タスク作成ボタンのレンダリングとアクセシビリティ
- *    - [ ] 7-1. app-menu__primary 内に新規タスク作成ボタン（wa-button#app-menu-task-create-btn）、ツールチップ、アイコン（plus-solid-full）がレンダリングされること
+ * 7. クイック新規タスク作成共通コンポーネント（task-create-button）のレンダリング
+ *    - [ ] 7-1. app-menu__primary 内に task-create-button がレンダリングされ、属性（buttonId, size, placement）が指定されていること
  *    - [ ] 7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること
- *    - [ ] 7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成 (Alt+N)」であること
- *    - [ ] 7-4. hasLabels が false の際、ボタンが無効化（disabled属性あり）され、ツールチップ文言が「ラベルを登録してください」であること
+ *    - [ ] 7-3. スクラッチモードが無効（false）の際、task-create-button に disabled 属性が付与されないこと
+ *    - [ ] 7-4. スクラッチモードが有効（true）の際、task-create-button に disabled 属性が付与されること
  *
  * 8. クイック新規タスク作成ボタンクリックによるカスタムイベント発行
  *    - [ ] 8-1. hasLabels が true の際、handleCreateTask の呼び出しによりカスタムイベント request-task-create がディスパッチされること
@@ -136,7 +136,6 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toContain("app-menu__zen-btn");
       expect(htmlStr).toContain("app-menu__zen-icon");
       expect(htmlStr).toContain("app-menu__task-create-btn");
-      expect(htmlStr).toContain("app-menu__task-create-icon");
     });
 
     it("4-2. コンポーネントテンプレートおよびSCSSスタイルシートから旧クラス名が完全に排除されていること", () => {
@@ -195,13 +194,13 @@ describe("AppMenu Component", () => {
     });
   });
 
-  describe("7. クイック新規タスク作成ボタンのレンダリングとアクセシビリティ", () => {
-    it("7-1. app-menu__primary 内に新規タスク作成ボタン（wa-button#app-menu-task-create-btn）、ツールチップ、アイコン（plus-solid-full）がレンダリングされること", () => {
+  describe("7. クイック新規タスク作成共通コンポーネント（task-create-button）のレンダリング", () => {
+    it("7-1. app-menu__primary 内に task-create-button がレンダリングされ、属性（buttonId, size, placement）が指定されていること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
-      expect(htmlStr).toContain("app-menu-task-create-btn");
-      expect(htmlStr).toContain("app-menu__task-create-btn");
-      expect(htmlStr).toContain("app-menu__task-create-icon");
-      expect(htmlStr).toContain("plus-solid-full");
+      expect(htmlStr).toContain("task-create-button");
+      expect(htmlStr).toContain('buttonId="app-menu-task-create-btn"');
+      expect(htmlStr).toContain('size="s"');
+      expect(htmlStr).toContain('placement="right"');
     });
 
     it("7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること", () => {
@@ -214,30 +213,16 @@ describe("AppMenu Component", () => {
       expect(zenIndex).toBeGreaterThan(createIndex);
     });
 
-    it("7-3. hasLabels が true の際、ボタンが活性化（disabled属性なし）され、ツールチップ文言が「新規タスクを作成 (Alt+N)」であること", () => {
-      (appMenu as any).labelsController = {
-        hasLabels: true,
-      };
+    it("7-3. スクラッチモードが無効（false）の際、task-create-button に disabled 属性が付与されないこと", () => {
+      (appMenu as any).isScratchMode = false;
       const htmlStr = flattenTemplate(appMenu.render());
-      expect(htmlStr).toMatch(
-        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?新規タスクを作成 \(Alt\+N\)[\s\S]*?<\/wa-tooltip>/,
-      );
-      expect(htmlStr).not.toMatch(
-        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
-      );
+      expect(htmlStr).not.toMatch(/<task-create-button[^>]*\bdisabled\b/);
     });
 
-    it("7-4. hasLabels が false の際、ボタンが無効化（disabled属性あり）され、ツールチップ文言が「ラベルを登録してください」であること", () => {
-      (appMenu as any).labelsController = {
-        hasLabels: false,
-      };
+    it("7-4. スクラッチモードが有効（true）の際、task-create-button に disabled 属性が付与されること", () => {
+      (appMenu as any).isScratchMode = true;
       const htmlStr = flattenTemplate(appMenu.render());
-      expect(htmlStr).toMatch(
-        /<wa-tooltip[^>]*for="app-menu-task-create-btn"[^>]*>[\s\S]*?ラベルを登録してください[\s\S]*?<\/wa-tooltip>/,
-      );
-      expect(htmlStr).toMatch(
-        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
-      );
+      expect(htmlStr).toMatch(/<task-create-button[^>]*\bdisabled\b/);
     });
   });
 
@@ -281,10 +266,10 @@ describe("AppMenu Component", () => {
 
     it("9-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順であること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
-      const toggleIndex = htmlStr.indexOf('id="app-menu-toggle-btn"');
-      const createIndex = htmlStr.indexOf('id="app-menu-task-create-btn"');
-      const scratchIndex = htmlStr.indexOf('id="app-menu-scratch-btn"');
-      const zenIndex = htmlStr.indexOf('id="app-menu-zen-btn"');
+      const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
+      const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
+      const scratchIndex = htmlStr.indexOf("app-menu-scratch-btn");
+      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
 
       expect(toggleIndex).toBeGreaterThan(-1);
       expect(createIndex).toBeGreaterThan(toggleIndex);
@@ -341,7 +326,7 @@ describe("AppMenu Component", () => {
       );
       // 新規タスク作成ボタンが無効化
       expect(htmlStr).toMatch(
-        /<wa-button[^>]*id="app-menu-task-create-btn"[^>]*\bdisabled\b/,
+        /<task-create-button[^>]*buttonId="app-menu-task-create-btn"[^>]*\bdisabled\b/,
       );
       // 集中モードボタンが無効化
       expect(htmlStr).toMatch(

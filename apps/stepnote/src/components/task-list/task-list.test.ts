@@ -14,7 +14,7 @@ import { TaskList } from "./task-list.js";
  * 2. ヘッダ部（Header）の表示とアクションボタンの配置
  *    - [ ] 2-1. ヘッダ部タイトルに「LIST」および選択中の年度が表示されること（例: LIST 2026）
  *    - [ ] 2-2. ヘッダ部に年度指定ボタン（task-list__btn-year）が配置され、アイコンおよびツールチップが設定されていること
- *    - [ ] 2-3. タスク追加ボタン（task-list__btn-add）がヘッダ部に配置されておらず、最左メニューパネル（app-menu）に集約されていること
+ *    - [ ] 2-3. ヘッダ部アクション領域（task-list__actions）にタスク新規作成共通ボタン（task-create-button#task-list-btn-add）が配置されていること
  *
  * 3. 検索部（Search）における共通コンポーネント連携
  *    - [ ] 3-1. 検索部に共通部品 search-input がレンダリングされること
@@ -108,10 +108,12 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       expect(htmlStr).toContain("wa-button");
     });
 
-    it("2-3. タスク追加ボタン（task-list__btn-add）がヘッダ部に配置されておらず、最左メニューパネル（app-menu）に集約されていること", () => {
+    it("2-3. ヘッダ部アクション領域（task-list__actions）にタスク新規作成共通ボタン（task-create-button#task-list-btn-add）が配置されていること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("task-list__btn-add");
-      expect(htmlStr).not.toContain("task-list-btn-add");
+      expect(htmlStr).toContain("task-create-button");
+      expect(htmlStr).toContain('buttonId="task-list-btn-add"');
+      expect(htmlStr).toContain('size="m"');
+      expect(htmlStr).toContain('placement="bottom"');
     });
   });
 
