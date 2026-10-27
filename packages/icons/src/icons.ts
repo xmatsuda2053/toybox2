@@ -56,6 +56,7 @@ import number_6_solid_full from "./assets/icons/number-6-solid-full.svg?raw";
 import number_7_solid_full from "./assets/icons/number-7-solid-full.svg?raw";
 import number_8_solid_full from "./assets/icons/number-8-solid-full.svg?raw";
 import number_9_solid_full from "./assets/icons/number-9-solid-full.svg?raw";
+import palette_solid_full from "./assets/icons/palette-solid-full.svg?raw";
 import pen_to_square_solid_full from "./assets/icons/pen-to-square-solid-full.svg?raw";
 import phone_solid_full from "./assets/icons/phone-solid-full.svg?raw";
 import plus_solid_full from "./assets/icons/plus-solid-full.svg?raw";
@@ -136,6 +137,7 @@ export const icons: Record<string, string> = {
   "number-7-solid-full": number_7_solid_full,
   "number-8-solid-full": number_8_solid_full,
   "number-9-solid-full": number_9_solid_full,
+  "palette-solid-full": palette_solid_full,
   "pen-to-square-solid-full": pen_to_square_solid_full,
   "phone-solid-full": phone_solid_full,
   "plus-solid-full": plus_solid_full,

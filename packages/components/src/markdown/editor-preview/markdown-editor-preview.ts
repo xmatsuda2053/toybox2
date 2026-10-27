@@ -21,6 +21,8 @@ import {
 } from "../editor/markdown-editor.js";
 import "../preview/markdown-preview.js";
 import { formatMarkdown } from "../formatter/markdown-formatter.js";
+import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
+import { colorExtension } from "../extensions/color.extension.js";
 import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
 import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
@@ -78,6 +80,14 @@ const BASIC_MARKDOWN_HELP_ROWS = [
   { name: "コード", syntax: "`code`", result: "インラインコード" },
   { name: "リンク", syntax: "[テキスト](URL)", result: "ハイパーリンク" },
   { name: "テーブル", syntax: "| A | B |", result: "表組" },
+];
+
+/**
+ * MarkdownEditorPreview の標準拡張機能リスト
+ */
+export const DEFAULT_MARKDOWN_EXTENSIONS: readonly MarkdownFeatureExtension[] = [
+  customBadgeExtension,
+  colorExtension,
 ];
 
 /**
@@ -241,7 +251,7 @@ export class MarkdownEditorPreview extends LitElement {
 
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
-  public extensions: MarkdownFeatureExtension[] = [];
+  public extensions: MarkdownFeatureExtension[] = [...DEFAULT_MARKDOWN_EXTENSIONS];
 
   /** CodeMirror 拡張機能 (DI) */
   @property({ attribute: false })
