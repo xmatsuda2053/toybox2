@@ -444,6 +444,65 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain('value="sub:callout:alert"');
     });
 
+    it("subItems を持つ拡張機能の場合、各子 wa-dropdown-item 内の wa-icon にバリエーションに応じた modifier クラスが付与されること", () => {
+      element.setMode("edit");
+      element.extensions = [calloutExtension];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-item-icon--info",
+      );
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-item-icon--check",
+      );
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-item-icon--gear",
+      );
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-item-icon--warn",
+      );
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-item-icon--alert",
+      );
+    });
+
+    it("SCSS で各サブメニューアイコンの modifier クラスに Web Awesome セマンティックトークンが設定されていること", () => {
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain("&--info");
+      expect(scssContent).toContain("var(--wa-color-brand-on-quiet)");
+      expect(scssContent).toContain("&--check");
+      expect(scssContent).toContain("var(--wa-color-success-on-quiet)");
+      expect(scssContent).toContain("&--gear");
+      expect(scssContent).toContain("var(--wa-color-neutral-on-quiet)");
+      expect(scssContent).toContain("&--warn");
+      expect(scssContent).toContain("var(--wa-color-warning-on-quiet)");
+      expect(scssContent).toContain("&--alert");
+      expect(scssContent).toContain("var(--wa-color-danger-on-quiet)");
+    });
+
+    it("SCSS の soft ダークテーマブロックにおいてサブメニューアイコンのカラーを !important で単色上書きしていないこと", () => {
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      // soft ダークスタイルブロックを抽出
+      const softDarkMatch = scssContent.match(
+        /\/\* =+[\s\S]*?soft ダークスタイル[\s\S]*?\*\/([\s\S]*?)(?=\/\* =+|$)/,
+      );
+      const softDarkBlock = softDarkMatch ? softDarkMatch[1] : "";
+
+      expect(softDarkBlock).not.toContain(
+        ".markdown-editor-preview__extension-menu-item-icon",
+      );
+    });
+
     it("handleExtensionMenuSelect() において sub:callout:check の選択により /// check テンプレートがエディタへ挿入されること", () => {
       element.setMode("edit");
       element.value = "既存テキスト";

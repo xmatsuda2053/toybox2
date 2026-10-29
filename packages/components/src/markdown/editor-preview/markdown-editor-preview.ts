@@ -831,7 +831,7 @@ export class MarkdownEditorPreview extends LitElement {
                   slot="icon"
                   library="my-icons"
                   name="${sub.icon || iconName}"
-                  class="markdown-editor-preview__extension-menu-item-icon"
+                  class="markdown-editor-preview__extension-menu-item-icon markdown-editor-preview__extension-menu-item-icon--${sub.id}"
                 ></wa-icon>
                 ${sub.label}
               </wa-dropdown-item>
