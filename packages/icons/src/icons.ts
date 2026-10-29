@@ -16,6 +16,8 @@ import caret_right_solid_full from "./assets/icons/caret-right-solid-full.svg?ra
 import check_solid_full from "./assets/icons/check-solid-full.svg?raw";
 import chevron_right from "./assets/icons/chevron-right.svg?raw";
 import circle_check_solid_full from "./assets/icons/circle-check-solid-full.svg?raw";
+import circle_exclamation_solid_full from "./assets/icons/circle-exclamation-solid-full.svg?raw";
+import circle_info_solid_full from "./assets/icons/circle-info-solid-full.svg?raw";
 import circle_play_solid_full from "./assets/icons/circle-play-solid-full.svg?raw";
 import circle_plus_solid_full from "./assets/icons/circle-plus-solid-full.svg?raw";
 import circle_stop_solid_full from "./assets/icons/circle-stop-solid-full.svg?raw";
@@ -34,6 +36,7 @@ import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import gear_solid_full from "./assets/icons/gear-solid-full.svg?raw";
 import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
 import html5_brands_solid_full from "./assets/icons/html5-brands-solid-full.svg?raw";
 import italic_solid_full from "./assets/icons/italic-solid-full.svg?raw";
@@ -93,6 +96,8 @@ export const icons: Record<string, string> = {
   "check-solid-full": check_solid_full,
   "chevron-right": chevron_right,
   "circle-check-solid-full": circle_check_solid_full,
+  "circle-exclamation-solid-full": circle_exclamation_solid_full,
+  "circle-info-solid-full": circle_info_solid_full,
   "circle-play-solid-full": circle_play_solid_full,
   "circle-plus-solid-full": circle_plus_solid_full,
   "circle-plus": circle_plus_solid_full,
@@ -115,6 +120,7 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "gear-solid-full": gear_solid_full,
   "heading-solid-full": heading_solid_full,
   "html5-brands-solid-full": html5_brands_solid_full,
   "italic-solid-full": italic_solid_full,

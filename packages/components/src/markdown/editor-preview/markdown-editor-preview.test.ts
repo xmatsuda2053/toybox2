@@ -31,17 +31,20 @@
  *   - 各ツールバーボタンに適切な wa-icon が配置されていること
  *   - preview モード時は書式ツールバーが非表示となること
  * 10. 拡張機能パッケージ (Feature Extension) の統合と伝播
- *   - 未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color）が登録されていること
+ *   - 未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color, callout）が登録されていること
  *   - extensions プロパティが保持されること
  *   - extensions 内の processor (remarkPlugins, rehypePlugins, sanitizeSchemaModifier) が適切に合成・伝播されること
  *   - extensions 内の editorExtensions が適切に合成・伝播されること
- * 11. 拡張機能ドロップダウンメニューのレンダリングとアクション
+ * 11. 拡張機能ドロップダウンメニューのレンダリングとアクション (wa-dropdown 統一およびサブメニュー仕様)
  *   - extensions が登録されている場合、書式ツールバー末尾に単一の拡張機能メニューボタン（ellipsis-solid-full）が描画されること
+ *   - 拡張機能メニューが wa-dropdown（placement='bottom-start'）としてレンダリングされること
  *   - extensions が空の場合は拡張機能メニューボタンにレスポンシブ非表示クラス（--responsive）が付与されること
  *   - 初期状態では拡張機能ドロップダウンメニューが非表示であること
  *   - toggleExtensionMenu() により拡張機能ドロップダウンメニューの開閉がトグルされること
  *   - 拡張機能メニュー内に登録された各機能のラベル・アイコン・構文が表示されること
- *   - 拡張機能メニュー項目の選択・実行によりエディタへテンプレートが挿入されメニューが閉じること
+ *   - subItems を持つ拡張機能の場合、親項目内に slot='submenu' を持った子 wa-dropdown-item がレンダリングされること
+ *   - 拡張メニュー内のセクションラベルが wa-dropdown 仕様に準拠し h3 見出しタグとしてレンダリングされること
+ *   - wa-select イベント（または handleExtensionMenuSelect）により各アクション・サブアイテムテンプレートがエディタへ挿入されること
  * 12. 構文ヘルプのレンダリングとダイアログ開閉・独自タグ一覧
  *   - ヘッダーのモード切替ボタングループの左隣にヘルプボタン（question-solid-full）が描画されること
  *   - 初期状態では構文ヘルプダイアログが非表示であること
@@ -128,6 +131,7 @@ import type { Root as MdastRoot } from "mdast";
 import { EditorView } from "@codemirror/view";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
 import { colorExtension } from "../extensions/color.extension.js";
+import { calloutExtension } from "../extensions/callout.extension.js";
 import type { MarkdownFeatureExtension } from "../types.js";
 import { DEFAULT_MARKDOWN_EXTENSIONS } from "./markdown-editor-preview.js";
 
@@ -313,12 +317,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("拡張機能パッケージ (Feature Extension) の統合と伝播", () => {
-    it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color）が登録されていること", () => {
+    it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color, callout）が登録されていること", () => {
       const defaultPreview = new MarkdownEditorPreview();
-      expect(defaultPreview.extensions).toHaveLength(2);
+      expect(defaultPreview.extensions).toHaveLength(3);
       expect(defaultPreview.extensions).toEqual([...DEFAULT_MARKDOWN_EXTENSIONS]);
       expect(defaultPreview.extensions).toContain(customBadgeExtension);
       expect(defaultPreview.extensions).toContain(colorExtension);
+      expect(defaultPreview.extensions).toContain(calloutExtension);
     });
 
     it("extensions プロパティが保持されること", () => {
@@ -369,31 +374,19 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       );
     });
 
-    it("初期状態では拡張機能ドロップダウンメニューが非表示であること", () => {
+    it("初期状態では拡張機能ドロップダウンメニューが閉じていること", () => {
       expect(element.isExtensionMenuOpen).toBe(false);
-      const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain(
-        "markdown-editor-preview__extension-menu--open",
-      );
     });
 
-    it("toggleExtensionMenu() により拡張機能ドロップダウンメニューの開閉がトグルされること", () => {
+    it("toggleExtensionMenu() により拡張機能ドロップダウンメニューの開閉状態がトグルされること", () => {
       element.setMode("edit");
       element.extensions = [customBadgeExtension];
 
       element.toggleExtensionMenu(true);
       expect(element.isExtensionMenuOpen).toBe(true);
-      let htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain(
-        "markdown-editor-preview__extension-menu--open",
-      );
 
       element.toggleExtensionMenu(false);
       expect(element.isExtensionMenuOpen).toBe(false);
-      htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain(
-        "markdown-editor-preview__extension-menu--open",
-      );
     });
 
     it("拡張機能メニュー内に登録された各機能のラベル・アイコン・構文が表示されること", () => {
@@ -417,6 +410,79 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect(element.value).toContain(":badge[");
       expect(element.isExtensionMenuOpen).toBe(false);
+    });
+
+    it("拡張機能メニューが wa-dropdown（placement='bottom-start'）としてレンダリングされること", () => {
+      element.setMode("edit");
+      element.extensions = [customBadgeExtension];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("<wa-dropdown");
+      expect(htmlStr).toContain('placement="bottom-start"');
+      expect(htmlStr).toContain("markdown-editor-preview__extension-menu-dropdown");
+    });
+
+    it("拡張メニュー内のセクションラベルが wa-dropdown 仕様に準拠し h3 見出しタグとしてレンダリングされること", () => {
+      element.setMode("edit");
+      element.extensions = [customBadgeExtension];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toMatch(/<h3[^>]*>\s*追加の書式\s*<\/h3>/);
+      expect(htmlStr).toMatch(/<h3[^>]*>\s*独自記法・拡張機能\s*<\/h3>/);
+    });
+
+    it("subItems を持つ拡張機能の場合、親項目内に slot='submenu' を持った子 wa-dropdown-item がレンダリングされること", () => {
+      element.setMode("edit");
+      element.extensions = [calloutExtension];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain('slot="submenu"');
+      expect(htmlStr).toContain('value="sub:callout:info"');
+      expect(htmlStr).toContain('value="sub:callout:check"');
+      expect(htmlStr).toContain('value="sub:callout:gear"');
+      expect(htmlStr).toContain('value="sub:callout:warn"');
+      expect(htmlStr).toContain('value="sub:callout:alert"');
+    });
+
+    it("handleExtensionMenuSelect() において sub:callout:check の選択により /// check テンプレートがエディタへ挿入されること", () => {
+      element.setMode("edit");
+      element.value = "既存テキスト";
+      element.extensions = [calloutExtension];
+
+      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+        new CustomEvent("wa-select", {
+          detail: { item: { value: "sub:callout:check" } },
+        }),
+      );
+
+      expect(element.value).toContain("/// check");
+    });
+
+    it("handleExtensionMenuSelect() において ext:custom-badge の選択によりテンプレートがエディタへ挿入されること", () => {
+      element.setMode("edit");
+      element.value = "既存テキスト";
+      element.extensions = [customBadgeExtension];
+
+      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+        new CustomEvent("wa-select", {
+          detail: { item: { value: "ext:custom-badge" } },
+        }),
+      );
+
+      expect(element.value).toContain(":badge[");
+    });
+
+    it("handleExtensionMenuSelect() において action:bold の選択により太字アクションが実行されること", () => {
+      element.setMode("edit");
+      element.value = "";
+
+      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+        new CustomEvent("wa-select", {
+          detail: { item: { value: "action:bold" } },
+        }),
+      );
+
+      expect(element.value).toContain("**太字**");
     });
   });
 
@@ -518,15 +584,38 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("ドロップダウンメニューの表示保証および独自拡張機能レンダリング仕様", () => {
-    it("extensions が設定されている場合、メニュー展開時に「独自記法・拡張機能」ヘッダーとアイテムがレンダリングされること", () => {
+    it("extensions が設定されている場合、独自記法アイテムに構文サンプルを含めずラベルのみがシンプルにレンダリングされること", () => {
       element.setMode("edit");
       element.extensions = [customBadgeExtension];
-      element.toggleExtensionMenu(true);
       const htmlStr = flattenTemplate(element.render());
 
       expect(htmlStr).toContain("独自記法・拡張機能");
       expect(htmlStr).toContain("ステータスバッジ");
-      expect(htmlStr).toContain(":badge[");
+      expect(htmlStr).not.toContain("markdown-editor-preview__extension-menu-item-syntax");
+
+      // ドロップダウンメニュー内に構文サンプル（:badge[）が含まれないこと
+      const dropdownMatch = htmlStr.match(
+        /<wa-dropdown[^>]*class="[^"]*markdown-editor-preview__extension-menu-dropdown[^"]*"[^>]*>([\s\S]*?)<\/wa-dropdown>/,
+      );
+      const dropdownContent = dropdownMatch ? dropdownMatch[1] : "";
+      expect(dropdownContent).toContain("ステータスバッジ");
+      expect(dropdownContent).not.toContain(":badge[");
+    });
+
+    it("SCSS で拡張メニューの見出し（h3）スタイルが Web Awesome 仕様（var(--wa-font-size-smaller)等）に統一されていること", () => {
+      const scssPath = new URL(
+        "./markdown-editor-preview.scss",
+        import.meta.url,
+      );
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      const h3Block =
+        scssContent.match(
+          /h3\.markdown-editor-preview__extension-menu-title\s*\{[^}]*\}/s,
+        )?.[0] || "";
+      expect(h3Block).toContain("font-size: var(--wa-font-size-smaller)");
+      expect(h3Block).toContain("padding: 0.25em 0.75em");
+      expect(h3Block).toContain("margin: 0.25em 0");
     });
 
     it("SCSS で header-left に overflow-x: auto が設定されておらず、ヘッダー外へのドロップダウン展開が阻害されないこと", () => {
@@ -561,7 +650,19 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(headerBlock).toContain("z-index");
     });
 
-    it("SCSS で extension-menu が left: 0 で前面展開され、左側のはみ出しクリップを防止すること", () => {
+    it("拡張機能メニューが wa-dropdown の placement='bottom-start' により左揃えで前面展開されること", () => {
+      element.setMode("edit");
+      element.extensions = [customBadgeExtension];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("<wa-dropdown");
+      expect(htmlStr).toContain('placement="bottom-start"');
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-dropdown",
+      );
+    });
+
+    it("SCSS で extension-menu-dropdown のインラインレイアウトが定義されていること", () => {
       const scssPath = new URL(
         "./markdown-editor-preview.scss",
         import.meta.url,
@@ -570,10 +671,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       const menuBlock =
         scssContent.match(
-          /\.markdown-editor-preview__extension-menu\s*\{[^}]*\}/s,
+          /\.markdown-editor-preview__extension-menu-dropdown\s*\{[^}]*\}/s,
         )?.[0] || "";
-      expect(menuBlock).toContain("left: 0");
-      expect(menuBlock).toContain("z-index: 1000");
+      expect(menuBlock).toContain("display: inline-flex");
     });
 
     it("SCSS で追加の書式セクションが通常幅時は非表示となり、狭幅コンテナクエリ内で表示されること", () => {
@@ -1062,7 +1162,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.commands = [];
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toContain("コマンド");
-      expect(htmlStr).not.toContain('slot="submenu"');
+      expect(htmlStr).not.toContain('value="command:');
       expect(htmlStr).not.toContain("number-0-solid-full");
     });
 

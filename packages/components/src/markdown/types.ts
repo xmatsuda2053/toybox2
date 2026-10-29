@@ -43,6 +43,20 @@ export interface IMarkdownProcessor {
 }
 
 /**
+ * 拡張機能のサブアイテム（バリエーション）定義
+ */
+export interface MarkdownExtensionSubItem {
+  /** サブアイテム固有の識別子 (例: "info", "check", "gear", "warn", "alert") */
+  readonly id: string;
+  /** 表示名 (例: "情報 (Info)", "成功・確認 (Check)") */
+  readonly label: string;
+  /** アイコン名 (登録済みアイコン) */
+  readonly icon?: string;
+  /** 挿入される構文テンプレート (例: "/// info\n\n///") */
+  readonly template: string;
+}
+
+/**
  * 統合 Markdown 拡張機能パッケージ (Feature Extension)
  *
  * 独自記法・構文拡張をプラグイン化する際、パイプライン処理・ツールバーアクション・構文ヘルプ解説を
@@ -71,6 +85,9 @@ export interface MarkdownFeatureExtension {
     /** ツールチップ表示名 (未指定時は label を使用) */
     title?: string;
   };
+
+  /** 複数の選択肢（バリエーション）を持つ場合に定義 */
+  readonly subItems?: readonly MarkdownExtensionSubItem[];
 
   /** unified (remark / rehype) パイプライン設定 */
   processor?: MarkdownProcessorOptions;
