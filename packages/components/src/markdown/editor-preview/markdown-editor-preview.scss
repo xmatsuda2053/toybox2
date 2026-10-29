@@ -182,13 +182,38 @@ h3.markdown-editor-preview__extension-menu-title {
 
 .markdown-editor-preview__extension-menu-item-icon {
   font-size: 16px;
-  color: var(--stepnote-accent, #3b82f6);
+  color: var(--extension-item-icon-color, var(--stepnote-accent, #3b82f6));
   flex-shrink: 0;
+
+  &--info {
+    --extension-item-icon-color: var(--wa-color-brand-on-quiet);
+    color: var(--wa-color-brand-on-quiet);
+  }
+
+  &--check {
+    --extension-item-icon-color: var(--wa-color-success-on-quiet);
+    color: var(--wa-color-success-on-quiet);
+  }
+
+  &--gear {
+    --extension-item-icon-color: var(--wa-color-neutral-on-quiet);
+    color: var(--wa-color-neutral-on-quiet);
+  }
+
+  &--warn {
+    --extension-item-icon-color: var(--wa-color-warning-on-quiet);
+    color: var(--wa-color-warning-on-quiet);
+  }
+
+  &--alert {
+    --extension-item-icon-color: var(--wa-color-danger-on-quiet);
+    color: var(--wa-color-danger-on-quiet);
+  }
 }
 
 :host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item-icon,
 :host(.wa-dark) .markdown-editor-preview__extension-menu-item-icon {
-  color: var(--stepnote-accent, #58a6ff);
+  color: var(--extension-item-icon-color, var(--stepnote-accent, #58a6ff));
 }
 
 /* レスポンシブ用ミートボールメニュー（通常時は非表示、幅狭時に出現） */
@@ -672,37 +697,6 @@ h3.markdown-editor-preview__extension-menu-title {
     background-color: var(--wa-color-surface-border, #434857) !important;
   }
 
-  .markdown-editor-preview__extension-menu {
-    background-color: var(--stepnote-dialog-bg, #1c2128) !important;
-    border-color: var(--stepnote-dialog-border, #444c56) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-header {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-title {
-    color: var(--wa-color-text-quiet, #9da7b3) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-item:hover {
-    background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-item-icon {
-    color: var(--wa-color-brand-70, #218bff) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-item-label {
-    color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor-preview__extension-menu-item-syntax {
-    color: var(--wa-color-text-quiet, #9da7b3) !important;
-    background-color: var(--wa-color-neutral-fill-normal-hover, #1f212b) !important;
-  }
 
   .markdown-editor-preview__mode-group {
     background-color: var(--wa-color-neutral-fill-normal-hover, #1f212b) !important;
