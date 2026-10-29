@@ -23,6 +23,7 @@ import "../preview/markdown-preview.js";
 import { formatMarkdown } from "../formatter/markdown-formatter.js";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
 import { colorExtension } from "../extensions/color.extension.js";
+import { calloutExtension } from "../extensions/callout.extension.js";
 import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
 import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
@@ -88,6 +89,7 @@ const BASIC_MARKDOWN_HELP_ROWS = [
 export const DEFAULT_MARKDOWN_EXTENSIONS: readonly MarkdownFeatureExtension[] = [
   customBadgeExtension,
   colorExtension,
+  calloutExtension,
 ];
 
 /**
@@ -510,21 +512,30 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
+   * エディタへ指定された構文テンプレート文字列を挿入する。
+   *
+   * @param template 挿入対象の構文文字列
+   */
+  public insertTemplateText(template: string): void {
+    const editor = this.renderRoot?.querySelector(
+      "markdown-editor",
+    ) as MarkdownEditor | null;
+    if (editor) {
+      editor.insertTemplate(template);
+    } else {
+      // Node.js テスト環境等で shadowRoot 内の子要素が未接続の場合のフォールバック
+      this.value = this.value ? `${this.value}\n${template}` : template;
+      this.handleEditorChange(this.value);
+    }
+  }
+
+  /**
    * 拡張機能のツールバーアクションを実行する。
    *
    * @param ext 拡張機能定義
    */
   public handleExtensionAction(ext: MarkdownFeatureExtension): void {
-    const editor = this.renderRoot?.querySelector(
-      "markdown-editor",
-    ) as MarkdownEditor | null;
-    if (editor) {
-      editor.insertTemplate(ext.template);
-    } else {
-      // Node.js テスト環境等で shadowRoot 内の子要素が未接続の場合のフォールバック
-      this.value = this.value ? `${this.value}\n${ext.template}` : ext.template;
-      this.handleEditorChange(this.value);
-    }
+    this.insertTemplateText(ext.template);
   }
 
   /**
@@ -535,8 +546,6 @@ export class MarkdownEditorPreview extends LitElement {
   public toggleHelp(open?: boolean): void {
     this.isHelpOpen = open ?? !this.isHelpOpen;
   }
-
-
 
   /**
    * 構文ヘルプダイアログから拡張機能のテンプレートを挿入し、ヘルプを閉じる。
@@ -554,7 +563,47 @@ export class MarkdownEditorPreview extends LitElement {
    * @param open 指定した開閉状態（省略時はトグル）
    */
   public toggleExtensionMenu(open?: boolean): void {
-    this.isExtensionMenuOpen = open ?? !this.isExtensionMenuOpen;
+    const dropdown = this.renderRoot?.querySelector<
+      HTMLElement & { open: boolean }
+    >(".markdown-editor-preview__extension-menu-dropdown");
+    if (dropdown) {
+      dropdown.open = open ?? !dropdown.open;
+      this.isExtensionMenuOpen = dropdown.open;
+    } else {
+      this.isExtensionMenuOpen = open ?? !this.isExtensionMenuOpen;
+    }
+  }
+
+  /**
+   * 拡張機能ドロップダウンメニューの項目選択イベントをハンドリングする。
+   *
+   * @param event wa-select カスタムイベント
+   */
+  public handleExtensionMenuSelect(
+    event: CustomEvent<{ item: { value: string } }>,
+  ): void {
+    const value = event.detail.item.value;
+    if (!value) return;
+
+    if (value.startsWith("sub:")) {
+      const parts = value.split(":");
+      const extId = parts[1];
+      const subId = parts[2];
+      const ext = this.extensions.find((e) => e.id === extId);
+      const sub = ext?.subItems?.find((s) => s.id === subId);
+      if (sub) {
+        this.insertTemplateText(sub.template);
+      }
+    } else if (value.startsWith("ext:")) {
+      const extId = value.slice("ext:".length);
+      const ext = this.extensions.find((e) => e.id === extId);
+      if (ext) {
+        this.insertTemplateText(ext.template);
+      }
+    } else if (value.startsWith("action:")) {
+      const action = value.slice("action:".length) as MarkdownActionType;
+      this.handleToolbarAction(action);
+    }
   }
 
   /**
@@ -738,33 +787,70 @@ export class MarkdownEditorPreview extends LitElement {
       <div
         class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary"
       >
-        <div class="markdown-editor-preview__extension-menu-header">
-          <span class="markdown-editor-preview__extension-menu-title"
-            >追加の書式</span
-          >
-        </div>
-        <div class="markdown-editor-preview__extension-menu-list">
-          ${SECONDARY_TOOLBAR_BUTTONS.map(
-            (btn) => html`
-              <button
-                type="button"
-                class="markdown-editor-preview__extension-menu-item"
-                role="menuitem"
-                @click=${() => this.handleMenuToolbarAction(btn.action)}
+        <h3 class="markdown-editor-preview__extension-menu-title">追加の書式</h3>
+        ${SECONDARY_TOOLBAR_BUTTONS.map(
+          (btn) => html`
+            <wa-dropdown-item value="action:${btn.action}">
+              <wa-icon
+                slot="icon"
+                library="my-icons"
+                name="${btn.icon}"
+                class="markdown-editor-preview__extension-menu-item-icon"
+              ></wa-icon>
+              ${btn.label}
+            </wa-dropdown-item>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
+   * 拡張機能の各メニュー項目（またはサブメニュー）を描画する。
+   */
+  private renderExtensionMenuItem(ext: MarkdownFeatureExtension) {
+    const iconName = ext.toolbarItem?.icon || "tag-solid-full";
+
+    if (ext.subItems && ext.subItems.length > 0) {
+      return html`
+        <wa-dropdown-item>
+          <wa-icon
+            slot="icon"
+            library="my-icons"
+            name="${iconName}"
+            class="markdown-editor-preview__extension-menu-item-icon"
+          ></wa-icon>
+          ${ext.label}
+          ${ext.subItems.map(
+            (sub) => html`
+              <wa-dropdown-item
+                slot="submenu"
+                value="sub:${ext.id}:${sub.id}"
               >
                 <wa-icon
+                  slot="icon"
                   library="my-icons"
-                  name="${btn.icon}"
+                  name="${sub.icon || iconName}"
                   class="markdown-editor-preview__extension-menu-item-icon"
                 ></wa-icon>
-                <span class="markdown-editor-preview__extension-menu-item-label"
-                  >${btn.label}</span
-                >
-              </button>
+                ${sub.label}
+              </wa-dropdown-item>
             `,
           )}
-        </div>
-      </div>
+        </wa-dropdown-item>
+      `;
+    }
+
+    return html`
+      <wa-dropdown-item value="ext:${ext.id}">
+        <wa-icon
+          slot="icon"
+          library="my-icons"
+          name="${iconName}"
+          class="markdown-editor-preview__extension-menu-item-icon"
+        ></wa-icon>
+        ${ext.label}
+      </wa-dropdown-item>
     `;
   }
 
@@ -774,38 +860,8 @@ export class MarkdownEditorPreview extends LitElement {
   private renderMenuExtensions() {
     if (this.extensions.length === 0) return "";
     return html`
-      <div class="markdown-editor-preview__extension-menu-header">
-        <span class="markdown-editor-preview__extension-menu-title"
-          >独自記法・拡張機能</span
-        >
-      </div>
-      <div class="markdown-editor-preview__extension-menu-list">
-        ${this.extensions.map(
-          (ext) => html`
-            <button
-              type="button"
-              class="markdown-editor-preview__extension-menu-item"
-              role="menuitem"
-              @click=${() => this.selectExtensionMenuItem(ext)}
-            >
-              <wa-icon
-                library="my-icons"
-                name=${ext.toolbarItem?.icon || "tag-solid-full"}
-                class="markdown-editor-preview__extension-menu-item-icon"
-              ></wa-icon>
-              <div class="markdown-editor-preview__extension-menu-item-body">
-                <span class="markdown-editor-preview__extension-menu-item-label"
-                  >${ext.label}</span
-                >
-                <code
-                  class="markdown-editor-preview__extension-menu-item-syntax"
-                  >${ext.template}</code
-                >
-              </div>
-            </button>
-          `,
-        )}
-      </div>
+      <h3 class="markdown-editor-preview__extension-menu-title">独自記法・拡張機能</h3>
+      ${this.extensions.map((ext) => this.renderExtensionMenuItem(ext))}
     `;
   }
 
@@ -822,34 +878,28 @@ export class MarkdownEditorPreview extends LitElement {
       <div
         class="markdown-editor-preview__extension-menu-container ${containerClass}"
       >
-        <button
-          type="button"
-          class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu ${this
-            .isExtensionMenuOpen
-            ? "markdown-editor-preview__toolbar-btn--active"
-            : ""}"
-          title="拡張機能"
-          aria-label="拡張機能"
-          aria-haspopup="true"
-          aria-expanded=${this.isExtensionMenuOpen ? "true" : "false"}
-          @click=${() => this.toggleExtensionMenu()}
+        <wa-dropdown
+          placement="bottom-start"
+          class="markdown-editor-preview__extension-menu-dropdown"
+          @wa-select=${(e: CustomEvent<{ item: { value: string } }>) =>
+            this.handleExtensionMenuSelect(e)}
         >
-          <wa-icon
-            library="my-icons"
-            name="ellipsis-solid-full"
-            label="拡張機能"
-          ></wa-icon>
-        </button>
-        <div
-          class="markdown-editor-preview__extension-menu ${this
-            .isExtensionMenuOpen
-            ? "markdown-editor-preview__extension-menu--open"
-            : ""}"
-          role="menu"
-          aria-label="拡張機能メニュー"
-        >
-          ${this.renderMenuSecondaryActions()} ${this.renderMenuExtensions()}
-        </div>
+          <button
+            slot="trigger"
+            type="button"
+            class="markdown-editor-preview__toolbar-btn markdown-editor-preview__toolbar-btn--extension-menu"
+            title="拡張機能"
+            aria-label="拡張機能"
+          >
+            <wa-icon
+              library="my-icons"
+              name="ellipsis-solid-full"
+              label="拡張機能"
+            ></wa-icon>
+          </button>
+          ${this.renderMenuSecondaryActions()}
+          ${this.renderMenuExtensions()}
+        </wa-dropdown>
       </div>
     `;
   }
