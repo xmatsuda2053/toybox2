@@ -8,10 +8,12 @@
  *   - タスクリスト（チェックボックス記法）が input[type="checkbox"] に変換されること
  *   - 取り消し線（~~text~~）が <del> タグに変換されること
  *   - 自動リンク記法（URL直書き）が <a> タグに変換されること
+ *   - URL の途中にスペースが含まれるリンク記法で href が保持されること
+ *   - Windows ローカルパス（C:\...）やカスタムスキーム（vscode://...）、コロンを含む独自文字列のリンクで href が保持されること
  * 3. セキュリティとサニタイズ（XSS防御）
  *   - <script> タグが完全に除去されること
  *   - onerror や onload などの危険なインラインイベントハンドラが除去されること
- *   - javascript: スキームの危険なリンクが除去または無効化されること
+ *   - javascript:, vbscript:, data: スキームの危険なリンクが除去または無効化されること
  * 4. サニタイズスキーマの拡張（カスタマイズ機能）
  *   - sanitizeSchemaModifier で許可したカスタムタグや属性がサニタイズを通過して出力されること
  * 5. プラグイン注入による拡張性（Open-Closed Principle）
@@ -115,6 +117,27 @@ describe("MarkdownProcessor", () => {
       expect(html).toContain("report.pdf");
       expect(html).toContain(">ドキュメント</a>");
     });
+
+    it("Windows ローカルパス（C:\\...）のリンク記法で href 属性が保持されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown = "[設計書](C:\\Users\\name\\My Documents\\_work\\spec.xlsx)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain("<a");
+      expect(html).toContain('href="C:%5CUsers%5Cname%5CMy%20Documents%5C_work%5Cspec.xlsx"');
+      expect(html).toContain(">設計書</a>");
+    });
+
+    it("カスタム URI スキーム（vscode://...）や独自参照キー（task:123）のリンク記法で href 属性が保持されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown = "[エディタで開く](vscode://file/C:/project/main.ts) と [関連タスク](task:123)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('<a href="vscode://file/C:/project/main.ts">エディタで開く</a>');
+      expect(html).toContain('<a href="task:123">関連タスク</a>');
+    });
   });
 
   describe("セキュリティとサニタイズ（XSS防御）", () => {
@@ -146,6 +169,18 @@ describe("MarkdownProcessor", () => {
 
       expect(html).not.toContain("javascript:");
       expect(html).not.toContain('href="javascript:');
+    });
+
+    it("vbscript: や data: スキームの危険なリンクが除去されること", async () => {
+      const processor = createMarkdownProcessor();
+      const malicious =
+        '[VBScript](vbscript:msgbox("xss")) [DataURI](data:text/html,<script>alert(1)</script>)';
+
+      const html = await processor.process(malicious);
+
+      expect(html).not.toContain("vbscript:");
+      expect(html).not.toContain("data:text/html");
+      expect(html).not.toContain("href=");
     });
   });
 

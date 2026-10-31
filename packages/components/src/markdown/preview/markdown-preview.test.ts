@@ -35,6 +35,7 @@
  *   - a タグクリック時にブラウザの画面遷移が抑止（preventDefault）されること
  *   - a タグの href がクリップボードにコピーされること
  *   - href に %20 が含まれる場合はデコードされてスペースとしてコピーされること
+ *   - Windows ローカルパス（C:\...）や独自文字列リンクをレンダリング・クリックした際、元の文字列がコピーされ link-copy イベントが発火すること
  *   - link-copy カスタムイベントが URL とともに発火すること
  * 16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
  *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
@@ -282,6 +283,47 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
 
       expect(copiedText).toBe("file:///C:/Users/name/My Documents/test folder/file.txt");
     });
+
+    it("Windows ローカルパス（C:\\...）のリンクをレンダリング・クリックした際、元のパス文字列がコピーされ link-copy イベントが発火すること", async () => {
+      let copiedText = "";
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      let eventDetail: { url: string } | null = null;
+      element.addEventListener("link-copy", (e: Event) => {
+        eventDetail = (e as CustomEvent<{ url: string }>).detail;
+      });
+
+      element.content = "[ローカルファイル](C:\\Users\\name\\My Documents\\_work\\report.pdf)";
+      await element.renderMarkdown();
+
+      const hrefMatch = element.renderedHtml.match(/href="([^"]+)"/);
+      expect(hrefMatch).not.toBeNull();
+
+      const extractedHref = hrefMatch ? hrefMatch[1] : null;
+      const mockAnchor = {
+        tagName: "A",
+        getAttribute: (name: string) => (name === "href" ? extractedHref : null),
+        closest: (selector: string) => (selector === "a" ? mockAnchor : null),
+      };
+      const mockEvent = {
+        target: mockAnchor,
+        preventDefault: () => {},
+        composedPath: () => [mockAnchor],
+      };
+
+      element.handleContentClick?.(mockEvent as unknown as MouseEvent);
+
+      expect(copiedText).toBe("C:\\Users\\name\\My Documents\\_work\\report.pdf");
+      expect(eventDetail).toEqual({
+        url: "C:\\Users\\name\\My Documents\\_work\\report.pdf",
+      });
+    });
   });
 
   describe("16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル", () => {
@@ -307,4 +349,3 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
     });
   });
 });
-
