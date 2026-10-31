@@ -23,6 +23,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isJournalAreaOpen: true,
     isZenMode: false,
     isScratchMode: false,
+    isSettingsMode: false,
   };
 
   /**
@@ -56,7 +57,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isNavigationListAreaOpen?: boolean;
     isJournalAreaOpen?: boolean;
   }): void {
-    if (this._state.isScratchMode) return;
+    if (this._state.isScratchMode || this._state.isSettingsMode) return;
 
     const nextNav =
       updates.isNavigationListAreaOpen ?? this._state.isNavigationListAreaOpen;
@@ -68,6 +69,28 @@ export class LayoutUIController extends BaseReactiveController<void> {
       ...this._state,
       ...updates,
       isZenMode: shouldExitZen ? false : this._state.isZenMode,
+    };
+    this.notify();
+  }
+
+  /**
+   * 全画面モード（Scratch / Settings）の状態遷移を一括適用する。
+   *
+   * @private
+   * @param {{ isScratchMode: boolean; isSettingsMode: boolean }} updates
+   * @memberof LayoutUIController
+   */
+  private applyFullScreenMode(updates: {
+    isScratchMode: boolean;
+    isSettingsMode: boolean;
+  }): void {
+    const isAnyFullScreen = updates.isScratchMode || updates.isSettingsMode;
+    this._state = {
+      ...this._state,
+      ...updates,
+      isNavigationListAreaOpen: !isAnyFullScreen,
+      isJournalAreaOpen: !isAnyFullScreen,
+      isZenMode: false,
     };
     this.notify();
   }
@@ -142,7 +165,11 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setZenMode = (enabled: boolean): void => {
-    if (this._state.isScratchMode || this._state.isZenMode === enabled) {
+    if (
+      this._state.isScratchMode ||
+      this._state.isSettingsMode ||
+      this._state.isZenMode === enabled
+    ) {
       return;
     }
 
@@ -182,26 +209,40 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setScratchMode = (enabled: boolean): void => {
-    if (this._state.isScratchMode === enabled) return;
-
-    if (enabled) {
-      this._state = {
-        ...this._state,
-        isScratchMode: true,
-        isNavigationListAreaOpen: false,
-        isJournalAreaOpen: false,
-        isZenMode: false,
-      };
-    } else {
-      this._state = {
-        ...this._state,
-        isScratchMode: false,
-        isNavigationListAreaOpen: true,
-        isJournalAreaOpen: true,
-        isZenMode: false,
-      };
+    if (this._state.isSettingsMode || this._state.isScratchMode === enabled) {
+      return;
     }
-    this.notify();
+    this.applyFullScreenMode({
+      isScratchMode: enabled,
+      isSettingsMode: false,
+    });
+  };
+
+  /**
+   * 全画面設定モード（Settings Mode）の有効・無効を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
+   *
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public toggleSettingsMode = (): void => {
+    this.setSettingsMode(!this._state.isSettingsMode);
+  };
+
+  /**
+   * 全画面設定モード（Settings Mode）の有効・無効を明示的に設定する。
+   *
+   * @param {boolean} enabled
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public setSettingsMode = (enabled: boolean): void => {
+    if (this._state.isScratchMode || this._state.isSettingsMode === enabled) {
+      return;
+    }
+    this.applyFullScreenMode({
+      isScratchMode: false,
+      isSettingsMode: enabled,
+    });
   };
 
   /**

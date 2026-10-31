@@ -231,7 +231,8 @@
 }
 
 /* 6. Scratch (全画面Scratchペイン): Menuペイン以外の全幅を占有 */
-.pane-scratch {
+.pane-scratch,
+.pane-settings {
   flex: 1 1 0%;
   min-width: 0;
   height: 100%;

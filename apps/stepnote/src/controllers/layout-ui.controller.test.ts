@@ -36,7 +36,12 @@ const createMockHost = () => {
  * 仕様 15:toggleScratchMode の実行によりスクラッチモードが有効化され（isScratchMode: true）、左右ペインが一括で閉じられ（isNavigationListAreaOpen: false, isJournalAreaOpen: false）、集中モードも解除されること。
  * 仕様 16:スクラッチモード有効時に再度 toggleScratchMode を実行するとスクラッチモードが解除され（isScratchMode: false）、常に左右両ペイン（サイドパネルおよびJournal）が展開された標準状態へ復帰すること。
  * 仕様 17:setScratchMode で明示的にスクラッチモードを設定でき、同じ状態の場合は不要な通知が行われないこと。
- * 仕様 18:スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode を呼び出しても状態が変更されずガードされること。
+ * 仕様 18:スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode, toggleSettingsMode を呼び出しても状態が変更されずガードされること。
+ * 仕様 19:設定モード（Settings Mode）の初期状態が false であること。
+ * 仕様 20:toggleSettingsMode の実行により設定モードが有効化され（isSettingsMode: true）、左右ペインが一括で閉じられ（isNavigationListAreaOpen: false, isJournalAreaOpen: false）、集中モードおよびスクラッチモードも解除されること。
+ * 仕様 21:設定モード有効時に再度 toggleSettingsMode を実行すると設定モードが解除され（isSettingsMode: false）、常に左右両ペイン（サイドパネルおよびJournal）が展開された標準状態へ復帰すること。
+ * 仕様 22:setSettingsMode で明示的に設定モードを設定でき、同じ状態の場合は不要な通知が行われないこと。
+ * 仕様 23:設定モード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode, toggleScratchMode を呼び出しても状態が変更されずガードされること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -50,6 +55,7 @@ describe("layout-ui.controller", () => {
         isJournalAreaOpen: true,
         isZenMode: false,
         isScratchMode: false,
+        isSettingsMode: false,
       });
     });
   });
@@ -369,7 +375,7 @@ describe("layout-ui.controller", () => {
       expect(requestUpdateMock).toHaveBeenCalledTimes(callCount + 1);
     });
 
-    it("仕様 18: スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode を呼び出しても状態が変更されずガードされること", () => {
+    it("仕様 18: スクラッチモード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode, toggleSettingsMode を呼び出しても状態が変更されずガードされること", () => {
       const { host } = createMockHost();
       const controller = new LayoutUIController(host);
 
@@ -390,6 +396,127 @@ describe("layout-ui.controller", () => {
 
       controller.toggleZenMode();
       expect(controller.state.isZenMode).toBe(false);
+
+      (
+        controller as unknown as { toggleSettingsMode?: () => void }
+      ).toggleSettingsMode?.();
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(false);
+    });
+  });
+
+  describe("設定モード（Settings Mode）の検証", () => {
+    it("仕様 19: 設定モードの初期状態が false であること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(false);
+    });
+
+    it("仕様 20: toggleSettingsMode の実行により設定モードが有効化され、左右ペインが一括で閉じられ、集中モードおよびスクラッチモードも解除されること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      controller.setZenMode(true);
+      expect(controller.state.isZenMode).toBe(true);
+
+      (
+        controller as unknown as { toggleSettingsMode: () => void }
+      ).toggleSettingsMode();
+
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+      expect(controller.state.isZenMode).toBe(false);
+      expect(controller.state.isScratchMode).toBe(false);
+      expect(requestUpdateMock).toHaveBeenCalled();
+    });
+
+    it("仕様 21: 設定モード有効時に再度 toggleSettingsMode を実行すると設定モードが解除され、常に左右両ペインが展開された標準状態へ復帰すること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      (
+        controller as unknown as { toggleSettingsMode: () => void }
+      ).toggleSettingsMode();
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(true);
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      (
+        controller as unknown as { toggleSettingsMode: () => void }
+      ).toggleSettingsMode();
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(false);
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(controller.state.isJournalAreaOpen).toBe(true);
+      expect(controller.state.isZenMode).toBe(false);
+      expect(controller.state.isScratchMode).toBe(false);
+    });
+
+    it("仕様 22: setSettingsMode で明示的に設定モードを設定でき、同じ状態の場合は不要な通知が行われないこと", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      (
+        controller as unknown as { setSettingsMode: (enabled: boolean) => void }
+      ).setSettingsMode(true);
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(true);
+      const callCount = requestUpdateMock.mock.calls.length;
+
+      (
+        controller as unknown as { setSettingsMode: (enabled: boolean) => void }
+      ).setSettingsMode(true);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(callCount);
+
+      (
+        controller as unknown as { setSettingsMode: (enabled: boolean) => void }
+      ).setSettingsMode(false);
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(false);
+      expect(requestUpdateMock).toHaveBeenCalledTimes(callCount + 1);
+    });
+
+    it("仕様 23: 設定モード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode, toggleScratchMode を呼び出しても状態が変更されずガードされること", () => {
+      const { host } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      (
+        controller as unknown as { setSettingsMode: (enabled: boolean) => void }
+      ).setSettingsMode(true);
+      expect(
+        (controller.state as unknown as { isSettingsMode: boolean })
+          .isSettingsMode,
+      ).toBe(true);
+
+      controller.toggleNavigationListArea();
+      expect(controller.state.isNavigationListAreaOpen).toBe(false);
+
+      controller.toggleJournalArea();
+      expect(controller.state.isJournalAreaOpen).toBe(false);
+
+      controller.toggleZenMode();
+      expect(controller.state.isZenMode).toBe(false);
+
+      controller.toggleScratchMode();
+      expect(controller.state.isScratchMode).toBe(false);
     });
   });
 });

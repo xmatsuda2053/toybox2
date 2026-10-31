@@ -66,6 +66,20 @@ import { AppMenu } from "./app-menu.js";
  *    - [ ] 14-1. handleExportDatabase の呼び出しによりカスタムイベント request-database-export がディスパッチされること
  *    - [ ] 14-2. handleImportDatabase の呼び出しによりファイル選択インプットがクリックされること
  *    - [ ] 14-3. handleFileSelected の呼び出しによりカスタムイベント request-database-import がファイル付きでディスパッチされること
+ *
+ * 15. 設定モード切替ボタンのレンダリングとアクセシビリティ
+ *    - [ ] 15-1. app-menu__secondary 内に設定切替ボタン（wa-button#app-menu-settings-btn）、trigger="hover" 指定のツールチップ（wa-tooltip）、アイコン（wa-icon[name='gear-solid-full']）がレンダリングされること
+ *    - [ ] 15-2. app-menu__secondary 内のボタン配置順序が「エクスポートボタン」→「インポートボタン」→「設定ボタン」の順（最下部）であること
+ *    - [ ] 15-3. isSettingsMode が false の際、ツールチップ文言が「設定を開く」であり、ボタンに is-active クラスが付与されないこと
+ *    - [ ] 15-4. isSettingsMode が true の際、ツールチップ文言が「設定を終了」であり、ボタンに is-active クラスが付与されること
+ *
+ * 16. 設定モード切替ボタンクリックによる LayoutUIController 連動
+ *    - [ ] 16-1. handleToggleSettingsMode の呼び出しにより layoutUIController.toggleSettingsMode が実行されること
+ *
+ * 17. 設定モード・スクラッチモード有効時における他のボタンの無効化（disabled）およびSCSS仕様
+ *    - [ ] 17-1. isSettingsMode が true の際、設定ボタン以外の全ボタン（開閉、新規タスク作成、スクラッチ、集中モード、エクスポート、インポート）に disabled 属性が付与されること
+ *    - [ ] 17-2. isScratchMode が true の際、設定ボタン（#app-menu-settings-btn）にも disabled 属性が付与されること
+ *    - [ ] 17-3. app-menu.scss で設定アイコン（.app-menu__settings-icon）および設定ボタンのアクティブスタイルが定義されていること
  */
 
 describe("AppMenu Component", () => {
@@ -428,6 +442,119 @@ describe("AppMenu Component", () => {
       expect(dispatchedEvent).not.toBeNull();
       expect(dispatchedEvent!.detail.file).toBe(mockFile);
       expect((mockEvent.target as HTMLInputElement).value).toBe("");
+    });
+  });
+
+  describe("15. 設定モード切替ボタンのレンダリングとアクセシビリティ", () => {
+    it("15-1. app-menu__secondary 内に設定切替ボタン（wa-button#app-menu-settings-btn）、trigger=\"hover\" 指定のツールチップ（wa-tooltip）、アイコン（wa-icon[name='gear-solid-full']）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-settings-btn"[^>]*class="[^"]*app-menu__settings-btn[^"]*"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-settings-btn"[^>]*trigger="hover"[^>]*>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*name="gear-solid-full"[^>]*class="[^"]*app-menu__settings-icon[^"]*"/,
+      );
+    });
+
+    it("15-2. app-menu__secondary 内のボタン配置順序が「エクスポートボタン」→「インポートボタン」→「設定ボタン」の順（最下部）であること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      const exportIndex = htmlStr.indexOf("app-menu-export-btn");
+      const importIndex = htmlStr.indexOf("app-menu-import-btn");
+      const settingsIndex = htmlStr.indexOf("app-menu-settings-btn");
+
+      expect(exportIndex).toBeGreaterThan(-1);
+      expect(importIndex).toBeGreaterThan(exportIndex);
+      expect(settingsIndex).toBeGreaterThan(importIndex);
+    });
+
+    it("15-3. isSettingsMode が false の際、ツールチップ文言が「設定を開く」であり、ボタンに is-active クラスが付与されないこと", () => {
+      (appMenu as unknown as { isSettingsMode: boolean }).isSettingsMode =
+        false;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-settings-btn"[^>]*>[\s\S]*?設定を開く[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-settings-btn"[^>]*class="[^"]*is-active[^"]*"/,
+      );
+    });
+
+    it("15-4. isSettingsMode が true の際、ツールチップ文言が「設定を終了」であり、ボタンに is-active クラスが付与されること", () => {
+      (appMenu as unknown as { isSettingsMode: boolean }).isSettingsMode = true;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-settings-btn"[^>]*>[\s\S]*?設定を終了[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-settings-btn"[^>]*class="[^"]*is-active[^"]*"/,
+      );
+    });
+  });
+
+  describe("16. 設定モード切替ボタンクリックによる LayoutUIController 連動", () => {
+    it("16-1. handleToggleSettingsMode の呼び出しにより layoutUIController.toggleSettingsMode が実行されること", () => {
+      const toggleSettingsModeMock = vi.fn();
+      mockLayoutUIController = {
+        ...mockLayoutUIController,
+        toggleSettingsMode: toggleSettingsModeMock,
+      } as unknown as LayoutUIController;
+      appMenu.layoutUIController = mockLayoutUIController as LayoutUIController;
+
+      (
+        appMenu as unknown as { handleToggleSettingsMode: () => void }
+      ).handleToggleSettingsMode();
+      expect(toggleSettingsModeMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("17. 設定モード・スクラッチモード有効時における他のボタンの無効化（disabled）およびSCSS仕様", () => {
+    it("17-1. isSettingsMode が true の際、設定ボタン以外の全ボタン（開閉、新規タスク作成、スクラッチ、集中モード、エクスポート、インポート）に disabled 属性が付与されること", () => {
+      (appMenu as unknown as { isSettingsMode: boolean }).isSettingsMode = true;
+      (appMenu as unknown as { labelsController: { hasLabels: boolean } }).labelsController =
+        { hasLabels: true };
+      const htmlStr = flattenTemplate(appMenu.render());
+
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-toggle-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).toMatch(
+        /<task-create-button[^>]*buttonId="app-menu-task-create-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-scratch-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-zen-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-export-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-import-btn"[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-settings-btn"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("17-2. isScratchMode が true の際、設定ボタン（#app-menu-settings-btn）にも disabled 属性が付与されること", () => {
+      appMenu.isScratchMode = true;
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-settings-btn"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("17-3. app-menu.scss で設定アイコン（.app-menu__settings-icon）および設定ボタンのアクティブスタイルが定義されていること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toContain(".app-menu__settings-btn");
+      expect(scss).toContain(".app-menu__settings-icon");
     });
   });
 });

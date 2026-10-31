@@ -25,7 +25,8 @@
 .app-menu__task-create-btn,
 .app-menu__scratch-btn,
 .app-menu__export-btn,
-.app-menu__import-btn {
+.app-menu__import-btn,
+.app-menu__settings-btn {
   @include flex-center;
 }
 
@@ -33,7 +34,8 @@
 .app-menu__task-create-icon,
 .app-menu__scratch-icon,
 .app-menu__export-icon,
-.app-menu__import-icon {
+.app-menu__import-icon,
+.app-menu__settings-icon {
   display: inline-block;
   font-size: var(--wa-font-size-l, 18px);
 }
@@ -42,7 +44,8 @@
   display: none;
 }
 
-.app-menu__scratch-btn {
+.app-menu__scratch-btn,
+.app-menu__settings-btn {
   &.is-active {
     color: var(--wa-color-brand-contrast);
     background-color: var(--wa-color-brand);

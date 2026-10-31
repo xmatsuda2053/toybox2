@@ -14,6 +14,8 @@ export interface LayoutState {
   isZenMode: boolean;
   /** 全画面スクラッチモード (Scratch Mode) の有効・無効状態 */
   isScratchMode: boolean;
+  /** 全画面設定モード (Settings Mode) の有効・無効状態 */
+  isSettingsMode: boolean;
 }
 
 /**

@@ -1,0 +1,81 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+@use "./pane-common.scss" as *;
+
+@include pane-host-layout;
+
+.settings-pane {
+  @include theme-transition;
+  background-color: var(--wa-color-surface-default);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.settings-pane__header {
+  @include pane-section-header;
+}
+
+.settings-pane__title {
+  @include pane-section-title;
+}
+
+.settings-pane__content {
+  padding: var(--wa-space-m, 16px) var(--wa-space-l, 24px);
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-pane__tab-group {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+}
+
+.settings-pane__tab-group::part(tab-group) {
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+}
+
+.settings-pane__tab-group::part(body) {
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  display: flex;
+}
+
+.settings-pane__tab-panel {
+  display: none;
+}
+
+.settings-pane__tab-panel[active] {
+  @include custom-scrollbar;
+  --padding: 0;
+  padding: 0 var(--wa-space-l, 24px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  display: flex;
+}
+
+.settings-pane__placeholder {
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s, 14px);
+  padding: var(--wa-space-s, 12px) 0;
+}
