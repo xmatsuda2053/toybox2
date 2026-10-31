@@ -13,7 +13,14 @@ import type {
 import { normalizeMarkdownLinksWithSpaces } from "../utils/link-normalizer.js";
 
 /**
- * GFM 構文（チェックボックス、テーブル等）を安全に許可するための拡張サニタイズベーススキーマ
+ * 危険なスクリプト・データ URI スキーム（javascript:, vbscript:, data:）を遮断し、
+ * それ以外の URL・Windows パス・カスタムスキーム・独自文字列を許可する正規表現
+ */
+const SAFE_HREF_PATTERN =
+  /^(?!(?:\s|%[0-9a-f]{2})*(?:javascript|vbscript|data):)/i;
+
+/**
+ * GFM 構文（チェックボックス、テーブル等）および安全なカスタムリンクを許可するための拡張サニタイズベーススキーマ
  */
 export const baseMarkdownSanitizeSchema: SanitizeSchema = {
   ...defaultSchema,
@@ -30,17 +37,17 @@ export const baseMarkdownSanitizeSchema: SanitizeSchema = {
   ],
   protocols: {
     ...defaultSchema.protocols,
-    href: [
-      ...((defaultSchema.protocols && defaultSchema.protocols.href) || [
-        "http",
-        "https",
-        "mailto",
-      ]),
-      "file",
-    ],
+    href: [],
   },
   attributes: {
     ...defaultSchema.attributes,
+    a: [
+      ...(defaultSchema.attributes?.a || []).filter(
+        (attr) =>
+          attr !== "href" && (!Array.isArray(attr) || attr[0] !== "href"),
+      ),
+      ["href", SAFE_HREF_PATTERN],
+    ],
     input: [
       ["type", "checkbox"],
       "disabled",
@@ -53,6 +60,36 @@ export const baseMarkdownSanitizeSchema: SanitizeSchema = {
     span: ["className"],
   },
 };
+
+/**
+ * JSON.parse(JSON.stringify(baseSchema)) 等で RegExp が直列化消失した場合に
+ * a[href] の安全な正規表現ルールを復元する純粋関数
+ */
+function restoreSafeHrefPattern(schema: SanitizeSchema): SanitizeSchema {
+  const aAttrs = schema.attributes?.a;
+  if (!aAttrs) return schema;
+
+  const restoredAAttrs = aAttrs.map((attr) => {
+    if (
+      Array.isArray(attr) &&
+      attr[0] === "href" &&
+      attr[1] &&
+      typeof attr[1] === "object" &&
+      !(attr[1] instanceof RegExp)
+    ) {
+      return ["href", SAFE_HREF_PATTERN] as [string, RegExp];
+    }
+    return attr;
+  });
+
+  return {
+    ...schema,
+    attributes: {
+      ...schema.attributes,
+      a: restoredAAttrs,
+    },
+  };
+}
 
 /**
  * Markdown パイプラインプロセッサを生成するファクトリ関数
@@ -71,7 +108,7 @@ export function createMarkdownProcessor(
 
   const baseSchema = baseMarkdownSanitizeSchema;
   const finalSchema: SanitizeSchema = sanitizeSchemaModifier
-    ? sanitizeSchemaModifier(baseSchema)
+    ? restoreSafeHrefPattern(sanitizeSchemaModifier(baseSchema))
     : baseSchema;
 
   const processor = unified()
