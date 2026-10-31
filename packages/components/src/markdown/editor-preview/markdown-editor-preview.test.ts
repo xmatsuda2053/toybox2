@@ -69,6 +69,7 @@
  *   - extensions および processorOptions が変更されない限り、effectiveProcessorOptions は同一のオブジェクト参照を返すこと
  * 16. テーマモード制御（themeMode）と視覚スタイルの保護
  *   - themeMode プロパティが指定された場合、指定されたテーマが優先されること
+ *   - themeMode を 'dark' から 'light' に切り替えた際、子要素の markdown-preview にも .themeMode プロパティが同期してバインドされること
  *   - SCSS において :host([data-theme="dark"]) の背景色が透明に設定され、角丸の遮蔽を防止すること
  * 17. 固定フィット表示における領域フィットと伸縮保護
  *   - :host、内部コンテナおよび body が親要素の flex: 1 / min-height: 100% を尊重し、領域末尾まで伸長可能であること
@@ -898,6 +899,22 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.syncTheme();
       expect(element.currentTheme).toBe("light");
       expect(element.getAttribute("data-theme")).toBe("light");
+    });
+
+    it("themeMode を 'dark' から 'light' に切り替えた際、子要素の markdown-preview にも .themeMode プロパティが同期してバインドされること", () => {
+      element.themeMode = "dark";
+      element.updated(new Map([["themeMode", "auto"]]));
+      const darkHtml = flattenTemplate(element.render());
+      expect(darkHtml).toMatch(
+        /<markdown-preview[\s\S]*?\.themeMode=dark[\s\S]*?>/,
+      );
+
+      element.themeMode = "light";
+      element.updated(new Map([["themeMode", "dark"]]));
+      const lightHtml = flattenTemplate(element.render());
+      expect(lightHtml).toMatch(
+        /<markdown-preview[\s\S]*?\.themeMode=light[\s\S]*?>/,
+      );
     });
 
     it("SCSS において :host([data-theme='dark']) に不透明な黒背景色が設定されず、transparent であること", () => {

@@ -40,10 +40,11 @@
  *   - href に %20 が含まれる場合はデコードされてスペースとしてコピーされること
  *   - Windows ローカルパス（C:\...）や独自文字列リンクをレンダリング・クリックした際、元の文字列がコピーされ link-copy イベントが発火すること
  *   - link-copy カスタムイベントが URL とともに発火すること
- * 16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
- *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
+ * 16. テーマモード制御（themeMode）およびテーマスタイルバリアント制御（darkTheme / lightTheme）
+ *   - themeMode の初期値が 'auto'、darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
  *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
  *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
+ *   - themeMode を 'dark' から 'light' に切り替えた際、ホスト要素から wa-dark クラスが除去されて wa-light および data-theme='light' に更新され、内部 body の data-theme も 'light' に同期されること
  */
 
 import * as fs from "node:fs";
@@ -363,8 +364,9 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
     });
   });
 
-  describe("16. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル", () => {
-    it("darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること", () => {
+  describe("16. テーマモード制御（themeMode）およびテーマスタイルバリアント制御（darkTheme / lightTheme）", () => {
+    it("themeMode の初期値が 'auto'、darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること", () => {
+      expect(element.themeMode).toBe("auto");
       expect(element.darkTheme).toBe("contrast");
       expect(element.lightTheme).toBe("default");
     });
@@ -383,6 +385,40 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       element.requestUpdate();
       element.syncTheme();
       expect(element.getAttribute("light-theme")).toBe("default");
+    });
+
+    it("themeMode を 'dark' から 'light' に切り替えた際、ホスト要素から wa-dark クラスが除去されて wa-light および data-theme='light' に更新され、内部 body の data-theme も 'light' に同期されること", async () => {
+      const classSet = new Set<string>();
+      Object.defineProperty(element, "classList", {
+        value: {
+          add: (c: string) => classSet.add(c),
+          remove: (c: string) => classSet.delete(c),
+          contains: (c: string) => classSet.has(c),
+        },
+        configurable: true,
+      });
+
+      element.content = "[リンク](https://example.com)";
+      await element.renderMarkdown();
+
+      // 1. ダークモードへ設定
+      element.themeMode = "dark";
+      element.updated(new Map([["themeMode", "auto"]]));
+
+      expect(element.currentTheme).toBe("dark");
+      expect(element.getAttribute("data-theme")).toBe("dark");
+      expect(element.classList.contains("wa-dark")).toBe(true);
+      expect(flattenTemplate(element.render())).toContain('data-theme="dark"');
+
+      // 2. ライトモードへ切り替え（wa-dark が残留しないことを検証）
+      element.themeMode = "light";
+      element.updated(new Map([["themeMode", "dark"]]));
+
+      expect(element.currentTheme).toBe("light");
+      expect(element.getAttribute("data-theme")).toBe("light");
+      expect(element.classList.contains("wa-dark")).toBe(false);
+      expect(element.classList.contains("wa-light")).toBe(true);
+      expect(flattenTemplate(element.render())).toContain('data-theme="light"');
     });
   });
 });

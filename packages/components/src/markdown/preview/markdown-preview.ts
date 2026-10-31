@@ -12,8 +12,8 @@ import type {
   MarkdownLightThemeVariant,
 } from "../types.js";
 import {
-  detectIsDarkMode,
   observeThemeChanges,
+  resolveThemeMode,
   applyHostThemeSync,
 } from "../utils/theme-sync.js";
 
@@ -30,6 +30,10 @@ export class MarkdownPreview extends LitElement {
   /** 表示対象の Markdown 文字列 */
   @property({ type: String })
   public content = "";
+
+  /** テーマモード ("light" | "dark" | "auto") */
+  @property({ type: String, attribute: "theme-mode" })
+  public themeMode: "light" | "dark" | "auto" = "auto";
 
   /** ダークモードスタイル種別 ("contrast" | "soft") */
   @property({ type: String, attribute: "dark-theme" })
@@ -50,6 +54,10 @@ export class MarkdownPreview extends LitElement {
   /** パース・レンダリング中フラグ */
   @state()
   public isLoading = false;
+
+  /** 現在適用されている解決済みテーマ ("light" | "dark") */
+  @state()
+  public currentTheme: "light" | "dark" = "light";
 
   private processor?: IMarkdownProcessor;
   private disconnectThemeObserver?: () => void;
@@ -72,7 +80,8 @@ export class MarkdownPreview extends LitElement {
   }
 
   public syncTheme(): void {
-    const isDark = detectIsDarkMode(this);
+    const isDark = resolveThemeMode(this.themeMode, this);
+    this.currentTheme = isDark ? "dark" : "light";
     applyHostThemeSync(this, isDark, this.darkTheme, this.lightTheme);
   }
 
@@ -80,6 +89,7 @@ export class MarkdownPreview extends LitElement {
     super.updated(changedProperties);
 
     if (
+      changedProperties.has("themeMode") ||
       changedProperties.has("darkTheme") ||
       changedProperties.has("lightTheme")
     ) {
@@ -188,6 +198,7 @@ export class MarkdownPreview extends LitElement {
 
   override render() {
     const isDark =
+      this.currentTheme === "dark" ||
       this.getAttribute?.("data-theme") === "dark" ||
       Boolean(this.classList?.contains?.("wa-dark"));
     const currentTheme = isDark ? "dark" : "light";
