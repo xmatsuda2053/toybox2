@@ -702,7 +702,7 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   /**
-   * エディタメニュー内から Markdown フォーマッターを実行し、テキストを更新してメニューを閉じる。
+   * Markdown フォーマッターを実行し、テキストを更新する。
    */
   public async handleMenuFormatAction(): Promise<void> {
     this.toggleActionMenu(false);
@@ -932,7 +932,28 @@ export class MarkdownEditorPreview extends LitElement {
     `;
   }
 
+  /**
+   * 編集・スプリットモード時のワンタッチ整形ボタンを描画する。
+   */
+  private renderFormatButton() {
+    if (this.mode === "preview") return nothing;
 
+    return html`
+      <button
+        type="button"
+        class="markdown-editor-preview__toolbar-btn markdown-editor-preview__format-btn"
+        title="整形"
+        aria-label="整形"
+        @click=${() => this.handleMenuFormatAction()}
+      >
+        <wa-icon
+          library="my-icons"
+          name="wand-magic-sparkles-solid-full"
+          label="整形"
+        ></wa-icon>
+      </button>
+    `;
+  }
 
   /**
    * スプリットモード切替タブボタンを描画する。
@@ -1050,15 +1071,6 @@ export class MarkdownEditorPreview extends LitElement {
         ></wa-icon>
         コピー
       </wa-dropdown-item>
-      <wa-dropdown-item value="format">
-        <wa-icon
-          slot="icon"
-          library="my-icons"
-          name="wand-magic-sparkles-solid-full"
-          class="markdown-editor-preview__action-menu-item-icon"
-        ></wa-icon>
-        整形
-      </wa-dropdown-item>
       <wa-dropdown-item value="help">
         <wa-icon
           slot="icon"
@@ -1145,7 +1157,8 @@ export class MarkdownEditorPreview extends LitElement {
           ${this.mode !== "preview" ? this.renderToolbar() : this.renderTitle()}
         </div>
         <div class="markdown-editor-preview__header-right">
-          ${this.renderModeSwitchTabs()} ${this.renderActionMenu()}
+          ${this.renderFormatButton()} ${this.renderModeSwitchTabs()}
+          ${this.renderActionMenu()}
         </div>
       </header>
     `;
