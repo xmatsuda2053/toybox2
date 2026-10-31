@@ -29,10 +29,11 @@
  *   - Light/Dark モードに応じた color-scheme が設定され、OSダークモード環境下でもチェックボックスが暗化しないこと
  * 13. チェックボックスのアクセントカラー
  *   - input[type='checkbox'] の accent-color がセマンティックトークンを参照していること
- * 14. blockquote の背景色・左ボーダー・文字色、wa-callout の余白、およびリンク種別（data-link-type）ごとのスタイル
+ * 14. blockquote の背景色・左ボーダー・文字色、wa-callout の余白、およびリンク種別（data-link-type）ごとのスタイルとホバー効果
  *   - blockquote がエディタ・ビュアーと同化せず、セマンティックトークンによる背景色・ボーダー・文字色を持つこと
  *   - wa-callout に下方向余白として var(--wa-space-m) が設定されていること
- *   - a[data-link-type] に実線下線（underline solid）が設定され、a[data-link-type="url"], a[data-link-type="path"], a[data-link-type="text"] ごとにセマンティックトークンによる配色が設定されていること
+ *   - a[data-link-type] の通常時は text-decoration: none が設定され、種別ごとにセマンティックトークンによる配色が設定されていること
+ *   - ホバー時（:hover）に実線下線（underline solid）および種別ごとの背景ハイライト（*-fill-quiet）が設定されていること
  * 15. リンククリック時のURLクリップボードコピー
  *   - a タグクリック時にブラウザの画面遷移が抑止（preventDefault）されること
  *   - a タグの href がクリップボードにコピーされること
@@ -219,20 +220,30 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       );
     });
 
-    it("リンク種別（url / path / text）すべてに実線下線（underline solid）が適用され、種別ごとにセマンティックトークンによる配色が設定されていること", () => {
+    it("リンク種別（url / path / text）の通常時は下線なし（text-decoration: none）で種別ごとの配色が設定され、ホバー時に実線下線と背景ハイライト（*-fill-quiet）が設定されていること", () => {
       expect(scssContent).toMatch(
-        /a\[data-link-type\]\s*\{[\s\S]*?text-decoration:\s*underline\s+solid/,
+        /a\[data-link-type\]\s*\{[\s\S]*?text-decoration:\s*none[\s\S]*?border-radius:\s*var\(--wa-border-radius-s\)/,
       );
-      expect(scssContent).not.toContain("dashed");
-      expect(scssContent).not.toContain("dotted");
+      expect(scssContent).toMatch(
+        /a\[data-link-type\]:hover\s*\{[\s\S]*?text-decoration:\s*underline\s+solid/,
+      );
       expect(scssContent).toMatch(
         /a\[data-link-type="url"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-brand-60\)/,
+      );
+      expect(scssContent).toMatch(
+        /a\[data-link-type="url"\]:hover\s*\{[\s\S]*?background-color:\s*var\(--wa-color-brand-fill-quiet\)/,
       );
       expect(scssContent).toMatch(
         /a\[data-link-type="path"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-warning-60\)/,
       );
       expect(scssContent).toMatch(
+        /a\[data-link-type="path"\]:hover\s*\{[\s\S]*?background-color:\s*var\(--wa-color-warning-fill-quiet\)/,
+      );
+      expect(scssContent).toMatch(
         /a\[data-link-type="text"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-text-quiet\)/,
+      );
+      expect(scssContent).toMatch(
+        /a\[data-link-type="text"\]:hover\s*\{[\s\S]*?background-color:\s*var\(--wa-color-neutral-fill-quiet\)[\s\S]*?color:\s*var\(--wa-color-text-normal\)/,
       );
       expect(scssContent).toContain(".markdown-link__icon");
     });
