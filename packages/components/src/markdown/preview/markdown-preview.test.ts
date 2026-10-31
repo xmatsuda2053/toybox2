@@ -29,8 +29,9 @@
  *   - Light/Dark モードに応じた color-scheme が設定され、OSダークモード環境下でもチェックボックスが暗化しないこと
  * 13. チェックボックスのアクセントカラー
  *   - input[type='checkbox'] の accent-color がセマンティックトークンを参照していること
- * 14. blockquote の背景色・左ボーダー・文字色
+ * 14. blockquote の背景色・左ボーダー・文字色および wa-callout の余白
  *   - blockquote がエディタ・ビュアーと同化せず、セマンティックトークンによる背景色・ボーダー・文字色を持つこと
+ *   - wa-callout に下方向余白として var(--wa-space-m) が設定されていること
  * 15. リンククリック時のURLクリップボードコピー
  *   - a タグクリック時にブラウザの画面遷移が抑止（preventDefault）されること
  *   - a タグの href がクリップボードにコピーされること
@@ -209,6 +210,12 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       expect(scssContent).toMatch(/blockquote[\s\S]*?background-color:\s*var\(--stepnote-markdown-blockquote-bg\)/);
       expect(scssContent).toMatch(/blockquote[\s\S]*?border-left:\s*0\.25em\s+solid\s+var\(--stepnote-markdown-blockquote-border\)/);
       expect(scssContent).toMatch(/blockquote[\s\S]*?color:\s*var\(--stepnote-markdown-blockquote-text\)/);
+    });
+
+    it("wa-callout に下方向余白として var(--wa-space-m) が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /wa-callout\s*\{[\s\S]*?margin(?:-block-end|-bottom)?:\s*(?:0\s+0\s+)?var\(--wa-space-m\)/,
+      );
     });
   });
 
