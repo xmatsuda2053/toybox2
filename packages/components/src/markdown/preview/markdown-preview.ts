@@ -1,8 +1,10 @@
 import { LitElement, html, unsafeCSS, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import previewStyles from "./markdown-preview.scss?inline";
 import { createMarkdownProcessor } from "../pipeline/markdown-processor.js";
+import { decodeLinkHref } from "../utils/link-normalizer.js";
 import type {
   IMarkdownProcessor,
   MarkdownProcessorOptions,
@@ -169,12 +171,7 @@ export class MarkdownPreview extends LitElement {
     e.preventDefault?.();
     e.stopPropagation?.();
 
-    let decodedUrl: string;
-    try {
-      decodedUrl = decodeURI(href);
-    } catch {
-      decodedUrl = href;
-    }
+    const decodedUrl = decodeLinkHref(href);
 
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       void navigator.clipboard.writeText(decodedUrl);

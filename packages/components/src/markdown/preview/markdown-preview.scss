@@ -77,6 +77,32 @@
     margin: 0 0 var(--wa-space-m);
   }
 
+  a[data-link-type] {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wa-space-2xs);
+    text-decoration: underline solid;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .markdown-link__icon {
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+
+  a[data-link-type="url"] {
+    color: var(--wa-color-brand-60);
+  }
+
+  a[data-link-type="path"] {
+    color: var(--wa-color-warning-60);
+  }
+
+  a[data-link-type="text"] {
+    color: var(--wa-color-text-quiet);
+  }
+
   table {
     border-collapse: collapse;
 
@@ -99,6 +125,22 @@
   input[type="checkbox"] {
     accent-color: var(--stepnote-markdown-checkbox-accent);
     cursor: pointer;
+  }
+}
+
+/* ダークモード（contrast / soft 共通）のリンク種別カラー */
+:host([data-theme="dark"]) .markdown-preview .markdown-preview__body.markdown-body,
+:host(.wa-dark) .markdown-preview .markdown-preview__body.markdown-body {
+  a[data-link-type="url"] {
+    color: var(--wa-color-brand-70);
+  }
+
+  a[data-link-type="path"] {
+    color: var(--wa-color-warning-70);
+  }
+
+  a[data-link-type="text"] {
+    color: var(--wa-color-text-quiet);
   }
 }
 
@@ -141,6 +183,14 @@
 
     a {
       color: var(--wa-color-brand-70);
+    }
+
+    a[data-link-type="path"] {
+      color: var(--wa-color-warning-70);
+    }
+
+    a[data-link-type="text"] {
+      color: var(--wa-color-text-quiet);
     }
 
     pre {

@@ -36,6 +36,7 @@ import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import folder_solid_full from "./assets/icons/folder-solid-full.svg?raw";
 import gear_solid_full from "./assets/icons/gear-solid-full.svg?raw";
 import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
 import html5_brands_solid_full from "./assets/icons/html5-brands-solid-full.svg?raw";
@@ -120,6 +121,7 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "folder-solid-full": folder_solid_full,
   "gear-solid-full": gear_solid_full,
   "heading-solid-full": heading_solid_full,
   "html5-brands-solid-full": html5_brands_solid_full,

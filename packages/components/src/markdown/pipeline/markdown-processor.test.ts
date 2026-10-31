@@ -10,13 +10,17 @@
  *   - 自動リンク記法（URL直書き）が <a> タグに変換されること
  *   - URL の途中にスペースが含まれるリンク記法で href が保持されること
  *   - Windows ローカルパス（C:\...）やカスタムスキーム（vscode://...）、コロンを含む独自文字列のリンクで href が保持されること
- * 3. セキュリティとサニタイズ（XSS防御）
+ * 3. リンク種別（URL / フォルダパス / テキスト）の自動判定と視覚属性付与
+ *   - Web URL（https://, http://, mailto: 等）のリンクに data-link-type="url"、title="[URL] ..."、および link-solid-full アイコンが付与されること
+ *   - フォルダ・ファイルパス（C:\..., \\server\..., file://..., /path, ./path）のリンクに data-link-type="path"、title="[フォルダパス] ..."、および folder-solid-full アイコンが付与されること
+ *   - それ以外のテキスト（任意文字列、カスタムキー等）のリンクに data-link-type="text"、title="[テキスト] ..."、および copy-solid-full アイコンが付与されること
+ * 4. セキュリティとサニタイズ（XSS防御）
  *   - <script> タグが完全に除去されること
  *   - onerror や onload などの危険なインラインイベントハンドラが除去されること
  *   - javascript:, vbscript:, data: スキームの危険なリンクが除去または無効化されること
- * 4. サニタイズスキーマの拡張（カスタマイズ機能）
+ * 5. サニタイズスキーマの拡張（カスタマイズ機能）
  *   - sanitizeSchemaModifier で許可したカスタムタグや属性がサニタイズを通過して出力されること
- * 5. プラグイン注入による拡張性（Open-Closed Principle）
+ * 6. プラグイン注入による拡張性（Open-Closed Principle）
  *   - 外部から注入した remark プラグインが MDAST レベルで適用されること
  *   - 外部から注入した rehype プラグインが HAST レベルで適用されること
  */
@@ -135,8 +139,60 @@ describe("MarkdownProcessor", () => {
 
       const html = await processor.process(markdown);
 
-      expect(html).toContain('<a href="vscode://file/C:/project/main.ts">エディタで開く</a>');
-      expect(html).toContain('<a href="task:123">関連タスク</a>');
+      expect(html).toContain('href="vscode://file/C:/project/main.ts"');
+      expect(html).toContain(">エディタで開く</a>");
+      expect(html).toContain('href="task:123"');
+      expect(html).toContain(">関連タスク</a>");
+    });
+  });
+
+  describe("リンク種別（URL / フォルダパス / テキスト）の自動判定と視覚属性付与", () => {
+    it("URL リンク（https://, http://, mailto: 等）に data-link-type='url'、title='[URL] ...'、および link-solid-full アイコンが付与されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown = "[公式サイト](https://example.com/docs)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('data-link-type="url"');
+      expect(html).toContain('title="[URL] https://example.com/docs"');
+      expect(html).toContain(
+        '<wa-icon library="my-icons" name="link-solid-full" class="markdown-link__icon"></wa-icon>公式サイト</a>',
+      );
+    });
+
+    it("フォルダパス・ファイルパス（C:\\..., \\\\server\\..., file://...）のリンクに data-link-type='path'、title='[フォルダパス] ...'、および folder-solid-full アイコンが付与されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown =
+        "[ローカルフォルダ](C:\\Users\\Public\\Documents) と [共有フォルダ](\\\\server\\share\\folder)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('data-link-type="path"');
+      expect(html).toContain('title="[フォルダパス] C:\\Users\\Public\\Documents"');
+      expect(html).toContain('title="[フォルダパス] \\\\server\\share\\folder"');
+      expect(html).toContain(
+        '<wa-icon library="my-icons" name="folder-solid-full" class="markdown-link__icon"></wa-icon>ローカルフォルダ</a>',
+      );
+      expect(html).toContain(
+        '<wa-icon library="my-icons" name="folder-solid-full" class="markdown-link__icon"></wa-icon>共有フォルダ</a>',
+      );
+    });
+
+    it("URL・パス以外のテキスト全般のリンクに data-link-type='text'、title='[テキスト] ...'、および copy-solid-full アイコンが付与されること", async () => {
+      const processor = createMarkdownProcessor();
+      const markdown = "[定型文コピー](お疲れ様です。よろしくお願いします。) と [タスクID](TASK-999)";
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('data-link-type="text"');
+      expect(html).toContain('title="[テキスト] お疲れ様です。よろしくお願いします。"');
+      expect(html).toContain('title="[テキスト] TASK-999"');
+      expect(html).toContain(
+        '<wa-icon library="my-icons" name="copy-solid-full" class="markdown-link__icon"></wa-icon>定型文コピー</a>',
+      );
+      expect(html).toContain(
+        '<wa-icon library="my-icons" name="copy-solid-full" class="markdown-link__icon"></wa-icon>タスクID</a>',
+      );
     });
   });
 
@@ -169,6 +225,7 @@ describe("MarkdownProcessor", () => {
 
       expect(html).not.toContain("javascript:");
       expect(html).not.toContain('href="javascript:');
+      expect(html).not.toContain("data-link-type");
     });
 
     it("vbscript: や data: スキームの危険なリンクが除去されること", async () => {
