@@ -81,9 +81,16 @@
     display: inline-flex;
     align-items: center;
     gap: var(--wa-space-2xs);
-    text-decoration: underline solid;
+    padding: 0 var(--wa-space-2xs);
+    text-decoration: none;
     text-underline-offset: 3px;
+    border-radius: var(--wa-border-radius-s);
     cursor: pointer;
+    transition: var(--stepnote-transition-theme);
+  }
+
+  a[data-link-type]:hover {
+    text-decoration: underline solid;
   }
 
   .markdown-link__icon {
@@ -95,12 +102,25 @@
     color: var(--wa-color-brand-60);
   }
 
+  a[data-link-type="url"]:hover {
+    background-color: var(--wa-color-brand-fill-quiet);
+  }
+
   a[data-link-type="path"] {
     color: var(--wa-color-warning-60);
   }
 
+  a[data-link-type="path"]:hover {
+    background-color: var(--wa-color-warning-fill-quiet);
+  }
+
   a[data-link-type="text"] {
     color: var(--wa-color-text-quiet);
+  }
+
+  a[data-link-type="text"]:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+    color: var(--wa-color-text-normal);
   }
 
   table {
@@ -141,6 +161,10 @@
 
   a[data-link-type="text"] {
     color: var(--wa-color-text-quiet);
+  }
+
+  a[data-link-type="text"]:hover {
+    color: var(--wa-color-text-normal);
   }
 }
 
@@ -191,6 +215,10 @@
 
     a[data-link-type="text"] {
       color: var(--wa-color-text-quiet);
+    }
+
+    a[data-link-type="text"]:hover {
+      color: var(--wa-color-text-normal);
     }
 
     pre {
