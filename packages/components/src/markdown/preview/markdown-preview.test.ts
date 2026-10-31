@@ -29,9 +29,10 @@
  *   - Light/Dark モードに応じた color-scheme が設定され、OSダークモード環境下でもチェックボックスが暗化しないこと
  * 13. チェックボックスのアクセントカラー
  *   - input[type='checkbox'] の accent-color がセマンティックトークンを参照していること
- * 14. blockquote の背景色・左ボーダー・文字色および wa-callout の余白
+ * 14. blockquote の背景色・左ボーダー・文字色、wa-callout の余白、およびリンク種別（data-link-type）ごとのスタイル
  *   - blockquote がエディタ・ビュアーと同化せず、セマンティックトークンによる背景色・ボーダー・文字色を持つこと
  *   - wa-callout に下方向余白として var(--wa-space-m) が設定されていること
+ *   - a[data-link-type] に実線下線（underline solid）が設定され、a[data-link-type="url"], a[data-link-type="path"], a[data-link-type="text"] ごとにセマンティックトークンによる配色が設定されていること
  * 15. リンククリック時のURLクリップボードコピー
  *   - a タグクリック時にブラウザの画面遷移が抑止（preventDefault）されること
  *   - a タグの href がクリップボードにコピーされること
@@ -216,6 +217,24 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       expect(scssContent).toMatch(
         /wa-callout\s*\{[\s\S]*?margin(?:-block-end|-bottom)?:\s*(?:0\s+0\s+)?var\(--wa-space-m\)/,
       );
+    });
+
+    it("リンク種別（url / path / text）すべてに実線下線（underline solid）が適用され、種別ごとにセマンティックトークンによる配色が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /a\[data-link-type\]\s*\{[\s\S]*?text-decoration:\s*underline\s+solid/,
+      );
+      expect(scssContent).not.toContain("dashed");
+      expect(scssContent).not.toContain("dotted");
+      expect(scssContent).toMatch(
+        /a\[data-link-type="url"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-brand-60\)/,
+      );
+      expect(scssContent).toMatch(
+        /a\[data-link-type="path"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-warning-60\)/,
+      );
+      expect(scssContent).toMatch(
+        /a\[data-link-type="text"\]\s*\{[\s\S]*?color:\s*var\(--wa-color-text-quiet\)/,
+      );
+      expect(scssContent).toContain(".markdown-link__icon");
     });
   });
 

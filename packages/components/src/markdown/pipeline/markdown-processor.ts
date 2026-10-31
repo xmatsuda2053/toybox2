@@ -1,16 +1,21 @@
-import { unified, type Processor } from "unified";
+import { unified, type Processor, type Plugin } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
+import { visit } from "unist-util-visit";
+import type { Root as HastRoot, Element as HastElement } from "hast";
 import type {
   IMarkdownProcessor,
   MarkdownProcessorOptions,
   SanitizeSchema,
 } from "../types.js";
 
-import { normalizeMarkdownLinksWithSpaces } from "../utils/link-normalizer.js";
+import {
+  normalizeMarkdownLinksWithSpaces,
+  resolveMarkdownLinkMeta,
+} from "../utils/link-normalizer.js";
 
 /**
  * 危険なスクリプト・データ URI スキーム（javascript:, vbscript:, data:）を遮断し、
@@ -92,6 +97,40 @@ function restoreSafeHrefPattern(schema: SanitizeSchema): SanitizeSchema {
 }
 
 /**
+ * サニタイズ済みの <a> 要素に対してリンク種別（data-link-type）、title 属性、
+ * および先頭の <wa-icon> を自動付与する rehype プラグイン
+ */
+const rehypeEnhanceLinksPlugin: Plugin<[], HastRoot> = () => {
+  return (tree) => {
+    visit(tree, "element", (node: HastElement) => {
+      if (node.tagName !== "a") return;
+      const href = node.properties?.href;
+      if (typeof href !== "string" || href.length === 0) return;
+
+      const meta = resolveMarkdownLinkMeta(href);
+      node.properties = {
+        ...node.properties,
+        "data-link-type": meta.type,
+        title: meta.title,
+      };
+
+      const iconElement: HastElement = {
+        type: "element",
+        tagName: "wa-icon",
+        properties: {
+          library: "my-icons",
+          name: meta.icon,
+          className: ["markdown-link__icon"],
+        },
+        children: [],
+      };
+
+      node.children = [iconElement, ...(node.children || [])];
+    });
+  };
+};
+
+/**
  * Markdown パイプラインプロセッサを生成するファクトリ関数
  *
  * @param options プラグインやサニタイズ設定オプション (DI)
@@ -117,6 +156,7 @@ export function createMarkdownProcessor(
     .use(remarkPlugins)
     .use(remarkRehype)
     .use(rehypeSanitize, finalSchema)
+    .use(rehypeEnhanceLinksPlugin)
     .use(rehypePlugins)
     .use(rehypeStringify);
 

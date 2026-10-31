@@ -5,7 +5,7 @@
  *    - デフォルトのアイコンライブラリ名として 'my-icons' が定義されていること
  *
  * 2. アイコン存在判定・取得仕様 (hasIcon / getIconSvg):
- *    - 登録済みのアイコン名に対して hasIcon が true を返すこと
+ *    - 登録済みのアイコン名に対して hasIcon が true を返すこと（folder-solid-full を含む）
  *    - 未登録のアイコン名に対して hasIcon が false を返すこと
  *    - 登録済みのアイコン名に対して getIconSvg が対応する SVG 文字列を返すこと
  *    - 未登録のアイコン名に対して getIconSvg が undefined を返すこと
@@ -70,6 +70,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("upload-solid-full")).toBe(true);
       expect(hasIcon("database-solid-full")).toBe(true);
       expect(hasIcon("book-open-solid-full")).toBe(true);
+      expect(hasIcon("folder-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }
@@ -92,6 +93,10 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const circleXmarkSvg = getIconSvg("circle-xmark-solid-full");
       expect(circleXmarkSvg).toBeDefined();
       expect(circleXmarkSvg).toContain("<svg");
+
+      const folderSvg = getIconSvg("folder-solid-full");
+      expect(folderSvg).toBeDefined();
+      expect(folderSvg).toContain("<svg");
     });
 
     it("未登録のアイコン名に対して getIconSvg が undefined を返すこと", () => {
