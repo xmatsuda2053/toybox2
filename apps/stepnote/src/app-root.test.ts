@@ -117,6 +117,13 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 13-2. Ctrl+Alt+S 押下時に layoutUIController.toggleScratchMode が呼び出され、preventDefault が実行されること
  *    - [ ] 13-3. isScratchMode が true の際、Ctrl+Alt+Z による集中モード切替は抑止されること
  *    - [ ] 13-4. isScratchMode が true の際でも、Ctrl+Alt+S によるスクラッチパッド解除が実行できること
+ *
+ * 【AppRoot 全画面設定モード仕様 (Phase 14)】
+ * 14. 全画面設定モード（Settings Mode）連携
+ *    - [ ] 14-1. isSettingsMode が true の際、panes-container 内に settings-pane がレンダリングされ、Navigation, TaskList, Task, Journal, Scratch ペインが非表示となること
+ *    - [ ] 14-2. isSettingsMode の状態が app-menu の .isSettingsMode プロパティへ反映されること
+ *    - [ ] 14-3. isSettingsMode が true の際、ヘッダーの全体検索ボタン（#header-global-search-trigger）が無効化（disabled属性）されること
+ *    - [ ] 14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z, Ctrl+Alt+S のキーボードショートカットが抑止されること
  */
 
 /**
@@ -791,6 +798,135 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
 
     it("13-4. isScratchMode が true の際でも、Ctrl+Alt+S によるスクラッチパッド解除が実行できること", () => {
+      appRoot.layoutUIController.setSettingsMode(false);
+      appRoot.layoutUIController.setScratchMode(true);
+      const toggleScratchSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleScratchMode",
+      );
+
+      const ctrlAltSEvent = {
+        key: "s",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      appRoot.handleGlobalKeyDown(ctrlAltSEvent);
+      expect(toggleScratchSpy).toHaveBeenCalled();
+      expect(ctrlAltSEvent.preventDefault).toHaveBeenCalled();
+    });
+  });
+
+  describe("14. 全画面設定モード（Settings Mode）連携", () => {
+    it("14-1. isSettingsMode が true の際、panes-container 内に settings-pane がレンダリングされ、Navigation, TaskList, Task, Journal, Scratch ペインが非表示となること", () => {
+      appRoot.layoutUIController.setScratchMode(false);
+      appRoot.layoutUIController.setSettingsMode(true);
+      const htmlStr = flattenTemplate(appRoot.render());
+
+      expect(htmlStr).toMatch(/<settings-pane/);
+      expect(htmlStr).not.toMatch(/<aside[^>]*class="[^"]*pane-navigation/);
+      expect(htmlStr).not.toMatch(/<task-list/);
+      expect(htmlStr).not.toMatch(/<task-pane/);
+      expect(htmlStr).not.toMatch(/<journal-pane/);
+      expect(htmlStr).not.toMatch(/<scratch-pane/);
+    });
+
+    it("14-2. isSettingsMode の状態が app-menu の .isSettingsMode プロパティへ反映されること", () => {
+      appRoot.layoutUIController.setScratchMode(false);
+      appRoot.layoutUIController.setSettingsMode(true);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain(".isSettingsMode=true");
+    });
+
+    it("14-3. isSettingsMode が true の際、ヘッダーの全体検索ボタンが無効化（disabled属性）されること", () => {
+      appRoot.layoutUIController.setScratchMode(false);
+      appRoot.layoutUIController.setSettingsMode(true);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(
+        /<button[^>]*id="header-global-search-trigger"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z, Ctrl+Alt+S のキーボードショートカットが抑止されること", () => {
+      appRoot.layoutUIController.setScratchMode(false);
+      appRoot.layoutUIController.setSettingsMode(true);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        true,
+      );
+      appRoot.isGlobalSearchOpen = false;
+      appRoot.isTaskCreateDialogOpen = false;
+      appRoot.isShortcutHelpOpen = false;
+
+      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+      const toggleScratchSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleScratchMode",
+      );
+
+      // Ctrl+K
+      const ctrlKEvent = {
+        key: "k",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      appRoot.handleGlobalKeyDown(ctrlKEvent);
+      expect(appRoot.isGlobalSearchOpen).toBe(false);
+      expect(ctrlKEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Alt+N
+      const altNEvent = {
+        key: "n",
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      appRoot.handleGlobalKeyDown(altNEvent);
+      expect(appRoot.isTaskCreateDialogOpen).toBe(false);
+      expect(altNEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Ctrl+/
+      const ctrlSlashEvent = {
+        key: "/",
+        ctrlKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      appRoot.handleGlobalKeyDown(ctrlSlashEvent);
+      expect(appRoot.isShortcutHelpOpen).toBe(false);
+      expect(ctrlSlashEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Ctrl+Alt+Z
+      const ctrlAltZEvent = {
+        key: "z",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      appRoot.handleGlobalKeyDown(ctrlAltZEvent);
+      expect(toggleZenSpy).not.toHaveBeenCalled();
+
+      // Ctrl+Alt+S
+      const ctrlAltSEvent = {
+        key: "s",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+      appRoot.handleGlobalKeyDown(ctrlAltSEvent);
+      expect(toggleScratchSpy).not.toHaveBeenCalled();
+    });
+
+    it("14-5. isSettingsMode が false の際、通常の5ペインレイアウトへ復帰すること", () => {
+      appRoot.layoutUIController.setSettingsMode(false);
+      appRoot.layoutUIController.setScratchMode(false);
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).not.toMatch(/<settings-pane/);
+      expect(htmlStr).toMatch(/<task-pane/);
+      expect(htmlStr).toMatch(/<journal-pane/);
+    });
+  });
+
+  describe("13-4 (legacy verify)", () => {
+    it("13-4-legacy. スクラッチモード解除の直前状態検証", () => {
       (appRoot.layoutUIController as any)._state = {
         ...appRoot.layoutUIController.state,
         isScratchMode: true,

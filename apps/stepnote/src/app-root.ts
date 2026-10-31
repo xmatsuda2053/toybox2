@@ -32,6 +32,7 @@ import "@/components/task-list/task-list.js";
 import "@/components/panes/task-pane.js";
 import "@/components/panes/journal-pane.js";
 import "@/components/panes/scratch-pane.js";
+import "@/components/panes/settings-pane.js";
 import "@/components/search/global-search-dialog.js";
 import "@/components/task-list/task-create-dialog.js";
 import "@/components/footer/app-footer.js";
@@ -253,7 +254,6 @@ export class AppRoot extends LitElement {
     }
   }
 
-
   public handleOpenGlobalSearch = (): void => {
     this.isGlobalSearchOpen = true;
   };
@@ -341,8 +341,15 @@ export class AppRoot extends LitElement {
   };
 
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
+    if (this.layoutUIController.state.isSettingsMode) {
+      return;
+    }
+
+    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+    const lowerKey = e.key.toLowerCase();
+
     // 全画面スクラッチモード切替（スクラッチモード中であっても通常画面へ復帰できるよう最優先で判定）
-    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "s") {
+    if (isCtrlOrMeta && e.altKey && lowerKey === "s") {
       e.preventDefault();
       this.layoutUIController.toggleScratchMode();
       return;
@@ -353,25 +360,25 @@ export class AppRoot extends LitElement {
     }
 
     // 集中モード切替
-    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "z") {
+    if (isCtrlOrMeta && e.altKey && lowerKey === "z") {
       e.preventDefault();
       this.layoutUIController.toggleZenMode();
       return;
     }
 
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+    if (isCtrlOrMeta && !e.altKey && lowerKey === "k") {
       e.preventDefault();
       this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
       return;
     }
 
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key === "/") {
+    if (isCtrlOrMeta && !e.altKey && e.key === "/") {
       e.preventDefault();
       this.handleToggleShortcutHelp();
       return;
     }
 
-    if (e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "n") {
+    if (e.altKey && !isCtrlOrMeta && lowerKey === "n") {
       e.preventDefault();
       this.handleOpenTaskCreate();
     }
@@ -427,11 +434,11 @@ export class AppRoot extends LitElement {
    * ヘッダー領域の HTML テンプレートを描画する。
    *
    * @private
-   * @param {boolean} isScratchMode
+   * @param {boolean} [isSearchDisabled=false]
    * @return {HTMLTemplateResult}
    * @memberof AppRoot
    */
-  private renderHeader(isScratchMode: boolean): HTMLTemplateResult {
+  private renderHeader(isSearchDisabled: boolean = false): HTMLTemplateResult {
     return html`
       <header class="app-header">
         <div class="header-branding">
@@ -444,7 +451,7 @@ export class AppRoot extends LitElement {
             id="header-global-search-trigger"
             class="header-search-trigger"
             aria-label="全体検索 (Ctrl+K)"
-            ?disabled=${isScratchMode}
+            ?disabled=${isSearchDisabled}
             @click=${this.handleOpenGlobalSearch}
           >
             <div class="header-search-trigger__lead">
@@ -453,7 +460,9 @@ export class AppRoot extends LitElement {
                 name="magnifying-glass-solid-full"
                 class="header-search-trigger__icon"
               ></wa-icon>
-              <span class="header-search-trigger__placeholder">全体を検索...</span>
+              <span class="header-search-trigger__placeholder"
+                >全体を検索...</span
+              >
             </div>
             <kbd class="header-search-trigger__shortcut">Ctrl K</kbd>
           </button>
@@ -466,38 +475,75 @@ export class AppRoot extends LitElement {
   }
 
   /**
-   * 全画面スクラッチモード時の HTML テンプレートを描画する。
+   * 最左メニュー領域 (app-menu) を描画する。
    *
    * @private
-   * @param {boolean} isOpen
-   * @param {boolean} isZenMode
-   * @param {boolean} isScratchMode
    * @param {string} resolvedTheme
    * @return {HTMLTemplateResult}
    * @memberof AppRoot
    */
-  private renderScratchPanes(
-    isOpen: boolean,
-    isZenMode: boolean,
-    isScratchMode: boolean,
-    resolvedTheme: string,
-  ): HTMLTemplateResult {
+  private renderAppMenu(resolvedTheme: string): HTMLTemplateResult {
+    const {
+      isNavigationListAreaOpen,
+      isZenMode,
+      isScratchMode,
+      isSettingsMode,
+    } = this.layoutUIController.state;
+
+    return html`
+      <app-menu
+        class="app-menu"
+        data-theme=${resolvedTheme}
+        .isNavigationListAreaOpen=${isNavigationListAreaOpen}
+        .isZenMode=${isZenMode}
+        .isScratchMode=${isScratchMode}
+        .isSettingsMode=${isSettingsMode}
+      ></app-menu>
+    `;
+  }
+
+  /**
+   * 全画面スクラッチモード時の HTML テンプレートを描画する。
+   *
+   * @private
+   * @param {string} resolvedTheme
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderScratchPanes(resolvedTheme: string): HTMLTemplateResult {
     return html`
       <div class="panes-container">
         <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
-        <app-menu
-          class="app-menu"
-          data-theme=${resolvedTheme}
-          .isNavigationListAreaOpen=${isOpen}
-          .isZenMode=${isZenMode}
-          .isScratchMode=${isScratchMode}
-        ></app-menu>
+        ${this.renderAppMenu(resolvedTheme)}
 
         <!-- 全画面スクラッチペイン -->
         <scratch-pane
           class="pane-scratch"
           data-theme=${resolvedTheme}
         ></scratch-pane>
+      </div>
+    `;
+  }
+
+  /**
+   * 全画面設定モード時の HTML テンプレートを描画する。
+   *
+   * @private
+   * @param {string} resolvedTheme
+   * @return {HTMLTemplateResult}
+   * @memberof AppRoot
+   */
+  private renderSettingsPanes(resolvedTheme: string): HTMLTemplateResult {
+    return html`
+      <div class="panes-container">
+        <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
+        ${this.renderAppMenu(resolvedTheme)}
+
+        <!-- 全画面設定ペイン -->
+        <settings-pane
+          class="pane-settings"
+          data-theme=${resolvedTheme}
+        ></settings-pane>
       </div>
     `;
   }
@@ -560,40 +606,29 @@ export class AppRoot extends LitElement {
    * 5ペイン（中央コンテンツ領域）の HTML テンプレートを描画する。
    *
    * @private
-   * @param {boolean} isOpen ナビゲーションリストエリアが開いているかどうか
-   * @param {boolean} isJournalOpen ジャーナルエリアが開いているかどうか
-   * @param {boolean} isZenMode 集中モードが有効かどうか
-   * @param {boolean} isScratchMode スクラッチモードが有効かどうか
    * @param {string} resolvedTheme 適用中の解決済みテーマ名
    * @return {HTMLTemplateResult}
    * @memberof AppRoot
    */
-  private renderPanes(
-    isOpen: boolean,
-    isJournalOpen: boolean,
-    isZenMode: boolean,
-    isScratchMode: boolean,
-    resolvedTheme: string,
-  ): HTMLTemplateResult {
+  private renderPanes(resolvedTheme: string): HTMLTemplateResult {
+    const {
+      isNavigationListAreaOpen: isOpen,
+      isJournalAreaOpen: isJournalOpen,
+      isScratchMode,
+      isSettingsMode,
+    } = this.layoutUIController.state;
+
     if (isScratchMode) {
-      return this.renderScratchPanes(
-        isOpen,
-        isZenMode,
-        isScratchMode,
-        resolvedTheme,
-      );
+      return this.renderScratchPanes(resolvedTheme);
+    }
+    if (isSettingsMode) {
+      return this.renderSettingsPanes(resolvedTheme);
     }
 
     return html`
       <div class="panes-container">
         <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
-        <app-menu
-          class="app-menu"
-          data-theme=${resolvedTheme}
-          .isNavigationListAreaOpen=${isOpen}
-          .isZenMode=${isZenMode}
-          .isScratchMode=${isScratchMode}
-        ></app-menu>
+        ${this.renderAppMenu(resolvedTheme)}
 
         <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
         ${this.renderNavigationAside(isOpen, resolvedTheme)}
@@ -624,26 +659,18 @@ export class AppRoot extends LitElement {
    * @memberof AppRoot
    */
   override render() {
-    const isOpen = this.layoutUIController.state.isNavigationListAreaOpen;
-    const isJournalOpen = this.layoutUIController.state.isJournalAreaOpen;
-    const isZenMode = this.layoutUIController.state.isZenMode;
-    const isScratchMode = this.layoutUIController.state.isScratchMode;
+    const { isScratchMode, isSettingsMode } = this.layoutUIController.state;
+    const isSearchDisabled = isScratchMode || isSettingsMode;
     const resolvedTheme = this.themeController.resolvedTheme;
     const themeClass = resolvedTheme === "dark" ? "wa-dark" : "wa-light";
 
     return html`
       <div class="app-shell ${themeClass}" data-theme=${resolvedTheme}>
         <!-- Header (上部固定) -->
-        ${this.renderHeader(isScratchMode)}
+        ${this.renderHeader(isSearchDisabled)}
 
         <!-- Panes (中央5ペイン領域) -->
-        ${this.renderPanes(
-          isOpen,
-          isJournalOpen,
-          isZenMode,
-          isScratchMode,
-          resolvedTheme,
-        )}
+        ${this.renderPanes(resolvedTheme)}
 
         <!-- Footer (下部固定) -->
         <app-footer class="app-footer"></app-footer>

@@ -53,6 +53,15 @@ export class AppMenu extends WithLayoutUIController(
   public isScratchMode: boolean = false;
 
   /**
+   * 全画面設定モード（Settings Mode）の有効・無効状態
+   *
+   * @type {boolean}
+   * @memberof AppMenu
+   */
+  @property({ type: Boolean })
+  public isSettingsMode: boolean = false;
+
+  /**
    * 登録済みのラベルが存在するか判定する
    *
    * @readonly
@@ -65,7 +74,7 @@ export class AppMenu extends WithLayoutUIController(
     }
     return (
       this.labelsController.hasLabels ??
-      ((this.labelsController.state?.length ?? 0) > 0)
+      (this.labelsController.state?.length ?? 0) > 0
     );
   }
 
@@ -94,6 +103,15 @@ export class AppMenu extends WithLayoutUIController(
    */
   public handleToggleScratchMode = (): void => {
     this.layoutUIController?.toggleScratchMode();
+  };
+
+  /**
+   * 全画面設定モード（Settings Mode）の有効・無効状態を切り替える。
+   *
+   * @memberof AppMenu
+   */
+  public handleToggleSettingsMode = (): void => {
+    this.layoutUIController?.toggleSettingsMode();
   };
 
   /**
@@ -170,7 +188,10 @@ export class AppMenu extends WithLayoutUIController(
    * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderSidebarToggleButton(isOpen: boolean, isDisabled: boolean = false) {
+  private renderSidebarToggleButton(
+    isOpen: boolean,
+    isDisabled: boolean = false,
+  ) {
     const toggleTooltip = isOpen
       ? "サイドパネルを閉じる"
       : "サイドパネルを開く";
@@ -222,9 +243,13 @@ export class AppMenu extends WithLayoutUIController(
    *
    * @private
    * @param {boolean} isScratch
+   * @param {boolean} isDisabled
    * @memberof AppMenu
    */
-  private renderScratchButton(isScratch: boolean) {
+  private renderScratchButton(
+    isScratch: boolean,
+    isDisabled: boolean = false,
+  ) {
     const scratchTooltip = isScratch
       ? "スクラッチモードを終了"
       : "スクラッチモード（アプリ共通メモ）を開く";
@@ -239,6 +264,7 @@ export class AppMenu extends WithLayoutUIController(
         variant="neutral"
         appearance="plain"
         size="s"
+        ?disabled=${isDisabled}
         @click=${this.handleToggleScratchMode}
       >
         <wa-icon
@@ -353,16 +379,61 @@ export class AppMenu extends WithLayoutUIController(
   }
 
   /**
+   * 設定モード切替ボタンを描画する。
+   *
+   * @private
+   * @param {boolean} isSettings
+   * @param {boolean} isDisabled
+   * @memberof AppMenu
+   */
+  private renderSettingsButton(
+    isSettings: boolean,
+    isDisabled: boolean = false,
+  ) {
+    const settingsTooltip = isSettings ? "設定を終了" : "設定を開く";
+    const activeClass = isSettings ? "is-active" : "";
+
+    return html`
+      <wa-tooltip
+        for="app-menu-settings-btn"
+        placement="right"
+        trigger="hover"
+      >
+        ${settingsTooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-settings-btn"
+        class="app-menu__btn app-menu__settings-btn ${activeClass}"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        ?disabled=${isDisabled}
+        @click=${this.handleToggleSettingsMode}
+      >
+        <wa-icon
+          library="my-icons"
+          name="gear-solid-full"
+          class="app-menu__settings-icon"
+          label=${settingsTooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
    * 下部補助機能エリア（システムボタン群）を描画する。
    *
    * @private
    * @memberof AppMenu
    */
   private renderSecondary() {
+    const isSystemDisabled = this.isScratchMode || this.isSettingsMode;
+
     return html`
       <div class="app-menu__secondary">
-        ${this.renderExportButton(this.isScratchMode)}
-        ${this.renderImportButton(this.isScratchMode)}
+        ${this.renderExportButton(isSystemDisabled)}
+        ${this.renderImportButton(isSystemDisabled)}
+        ${this.renderSettingsButton(this.isSettingsMode, this.isScratchMode)}
         <input
           id="app-menu-import-input"
           class="app-menu__import-input"
@@ -376,16 +447,18 @@ export class AppMenu extends WithLayoutUIController(
   }
 
   override render() {
+    const isPrimaryDisabled = this.isScratchMode || this.isSettingsMode;
+
     return html`
       <!-- 上部エリア (メイン機能群) -->
       <div class="app-menu__primary">
         ${this.renderSidebarToggleButton(
           this.isNavigationListAreaOpen,
-          this.isScratchMode,
+          isPrimaryDisabled,
         )}
-        ${this.renderTaskCreateButton(this.isScratchMode)}
-        ${this.renderScratchButton(this.isScratchMode)}
-        ${this.renderZenModeButton(this.isZenMode, this.isScratchMode)}
+        ${this.renderTaskCreateButton(isPrimaryDisabled)}
+        ${this.renderScratchButton(this.isScratchMode, this.isSettingsMode)}
+        ${this.renderZenModeButton(this.isZenMode, isPrimaryDisabled)}
       </div>
 
       <!-- 下部エリア (システムボタン群) -->
