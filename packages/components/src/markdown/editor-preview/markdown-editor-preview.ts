@@ -1188,6 +1188,7 @@ export class MarkdownEditorPreview extends LitElement {
         >
           <markdown-preview
             data-theme=${this.currentTheme}
+            .themeMode=${this.currentTheme}
             .darkTheme=${this.darkTheme}
             .lightTheme=${this.lightTheme}
             .content=${this.previewValue}
