@@ -84,14 +84,14 @@
  *   - SCSS において .markdown-editor-preview__toolbar-btn の min-width / min-height が 24px、アイコンフォントサイズが 15px にコンパクト化されていること
  *   - SCSS において .markdown-editor-preview__mode-btn の min-height が 24px にコンパクト化されていること
  *   - SCSS においてコンテナクエリ閾値が @container editor-preview (max-width: 430px) に最適化されていること
- * 21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様
- *   - ヘッダー右側エリアにおいて、全表示ボタンが存在せず「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること
+ * 21. ヘッダー右側の整形ボタン・モード切替タブ・エディタ操作メニュー（wa-dropdown）仕様
+ *   - 編集モード（edit）およびスプリットモード（split）時、ヘッダー右側エリアに「整形ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること
+ *   - プレビューモード（preview）時、ヘッダー右側エリアに「整形ボタン」が表示されないこと
+ *   - 整形ボタンをクリック（または handleFormatAction 実行）した際、フォーマッターが実行されて value が更新されること
  *   - エディタ操作メニューが wa-dropdown（placement='bottom-end'）としてレンダリングされること
  *   - メニューボタンが slot='trigger' として配置され、アイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
- *   - wa-dropdown 内に「コピー（value='copy'）」「整形（value='format'）」「構文ヘルプ（value='help'）」の各 wa-dropdown-item が含まれること
- *   - wa-select イベント（または handleActionMenuSelect）により各アクション（コピー、整形、構文ヘルプ）が実行されること
+ *   - wa-dropdown 内に「コピー（value='copy'）」「構文ヘルプ（value='help'）」の各 wa-dropdown-item が含まれ、「整形（value='format'）」は含まれないこと
  *   - メニュー内の「コピー」実行時、value がクリップボードにコピーされ markdown-copy イベントが発火すること
- *   - メニュー内の「整形」実行時、フォーマッターが実行されて value が更新されること
  *   - メニュー内の「構文ヘルプ」実行時、toggleHelp(true) が呼び出されること
  * 22. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
  *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
@@ -1007,23 +1007,47 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-  describe("21. ヘッダー右端のエディタ操作メニューおよび wa-dropdown 仕様", () => {
-    it("ヘッダー右側エリアにおいて、全表示ボタンが存在せず「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること", () => {
-      const htmlStr = flattenTemplate(element.render());
-      const autoHeightIdx = htmlStr.indexOf(
-        "markdown-editor-preview__auto-height-btn",
+  describe("21. ヘッダー右側の整形ボタン・モード切替タブ・エディタ操作メニュー（wa-dropdown）仕様", () => {
+    it("編集モード（edit）およびスプリットモード（split）時、ヘッダー右側エリアに「整形ボタン」→「モード切替タブ」→「メニューボタン（wa-dropdown）」の順に配置されていること", () => {
+      element.setMode("edit");
+      const editHtml = flattenTemplate(element.render());
+      const editFormatIdx = editHtml.indexOf(
+        "markdown-editor-preview__format-btn",
       );
-      const modeGroupIdx = htmlStr.indexOf(
+      const editModeGroupIdx = editHtml.indexOf(
         "markdown-editor-preview__mode-group",
       );
-      const actionMenuIdx = htmlStr.indexOf(
+      const editActionMenuIdx = editHtml.indexOf(
         "markdown-editor-preview__action-menu-btn",
       );
 
-      expect(autoHeightIdx).toBe(-1);
-      expect(modeGroupIdx).toBeGreaterThan(-1);
-      expect(actionMenuIdx).toBeGreaterThan(-1);
-      expect(modeGroupIdx).toBeLessThan(actionMenuIdx);
+      expect(editFormatIdx).toBeGreaterThan(-1);
+      expect(editModeGroupIdx).toBeGreaterThan(-1);
+      expect(editActionMenuIdx).toBeGreaterThan(-1);
+      expect(editFormatIdx).toBeLessThan(editModeGroupIdx);
+      expect(editModeGroupIdx).toBeLessThan(editActionMenuIdx);
+      expect(editHtml).toContain("wand-magic-sparkles-solid-full");
+      expect(editHtml).toContain('title="整形"');
+      expect(editHtml).toContain('aria-label="整形"');
+
+      element.setMode("split");
+      const splitHtml = flattenTemplate(element.render());
+      const splitFormatIdx = splitHtml.indexOf(
+        "markdown-editor-preview__format-btn",
+      );
+      const splitModeGroupIdx = splitHtml.indexOf(
+        "markdown-editor-preview__mode-group",
+      );
+      expect(splitFormatIdx).toBeGreaterThan(-1);
+      expect(splitFormatIdx).toBeLessThan(splitModeGroupIdx);
+    });
+
+    it("プレビューモード（preview）時、ヘッダー右側エリアに「整形ボタン」が表示されないこと", () => {
+      element.setMode("preview");
+      const previewHtml = flattenTemplate(element.render());
+
+      expect(previewHtml).not.toContain("markdown-editor-preview__format-btn");
+      expect(previewHtml).not.toContain("wand-magic-sparkles-solid-full");
     });
 
     it("エディタ操作メニューが wa-dropdown（placement='bottom-end'）としてレンダリングされること", () => {
@@ -1041,16 +1065,15 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toMatch(/aria-label=["']エディタメニュー["']/);
     });
 
-    it("wa-dropdown 内に「コピー」「整形」「構文ヘルプ」の各 wa-dropdown-item がレンダリングされていること", () => {
+    it("wa-dropdown 内に「コピー」「構文ヘルプ」の各 wa-dropdown-item がレンダリングされ、「整形」項目は含まれないこと", () => {
+      element.setMode("edit");
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain('<wa-dropdown-item value="copy"');
-      expect(htmlStr).toContain('<wa-dropdown-item value="format"');
       expect(htmlStr).toContain('<wa-dropdown-item value="help"');
+      expect(htmlStr).not.toContain('<wa-dropdown-item value="format"');
       expect(htmlStr).toContain("copy-solid-full");
-      expect(htmlStr).toContain("wand-magic-sparkles-solid-full");
       expect(htmlStr).toContain("question-solid-full");
       expect(htmlStr).toContain("コピー");
-      expect(htmlStr).toContain("整形");
       expect(htmlStr).toContain("構文ヘルプ");
     });
 
@@ -1089,12 +1112,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       }
     });
 
-    it("handleActionMenuSelect() において value='format' でフォーマッターが実行されて value が更新されること", async () => {
+    it("handleMenuFormatAction() 実行によりフォーマッターが実行されて value が更新されること", async () => {
       element.value = "#  未整形タイトル \n\n\n\n本文段落  ";
-      const customEvt = new CustomEvent("wa-select", {
-        detail: { item: { value: "format" } },
-      });
-      await element.handleActionMenuSelect(customEvt);
+      await element.handleMenuFormatAction();
 
       expect(element.value.trim()).toBe("# 未整形タイトル\n\n本文段落");
     });
