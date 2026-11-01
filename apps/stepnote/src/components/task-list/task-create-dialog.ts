@@ -17,23 +17,28 @@ import {
   SubscriberElement,
   WithLabelsController,
   WithTaskController,
+  WithTaskTemplateController,
 } from "@/utils/controller-consumers.mixin.js";
 import { WithDialogBase } from "@/utils/dialog-element.mixin.js";
+import { generateTemplateIssuePayloads } from "@/utils/task-template.utils.js";
+import type { TaskTemplateRecord } from "@/db/models/template.model.js";
 import styles from "./task-create-dialog.scss?inline";
 
 /**
  * 新規タスク作成ダイアログコンポーネント (TaskCreateDialog)
  *
  * Task List パネルヘッダから呼び出され、タスク新規登録用のモーダルフォームを提供する。
- * タスク名（必須）、期日（必須・初期値システム日付）、作業年度、ラベルの入力を受け付ける。
+ * タスク名（必須）、期日（必須・初期値システム日付）、作業年度、ラベル、テンプレートの入力を受け付ける。
  *
  * @export
  * @class TaskCreateDialog
- * @extends {WithDialogBase(WithTaskController(WithLabelsController(SubscriberElement)))}
+ * @extends {WithDialogBase(WithTaskController(WithLabelsController(WithTaskTemplateController(SubscriberElement))))}
  */
 @customElement("task-create-dialog")
 export class TaskCreateDialog extends WithDialogBase(
-  WithTaskController(WithLabelsController(SubscriberElement)),
+  WithTaskController(
+    WithLabelsController(WithTaskTemplateController(SubscriberElement)),
+  ),
 ) {
   public static styles = unsafeCSS(styles);
 
@@ -64,6 +69,10 @@ export class TaskCreateDialog extends WithDialogBase(
   /** 入力フォーム状態: ラベルID */
   @state()
   public inputLabelId: number | undefined;
+
+  /** 入力フォーム状態: テンプレートID */
+  @state()
+  public inputTemplateId: number | undefined;
 
   /**
    * フォームの入力バリデーション状態
@@ -98,6 +107,7 @@ export class TaskCreateDialog extends WithDialogBase(
     this.inputName = "";
     this.inputDueDate = format(new Date(), "yyyy-MM-dd");
     this.inputFiscalYear = this.fiscalYear ?? getCurrentFiscalYear();
+    this.inputTemplateId = undefined;
 
     const fallbackLabelId =
       this.selectedLabelId ??
@@ -140,6 +150,16 @@ export class TaskCreateDialog extends WithDialogBase(
   };
 
   /**
+   * テンプレート変更ハンドラー
+   */
+  public handleSelectTemplate = (e: Event): void => {
+    const target = e.target as HTMLElement & { value?: string };
+    const val = target.value;
+    this.inputTemplateId =
+      val !== undefined && val !== "" ? Number(val) : undefined;
+  };
+
+  /**
    * キャンセル操作ハンドラー
    * 子要素（wa-select や popover 等）からバブリングしたイベントは無視する
    */
@@ -152,55 +172,107 @@ export class TaskCreateDialog extends WithDialogBase(
   };
 
   /**
+   * 選択中テンプレートから初期Issueペイロードを生成する
+   */
+  private resolveTemplateIssues(
+    template: TaskTemplateRecord | undefined,
+    dueDate: Date,
+  ) {
+    if (!template) {
+      return undefined;
+    }
+    return generateTemplateIssuePayloads(
+      template,
+      new Date(),
+      dueDate,
+      0,
+    ).map(({ taskId: _, ...issue }) => issue);
+  }
+
+  /**
    * タスク登録保存ハンドラー
    */
   public handleSave = async (e?: Event): Promise<boolean> => {
     e?.preventDefault();
-
-    if (!this.isValid) {
-      return false;
-    }
-
-    if (!this.taskController) {
+    if (!this.isValid || !this.taskController) {
       return false;
     }
 
     const [year, month, day] = this.inputDueDate.split("-").map(Number);
     const dueDate = new Date(year, month - 1, day, 0, 0, 0, 0);
-
     const fallbackLabelId =
       this.inputLabelId ??
       this.labelsController?.selectedLabelId ??
       (this.labelsController?.state[0]?.id as number | undefined) ??
       1;
 
+    const selectedTemplate = this.inputTemplateId !== undefined
+      ? this.taskTemplateController?.state.find((t) => t.id === this.inputTemplateId)
+      : undefined;
+
     const taskPayload = {
       name: this.inputName.trim(),
       dueDate,
       fiscalYear: this.inputFiscalYear,
       labelId: fallbackLabelId,
+      description: selectedTemplate?.description ?? "",
     };
 
-    const newId = await this.taskController.createTask(taskPayload);
+    const initialIssues = this.resolveTemplateIssues(selectedTemplate, dueDate);
+    const newId = await this.taskController.createTask(taskPayload, initialIssues);
 
     dispatchCustomEvent(this, "task-created", {
-      detail: {
-        taskId: newId,
-        ...taskPayload,
-      },
+      detail: { taskId: newId, ...taskPayload },
     });
-
     this.resetForm();
     this.open = false;
     return true;
   };
 
   /**
+   * 年度・ラベル・テンプレート選択項目の描画
+   */
+  private renderSelectors(): HTMLTemplateResult {
+    const fiscalYears = getFiscalYearRange();
+    const labels = this.labelsController?.state ?? [];
+    const templates = this.taskTemplateController?.state ?? [];
+
+    return html`
+      <wa-select
+        id="task-create-fiscal-year"
+        class="task-create-dialog__field"
+        label="対象年度"
+        .value=${String(this.inputFiscalYear)}
+        @change=${this.handleSelectFiscalYear}
+      >
+        ${fiscalYears.map((fy) => html`<wa-option value=${String(fy)}>${fy}年度</wa-option>`)}
+      </wa-select>
+      <wa-select
+        id="task-create-label"
+        class="task-create-dialog__field"
+        label="ラベル"
+        .value=${this.inputLabelId !== undefined ? String(this.inputLabelId) : ""}
+        @change=${this.handleSelectLabel}
+      >
+        ${labels.map((l) => html`<wa-option value=${String(l.id)}>${l.name}</wa-option>`)}
+      </wa-select>
+      <wa-select
+        id="task-create-template"
+        class="task-create-dialog__field"
+        label="テンプレート"
+        .value=${this.inputTemplateId !== undefined ? String(this.inputTemplateId) : ""}
+        @change=${this.handleSelectTemplate}
+      >
+        <wa-option value="">テンプレートなし</wa-option>
+        ${templates.map((t) => html`<wa-option value=${String(t.id)}>${t.name}</wa-option>`)}
+      </wa-select>
+    `;
+  }
+
+  /**
    * 入力フォーム領域の描画
    */
   private renderForm(): HTMLTemplateResult {
-    const fiscalYears = getFiscalYearRange();
-    const labels = this.labelsController?.state ?? [];
     return html`
       <form
         class="task-create-dialog__form"
@@ -224,24 +296,7 @@ export class TaskCreateDialog extends WithDialogBase(
           .value=${this.inputDueDate}
           @datepicker-change=${this.handleDateChange}
         ></datepicker-input>
-        <wa-select
-          id="task-create-fiscal-year"
-          class="task-create-dialog__field"
-          label="対象年度"
-          .value=${String(this.inputFiscalYear)}
-          @change=${this.handleSelectFiscalYear}
-        >
-          ${fiscalYears.map((fy) => html`<wa-option value=${String(fy)}>${fy}年度</wa-option>`)}
-        </wa-select>
-        <wa-select
-          id="task-create-label"
-          class="task-create-dialog__field"
-          label="ラベル"
-          .value=${this.inputLabelId !== undefined ? String(this.inputLabelId) : ""}
-          @change=${this.handleSelectLabel}
-        >
-          ${labels.map((l) => html`<wa-option value=${String(l.id)}>${l.name}</wa-option>`)}
-        </wa-select>
+        ${this.renderSelectors()}
       </form>
     `;
   }
@@ -249,13 +304,12 @@ export class TaskCreateDialog extends WithDialogBase(
   /**
    * フッターアクションボタン領域の描画
    */
-  private renderActions(): HTMLTemplateResult {
+  private renderFooter(): HTMLTemplateResult {
     return html`
-      <div slot="footer" class="task-create-dialog__actions">
+      <div slot="footer" class="task-create-dialog__footer">
         <wa-button
           class="task-create-dialog__btn-cancel"
-          variant="neutral"
-          appearance="plain"
+          variant="text"
           @click=${this.handleCancel}
         >
           キャンセル
@@ -272,20 +326,18 @@ export class TaskCreateDialog extends WithDialogBase(
     `;
   }
 
-  override render(): HTMLTemplateResult {
+  public override render(): HTMLTemplateResult {
     return html`
-      <div class="task-create-dialog">
-        <wa-dialog
-          id="task-create-dialog"
-          class="task-create-dialog__dialog"
-          label="新規タスクの作成"
-          ?open=${this.open}
-          @wa-after-hide=${this.handleCancel}
-        >
-          ${this.renderForm()}
-          ${this.renderActions()}
-        </wa-dialog>
-      </div>
+      <wa-dialog
+        id="task-create-dialog"
+        class="task-create-dialog__dialog"
+        label="新規タスクの作成"
+        ?open=${this.open}
+        @wa-after-hide=${this.handleCancel}
+      >
+        ${this.renderForm()}
+        ${this.renderFooter()}
+      </wa-dialog>
     `;
   }
 }

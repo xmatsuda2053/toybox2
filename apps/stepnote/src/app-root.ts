@@ -13,6 +13,7 @@ import {
   issuesContext,
   themeContext,
   scratchContext,
+  taskTemplateContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -24,6 +25,7 @@ import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
 import { ThemeController } from "@/controllers/theme.controller.js";
 import { ScratchController } from "@/controllers/scratch.controller.js";
+import { TaskTemplateController } from "@/controllers/task-template.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
@@ -50,6 +52,7 @@ import {
   NotesRepository,
   IssuesRepository,
   ScratchRepository,
+  TaskTemplateRepository,
 } from "@/repositories/index.js";
 
 /**
@@ -75,6 +78,7 @@ export class AppRoot extends LitElement {
   public issuesController!: IssuesController;
   public themeController!: ThemeController;
   public scratchController!: ScratchController;
+  public taskTemplateController!: TaskTemplateController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
 
@@ -139,6 +143,7 @@ export class AppRoot extends LitElement {
     this.labelsController = new LabelsController(this, labelsRepository);
     this.logsController = new LogsController(this, logsRepository);
     this.scratchController = new ScratchController(this, scratchRepository);
+    this.taskTemplateController = new TaskTemplateController(this, new TaskTemplateRepository());
 
     // 共通システムログサービスの初期化
     this.systemLogService = new SystemLogService(
@@ -221,6 +226,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: scratchContext,
       initialValue: this.scratchController,
+    });
+    new ContextProvider(this, {
+      context: taskTemplateContext,
+      initialValue: this.taskTemplateController,
     });
   }
 

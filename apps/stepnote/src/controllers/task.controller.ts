@@ -3,7 +3,7 @@ import type { TaskRepository } from "@/repositories/task.repository";
 import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { SystemLogService } from "@/services/system-log.service";
-import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { CreateTaskInput, Summary, Property, TaskStatusCode } from "@/types";
 import { BaseTaskScopeController } from "./base-reactive.controller";
 
@@ -102,7 +102,10 @@ export class TaskController extends BaseTaskScopeController<
    * @return {*}  {Promise<number>}
    * @memberof TaskController
    */
-  public createTask = async (input: CreateTaskInput): Promise<number> => {
+  public createTask = async (
+    input: CreateTaskInput,
+    initialIssues?: Array<Omit<IssueRecord, "id" | "taskId">>,
+  ): Promise<number> => {
     const taskData: Omit<TaskRecord, "id"> = {
       name: input.name,
       dueDate: input.dueDate,
@@ -118,6 +121,14 @@ export class TaskController extends BaseTaskScopeController<
     };
 
     const newId = await this.repository.add(taskData);
+    if (initialIssues && initialIssues.length > 0 && this.issuesRepository) {
+      await this.issuesRepository.bulkAdd(
+        initialIssues.map((issue) => ({
+          ...issue,
+          taskId: newId,
+        })),
+      );
+    }
     this._taskId = newId;
     await this.loadState();
     await this.recordTaskCreateLog(newId, input);

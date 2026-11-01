@@ -5,3 +5,4 @@ export * from "./notes.repository";
 export * from "./quick-access.repository";
 export * from "./scratch.repository";
 export * from "./task.repository";
+export * from "./template.repository";

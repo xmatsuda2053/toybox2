@@ -65,6 +65,14 @@ class FakeIssuesRepository {
       .filter((item) => item.taskId === taskId)
       .map((item) => ({ ...item }));
   }
+
+  async bulkAdd(items: Array<Omit<IssueRecord, "id">>): Promise<number[]> {
+    return items.map((item, idx) => {
+      const id = this.data.length + idx + 1;
+      this.data.push({ ...item, id });
+      return id;
+    });
+  }
 }
 
 /**
