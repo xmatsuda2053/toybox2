@@ -87,6 +87,7 @@ export class SystemLogService {
       labelName: string;
       fiscalYear: number;
       statusCode?: TaskStatusCode;
+      templateName?: string;
     },
   ): Promise<void> {
     const log = formatTaskCreatedLog(params);

@@ -182,6 +182,7 @@ export class TaskController extends BaseTaskScopeController<
       labelName,
       fiscalYear: input.fiscalYear,
       statusCode: input.statusCode,
+      templateName: input.templateName,
     });
   }
 

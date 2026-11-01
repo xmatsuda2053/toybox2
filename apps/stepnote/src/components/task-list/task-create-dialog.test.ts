@@ -277,6 +277,7 @@ describe("TaskCreateDialog Component", () => {
         expect.objectContaining({
           name: "定例タスク",
           description: "## 定例概要",
+          templateName: "定例テンプレート",
         }),
         expect.arrayContaining([
           expect.objectContaining({

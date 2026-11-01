@@ -43,6 +43,7 @@ export function getStatusLabel(code?: TaskStatusCode): string {
  *   labelName: string;
  *   fiscalYear: number;
  *   statusCode?: TaskStatusCode;
+  templateName?: string;
  * }} params
  * @return {string} Markdown文字列
  */
@@ -52,6 +53,7 @@ export function formatTaskCreatedLog(params: {
   labelName: string;
   fiscalYear: number;
   statusCode?: TaskStatusCode;
+  templateName?: string;
 }): string {
   const dueDateStr = formatDateString(params.dueDate);
   const statusLabel = getStatusLabel(params.statusCode);
@@ -62,7 +64,8 @@ export function formatTaskCreatedLog(params: {
     `- **期日**: ${dueDateStr}\n` +
     `- **ラベル**: ${params.labelName}\n` +
     `- **年度**: ${params.fiscalYear}年度\n` +
-    `- **初期ステータス**: ${statusLabel}`
+    `- **初期ステータス**: ${statusLabel}` +
+    (params.templateName ? `\n- **テンプレート**: ${params.templateName}` : "")
   );
 }
 
