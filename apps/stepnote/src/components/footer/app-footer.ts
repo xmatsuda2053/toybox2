@@ -410,7 +410,7 @@ export class AppFooter extends WithLabelsController(
       <wa-button
         id="footer-btn-shortcuts"
         appearance="plain"
-        size="small"
+        size="s"
         class="app-footer__btn app-footer__btn--shortcuts"
         aria-label="キーボードショートカット"
         @click=${this.handleShortcutHelpClick}

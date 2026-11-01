@@ -6244,7 +6244,7 @@
       <div class="task-contact__field">
         <wa-input
           class="task-contact__input task-contact__input--${e}"
-          size="small"
+          size="s"
           placeholder=${n}
           .title=${t}
           .value=${t}
@@ -7259,7 +7259,7 @@
             class="settings-pane__btn-menu"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="メニュー"
             aria-label="Template options"
           >
@@ -7291,7 +7291,7 @@
             class="settings-pane__btn-new"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="新規テンプレートを作成"
             aria-label="新規テンプレートを作成"
             @click=${this.startNewTemplate}
@@ -7316,7 +7316,7 @@
         class="${i}"
         variant="${n}"
         appearance="${r}"
-        size="medium"
+        size="m"
         title="${a}"
         aria-label="${a}"
         ?disabled=${e}
@@ -7343,7 +7343,7 @@
           class="settings-pane__btn-menu"
           variant="neutral"
           appearance="plain"
-          size="small"
+          size="s"
           aria-label="Issueメニュー"
           title="Issueメニュー"
           @click=${e=>e.stopPropagation()}
@@ -7393,7 +7393,7 @@
             class="settings-pane__btn-add-issue"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="Issueを追加"
             aria-label="Issueを追加"
             @click=${this.addIssue}
@@ -7428,7 +7428,7 @@
           <span class="settings-pane__issue-offset-label">タスク期日からの日数:</span>
           <wa-input
             type="number"
-            size="small"
+            size="s"
             class="settings-pane__issue-offset-input"
             .value=${String(e.dayOffset)}
             @input=${e=>this.handleIssueOffsetChange(this.selectedIssueIndex,Number(e.target.value))}
@@ -7750,7 +7750,7 @@
       <wa-button
         id="footer-btn-shortcuts"
         appearance="plain"
-        size="small"
+        size="s"
         class="app-footer__btn app-footer__btn--shortcuts"
         aria-label="キーボードショートカット"
         @click=${this.handleShortcutHelpClick}

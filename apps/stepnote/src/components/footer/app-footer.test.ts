@@ -19,6 +19,7 @@ import type { TaskController } from "../../controllers/task.controller.js";
  *    - 1-7. 左ゾーンにタスク進捗カウンター (wa-icon[name="list-check-solid-full"]) がレンダリングされること
  *    - 1-8. 年度およびタスク進捗に wa-tooltip（trigger="hover", placement="top"）が設定されること
  *    - 1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタン (wa-button#footer-btn-shortcuts) および wa-tooltip がレンダリングされること
+ *    - 1-10. ショートカットヘルプボタンが size="s" でレンダリングされること
  *
  * 2. ストレージ推定使用量の表示
  *    - 2-1. storageUsage が設定されている場合、フォーマットされた文字列 (例: "2.40 MB") が表示されること
@@ -133,6 +134,13 @@ describe("AppFooter Component", () => {
         /<wa-tooltip[^>]*for="footer-btn-shortcuts"[^>]*placement="top"[^>]*trigger="hover"/,
       );
       expect(htmlStr).toContain("キーボードショートカット (Ctrl+/)");
+    });
+
+    it("1-10. ショートカットヘルプボタンが size='s' でレンダリングされること", () => {
+      const htmlStr = flattenTemplate(footer.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="footer-btn-shortcuts"[^>]*size="s"/,
+      );
     });
   });
 
