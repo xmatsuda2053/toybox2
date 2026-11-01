@@ -133,6 +133,7 @@ import { EditorView } from "@codemirror/view";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
 import { colorExtension } from "../extensions/color.extension.js";
 import { calloutExtension } from "../extensions/callout.extension.js";
+import { idLinkExtension } from "../extensions/id-link.extension.js";
 import type { MarkdownFeatureExtension } from "../types.js";
 import { DEFAULT_MARKDOWN_EXTENSIONS } from "./markdown-editor-preview.js";
 
@@ -324,13 +325,14 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("拡張機能パッケージ (Feature Extension) の統合と伝播", () => {
-    it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color, callout）が登録されていること", () => {
+    it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color, callout, id-link）が登録されていること", () => {
       const defaultPreview = new MarkdownEditorPreview();
-      expect(defaultPreview.extensions).toHaveLength(3);
+      expect(defaultPreview.extensions).toHaveLength(4);
       expect(defaultPreview.extensions).toEqual([...DEFAULT_MARKDOWN_EXTENSIONS]);
       expect(defaultPreview.extensions).toContain(customBadgeExtension);
       expect(defaultPreview.extensions).toContain(colorExtension);
       expect(defaultPreview.extensions).toContain(calloutExtension);
+      expect(defaultPreview.extensions).toContain(idLinkExtension);
     });
 
     it("extensions プロパティが保持されること", () => {

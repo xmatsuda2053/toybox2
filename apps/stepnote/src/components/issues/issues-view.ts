@@ -149,6 +149,13 @@ export class IssuesView extends WithIssuesController(
     this.collapsingIssueId = this.accordion.collapsingId;
   };
 
+  /** 指定した Issue を展開状態にする */
+  public expandIssue = (issueId: number): void => {
+    if (!this.expandedIssueIds.has(issueId)) {
+      this.handleToggleExpand(issueId);
+    }
+  };
+
   /** エディタ表示モード変更ハンドラー */
   public handleModeChange = (
     issueId: number,
