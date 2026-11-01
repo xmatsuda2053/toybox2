@@ -80,12 +80,23 @@ import { AppMenu } from "./app-menu.js";
  *    - [ ] 17-1. isSettingsMode が true の際、設定ボタン以外の全ボタン（開閉、新規タスク作成、スクラッチ、集中モード、エクスポート、インポート）に disabled 属性が付与されること
  *    - [ ] 17-2. isScratchMode が true の際、設定ボタン（#app-menu-settings-btn）にも disabled 属性が付与されること
  *    - [ ] 17-3. app-menu.scss で設定アイコン（.app-menu__settings-icon）および設定ボタンのアクティブスタイルが定義されていること
+ *
+ * 18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ
+ *    - [ ] 18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger="hover" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-solid-full']）がレンダリングされること
+ *    - [ ] 18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順（最上部）であること
+ *    - [ ] 18-3. ツールチップ文言が「ホーム画面に戻る（表示を初期化）」であり、ボタンに is-active クラスが付与されないこと
+ *    - [ ] 18-4. スクラッチモードや設定モードが有効（true）の際も、ホームボタン（#app-menu-home-btn）には disabled 属性が付与されず常時有効であること
+ *    - [ ] 18-5. app-menu.scss でホームボタン（.app-menu__home-btn）およびホームアイコン（.app-menu__home-icon）に --wa-font-size-l が定義されていること
+ *
+ * 19. ホーム画面に戻るボタンクリックによる LayoutUIController 連動
+ *    - [ ] 19-1. handleResetToHome の呼び出しにより layoutUIController.resetToHome が実行されること
  */
 
 describe("AppMenu Component", () => {
   let appMenu: AppMenu;
   let mockLayoutUIController: Partial<LayoutUIController> & {
     toggleZenMode?: () => void;
+    resetToHome?: () => void;
   };
 
   beforeEach(() => {
@@ -93,6 +104,7 @@ describe("AppMenu Component", () => {
     mockLayoutUIController = {
       toggleNavigationListArea: vi.fn(),
       toggleZenMode: vi.fn(),
+      resetToHome: vi.fn(),
     };
     appMenu.layoutUIController = mockLayoutUIController as LayoutUIController;
   });
@@ -555,6 +567,88 @@ describe("AppMenu Component", () => {
       );
       expect(scss).toContain(".app-menu__settings-btn");
       expect(scss).toContain(".app-menu__settings-icon");
+    });
+  });
+
+  describe("18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ", () => {
+    it("18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger=\"hover\" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-solid-full']）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="app-menu-home-btn"[^>]*class="[^"]*app-menu__home-btn[^"]*"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-home-btn"[^>]*trigger="hover"[^>]*>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*name="house-solid-full"[^>]*class="[^"]*app-menu__home-icon[^"]*"/,
+      );
+    });
+
+    it("18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順（最上部）であること", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      const homeIndex = htmlStr.indexOf("app-menu-home-btn");
+      const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
+      const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
+      const scratchIndex = htmlStr.indexOf("app-menu-scratch-btn");
+      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
+
+      expect(homeIndex).toBeGreaterThan(-1);
+      expect(toggleIndex).toBeGreaterThan(homeIndex);
+      expect(createIndex).toBeGreaterThan(toggleIndex);
+      expect(scratchIndex).toBeGreaterThan(createIndex);
+      expect(zenIndex).toBeGreaterThan(scratchIndex);
+    });
+
+    it("18-3. ツールチップ文言が「ホーム画面に戻る（表示を初期化）」であり、ボタンに is-active クラスが付与されないこと", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="app-menu-home-btn"[^>]*>[\s\S]*?ホーム画面に戻る（表示を初期化）[\s\S]*?<\/wa-tooltip>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-home-btn"[^>]*class="[^"]*is-active[^"]*"/,
+      );
+    });
+
+    it("18-4. スクラッチモードや設定モードが有効（true）の際も、ホームボタン（#app-menu-home-btn）には disabled 属性が付与されず常時有効であること", () => {
+      appMenu.isScratchMode = true;
+      appMenu.isSettingsMode = false;
+      const scratchHtmlStr = flattenTemplate(appMenu.render());
+      expect(scratchHtmlStr).toContain('id="app-menu-home-btn"');
+      expect(scratchHtmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-home-btn"[^>]*\bdisabled\b/,
+      );
+
+      appMenu.isScratchMode = false;
+      appMenu.isSettingsMode = true;
+      const settingsHtmlStr = flattenTemplate(appMenu.render());
+      expect(settingsHtmlStr).toContain('id="app-menu-home-btn"');
+      expect(settingsHtmlStr).not.toMatch(
+        /<wa-button[^>]*id="app-menu-home-btn"[^>]*\bdisabled\b/,
+      );
+    });
+
+    it("18-5. app-menu.scss でホームボタン（.app-menu__home-btn）およびホームアイコン（.app-menu__home-icon）に --wa-font-size-l が定義されていること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toContain(".app-menu__home-btn");
+      expect(scss).toContain(".app-menu__home-icon");
+      expect(scss).toMatch(/font-size:\s*var\(--wa-font-size-l/);
+    });
+  });
+
+  describe("19. ホーム画面に戻るボタンクリックによる LayoutUIController 連動", () => {
+    it("19-1. handleResetToHome の呼び出しにより layoutUIController.resetToHome が実行されること", () => {
+      const resetToHomeMock = vi.fn();
+      mockLayoutUIController = {
+        ...mockLayoutUIController,
+        resetToHome: resetToHomeMock,
+      };
+      appMenu.layoutUIController = mockLayoutUIController as LayoutUIController;
+
+      (appMenu as unknown as { handleResetToHome: () => void }).handleResetToHome();
+      expect(resetToHomeMock).toHaveBeenCalledTimes(1);
     });
   });
 });

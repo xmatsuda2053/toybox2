@@ -79,6 +79,15 @@ export class AppMenu extends WithLayoutUIController(
   }
 
   /**
+   * 画面全体のレイアウト状態を初期状態（ホーム画面）にリセットする。
+   *
+   * @memberof AppMenu
+   */
+  public handleResetToHome = (): void => {
+    this.layoutUIController?.resetToHome();
+  };
+
+  /**
    * サイドパネル（ナビゲーションおよびタスク一覧）の開閉状態を切り替える。
    *
    * @memberof AppMenu
@@ -179,6 +188,37 @@ export class AppMenu extends WithLayoutUIController(
       target.value = "";
     }
   };
+
+  /**
+   * ホーム画面に戻る（レイアウト初期化）ボタンを描画する。
+   *
+   * @private
+   * @memberof AppMenu
+   */
+  private renderHomeButton() {
+    const homeTooltip = "ホーム画面に戻る（表示を初期化）";
+
+    return html`
+      <wa-tooltip for="app-menu-home-btn" placement="right" trigger="hover">
+        ${homeTooltip}
+      </wa-tooltip>
+      <wa-button
+        id="app-menu-home-btn"
+        class="app-menu__btn app-menu__home-btn"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        @click=${this.handleResetToHome}
+      >
+        <wa-icon
+          library="my-icons"
+          name="house-solid-full"
+          class="app-menu__home-icon"
+          label=${homeTooltip}
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
 
   /**
    * サイドパネル開閉トグルボタンを描画する。
@@ -452,6 +492,7 @@ export class AppMenu extends WithLayoutUIController(
     return html`
       <!-- 上部エリア (メイン機能群) -->
       <div class="app-menu__primary">
+        ${this.renderHomeButton()}
         ${this.renderSidebarToggleButton(
           this.isNavigationListAreaOpen,
           isPrimaryDisabled,

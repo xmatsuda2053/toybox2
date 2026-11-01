@@ -20,6 +20,7 @@
   width: 100%;
 }
 
+.app-menu__home-btn,
 .app-menu__toggle-btn,
 .app-menu__zen-btn,
 .app-menu__task-create-btn,
@@ -30,6 +31,7 @@
   @include flex-center;
 }
 
+.app-menu__home-icon,
 .app-menu__zen-icon,
 .app-menu__task-create-icon,
 .app-menu__scratch-icon,
