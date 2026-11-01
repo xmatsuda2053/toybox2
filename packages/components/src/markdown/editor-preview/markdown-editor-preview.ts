@@ -465,6 +465,9 @@ export class MarkdownEditorPreview extends LitElement {
    * @param newValue 変更後のテキスト
    */
   public handleEditorChange(newValue: string): void {
+    if (!this._mode) {
+      this._mode = "edit";
+    }
     this.value = newValue;
     this.debouncedUpdatePreview(newValue);
     this.dispatchEvent(

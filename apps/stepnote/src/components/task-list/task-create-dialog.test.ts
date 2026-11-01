@@ -57,6 +57,9 @@ describe("TaskCreateDialog Component", () => {
     selectedLabelId: number | undefined;
     hasSelectedLabels: boolean;
   };
+  let mockTaskTemplateController: {
+    state: any[];
+  };
 
   const initialLabels: LabelRecord[] = [
     {
@@ -92,6 +95,12 @@ describe("TaskCreateDialog Component", () => {
     // Controller モックの紐付け
     (element as any).taskController = mockTaskController;
     (element as any).labelsController = mockLabelsController;
+    mockTaskTemplateController = {
+      state: [
+        { id: 10, name: "定例テンプレート", description: "## 定例概要", issues: [{ id: "1", order: 1, value: "# 準備", dayOffset: 0 }] },
+      ],
+    };
+    (element as any).taskTemplateController = mockTaskTemplateController;
   });
 
   describe("1. ダイアログの基本構造およびレンダリング", () => {
@@ -127,6 +136,12 @@ describe("TaskCreateDialog Component", () => {
       expect(htmlStr).toContain("2026");
     });
 
+    it("1-5-2. テンプレート選択欄（wa-select#task-create-template）が存在し、登録済みテンプレートが選択肢としてレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("id=\"task-create-template\"");
+      expect(htmlStr).toContain("定例テンプレート");
+      expect(htmlStr).toContain("テンプレートなし");
+    });
     it("1-5. ラベル選択欄（wa-select#task-create-label）が存在し、登録済みラベル一覧が選択肢（wa-option）としてレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("wa-select");
@@ -219,6 +234,7 @@ describe("TaskCreateDialog Component", () => {
           fiscalYear: 2026,
           labelId: 2,
         }),
+        undefined,
       );
       expect(eventFired).toBe(true);
       expect(element.open).toBe(false);
@@ -250,6 +266,42 @@ describe("TaskCreateDialog Component", () => {
       expect(mockEvent.preventDefault).toHaveBeenCalled();
     });
 
+    it("3-5. テンプレート選択時、タスク概要にテンプレートのMarkdownが設定され、初期Issueが作成されること", async () => {
+      (element as any).inputName = "定例タスク";
+      (element as any).inputDueDate = "2026-11-10";
+      (element as any).inputTemplateId = 10;
+
+      const result = await (element as any).handleSave();
+      expect(result).toBe(true);
+      expect(mockTaskController.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "定例タスク",
+          description: "## 定例概要",
+        }),
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: "準備",
+            value: "# 準備",
+          }),
+        ]),
+      );
+    });
+
+    it("3-6. テンプレート未選択時、テンプレート未選択のまま初期Issueなしで作成されること", async () => {
+      (element as any).inputName = "通常タスク";
+      (element as any).inputDueDate = "2026-11-10";
+      (element as any).inputTemplateId = undefined;
+
+      const result = await (element as any).handleSave();
+      expect(result).toBe(true);
+      expect(mockTaskController.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "通常タスク",
+          description: "",
+        }),
+        undefined,
+      );
+    });
     it("3-4. フォーム要素の @submit に handleSave が直接バインドされていること", () => {
       const template = element.render();
       const templateStr = JSON.stringify(template);

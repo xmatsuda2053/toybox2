@@ -1,5 +1,7 @@
+import angle_down_solid_full from "./assets/icons/angle-down-solid-full.svg?raw";
 import angle_left_solid_full from "./assets/icons/angle-left-solid-full.svg?raw";
 import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?raw";
+import angle_up_solid_full from "./assets/icons/angle-up-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
 import arrows_up_down_solid_full from "./assets/icons/arrows-up-down-solid-full.svg?raw";
@@ -36,6 +38,7 @@ import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
+import floppy_disk_regular_full from "./assets/icons/floppy-disk-regular-full.svg?raw";
 import folder_solid_full from "./assets/icons/folder-solid-full.svg?raw";
 import gear_solid_full from "./assets/icons/gear-solid-full.svg?raw";
 import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
@@ -81,8 +84,10 @@ import wand_magic_sparkles_solid_full from "./assets/icons/wand-magic-sparkles-s
 import xmark_solid_full from "./assets/icons/xmark-solid-full.svg?raw";
 
 export const icons: Record<string, string> = {
+  "angle-down-solid-full": angle_down_solid_full,
   "angle-left-solid-full": angle_left_solid_full,
   "angle-right-solid-full": angle_right_solid_full,
+  "angle-up-solid-full": angle_up_solid_full,
   "angles-left-solid-full": angles_left_solid_full,
   "angles-right-solid-full": angles_right_solid_full,
   "arrows-up-down-solid-full": arrows_up_down_solid_full,
@@ -123,6 +128,7 @@ export const icons: Record<string, string> = {
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,
+  "floppy-disk-regular-full": floppy_disk_regular_full,
   "folder-solid-full": folder_solid_full,
   "gear-solid-full": gear_solid_full,
   "heading-solid-full": heading_solid_full,

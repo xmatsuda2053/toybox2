@@ -10,6 +10,7 @@ import {
   logsContext,
   layoutUIContext,
   scratchContext,
+  taskTemplateContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -19,6 +20,7 @@ import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller";
 import type { ScratchController } from "@/controllers/scratch.controller";
+import type { TaskTemplateController } from "@/controllers/task-template.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -290,4 +292,37 @@ export function WithTaskListController<T extends LitElementConstructor>(Base: T)
   return TaskListConsumerClass;
 }
 
+/**
+ * TaskTemplateController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける taskTemplateController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithTaskTemplateController<T extends LitElementConstructor>(
+  Base: T,
+) {
+  class TaskTemplateConsumerClass extends Base {
+    private _taskTemplateController?: TaskTemplateController;
 
+    /** タスクテンプレート管理コントローラー */
+    public get taskTemplateController(): TaskTemplateController | undefined {
+      return this._taskTemplateController;
+    }
+
+    @consume({ context: taskTemplateContext, subscribe: true })
+    @property({ attribute: false })
+    public set taskTemplateController(
+      controller: TaskTemplateController | undefined,
+    ) {
+      this._taskTemplateController = this.subscriber.bind(
+        "taskTemplate",
+        this._taskTemplateController,
+        controller,
+      );
+    }
+  }
+  return TaskTemplateConsumerClass;
+}

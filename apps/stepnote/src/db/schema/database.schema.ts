@@ -6,6 +6,7 @@ import {
   QuickAccessRecord,
   LabelRecord,
   ScratchRecord,
+  TaskTemplateRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
 import { extractMarkdownTitle } from "@shared/utils";
@@ -75,6 +76,14 @@ export class Database extends Dexie {
   scratches!: Table<ScratchRecord, number>;
 
   /**
+   * タスクテンプレートテーブル
+   *
+   * @type {Table<TaskTemplateRecord, number>}
+   * @memberof Database
+   */
+  taskTemplates!: Table<TaskTemplateRecord, number>;
+
+  /**
    * Creates an instance of Database.
    * @memberof Database
    */
@@ -123,6 +132,9 @@ export class Database extends Dexie {
             }
           });
       });
+    this.version(4).stores({
+      taskTemplates: "++id, name, createdAt",
+    });
   }
 }
 

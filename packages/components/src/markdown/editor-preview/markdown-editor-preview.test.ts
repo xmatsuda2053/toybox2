@@ -159,6 +159,12 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(element.mode).not.toBe("split");
     });
 
+    it("空の初期状態でテキストを入力（handleEditorChange）した際、edit モードが維持され preview へ勝手に切り替わらないこと", () => {
+      element.value = "";
+      expect(element.mode).toBe("edit");
+      element.handleEditorChange("文字入力中");
+      expect(element.mode).toBe("edit");
+    });
     it("明示的に mode が指定されている場合は指定値が維持されること", () => {
       element.value = "# テキスト";
       element.mode = "edit";
