@@ -216,6 +216,7 @@ export class TaskCreateDialog extends WithDialogBase(
       fiscalYear: this.inputFiscalYear,
       labelId: fallbackLabelId,
       description: selectedTemplate?.description ?? "",
+      templateName: selectedTemplate?.name,
     };
 
     const initialIssues = this.resolveTemplateIssues(selectedTemplate, dueDate);

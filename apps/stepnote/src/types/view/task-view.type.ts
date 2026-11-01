@@ -14,6 +14,8 @@ export type CreateTaskInput = Partial<Omit<TaskRecord, "id">> & {
   fiscalYear: number;
   /** 所属ラベルID */
   labelId: number;
+  /** 使用したテンプレート名（任意） */
+  templateName?: string;
 };
 
 /**

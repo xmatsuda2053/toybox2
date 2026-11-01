@@ -609,6 +609,24 @@ describe("TaskController (Single Task TDD)", () => {
       );
     });
 
+    it("8-1b. createTask に templateName を指定した場合、systemLogService.logTaskCreated に templateName が渡されること", async () => {
+      const newId = await controller.createTask({
+        name: "テンプレートタスク",
+        dueDate: new Date(2026, 9, 31),
+        fiscalYear: 2026,
+        labelId: 1,
+        templateName: "定例テンプレート",
+      });
+
+      expect(fakeSystemLogService.logTaskCreated).toHaveBeenCalledWith(
+        newId,
+        expect.objectContaining({
+          name: "テンプレートタスク",
+          templateName: "定例テンプレート",
+        }),
+      );
+    });
+
     it("8-2. updateSummary でタスク名が変更された場合、logTaskNameChanged が呼び出されること", async () => {
       await controller.initialized;
       await controller.updateSummary({ name: "変更後タスク名" });
