@@ -42,6 +42,8 @@ const createMockHost = () => {
  * 仕様 21:設定モード有効時に再度 toggleSettingsMode を実行すると設定モードが解除され（isSettingsMode: false）、常に左右両ペイン（サイドパネルおよびJournal）が展開された標準状態へ復帰すること。
  * 仕様 22:setSettingsMode で明示的に設定モードを設定でき、同じ状態の場合は不要な通知が行われないこと。
  * 仕様 23:設定モード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode, toggleScratchMode を呼び出しても状態が変更されずガードされること。
+ * 仕様 24:resetToHome の実行により、スクラッチモード・設定モード・集中モードがすべて解除され、すべてのペイン開閉状態（Quick Access含む）が初期状態（開いた状態）へ一括リセットされること。
+ * 仕様 25:すでにすべての状態が初期値である場合に resetToHome を実行しても不要な再描画通知が行われないこと。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -517,6 +519,83 @@ describe("layout-ui.controller", () => {
 
       controller.toggleScratchMode();
       expect(controller.state.isScratchMode).toBe(false);
+    });
+  });
+
+  describe("ホーム状態への一括リセット（resetToHome）の検証", () => {
+    it("仕様 24: resetToHome の実行により、スクラッチモード・設定モード・集中モードがすべて解除され、すべてのペイン開閉状態（Quick Access含む）が初期状態へ一括リセットされること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      // 1. スクラッチモードかつ Quick Access と Navigation Area が閉じた状態からのリセット
+      controller.setQuickAccessOpen(false);
+      controller.setNavigationAreaOpen(false);
+      controller.setScratchMode(true);
+      requestUpdateMock.mockClear();
+
+      (
+        controller as unknown as { resetToHome: () => void }
+      ).resetToHome();
+
+      expect(controller.state).toEqual({
+        isQuickAccessOpen: true,
+        isNavigationAreaOpen: true,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
+        isZenMode: false,
+        isScratchMode: false,
+        isSettingsMode: false,
+      });
+      expect(requestUpdateMock).toHaveBeenCalledTimes(1);
+
+      // 2. 設定モードからのリセット
+      controller.setSettingsMode(true);
+      requestUpdateMock.mockClear();
+
+      (
+        controller as unknown as { resetToHome: () => void }
+      ).resetToHome();
+
+      expect(controller.state).toEqual({
+        isQuickAccessOpen: true,
+        isNavigationAreaOpen: true,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
+        isZenMode: false,
+        isScratchMode: false,
+        isSettingsMode: false,
+      });
+      expect(requestUpdateMock).toHaveBeenCalledTimes(1);
+
+      // 3. 集中モードからのリセット
+      controller.setZenMode(true);
+      requestUpdateMock.mockClear();
+
+      (
+        controller as unknown as { resetToHome: () => void }
+      ).resetToHome();
+
+      expect(controller.state).toEqual({
+        isQuickAccessOpen: true,
+        isNavigationAreaOpen: true,
+        isNavigationListAreaOpen: true,
+        isJournalAreaOpen: true,
+        isZenMode: false,
+        isScratchMode: false,
+        isSettingsMode: false,
+      });
+      expect(requestUpdateMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("仕様 25: すでにすべての状態が初期値である場合に resetToHome を実行しても不要な再描画通知が行われないこと", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new LayoutUIController(host);
+
+      (
+        controller as unknown as { resetToHome: () => void }
+      ).resetToHome();
+
+      expect(requestUpdateMock).toHaveBeenCalledTimes(0);
     });
   });
 });

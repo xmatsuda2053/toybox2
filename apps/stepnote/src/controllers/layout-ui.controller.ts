@@ -3,6 +3,19 @@ import type { LayoutState } from "@/types/view/ui.types";
 import { BaseReactiveController } from "./base-reactive.controller";
 
 /**
+ * 画面レイアウトの初期状態（ホーム状態）
+ */
+const INITIAL_LAYOUT_STATE: LayoutState = {
+  isQuickAccessOpen: true,
+  isNavigationAreaOpen: true,
+  isNavigationListAreaOpen: true,
+  isJournalAreaOpen: true,
+  isZenMode: false,
+  isScratchMode: false,
+  isSettingsMode: false,
+};
+
+/**
  * 画面全体のレイアウト状態（各パネル・ドロワーの開閉フラグ）を管理する Reactive Controller
  *
  * @export
@@ -16,15 +29,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @type {LayoutState}
    * @memberof LayoutUIController
    */
-  private _state: LayoutState = {
-    isQuickAccessOpen: true,
-    isNavigationAreaOpen: true,
-    isNavigationListAreaOpen: true,
-    isJournalAreaOpen: true,
-    isZenMode: false,
-    isScratchMode: false,
-    isSettingsMode: false,
-  };
+  private _state: LayoutState = { ...INITIAL_LAYOUT_STATE };
 
   /**
    * 画面開閉の状態（読み取り専用）
@@ -94,6 +99,23 @@ export class LayoutUIController extends BaseReactiveController<void> {
     };
     this.notify();
   }
+
+  /**
+   * 画面全体のレイアウト状態を初期状態（ホーム状態）に一括リセットする。
+   * スクラッチモード・設定モード・集中モードをすべて解除し、全ペインを展開状態に戻す。
+   *
+   * @return {*} {void}
+   * @memberof LayoutUIController
+   */
+  public resetToHome = (): void => {
+    const isAlreadyHome = (
+      Object.keys(INITIAL_LAYOUT_STATE) as Array<keyof LayoutState>
+    ).every((key) => this._state[key] === INITIAL_LAYOUT_STATE[key]);
+    if (isAlreadyHome) return;
+
+    this._state = { ...INITIAL_LAYOUT_STATE };
+    this.notify();
+  };
 
   /**
    * QUICK ACCESS の 開閉状態を反転させ、ホストおよび全購読コンポーネントへ再描画を要求する。
