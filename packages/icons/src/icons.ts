@@ -39,6 +39,7 @@ import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
 import folder_solid_full from "./assets/icons/folder-solid-full.svg?raw";
 import gear_solid_full from "./assets/icons/gear-solid-full.svg?raw";
 import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
+import house_regular_full from "./assets/icons/house-regular-full.svg?raw";
 import house_solid_full from "./assets/icons/house-solid-full.svg?raw";
 import html5_brands_solid_full from "./assets/icons/html5-brands-solid-full.svg?raw";
 import italic_solid_full from "./assets/icons/italic-solid-full.svg?raw";
@@ -125,6 +126,7 @@ export const icons: Record<string, string> = {
   "folder-solid-full": folder_solid_full,
   "gear-solid-full": gear_solid_full,
   "heading-solid-full": heading_solid_full,
+  "house-regular-full": house_regular_full,
   "house-solid-full": house_solid_full,
   "html5-brands-solid-full": html5_brands_solid_full,
   "italic-solid-full": italic_solid_full,

@@ -212,7 +212,7 @@ export class AppMenu extends WithLayoutUIController(
       >
         <wa-icon
           library="my-icons"
-          name="house-solid-full"
+          name="house-regular-full"
           class="app-menu__home-icon"
           label=${homeTooltip}
         ></wa-icon>
