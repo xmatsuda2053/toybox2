@@ -77,8 +77,8 @@ import { AppMenu } from "./app-menu.js";
  *    - [ ] 16-1. handleToggleSettingsMode の呼び出しにより layoutUIController.toggleSettingsMode が実行されること
  *
  * 17. 設定モード・スクラッチモード有効時における他のボタンの無効化（disabled）およびSCSS仕様
- *    - [ ] 17-1. isSettingsMode が true の際、設定ボタン以外の全ボタン（開閉、新規タスク作成、スクラッチ、集中モード、エクスポート、インポート）に disabled 属性が付与されること
- *    - [ ] 17-2. isScratchMode が true の際、設定ボタン（#app-menu-settings-btn）にも disabled 属性が付与されること
+ *    - [ ] 17-1. isSettingsMode が true の際、開閉、新規タスク作成、集中モード、エクスポート、インポートボタンに disabled 属性が付与され、スクラッチボタンと設定ボタンには disabled 属性が付与されないこと
+ *    - [ ] 17-2. isScratchMode が true の際も、設定ボタン（#app-menu-settings-btn）には disabled 属性が付与されず常時操作可能であること
  *    - [ ] 17-3. app-menu.scss で設定アイコン（.app-menu__settings-icon）および設定ボタンのアクティブスタイルが定義されていること
  *
  * 18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ
@@ -523,8 +523,8 @@ describe("AppMenu Component", () => {
   });
 
   describe("17. 設定モード・スクラッチモード有効時における他のボタンの無効化（disabled）およびSCSS仕様", () => {
-    it("17-1. isSettingsMode が true の際、設定ボタン以外の全ボタン（開閉、新規タスク作成、スクラッチ、集中モード、エクスポート、インポート）に disabled 属性が付与されること", () => {
-      (appMenu as unknown as { isSettingsMode: boolean }).isSettingsMode = true;
+    it("17-1. isSettingsMode が true の際、開閉、新規タスク作成、集中モード、エクスポート、インポートボタンに disabled 属性が付与され、スクラッチボタンと設定ボタンには disabled 属性が付与されないこと", () => {
+      appMenu.isSettingsMode = true;
       (appMenu as unknown as { labelsController: { hasLabels: boolean } }).labelsController =
         { hasLabels: true };
       const htmlStr = flattenTemplate(appMenu.render());
@@ -535,7 +535,7 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toMatch(
         /<task-create-button[^>]*buttonId="app-menu-task-create-btn"[^>]*\bdisabled\b/,
       );
-      expect(htmlStr).toMatch(
+      expect(htmlStr).not.toMatch(
         /<wa-button[^>]*id="app-menu-scratch-btn"[^>]*\bdisabled\b/,
       );
       expect(htmlStr).toMatch(
@@ -552,10 +552,11 @@ describe("AppMenu Component", () => {
       );
     });
 
-    it("17-2. isScratchMode が true の際、設定ボタン（#app-menu-settings-btn）にも disabled 属性が付与されること", () => {
+    it("17-2. isScratchMode が true の際も、設定ボタン（#app-menu-settings-btn）には disabled 属性が付与されず常時操作可能であること", () => {
       appMenu.isScratchMode = true;
       const htmlStr = flattenTemplate(appMenu.render());
-      expect(htmlStr).toMatch(
+      expect(htmlStr).toContain('id="app-menu-settings-btn"');
+      expect(htmlStr).not.toMatch(
         /<wa-button[^>]*id="app-menu-settings-btn"[^>]*\bdisabled\b/,
       );
     });
