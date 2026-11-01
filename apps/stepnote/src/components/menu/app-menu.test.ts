@@ -90,6 +90,10 @@ import { AppMenu } from "./app-menu.js";
  *
  * 19. ホーム画面に戻るボタンクリックによる LayoutUIController 連動
  *    - [ ] 19-1. handleResetToHome の呼び出しにより layoutUIController.resetToHome が実行されること
+ *
+ * 20. アクティブ状態（is-active）におけるスタイル設定
+ *    - [ ] 20-1. app-menu.scss でスクラッチボタンおよび設定ボタンのアクティブ時（&.is-active）に border-radius: var(--wa-form-control-border-radius) が設定されていること
+ *    - [ ] 20-2. app-menu.scss でアクティブ時（&.is-active）の背景色が hover 時と同一の var(--wa-color-neutral-fill-quiet) であり、文字色が var(--wa-color-brand) であること
  */
 
 describe("AppMenu Component", () => {
@@ -650,6 +654,31 @@ describe("AppMenu Component", () => {
 
       (appMenu as unknown as { handleResetToHome: () => void }).handleResetToHome();
       expect(resetToHomeMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("20. アクティブ状態（is-active）におけるスタイル設定", () => {
+    it("20-1. app-menu.scss でスクラッチボタンおよび設定ボタンのアクティブ時（&.is-active）に border-radius: var(--wa-form-control-border-radius) が設定されていること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toMatch(
+        /\.app-menu__scratch-btn,\s*\.app-menu__settings-btn\s*\{[\s\S]*?&?\.is-active\s*\{[\s\S]*?border-radius:\s*var\(--wa-form-control-border-radius\)/,
+      );
+    });
+
+    it("20-2. app-menu.scss でアクティブ時（&.is-active）の背景色が hover 時と同一の var(--wa-color-neutral-fill-quiet) であり、文字色が var(--wa-color-brand) であること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toMatch(
+        /\.app-menu__scratch-btn,\s*\.app-menu__settings-btn\s*\{[\s\S]*?&?\.is-active\s*\{[\s\S]*?background-color:\s*var\(--wa-color-neutral-fill-quiet\)/,
+      );
+      expect(scss).toMatch(
+        /\.app-menu__scratch-btn,\s*\.app-menu__settings-btn\s*\{[\s\S]*?&?\.is-active\s*\{[\s\S]*?color:\s*var\(--wa-color-brand\)/,
+      );
     });
   });
 });

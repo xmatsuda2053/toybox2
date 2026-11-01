@@ -49,8 +49,9 @@
 .app-menu__scratch-btn,
 .app-menu__settings-btn {
   &.is-active {
-    color: var(--wa-color-brand-contrast);
-    background-color: var(--wa-color-brand);
+    color: var(--wa-color-brand);
+    background-color: var(--wa-color-neutral-fill-quiet);
+    border-radius: var(--wa-form-control-border-radius);
   }
 }
 
