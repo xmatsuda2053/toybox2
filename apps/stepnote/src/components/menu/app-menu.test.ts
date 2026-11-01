@@ -82,7 +82,7 @@ import { AppMenu } from "./app-menu.js";
  *    - [ ] 17-3. app-menu.scss で設定アイコン（.app-menu__settings-icon）および設定ボタンのアクティブスタイルが定義されていること
  *
  * 18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ
- *    - [ ] 18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger="hover" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-solid-full']）がレンダリングされること
+ *    - [ ] 18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger="hover" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-regular-full']）がレンダリングされること
  *    - [ ] 18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順（最上部）であること
  *    - [ ] 18-3. ツールチップ文言が「ホーム画面に戻る（表示を初期化）」であり、ボタンに is-active クラスが付与されないこと
  *    - [ ] 18-4. スクラッチモードや設定モードが有効（true）の際も、ホームボタン（#app-menu-home-btn）には disabled 属性が付与されず常時有効であること
@@ -572,7 +572,7 @@ describe("AppMenu Component", () => {
   });
 
   describe("18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ", () => {
-    it("18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger=\"hover\" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-solid-full']）がレンダリングされること", () => {
+    it("18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger=\"hover\" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-regular-full']）がレンダリングされること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
       expect(htmlStr).toMatch(
         /<wa-button[^>]*id="app-menu-home-btn"[^>]*class="[^"]*app-menu__home-btn[^"]*"/,
@@ -581,7 +581,7 @@ describe("AppMenu Component", () => {
         /<wa-tooltip[^>]*for="app-menu-home-btn"[^>]*trigger="hover"[^>]*>/,
       );
       expect(htmlStr).toMatch(
-        /<wa-icon[^>]*name="house-solid-full"[^>]*class="[^"]*app-menu__home-icon[^"]*"/,
+        /<wa-icon[^>]*name="house-regular-full"[^>]*class="[^"]*app-menu__home-icon[^"]*"/,
       );
     });
 
