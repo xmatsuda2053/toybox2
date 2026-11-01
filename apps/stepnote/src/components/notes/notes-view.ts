@@ -9,6 +9,7 @@ import "@shared/components";
 import type {
   SearchInputEventDetail,
   MarkdownDisplayMode,
+  MarkdownEditorCommand,
 } from "@shared/components";
 import type { NoteItemRecord, NotesManagerController } from "@/types/view/ui.types.js";
 import {
@@ -43,6 +44,10 @@ export class NotesView extends WithNotesController(
   WithTaskController(SubscriberElement),
 ) {
   public static override styles = unsafeCSS(styles);
+
+  private static readonly NOTE_COMMANDS: readonly MarkdownEditorCommand[] = [
+    { label: "ジャンプ用タグをコピー", eventName: "copy-jump-tag" },
+  ];
 
   @property({ type: String, attribute: "data-theme", reflect: true })
   public theme: string = "light";
@@ -166,6 +171,21 @@ export class NotesView extends WithNotesController(
     this.noteModeMap.clear();
     this.requestUpdate();
   }
+
+  /**
+   * ジャンプ用タグのクリップボードコピーハンドラー
+   */
+  public handleCopyJumpTag = async (): Promise<void> => {
+    if (this.activeNoteId === undefined) return;
+    const activeNote = this.effectiveNotes.find((n) => n.id === this.activeNoteId);
+    if (!activeNote) return;
+
+    const title = activeNote.title || extractNoteTitle(activeNote.value);
+    const copyText = `#(${this.activeNoteId}){${title}}`;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(copyText);
+    }
+  };
 
   /** 検索入力ハンドラー */
   public handleSearchInput = (
@@ -347,6 +367,8 @@ export class NotesView extends WithNotesController(
           .darkTheme=${"soft"}
           .showDeleteButton=${true}
           ?show-delete-button=${true}
+          .commands=${NotesView.NOTE_COMMANDS}
+          @copy-jump-tag=${this.handleCopyJumpTag}
           @mode-change=${(e: CustomEvent<{ mode: MarkdownDisplayMode }>) =>
             this.handleModeChange(e.detail.mode)}
           @markdown-change=${(e: CustomEvent<{ value: string }>) =>
