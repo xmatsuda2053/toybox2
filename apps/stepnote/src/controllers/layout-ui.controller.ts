@@ -231,7 +231,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setScratchMode = (enabled: boolean): void => {
-    if (this._state.isSettingsMode || this._state.isScratchMode === enabled) {
+    if (this._state.isScratchMode === enabled) {
       return;
     }
     this.applyFullScreenMode({
@@ -258,7 +258,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   public setSettingsMode = (enabled: boolean): void => {
-    if (this._state.isScratchMode || this._state.isSettingsMode === enabled) {
+    if (this._state.isSettingsMode === enabled) {
       return;
     }
     this.applyFullScreenMode({

@@ -473,7 +473,7 @@ export class AppMenu extends WithLayoutUIController(
       <div class="app-menu__secondary">
         ${this.renderExportButton(isSystemDisabled)}
         ${this.renderImportButton(isSystemDisabled)}
-        ${this.renderSettingsButton(this.isSettingsMode, this.isScratchMode)}
+        ${this.renderSettingsButton(this.isSettingsMode)}
         <input
           id="app-menu-import-input"
           class="app-menu__import-input"
@@ -498,7 +498,7 @@ export class AppMenu extends WithLayoutUIController(
           isPrimaryDisabled,
         )}
         ${this.renderTaskCreateButton(isPrimaryDisabled)}
-        ${this.renderScratchButton(this.isScratchMode, this.isSettingsMode)}
+        ${this.renderScratchButton(this.isScratchMode)}
         ${this.renderZenModeButton(this.isZenMode, isPrimaryDisabled)}
       </div>
 

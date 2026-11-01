@@ -341,21 +341,20 @@ export class AppRoot extends LitElement {
   };
 
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
-    if (this.layoutUIController.state.isSettingsMode) {
-      return;
-    }
-
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
     const lowerKey = e.key.toLowerCase();
 
-    // 全画面スクラッチモード切替（スクラッチモード中であっても通常画面へ復帰できるよう最優先で判定）
+    // 全画面スクラッチモード切替（スクラッチモードや設定モード中であっても直接切り替え・復帰できるよう最優先で判定）
     if (isCtrlOrMeta && e.altKey && lowerKey === "s") {
       e.preventDefault();
       this.layoutUIController.toggleScratchMode();
       return;
     }
 
-    if (this.layoutUIController.state.isScratchMode) {
+    if (
+      this.layoutUIController.state.isScratchMode ||
+      this.layoutUIController.state.isSettingsMode
+    ) {
       return;
     }
 

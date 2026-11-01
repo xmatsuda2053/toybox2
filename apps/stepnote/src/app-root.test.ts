@@ -123,7 +123,8 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 14-1. isSettingsMode が true の際、panes-container 内に settings-pane がレンダリングされ、Navigation, TaskList, Task, Journal, Scratch ペインが非表示となること
  *    - [ ] 14-2. isSettingsMode の状態が app-menu の .isSettingsMode プロパティへ反映されること
  *    - [ ] 14-3. isSettingsMode が true の際、ヘッダーの全体検索ボタン（#header-global-search-trigger）が無効化（disabled属性）されること
- *    - [ ] 14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z, Ctrl+Alt+S のキーボードショートカットが抑止されること
+ *    - [ ] 14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z のキーボードショートカットが抑止されること
+ *    - [ ] 14-6. isSettingsMode が true の際でも、Ctrl+Alt+S 押下によりスクラッチモードへ直接切り替えられること
  */
 
 /**
@@ -848,7 +849,7 @@ describe("AppRoot Controller 状態連携仕様", () => {
       );
     });
 
-    it("14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z, Ctrl+Alt+S のキーボードショートカットが抑止されること", () => {
+    it("14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z のキーボードショートカットが抑止されること", () => {
       appRoot.layoutUIController.setScratchMode(false);
       appRoot.layoutUIController.setSettingsMode(true);
       vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
@@ -859,10 +860,6 @@ describe("AppRoot Controller 状態連携仕様", () => {
       appRoot.isShortcutHelpOpen = false;
 
       const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
-      const toggleScratchSpy = vi.spyOn(
-        appRoot.layoutUIController,
-        "toggleScratchMode",
-      );
 
       // Ctrl+K
       const ctrlKEvent = {
@@ -903,16 +900,6 @@ describe("AppRoot Controller 状態連携仕様", () => {
       } as unknown as KeyboardEvent;
       appRoot.handleGlobalKeyDown(ctrlAltZEvent);
       expect(toggleZenSpy).not.toHaveBeenCalled();
-
-      // Ctrl+Alt+S
-      const ctrlAltSEvent = {
-        key: "s",
-        ctrlKey: true,
-        altKey: true,
-        preventDefault: vi.fn(),
-      } as unknown as KeyboardEvent;
-      appRoot.handleGlobalKeyDown(ctrlAltSEvent);
-      expect(toggleScratchSpy).not.toHaveBeenCalled();
     });
 
     it("14-5. isSettingsMode が false の際、通常の5ペインレイアウトへ復帰すること", () => {
@@ -922,6 +909,26 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect(htmlStr).not.toMatch(/<settings-pane/);
       expect(htmlStr).toMatch(/<task-pane/);
       expect(htmlStr).toMatch(/<journal-pane/);
+    });
+
+    it("14-6. isSettingsMode が true の際でも、Ctrl+Alt+S 押下によりスクラッチモードへ直接切り替えられること", () => {
+      appRoot.layoutUIController.setScratchMode(false);
+      appRoot.layoutUIController.setSettingsMode(true);
+      const toggleScratchSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleScratchMode",
+      );
+
+      const ctrlAltSEvent = {
+        key: "s",
+        ctrlKey: true,
+        altKey: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent;
+
+      appRoot.handleGlobalKeyDown(ctrlAltSEvent);
+      expect(toggleScratchSpy).toHaveBeenCalledTimes(1);
+      expect(ctrlAltSEvent.preventDefault).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -946,8 +953,3 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
   });
 });
-
-
-
-
-
