@@ -42,7 +42,7 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 4-2. settings-pane.scss に !important 宣言が一切含まれていないこと
  *    - 4-3. settings-pane.scss に @extend が一切含まれていないこと
  *    - 4-4. settings-pane.scss 全体においてハードコードされたカラーコード（Hex / RGB / RGBA）が 0 件であること
- *    - 4-5. .settings-pane__master-header がリストアイテムと右端位置を揃えるための余白定義（padding-right / padding-inline）を持つこと
+ *    - 4-5. .settings-pane__master-header がリストアイテムのメニューボタンと横位置を揃えるための右余白（padding-inline-end）および scrollbar-gutter: stable を持つこと
  *    - 4-6. .settings-pane__tab-panel[active] の内部スロット（::part(base)）に高さ伝播・スクロール可能とするスタイル（height: 100%）が定義されていること
  *    - 4-7. .settings-pane__master-list がスクロールバーとアイテム間の圧迫感を防ぐ余白定義（padding-inline-end または padding-right）および scrollbar-gutter: stable を持つこと
  *    - 4-8. .settings-pane__form-name にWeb Awesome公式サンプルに準拠したラベル左配置スタイル（gridまたはflexおよび::part(form-control-label)）が定義されていること
@@ -413,10 +413,16 @@ describe("SettingsPane Component", () => {
       expect(hexMatches.length + rgbMatches.length).toBe(0);
     });
 
-    it("4-5. .settings-pane__master-header がリストアイテムと右端位置を揃えるための余白定義を持つこと", () => {
+    it("4-5. .settings-pane__master-header がリストアイテムのメニューボタンと横位置を揃えるための右余白（padding-inline-end: calc(... * 1.5)）および scrollbar-gutter: stable を持つこと", () => {
       const scss = fs.readFileSync(scssPath, "utf-8");
       expect(scss).toMatch(
-        /\.settings-pane__master-header\s*\{[^}]*?(?:padding-right|padding-inline):\s*var\(--wa-space-xs\b/,
+        /\.settings-pane__master-header\s*\{[^}]*?padding-inline-end:\s*calc\(var\(--wa-space-xs,\s*8px\)\s*\*\s*1\.5\)/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__master-header\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__master-header\s*\{[^}]*?overflow:\s*hidden\b/,
       );
     });
 

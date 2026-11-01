@@ -113,7 +113,10 @@
   @include flex-between;
   margin-bottom: var(--wa-space-s, 12px);
   padding-bottom: var(--wa-space-xs, 8px);
-  padding-inline: var(--wa-space-xs, 8px);
+  padding-inline-start: var(--wa-space-xs, 8px);
+  padding-inline-end: calc(var(--wa-space-xs, 8px) * 1.5);
+  scrollbar-gutter: stable;
+  overflow: hidden;
   border-bottom: 1px solid var(--wa-color-border-subtle);
 }
 
@@ -356,7 +359,10 @@
   @include flex-between;
   margin-bottom: var(--wa-space-xs, 8px);
   padding-bottom: var(--wa-space-xs, 8px);
-  padding-inline: var(--wa-space-xs, 8px);
+  padding-inline-start: var(--wa-space-xs, 8px);
+  padding-inline-end: calc(var(--wa-space-xs, 8px) * 1.5);
+  scrollbar-gutter: stable;
+  overflow: hidden;
   border-bottom: 1px solid var(--wa-color-border-subtle);
   flex-shrink: 0;
 }
