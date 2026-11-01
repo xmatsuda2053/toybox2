@@ -36,6 +36,7 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 3-16. Issueリストの各アイテムタイトルからMarkdown見出し記号（#）が除外されて表示されること
  *    - 3-17. テンプレート編集後に未保存の変更がある場合、保存ボタンがアクセント（variant="brand" appearance="accent"）されアイコンにアニメーション（animation="shake"）が設定されること
  *    - 3-18. テンプレート名入力・保存ボタン行（.settings-pane__name-row）と分離されたスクロール可能なフォームボディ（.settings-pane__form-body）がレンダリングされること
+ *    - 3-19. 設定ペイン内のボタンおよび入力欄が Web Awesome の新仕様 size="s" でレンダリングされること
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (settings-pane.scss) が存在し、ルートブロック .settings-pane および主要セレクタが定義されていること
@@ -312,7 +313,7 @@ describe("SettingsPane Component", () => {
         /<wa-button[^>]*class="[^"]*settings-pane__btn-save[^"]*"[^>]*variant="neutral"[^>]*appearance="plain"[^>]*>/,
       );
       expect(htmlStr).toMatch(
-        /<wa-button[^>]*class="[^"]*settings-pane__btn-save[^"]*"[^>]*size="medium"/,
+        /<wa-button[^>]*class="[^"]*settings-pane__btn-save[^"]*"[^>]*size="m"/,
       );
       expect(htmlStr).toMatch(
         /<wa-tooltip[^>]*for="settings-template-save-btn"[^>]*trigger="hover"[^>]*>/,
@@ -369,6 +370,29 @@ describe("SettingsPane Component", () => {
       // form-body 内に概要エディタとIssueセクションが含まれること
       expect(htmlStr).toMatch(
         /<div[^>]*class="[^"]*settings-pane__form-body[^"]*"[^>]*>[\s\S]*?<div[^>]*class="[^"]*settings-pane__desc-container[^"]*"[\s\S]*?<div[^>]*class="[^"]*settings-pane__issue-section[^"]*"/,
+      );
+    });
+
+    it("3-19. 設定ペイン内のボタンおよび入力欄が Web Awesome の新仕様 size='s' でレンダリングされること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      element.addIssue();
+      const htmlStr = flattenTemplate(element.render());
+
+      // 新規作成ボタン
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-template-create-btn"[^>]*size="s"/,
+      );
+      // テンプレート項目のメニューボタン
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*slot="trigger"[^>]*class="[^"]*settings-pane__btn-menu[^"]*"[^>]*size="s"/,
+      );
+      // Issue追加ボタン
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-issue-add-btn"[^>]*size="s"/,
+      );
+      // 日数オフセット入力欄
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*size="s"[^>]*class="[^"]*settings-pane__issue-offset-input"[^>]*>/,
       );
     });
   });

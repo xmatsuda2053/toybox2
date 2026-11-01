@@ -370,7 +370,7 @@ export class SettingsPane extends WithTaskTemplateController(
             class="settings-pane__btn-menu"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="メニュー"
             aria-label="Template options"
           >
@@ -411,7 +411,7 @@ export class SettingsPane extends WithTaskTemplateController(
             class="settings-pane__btn-new"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="新規テンプレートを作成"
             aria-label="新規テンプレートを作成"
             @click=${this.startNewTemplate}
@@ -452,7 +452,7 @@ export class SettingsPane extends WithTaskTemplateController(
         class="${saveButtonClass}"
         variant="${saveButtonVariant}"
         appearance="${saveButtonAppearance}"
-        size="medium"
+        size="m"
         title="${tooltipText}"
         aria-label="${tooltipText}"
         ?disabled=${isSaveDisabled}
@@ -493,7 +493,7 @@ export class SettingsPane extends WithTaskTemplateController(
           class="settings-pane__btn-menu"
           variant="neutral"
           appearance="plain"
-          size="small"
+          size="s"
           aria-label="Issueメニュー"
           title="Issueメニュー"
           @click=${(e: Event) => e.stopPropagation()}
@@ -568,7 +568,7 @@ export class SettingsPane extends WithTaskTemplateController(
             class="settings-pane__btn-add-issue"
             variant="neutral"
             appearance="plain"
-            size="small"
+            size="s"
             title="Issueを追加"
             aria-label="Issueを追加"
             @click=${this.addIssue}
@@ -626,7 +626,7 @@ export class SettingsPane extends WithTaskTemplateController(
           <span class="settings-pane__issue-offset-label">タスク期日からの日数:</span>
           <wa-input
             type="number"
-            size="small"
+            size="s"
             class="settings-pane__issue-offset-input"
             .value=${String(currentIssue.dayOffset)}
             @input=${(e: Event) =>

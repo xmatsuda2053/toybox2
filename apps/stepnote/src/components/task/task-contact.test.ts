@@ -22,6 +22,7 @@ import { TaskContact, type ContactsChangeEventDetail } from "./task-contact.js";
  *    - 2-5. 要素が存在する場合、空状態メッセージ（.task-contact__empty）が存在しないこと
  *    - 2-6. 所属、氏名、連絡先のラベル（.task-contact__label）が存在せず、プレースホルダーのみで明示されていること
  *    - 2-7. 各入力欄（所属: building-solid-full、氏名: user-solid-full、連絡先: phone-solid-full）の slot="start" に対応する wa-icon が描画されること
+ *    - 2-8. 各入力欄（所属、氏名、連絡先）が Web Awesome の新仕様 size="s" でレンダリングされること
  *
  * 3. ユーザーインタラクションとイベント発火
  *    - 3-1. handleAdd 実行時に空行が追加された contacts 配列とともに contacts-change イベント（action: 'add'）がディスパッチされること
@@ -144,6 +145,19 @@ describe("TaskContact Component", () => {
       );
       expect(htmlStr).toMatch(
         /<wa-icon[^>]*slot=["']?start["']?[^>]*name=["']?phone-solid-full["']?/,
+      );
+    });
+
+    it("2-8. 各入力欄（所属、氏名、連絡先）が Web Awesome の新仕様 size='s' でレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class="[^"]*task-contact__input--div[^"]*"[^>]*size="s"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class="[^"]*task-contact__input--name[^"]*"[^>]*size="s"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-input[^>]*class="[^"]*task-contact__input--tel[^"]*"[^>]*size="s"/,
       );
     });
   });

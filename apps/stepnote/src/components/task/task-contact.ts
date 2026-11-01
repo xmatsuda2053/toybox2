@@ -110,7 +110,7 @@ export class TaskContact extends LitElement {
       <div class="task-contact__field">
         <wa-input
           class="task-contact__input task-contact__input--${field}"
-          size="small"
+          size="s"
           placeholder=${placeholder}
           .title=${value}
           .value=${value}
