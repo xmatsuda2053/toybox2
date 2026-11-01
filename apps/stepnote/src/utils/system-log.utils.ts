@@ -195,13 +195,15 @@ export function formatIssueCreatedLog(
   issueId: number,
   dueDate: Date,
   statusCode: TaskStatusCode = 0,
+  title?: string,
 ): string {
   const dueDateStr = formatDateString(dueDate);
   const statusLabel = getStatusLabel(statusCode);
+  const tagLabel = title?.trim() || `Issue #${issueId}`;
 
   return (
     `### sys: Issue #${issueId} 作成\n\n` +
-    `- **対象**: Issue #${issueId}\n` +
+    `- **対象**: #[${issueId}]{${tagLabel}}\n` +
     `- **期日**: ${dueDateStr}\n` +
     `- **初期ステータス**: ${statusLabel} (${statusCode})`
   );
@@ -220,7 +222,7 @@ export function formatIssueBulkCreatedLog(
   const count = issues.length;
   const idList = issues.map((i) => `#${i.id}`).join(", ");
   const issueLines = issues
-    .map((i) => `  - Issue #${i.id}: ${i.title}`)
+    .map((i) => `  - #[${i.id}]{${i.title}}`)
     .join("\n");
 
   return (
@@ -253,7 +255,7 @@ export function formatIssueStatusChangedLog(
 
   return (
     `### sys: Issue #${issueId} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
-    `- **対象**: Issue #${issueId} ("${title}")\n` +
+    `- **対象**: #[${issueId}]{${title}}\n` +
     `- **項目**: ステータス\n` +
     `- **変更前**: ${beforeLabel} (${before})\n` +
     `- **変更後**: ${afterLabel} (${after})`
@@ -281,7 +283,7 @@ export function formatIssueDueDateChangedLog(
 
   return (
     `### sys: Issue #${issueId} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
-    `- **対象**: Issue #${issueId} ("${title}")\n` +
+    `- **対象**: #[${issueId}]{${title}}\n` +
     `- **項目**: 期日\n` +
     `- **変更前**: ${beforeStr}\n` +
     `- **変更後**: ${afterStr}`
@@ -326,9 +328,10 @@ export function formatIssueDeletedLog(issue: {
  * @param {number} noteId 採番されたNoteID
  * @return {string} Markdown文字列
  */
-export function formatNoteCreatedLog(noteId: number): string {
+export function formatNoteCreatedLog(noteId: number, title?: string): string {
+  const tagLabel = title?.trim() || `Note #${noteId}`;
   return (
-    `### sys: Note #${noteId} 作成\n\n` + `- **対象**: Note #${noteId}`
+    `### sys: Note #${noteId} 作成\n\n` + `- **対象**: #(${noteId}){${tagLabel}}`
   );
 }
 

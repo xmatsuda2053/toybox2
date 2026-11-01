@@ -42,6 +42,8 @@ import { NotesView } from "./notes-view";
  *    - 4-11. resetModesToPreview() の呼び出しにより、全ノートのエディタモードがプレビューモードへリセットされること
  *    - 4-12. 新規ノート作成後（handleCreateNote）に wa-tab-show イベントが発火してもエディタモード（edit）がプレビューモードで上書きされず維持されること
  *    - 4-13. handleTabShow 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること
+ *    - 4-14. markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
+ *    - 4-15. handleCopyJumpTag 実行時に #(noteId){title} の形式でクリップボードへ書き込みが行われること
  *
  * 5. 新規ページ作成 (Create Page)
  *    - 5-1. 新規追加ボタンクリック（handleCreateNote）で notesController.createNote が初期値 "## Note" で呼び出され、作成された新しいNoteが自動的にアクティブになること
@@ -396,6 +398,33 @@ describe("NotesView Component", () => {
       element.handleTabShow(event);
 
       expect(stopPropagationSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("4-14. markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること", () => {
+      element.activeNoteId = 201;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*.commands=/);
+    });
+
+    it("4-15. handleCopyJumpTag 実行時に #(noteId){title} の形式でクリップボードへ書き込みが行われること", async () => {
+      const originalClipboard = navigator.clipboard;
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: writeTextMock },
+      });
+
+      element.activeNoteId = 201;
+      await element.handleCopyJumpTag();
+
+      expect(writeTextMock).toHaveBeenCalledWith("#(201){仕様メモ}");
+
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
     });
   });
 

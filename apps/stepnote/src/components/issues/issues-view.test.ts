@@ -49,6 +49,8 @@ import { IssuesView } from "./issues-view.js";
  *    - 4-11. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
  *    - 4-12. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセット（issueModeMap が初期化）され、展開状態もクリアされること
  *    - 4-13. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること
+ *    - 4-14. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
+ *    - 4-15. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること
  *
  * 5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)
  *    - 5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること
@@ -530,6 +532,32 @@ describe("IssuesView Component", () => {
 
       expect(element.issueModeMap.get(1)).toBe("preview");
       expect(element.issueModeMap.get(2)).toBe("preview");
+    });
+
+    it("4-14. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること", () => {
+      element.expandedIssueIds.add(1);
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.commands=/);
+    });
+
+    it("4-15. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること", async () => {
+      const originalClipboard = navigator.clipboard;
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: writeTextMock },
+      });
+
+      await element.handleCopyJumpTag(1);
+
+      expect(writeTextMock).toHaveBeenCalledWith("#[1]{設計書のレビュー実施}");
+
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
     });
   });
 

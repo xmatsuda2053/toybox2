@@ -10,6 +10,7 @@ import type {
   DatePickerChangeEventDetail,
   SearchInputEventDetail,
   MarkdownDisplayMode,
+  MarkdownEditorCommand,
 } from "@shared/components";
 import { format } from "@shared/utils";
 import type { IssueRecord } from "@/db/models/task.model";
@@ -55,6 +56,10 @@ export class IssuesView extends WithIssuesController(
   WithTaskController(SubscriberElement),
 ) {
   public static override styles = unsafeCSS(styles);
+
+  private static readonly ISSUE_COMMANDS: readonly MarkdownEditorCommand[] = [
+    { label: "ジャンプ用タグをコピー", eventName: "copy-jump-tag" },
+  ];
 
   @property({ type: String, attribute: "data-theme", reflect: true })
   public theme: string = "light";
@@ -153,6 +158,19 @@ export class IssuesView extends WithIssuesController(
   public expandIssue = (issueId: number): void => {
     if (!this.expandedIssueIds.has(issueId)) {
       this.handleToggleExpand(issueId);
+    }
+  };
+
+  /**
+   * ジャンプ用タグのクリップボードコピーハンドラー
+   */
+  public handleCopyJumpTag = async (issueId: number): Promise<void> => {
+    const issue = this.issuesController?.state?.find((i) => i.id === issueId);
+    if (!issue) return;
+
+    const copyText = `#[${issueId}]{${issue.title}}`;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(copyText);
     }
   };
 
@@ -495,6 +513,9 @@ export class IssuesView extends WithIssuesController(
             .value=${issue.value}
             .mode=${currentMode}
             ?show-delete-button=${true}
+            .commands=${IssuesView.ISSUE_COMMANDS}
+            @copy-jump-tag=${() =>
+              issue.id !== undefined && this.handleCopyJumpTag(issue.id)}
             @mode-change=${(e: CustomEvent<{ mode: MarkdownDisplayMode }>) =>
               issue.id !== undefined &&
               this.handleModeChange(issue.id, e.detail.mode)}
