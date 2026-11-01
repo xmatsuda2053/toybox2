@@ -40,6 +40,7 @@ import "@/components/task-list/task-create-dialog.js";
 import "@/components/footer/app-footer.js";
 import "@/components/help/shortcut-help-drawer.js";
 import { getCurrentFiscalYear } from "@shared/utils";
+import type { IdJumpDetail } from "@shared/components";
 import { db } from "@/db/schema/database.schema.js";
 import { TaskListQuery } from "@/db/queries/task-list.query.js";
 import { SystemLogService } from "@/services/system-log.service.js";
@@ -81,6 +82,9 @@ export class AppRoot extends LitElement {
   public taskTemplateController!: TaskTemplateController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
+  public taskRepository!: TaskRepository;
+  public issuesRepository!: IssuesRepository;
+  public notesRepository!: NotesRepository;
 
   @state()
   public isGlobalSearchOpen = false;
@@ -119,6 +123,9 @@ export class AppRoot extends LitElement {
     this.addEventListener("request-shortcut-help", () => {
       this.handleToggleShortcutHelp();
     });
+    this.addEventListener("id-jump", (e: Event) => {
+      this.handleIdJumpEvent(e);
+    });
   }
 
   /**
@@ -128,11 +135,11 @@ export class AppRoot extends LitElement {
    * @memberof AppRoot
    */
   private setupControllers(): void {
-    const taskRepository = new TaskRepository();
-    const issuesRepository = new IssuesRepository();
+    this.taskRepository = new TaskRepository();
+    this.issuesRepository = new IssuesRepository();
+    this.notesRepository = new NotesRepository();
     const labelsRepository = new LabelsRepository();
     const logsRepository = new LogsRepository();
-    const notesRepository = new NotesRepository();
     const scratchRepository = new ScratchRepository();
 
     this.layoutUIController = new LayoutUIController(this);
@@ -153,27 +160,27 @@ export class AppRoot extends LitElement {
 
     this.taskController = new TaskController(
       this,
-      taskRepository,
+      this.taskRepository,
       undefined,
-      issuesRepository,
+      this.issuesRepository,
       this.systemLogService,
       labelsRepository,
     );
     this.taskListController = new TaskListController(
       this,
-      taskRepository,
+      this.taskRepository,
       getCurrentFiscalYear(),
       new TaskListQuery(db),
     );
     this.notesController = new NotesController(
       this,
-      notesRepository,
+      this.notesRepository,
       undefined,
       this.systemLogService,
     );
     this.issuesController = new IssuesController(
       this,
-      issuesRepository,
+      this.issuesRepository,
       undefined,
       this.systemLogService,
     );
@@ -282,6 +289,104 @@ export class AppRoot extends LitElement {
       });
     }
   };
+
+  /**
+   * id-jump イベントのディスパッチハンドラー
+   *
+   * @param {Event} e
+   * @memberof AppRoot
+   */
+  public handleIdJumpEvent = (e: Event): void => {
+    const customEvent = e as CustomEvent<IdJumpDetail>;
+    if (customEvent.detail) {
+      void this.handleIdJump(customEvent.detail);
+    }
+  };
+
+  /**
+   * 指定したタスクを選択し、画面全体（ラベル、タスク一覧、タスク詳細）を更新する
+   *
+   * @param {number} taskId
+   * @return {Promise<boolean>}
+   */
+  public async selectAndShowTask(taskId: number): Promise<boolean> {
+    const task = await this.taskRepository.getById(taskId);
+    if (!task) return false;
+
+    if (this.labelsController && task.labelId !== undefined) {
+      try {
+        await this.labelsController.selectLabel(task.labelId);
+      } catch {
+        // ラベルが存在しない場合はタスク選択を継続
+      }
+    }
+    if (this.taskListController) {
+      await this.taskListController.selectTask(taskId);
+    }
+    if (this.taskController) {
+      await this.taskController.setTaskId(taskId);
+    }
+    return true;
+  }
+
+  /**
+   * Markdown から発行された ID ジャンプ処理を実行する
+   *
+   * @param {IdJumpDetail} detail
+   * @return {Promise<void>}
+   * @memberof AppRoot
+   */
+  public async handleIdJump(detail: IdJumpDetail): Promise<void> {
+    const { type, id } = detail;
+    if (!id || typeof id !== "number") return;
+
+    if (this.layoutUIController.state.isScratchMode) {
+      this.layoutUIController.setScratchMode(false);
+    }
+    if (this.layoutUIController.state.isSettingsMode) {
+      this.layoutUIController.setSettingsMode(false);
+    }
+
+    if (type === "task") {
+      await this.selectAndShowTask(id);
+    } else if (type === "issue") {
+      await this.handleIssueJump(id);
+    } else if (type === "note") {
+      await this.handleNoteJump(id);
+    }
+  }
+
+  /**
+   * Issue ID へのジャンプ処理（親タスク選択および該当Issue展開）
+   */
+  private async handleIssueJump(issueId: number): Promise<void> {
+    const issue = await this.issuesRepository.getById(issueId);
+    if (!issue) return;
+
+    await this.selectAndShowTask(issue.taskId);
+
+
+    const taskPane = this.renderRoot?.querySelector("task-pane") as
+      | (HTMLElement & { navigateToIssue?: (id: number) => void })
+      | null;
+    taskPane?.navigateToIssue?.(issueId);
+  }
+
+  /**
+   * Note ID へのジャンプ処理（親タスク選択および該当Note選択）
+   */
+  private async handleNoteJump(noteId: number): Promise<void> {
+    const note = await this.notesRepository.getById(noteId);
+    if (!note) return;
+
+    await this.selectAndShowTask(note.taskId);
+
+
+    const taskPane = this.renderRoot?.querySelector("task-pane") as
+      | (HTMLElement & { navigateToNote?: (id: number) => void })
+      | null;
+    taskPane?.navigateToNote?.(noteId);
+  }
 
   public handleOpenTaskCreate = (): void => {
     if (!this.labelsController.hasLabels) {
@@ -716,3 +821,5 @@ declare global {
     "app-root": AppRoot;
   }
 }
+
+

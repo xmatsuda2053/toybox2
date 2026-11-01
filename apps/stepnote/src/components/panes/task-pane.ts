@@ -153,6 +153,48 @@ export class TaskPane extends WithIssuesController(
   };
 
   /**
+   * 指定した Issue へ切り替えて展開表示する
+   */
+  public navigateToIssue = async (issueId: number): Promise<void> => {
+    this.activeTab = "issues";
+    const tabGroup = this.renderRoot?.querySelector("wa-tab-group") as
+      | (HTMLElement & { show?: (name: string) => void })
+      | null;
+    tabGroup?.show?.("issues");
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+    const issuesView = this.renderRoot?.querySelector("issues-view") as
+      | (HTMLElement & { expandIssue?: (id: number) => void; updateComplete?: Promise<unknown> })
+      | null;
+    if (issuesView?.isConnected) {
+      await issuesView.updateComplete;
+    }
+    issuesView?.expandIssue?.(issueId);
+  };
+
+  /**
+   * 指定した Note へ切り替えて選択表示する
+   */
+  public navigateToNote = async (noteId: number): Promise<void> => {
+    this.activeTab = "notes";
+    const tabGroup = this.renderRoot?.querySelector("wa-tab-group") as
+      | (HTMLElement & { show?: (name: string) => void })
+      | null;
+    tabGroup?.show?.("notes");
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+    const notesView = this.renderRoot?.querySelector("notes-view") as
+      | (HTMLElement & { handleSelectNote?: (id: number) => void; updateComplete?: Promise<unknown> })
+      | null;
+    if (notesView?.isConnected) {
+      await notesView.updateComplete;
+    }
+    notesView?.handleSelectNote?.(noteId);
+  };
+
+  /**
    * 空状態テンプレートの描画
    */
   private renderEmptyState(): HTMLTemplateResult {
@@ -409,3 +451,4 @@ declare global {
     "task-pane": TaskPane;
   }
 }
+

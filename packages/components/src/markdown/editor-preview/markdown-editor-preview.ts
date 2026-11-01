@@ -24,6 +24,7 @@ import { formatMarkdown } from "../formatter/markdown-formatter.js";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
 import { colorExtension } from "../extensions/color.extension.js";
 import { calloutExtension } from "../extensions/callout.extension.js";
+import { idLinkExtension } from "../extensions/id-link.extension.js";
 import "@awesome.me/webawesome/dist/components/dropdown/dropdown.js";
 import "@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
@@ -90,6 +91,7 @@ export const DEFAULT_MARKDOWN_EXTENSIONS: readonly MarkdownFeatureExtension[] = 
   customBadgeExtension,
   colorExtension,
   calloutExtension,
+  idLinkExtension,
 ];
 
 /**

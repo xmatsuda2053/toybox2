@@ -587,4 +587,44 @@ describe("TaskPane Component", () => {
       expect(content).not.toMatch(/\.pane-task\b/);
     });
   });
+
+  describe("6. タブ切り替えおよびIDナビゲーション（navigateToIssue / navigateToNote）", () => {
+    it("6-1. navigateToIssue(issueId) 実行時に activeTab が issues に切り替わり、issues-view の該当Issueが展開されること", async () => {
+      element.activeTab = "summary";
+      const mockIssuesView = {
+        expandIssue: vi.fn(),
+        resetModesToPreview: vi.fn(),
+      };
+      Object.defineProperty(element, "renderRoot", { configurable: true, value: {
+        querySelector: vi.fn().mockImplementation((sel: string) => {
+          if (sel === "issues-view") return mockIssuesView;
+          return null;
+        }),
+      }});
+
+      await element.navigateToIssue(42);
+      expect(element.activeTab).toBe("issues");
+      expect(mockIssuesView.expandIssue).toHaveBeenCalledWith(42);
+    });
+
+    it("6-2. navigateToNote(noteId) 実行時に activeTab が notes に切り替わり、notes-view の該当Noteが選択されること", async () => {
+      element.activeTab = "summary";
+      const mockNotesView = {
+        handleSelectNote: vi.fn(),
+        resetModesToPreview: vi.fn(),
+      };
+      Object.defineProperty(element, "renderRoot", { configurable: true, value: {
+        querySelector: vi.fn().mockImplementation((sel: string) => {
+          if (sel === "notes-view") return mockNotesView;
+          return null;
+        }),
+      }});
+
+      await element.navigateToNote(99);
+      expect(element.activeTab).toBe("notes");
+      expect(mockNotesView.handleSelectNote).toHaveBeenCalledWith(99);
+    });
+  });
 });
+
+

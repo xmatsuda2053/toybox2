@@ -537,6 +537,7 @@ describe("AppRoot Controller 状態連携仕様", () => {
       const refreshSpy = vi
         .spyOn(appRoot.taskListController, "refresh")
         .mockResolvedValue(undefined);
+      vi.spyOn(appRoot.labelsController, "selectLabel").mockResolvedValue();
       const selectTaskSpy = vi
         .spyOn(appRoot.taskListController, "selectTask")
         .mockResolvedValue(undefined);
@@ -604,7 +605,7 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: true,
       };
-      (appRoot as any).labelsController = { hasLabels: true };
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
 
       // Ctrl+K の抑止確認
       const ctrlKEvent = {
@@ -932,6 +933,142 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
   });
 
+  describe("15. Markdown IDジャンプ（id-jump）イベント連携仕様", () => {
+    it("15-1. type='task' の id-jump イベントを受信した際、selectAndShowTask により taskListController.selectTask と taskController.setTaskId が呼び出されること", async () => {
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 10,
+        name: "テストタスク",
+        labelId: 1,
+      } as any);
+      vi.spyOn(appRoot.labelsController, "selectLabel").mockResolvedValue();
+      const selectTaskSpy = vi
+        .spyOn(appRoot.taskListController, "selectTask")
+        .mockResolvedValue();
+      const setTaskIdSpy = vi
+        .spyOn(appRoot.taskController, "setTaskId")
+        .mockResolvedValue();
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "task", id: 10 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(selectTaskSpy).toHaveBeenCalledWith(10);
+      expect(setTaskIdSpy).toHaveBeenCalledWith(10);
+    });
+
+    it("15-2. type='issue' の id-jump イベントを受信した際、該当Issueの親タスクが選択・表示され、task-pane の navigateToIssue が呼び出されること", async () => {
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 10,
+        name: "親タスク",
+      } as any);
+      vi.spyOn(appRoot.labelsController, "selectLabel").mockResolvedValue();
+      const selectTaskSpy = vi
+        .spyOn(appRoot.taskListController, "selectTask")
+        .mockResolvedValue();
+      const setTaskIdSpy = vi
+        .spyOn(appRoot.taskController, "setTaskId")
+        .mockResolvedValue();
+      const mockTaskPane = {
+        navigateToIssue: vi.fn(),
+      };
+      Object.defineProperty(appRoot, "renderRoot", { configurable: true, value: {
+        querySelector: vi.fn().mockImplementation((sel: string) => {
+          if (sel === "task-pane") return mockTaskPane;
+          return null;
+        }),
+      }});
+
+      vi.spyOn(appRoot.issuesRepository, "getById").mockResolvedValue({
+        id: 20,
+        taskId: 10,
+        title: "テスト課題",
+      } as any);
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "issue", id: 20 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(selectTaskSpy).toHaveBeenCalledWith(10);
+      expect(setTaskIdSpy).toHaveBeenCalledWith(10);
+      expect(mockTaskPane.navigateToIssue).toHaveBeenCalledWith(20);
+    });
+
+    it("15-3. type='note' の id-jump イベントを受信した際、該当Noteの親タスクが選択・表示され、task-pane の navigateToNote が呼び出されること", async () => {
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 10,
+        name: "親タスク",
+      } as any);
+      vi.spyOn(appRoot.labelsController, "selectLabel").mockResolvedValue();
+      const selectTaskSpy = vi
+        .spyOn(appRoot.taskListController, "selectTask")
+        .mockResolvedValue();
+      const setTaskIdSpy = vi
+        .spyOn(appRoot.taskController, "setTaskId")
+        .mockResolvedValue();
+      const mockTaskPane = {
+        navigateToNote: vi.fn(),
+      };
+      Object.defineProperty(appRoot, "renderRoot", { configurable: true, value: {
+        querySelector: vi.fn().mockImplementation((sel: string) => {
+          if (sel === "task-pane") return mockTaskPane;
+          return null;
+        }),
+      }});
+      vi.spyOn(appRoot.notesRepository, "getById").mockResolvedValue({
+        id: 30,
+        taskId: 10,
+        name: "テストノート",
+      } as any);
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "note", id: 30 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(selectTaskSpy).toHaveBeenCalledWith(10);
+      expect(setTaskIdSpy).toHaveBeenCalledWith(10);
+      expect(mockTaskPane.navigateToNote).toHaveBeenCalledWith(30);
+    });
+
+    it("15-4. スクラッチモードまたは設定モードが有効な場合、id-jump 受信時に通常表示へ復帰すること", async () => {
+      appRoot.layoutUIController.setScratchMode(true);
+      appRoot.layoutUIController.setSettingsMode(true);
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({ id: 10 } as any);
+      vi.spyOn(appRoot.taskListController, "selectTask").mockResolvedValue();
+      vi.spyOn(appRoot.taskController, "setTaskId").mockResolvedValue();
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "task", id: 10 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(appRoot.layoutUIController.state.isScratchMode).toBe(false);
+      expect(appRoot.layoutUIController.state.isSettingsMode).toBe(false);
+    });
+  });
+
   describe("13-4 (legacy verify)", () => {
     it("13-4-legacy. スクラッチモード解除の直前状態検証", () => {
       (appRoot.layoutUIController as any)._state = {
@@ -953,3 +1090,8 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
   });
 });
+
+
+
+
+
