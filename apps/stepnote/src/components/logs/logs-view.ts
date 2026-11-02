@@ -20,6 +20,7 @@ import {
   filterLogs,
   formatLogDate,
   sortLogsByCreatedAtDesc,
+  detectAddedLogIds,
 } from "./logs-view.utils.js";
 import {
   KeyedDebounceManager,
@@ -76,6 +77,8 @@ export class LogsView extends WithLogsController(
 
   private lastTaskId?: number;
 
+  private knownLogIds: Set<number> | null = null;
+
   override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
     const parentTaskId = this.taskController?.state?.id;
@@ -85,6 +88,7 @@ export class LogsView extends WithLogsController(
       this.expandedLogIds = new Set();
       this.collapsingLogId = null;
       this.logModeMap.clear();
+      this.knownLogIds = null;
     }
     if (
       this.logsController &&
@@ -92,6 +96,34 @@ export class LogsView extends WithLogsController(
       this.logsController.taskId !== parentTaskId
     ) {
       this.logsController.setTaskId(parentTaskId);
+    }
+    this.syncNewLogsExpansion();
+  }
+
+  /** 新規追加された作業ログを検知し、最新の1件を自動展開する */
+  private syncNewLogsExpansion(): void {
+    const rawLogs = this.logsController?.state;
+    if (!rawLogs) return;
+
+    const currentIds = new Set<number>();
+    for (const log of rawLogs) {
+      if (log.id !== undefined) {
+        currentIds.add(log.id);
+      }
+    }
+
+    if (this.knownLogIds === null) {
+      if (this.logsController?.taskId === this.lastTaskId) {
+        this.knownLogIds = currentIds;
+      }
+      return;
+    }
+
+    const addedIds = detectAddedLogIds(this.knownLogIds, rawLogs);
+    this.knownLogIds = currentIds;
+
+    if (addedIds.length > 0) {
+      this.expandLog(addedIds[0]);
     }
   }
 
@@ -129,6 +161,13 @@ export class LogsView extends WithLogsController(
     this.collapsingLogId = this.accordion.collapsingId;
   };
 
+  /** 指定した Log を展開状態にする（未展開時のみ排他的に展開） */
+  public expandLog = (logId: number): void => {
+    if (!this.expandedLogIds.has(logId)) {
+      this.handleToggleExpand(logId);
+    }
+  };
+
   /** エディタ表示モード変更ハンドラー */
   public handleModeChange = (
     logId: number,
@@ -158,7 +197,7 @@ export class LogsView extends WithLogsController(
     });
 
     if (newId !== undefined) {
-      this.handleToggleExpand(newId);
+      this.expandLog(newId);
       this.logModeMap.set(newId, "edit");
     }
   };

@@ -30,6 +30,8 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 3-3. 複数行をクリックしても同時に展開されず、常に1件のみが展開されること（複数展開メソッドが存在しないこと）
  *    - 3-4. 展開中のログ行を再度クリックすると閉じアニメーション（.logs-view__detail-container--collapsing）へ遷移すること
  *    - 3-5. アニメーション終了（handleDetailAnimationEnd）によって閉じる対象のログ詳細が完全にアンマウントされること
+ *    - 3-6. expandLog(logId) 実行時に未展開のログが排他的に展開されること
+ *    - 3-7. 既に展開中のログに対して expandLog(logId) を実行しても閉じず展開状態が維持されること
  *
  * 4. 詳細パネルの構成と編集・自動保存・削除 (Detail Panel, Auto-save & Delete)
  *    - 4-1. 詳細パネル内にメタ情報バー（.logs-view__detail-meta）および markdown-editor-preview が配置されること
@@ -48,8 +50,12 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 4-14. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセット（logModeMap が初期化）され、展開状態もクリアされること
  *    - 4-15. resetModesToPreview() の呼び出しにより、すべてのログのエディタモードがプレビューモードへリセットされること
  *
- * 5. 新規ログ作成 (Create Log)
+ * 5. 新規ログ作成と自動展開 (Create Log & Auto-expansion)
  *    - 5-1. 新規追加ボタンクリック（handleCreateLog）で logsController.createLog が見出しレベル ### のテンプレートで呼び出され、作成されたログが自動展開されること
+ *    - 5-2. システムログ等により logsController.state に新しいログが追加された際、自動的に該当ログが排他展開（expand）されること
+ *    - 5-3. システムログ追加により自動展開された際、エディタ表示モードがプレビュー（preview）モードであること
+ *    - 5-4. タスク切り替え直後の初回ログロード完了時には、既存ログが自動展開されないこと
+ *    - 5-5. ログが削除された際には、自動展開が発生しないこと
  *
  * 6. BEM設計およびSCSSスタイルの検証
  *    - 6-1. SCSSスタイルシート（logs-view.scss）が存在し、ルートブロック .logs-view および主要BEMセレクタが定義されていること
@@ -255,6 +261,23 @@ describe("LogsView Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toContain("logs-view__detail-container--collapsing");
     });
+
+    it("3-6. expandLog(logId) 実行時に未展開のログが排他的に展開されること", () => {
+      element.expandLog(101);
+      expect(element.expandedLogIds.has(101)).toBe(true);
+
+      element.expandLog(102);
+      expect(element.expandedLogIds.has(102)).toBe(true);
+      expect(element.expandedLogIds.has(101)).toBe(false);
+    });
+
+    it("3-7. 既に展開中のログに対して expandLog(logId) を実行しても閉じず展開状態が維持されること", () => {
+      element.expandLog(101);
+      expect(element.expandedLogIds.has(101)).toBe(true);
+
+      element.expandLog(101);
+      expect(element.expandedLogIds.has(101)).toBe(true);
+    });
   });
 
   describe("4. 詳細パネルの構成と編集・自動保存・削除", () => {
@@ -434,7 +457,7 @@ describe("LogsView Component", () => {
     });
   });
 
-  describe("5. 新規ログ作成", () => {
+  describe("5. 新規ログ作成と自動展開", () => {
     it("5-1. 新規追加ボタンクリック（handleCreateLog）で logsController.createLog が見出しレベル ### のテンプレートで呼び出され、作成されたログが自動展開されること", async () => {
       await element.handleCreateLog();
 
@@ -442,6 +465,95 @@ describe("LogsView Component", () => {
       const callArg = mockLogsController.createLog.mock.calls[0][0];
       expect(callArg.value).toMatch(/^###\s+/);
       expect(element.expandedLogIds.has(103)).toBe(true);
+    });
+
+    it("5-2. システムログ等により logsController.state に新しいログが追加された際、自動的に該当ログが排他展開（expand）されること", () => {
+      // 初期状態の同期（初回ロード完了を模擬）
+      element.willUpdate(new Map());
+      expect(element.expandedLogIds.size).toBe(0);
+
+      // システムログが追加されたことを模擬（ID: 104 が新しく追加）
+      mockLogsController.state = [
+        ...sampleLogs,
+        {
+          id: 104,
+          taskId: 1,
+          value: "### sys: Issue #10 作成\n期日: 2026-10-20",
+          createdAt: new Date("2026-10-12T15:00:00Z"),
+          updatedAt: new Date("2026-10-12T15:00:00Z"),
+        },
+      ];
+
+      // willUpdate 実行により新規ログを検知して自動展開
+      element.willUpdate(new Map([["logsController", undefined]]));
+
+      expect(element.expandedLogIds.has(104)).toBe(true);
+      expect(element.expandedLogIds.size).toBe(1);
+    });
+
+    it("5-3. システムログ追加により自動展開された際、エディタ表示モードがプレビュー（preview）モードであること", () => {
+      // 初期同期
+      element.willUpdate(new Map());
+
+      // システムログ追加
+      mockLogsController.state = [
+        ...sampleLogs,
+        {
+          id: 105,
+          taskId: 1,
+          value: '### sys: ステータス変更: "未着手" → "進行中"',
+          createdAt: new Date("2026-10-12T16:00:00Z"),
+        },
+      ];
+
+      element.willUpdate(new Map([["logsController", undefined]]));
+
+      expect(element.expandedLogIds.has(105)).toBe(true);
+      expect(element.logModeMap.get(105) ?? "preview").toBe("preview");
+
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+    });
+
+    it("5-4. タスク切り替え直後の初回ログロード完了時には、既存ログが自動展開されないこと", () => {
+      // 親タスク切り替え
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 2,
+      };
+      mockLogsController.taskId = 2;
+      mockLogsController.state = [
+        {
+          id: 201,
+          taskId: 2,
+          value: "既存ログ 1",
+          createdAt: new Date("2026-10-10"),
+        },
+        {
+          id: 202,
+          taskId: 2,
+          value: "既存ログ 2",
+          createdAt: new Date("2026-10-11"),
+        },
+      ];
+
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.expandedLogIds.size).toBe(0);
+    });
+
+    it("5-5. ログが削除された際には、自動展開が発生しないこと", () => {
+      // 初期同期
+      element.willUpdate(new Map());
+      expect(element.expandedLogIds.size).toBe(0);
+
+      // ログが1件削除されて減少
+      mockLogsController.state = [sampleLogs[0]];
+
+      element.willUpdate(new Map([["logsController", undefined]]));
+
+      expect(element.expandedLogIds.size).toBe(0);
     });
   });
 
