@@ -1,4 +1,6 @@
 import "fake-indexeddb/auto";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { AppFooter } from "./app-footer.js";
@@ -38,6 +40,12 @@ import type { TaskController } from "../../controllers/task.controller.js";
  * 6. コントローラー状態更新とストレージ使用量の連動
  *    - 6-1. 各種コントローラー（task, logs, notes, issues, scratch, labels, taskList）の更新通知契機でストレージ使用量更新がトリガーされること
  *    - 6-2. コントローラーが subscribe 経由で変更通知を発行した際、requestStorageUpdate が呼び出されること
+ *
+ * 7. スタイル定義およびデザイン規約
+ *    - 7-1. app-footer.scss にてホスト要素の高さに --stepnote-footer-height（デフォルトフォールバック: 32px）が指定されていること
+ *    - 7-2. app-footer.scss にてルート要素 (.app-footer) およびテキスト (.app-footer__text) のフォントサイズに var(--wa-font-size-s, 13px) が指定されていること
+ *    - 7-3. app-footer.scss にてアイコン (.app-footer__icon) のサイズに 13px が指定されていること
+ *    - 7-4. app-footer.scss にカラー直値（Hex / RGB / RGBA）や !important、@extend が含まれていないこと
  */
 
 describe("AppFooter Component", () => {
@@ -227,6 +235,38 @@ describe("AppFooter Component", () => {
       listener?.();
 
       expect(requestSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("7. スタイル定義およびデザイン規約", () => {
+    const scssPath = path.resolve(__dirname, "./app-footer.scss");
+    const scss = fs.readFileSync(scssPath, "utf-8");
+
+    it("7-1. app-footer.scss にてホスト要素の高さに --stepnote-footer-height（デフォルトフォールバック: 32px）が指定されていること", () => {
+      expect(scss).toMatch(
+        /:host\s*\{[\s\S]*?height:\s*var\(--stepnote-footer-height,\s*32px\);/,
+      );
+    });
+
+    it("7-2. app-footer.scss にてルート要素 (.app-footer) およびテキスト (.app-footer__text) のフォントサイズに var(--wa-font-size-s, 13px) が指定されていること", () => {
+      expect(scss).toMatch(
+        /\.app-footer\s*\{[\s\S]*?font-size:\s*var\(--wa-font-size-s,\s*13px\);/,
+      );
+      expect(scss).toMatch(
+        /\.app-footer__text\s*\{[\s\S]*?font-size:\s*var\(--wa-font-size-s,\s*13px\);/,
+      );
+    });
+
+    it("7-3. app-footer.scss にてアイコン (.app-footer__icon) のサイズに 13px が指定されていること", () => {
+      expect(scss).toMatch(
+        /\.app-footer__icon\s*\{[\s\S]*?font-size:\s*13px;/,
+      );
+    });
+
+    it("7-4. app-footer.scss にカラー直値（Hex / RGB / RGBA）や !important、@extend が含まれていないこと", () => {
+      expect(scss).not.toContain("!important");
+      expect(scss).not.toContain("@extend");
+      expect(scss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     });
   });
 });

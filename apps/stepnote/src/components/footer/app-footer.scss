@@ -3,7 +3,7 @@
 :host {
   display: block;
   width: 100%;
-  height: var(--stepnote-footer-height, 30px);
+  height: var(--stepnote-footer-height, 32px);
   @include theme-transition;
 }
 
@@ -18,7 +18,7 @@
   border-top: var(--wa-border-width-s, 1px) var(--wa-border-style, solid) var(--wa-color-surface-border);
   color: var(--wa-color-text-quiet);
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--wa-font-size-s, 13px);
   line-height: 1;
   user-select: none;
   overflow: hidden;
@@ -65,7 +65,7 @@
 }
 
 .app-footer__icon {
-  font-size: 11px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
@@ -74,13 +74,13 @@
 }
 
 .app-footer__text {
-  font-size: 11px;
+  font-size: var(--wa-font-size-s, 13px);
   @include text-ellipsis;
 }
 
 .app-footer__divider {
   color: var(--wa-color-surface-border);
-  font-size: 10px;
+  font-size: 11px;
   user-select: none;
 }
 
