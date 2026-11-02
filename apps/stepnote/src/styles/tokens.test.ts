@@ -45,6 +45,7 @@ import * as fs from "node:fs";
  * 仕様 39: Light モードに blockquote および checkbox 用セマンティックトークンが定義されていること
  * 仕様 40: Dark モード（@mixin dark-theme-tokens）に blockquote および checkbox 用セマンティックトークンが定義されていること
  * 仕様 41: ペイン幅トークン（--stepnote-pane-menu-width: 45px / --stepnote-pane-navigation-width: 220px / --stepnote-pane-task-list-width: 290px）が定義されていること
+ * 仕様 42: ヘッダー・フッター高さトークン（--stepnote-header-height: 48px / --stepnote-footer-height: 32px）が定義されていること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -502,6 +503,11 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
       expect(tokensScss).toMatch(/--stepnote-pane-menu-width:\s*45px;/);
       expect(tokensScss).toMatch(/--stepnote-pane-navigation-width:\s*220px;/);
       expect(tokensScss).toMatch(/--stepnote-pane-task-list-width:\s*290px;/);
+    });
+
+    it("仕様 42: ヘッダー・フッター高さトークン（--stepnote-header-height: 48px / --stepnote-footer-height: 32px）が定義されていること", () => {
+      expect(tokensScss).toMatch(/--stepnote-header-height:\s*48px;/);
+      expect(tokensScss).toMatch(/--stepnote-footer-height:\s*32px;/);
     });
   });
 });

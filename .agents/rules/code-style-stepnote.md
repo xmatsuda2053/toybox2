@@ -33,7 +33,7 @@ trigger: always_on
 - **Header（上部バー）**:
   - `height` は固定サイズ（48px）とし、画面上部に常時固定表示する。
 - **Footer（下部バー）**:
-  - `height` は固定サイズ（30px）とし、画面下部に常時固定表示する。
+  - `height` は固定サイズ（32px）とし、画面下部に常時固定表示する。
 - **Panes Container（中央・5ペイン領域）**:
   - Header と Footer の間の領域を占有（`flex: 1; min-height: 0;`）し、左から **「Menu」「Navigation」「Task List」「Task」「Journal」** の5ペインを横並び（Row）で配置する。
 
