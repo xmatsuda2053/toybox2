@@ -85,3 +85,27 @@ export function sortLogsByCreatedAtDesc(
     return idB - idA;
   });
 }
+
+/**
+ * 既知のログIDセットと比較し、新しく追加されたログのIDを作成日時降順で抽出する。
+ *
+ * @export
+ * @param {ReadonlySet<number>} knownIds 既知のログIDセット
+ * @param {readonly LogRecord[]} currentLogs 現在のログ一覧
+ * @return {number[]} 新規追加されたログID配列（作成日時降順）
+ */
+export function detectAddedLogIds(
+  knownIds: ReadonlySet<number>,
+  currentLogs: readonly LogRecord[],
+): number[] {
+  const addedLogs = currentLogs.filter(
+    (log): log is LogRecord & { id: number } =>
+      log.id !== undefined && !knownIds.has(log.id),
+  );
+  if (addedLogs.length === 0) {
+    return [];
+  }
+  return sortLogsByCreatedAtDesc(addedLogs)
+    .map((log) => log.id)
+    .filter((id): id is number => id !== undefined);
+}

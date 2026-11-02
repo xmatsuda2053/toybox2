@@ -5,6 +5,7 @@ import {
   filterLogs,
   formatLogDate,
   sortLogsByCreatedAtDesc,
+  detectAddedLogIds,
 } from "./logs-view.utils";
 
 /**
@@ -25,6 +26,11 @@ import {
  * 4. sortLogsByCreatedAtDesc (ログ作成日時の降順ソート)
  *    - ログ一覧を作成日時（createdAt）の降順（新しい順）にソートすること
  *    - createdAt が同日時の場合は ID 降順で安定ソートすること
+ * 5. detectAddedLogIds (新規追加ログIDの検出)
+ *    - 既存IDセットに含まれないログのIDを作成日時降順で抽出すること
+ *    - 新規ログが存在しない場合は空配列を返すこと
+ *    - ログIDが未定義のレコードは除外すること
+ *    - 複数件新規追加された場合、新しい順にソートされて返ること
  */
 describe("logs-view.utils", () => {
   describe("extractLogTitle", () => {
@@ -120,6 +126,46 @@ describe("logs-view.utils", () => {
       ];
       const sorted = sortLogsByCreatedAtDesc(logs);
       expect(sorted.map((l) => l.id)).toEqual([2, 3, 1]);
+    });
+  });
+
+  describe("detectAddedLogIds", () => {
+    it("既存IDセットに含まれないログのIDを作成日時降順で抽出すること", () => {
+      const knownIds = new Set([1, 2]);
+      const currentLogs: LogRecord[] = [
+        { id: 1, taskId: 10, value: "Log 1", createdAt: new Date("2026-10-10") },
+        { id: 2, taskId: 10, value: "Log 2", createdAt: new Date("2026-10-11") },
+        { id: 3, taskId: 10, value: "Log 3 (new)", createdAt: new Date("2026-10-12") },
+      ];
+      expect(detectAddedLogIds(knownIds, currentLogs)).toEqual([3]);
+    });
+
+    it("新規ログが存在しない場合は空配列を返すこと", () => {
+      const knownIds = new Set([1, 2, 3]);
+      const currentLogs: LogRecord[] = [
+        { id: 1, taskId: 10, value: "Log 1", createdAt: new Date("2026-10-10") },
+        { id: 2, taskId: 10, value: "Log 2", createdAt: new Date("2026-10-11") },
+      ];
+      expect(detectAddedLogIds(knownIds, currentLogs)).toEqual([]);
+    });
+
+    it("ログIDが未定義のレコードは除外すること", () => {
+      const knownIds = new Set([1]);
+      const currentLogs: LogRecord[] = [
+        { id: 1, taskId: 10, value: "Log 1", createdAt: new Date("2026-10-10") },
+        { id: undefined, taskId: 10, value: "Log undefined", createdAt: new Date("2026-10-12") },
+      ];
+      expect(detectAddedLogIds(knownIds, currentLogs)).toEqual([]);
+    });
+
+    it("複数件新規追加された場合、新しい順（作成日時降順）にソートされて返ること", () => {
+      const knownIds = new Set([1]);
+      const currentLogs: LogRecord[] = [
+        { id: 1, taskId: 10, value: "Log 1", createdAt: new Date("2026-10-10") },
+        { id: 2, taskId: 10, value: "Log 2 (earlier)", createdAt: new Date("2026-10-11") },
+        { id: 3, taskId: 10, value: "Log 3 (later)", createdAt: new Date("2026-10-13") },
+      ];
+      expect(detectAddedLogIds(knownIds, currentLogs)).toEqual([3, 2]);
     });
   });
 });
