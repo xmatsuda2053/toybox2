@@ -45,6 +45,19 @@ function validateLegacySnDbData(data: unknown): DexieExportJsonStructure {
 }
 
 /**
+ * 旧StepNoteのクリックコピーMarkdown記法（+{text}+）を新StepNoteのリンク記法（[text](text)）へ変換する。
+ *
+ * @param text 変換対象テキスト
+ * @returns 変換後テキスト
+ */
+export function convertCopySyntaxToMarkdownLink(text: string): string {
+  if (!text) {
+    return text;
+  }
+  return text.replace(/\+\{([^\r\n{}]+?)\}\+/g, "[$1]($1)");
+}
+
+/**
  * tasks テーブルレコードを新仕様へ変換する。
  */
 function migrateTasks(rows: Record<string, unknown>[]): Record<string, unknown>[] {
@@ -52,6 +65,9 @@ function migrateTasks(rows: Record<string, unknown>[]): Record<string, unknown>[
     const copy = { ...row };
     copy.bookmark = Boolean(row.bookmark);
     copy.selected = Boolean(row.selected);
+    if (typeof row.description === "string") {
+      copy.description = convertCopySyntaxToMarkdownLink(row.description);
+    }
     delete copy.currentStatus;
     return copy;
   });
@@ -62,10 +78,12 @@ function migrateTasks(rows: Record<string, unknown>[]): Record<string, unknown>[
  */
 function migrateLogs(rows: Record<string, unknown>[]): Record<string, unknown>[] {
   return rows.map((row) => {
-    const val = typeof row.value === "string" ? row.value : "";
+    const rawVal = typeof row.value === "string" ? row.value : "";
+    const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     return {
       ...row,
-      title: extractMarkdownTitle(val, "(無題のログ)"),
+      value: convertedVal,
+      title: extractMarkdownTitle(convertedVal, "(無題のログ)"),
     };
   });
 }
@@ -81,14 +99,16 @@ function migrateNotes(rows: Record<string, unknown>[]): {
   let filteredCount = 0;
 
   for (const row of rows) {
-    const val = typeof row.value === "string" ? row.value : "";
-    if (isBlank(val)) {
+    const rawVal = typeof row.value === "string" ? row.value : "";
+    if (isBlank(rawVal)) {
       filteredCount++;
       continue;
     }
+    const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     validRows.push({
       ...row,
-      title: extractMarkdownTitle(val, "(無題のメモ)"),
+      value: convertedVal,
+      title: extractMarkdownTitle(convertedVal, "(無題のメモ)"),
     });
   }
 
@@ -140,9 +160,11 @@ function migrateQuickAccess(rows: Record<string, unknown>[]): Record<string, unk
 function migrateScratches(rows: Record<string, unknown>[]): Record<string, unknown>[] {
   return rows.map((row) => {
     const copy = { ...row };
-    const val = typeof row.value === "string" ? row.value : "";
+    const rawVal = typeof row.value === "string" ? row.value : "";
+    const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
+    copy.value = convertedVal;
     const rawTitle = typeof row.title === "string" ? row.title.trim() : "";
-    copy.title = rawTitle !== "" ? rawTitle : extractMarkdownTitle(val, "(無題のメモ)");
+    copy.title = rawTitle !== "" ? rawTitle : extractMarkdownTitle(convertedVal, "(無題のメモ)");
     delete copy.selected;
     delete copy.pin;
     return copy;
