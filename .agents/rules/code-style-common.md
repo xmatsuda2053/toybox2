@@ -114,6 +114,21 @@ trigger: always_on
   - GitHub Actions 等の CI パイプラインでは整合性を厳格に検証する `npm ci --legacy-peer-deps` が実行されるため、`package-lock.json` に新ワークスペースが登録されていないと `npm error Missing: <workspace>@<version> from lock file (EUSAGE)` となりビルドが即座に失敗する。
   - 新設ワークスペースのコードをコミットする際は、更新された `package-lock.json` も漏れなく同一コミット（または同一 PR）に含めてプッシュすること。
 
+### 4.2 モノレポ Git ブランチ・バージョン管理規約（Branching & Tagging Strategy）
+- **Trunk-based Development（GitHub Flow）の厳守**:
+  - 本線ブランチは `main` のみとし、`develop` 等の長期分岐ブランチは設けない。
+  - すべての機能開発・修正・ドキュメント更新は、短命な作業ブランチ（Short-lived Feature Branch）を作成し、PR を経て `main` へマージする。マージ後の作業ブランチは速やかに削除する。
+- **作業ブランチ命名規則におけるスコープ明記**:
+  - 複数アプリ・パッケージが混在するモノレポ環境において作業対象を即座に識別するため、ブランチ名には必ず対象スコープ（アプリ名・パッケージ名）を含める。
+  - 命名フォーマット: `<prefix>/<scope>-<issue_id>-<slug>`
+    - `stepnote`: `apps/stepnote` 向け（例: `feat/stepnote-120-task-filter`）
+    - `ext`: ブラウザ拡張機能向け（例: `feat/ext-45-popup-ui`）
+    - `<app>`: 新規Webアプリ向け（例: `fix/portal-88-login-auth`）
+    - `pkg`: 共通パッケージ向け（例: `refactor/pkg-utils-date-calc`）
+    - `repo`: リポジトリ全体・CI/CD・共通ルール向け（例: `docs/repo-370-git-branch-strategy`）
+- **独立リリースタグ運用**:
+  - アプリケーションごとの独立したリリースサイクルを担保するため、Git タグは単一の `v1.0.0` ではなく `<scope>@v<version>`（例: `stepnote@v1.2.0`, `ext-clipper@v0.1.0`）形式を採用する。
+
 ---
 
 ## 5. 静的解析ツールによる定量的品質ゲート
