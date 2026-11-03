@@ -27,7 +27,7 @@ function downloadBlob(blob: Blob, fileName: string): void {
 /**
  * 移行サマリーテーブルの HTML を構築する。
  */
-function buildSummaryHtml(result: MigrationResult): string {
+export function buildSummaryHtml(result: MigrationResult): string {
   const { summary } = result;
   return `
     <div class="alert alert--success">
@@ -39,6 +39,7 @@ function buildSummaryHtml(result: MigrationResult): string {
         <tr><th>作業ログ件数</th><td>${summary.logsCount} 件</td></tr>
         <tr><th>メモ件数（移行対象）</th><td>${summary.notesCount} 件</td></tr>
         <tr><th>空メモ件数（除外）</th><td>${summary.notesFilteredCount} 件</td></tr>
+        <tr><th>空関係者件数（除外）</th><td>${summary.contactsFilteredCount} 件</td></tr>
         <tr><th>分類ラベル件数</th><td>${summary.labelsCount} 件</td></tr>
         <tr><th>共通メモ（スクラッチ）件数</th><td>${summary.scratchesCount} 件</td></tr>
         <tr><th>クイックアクセス設定</th><td>反映済み（boolean化）</td></tr>

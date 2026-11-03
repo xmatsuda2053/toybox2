@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { convertSnDbToStepNote, convertCopySyntaxToMarkdownLink } from "./migration.utils";
+import { convertSnDbToStepNote, convertCopySyntaxToMarkdownLink, isContactEmpty } from "./migration.utils";
 import type { DexieExportJsonStructure } from "../types/migration.types";
 
 /**
@@ -16,6 +16,10 @@ import type { DexieExportJsonStructure } from "../types/migration.types";
  *    - 2-2. selected が 1 のとき true、0 のとき false に変換されること
  *    - 2-3. 未使用の currentStatus プロパティが削除・除外されること
  *    - 2-4. id, name, dueDate, contacts, description, fiscalYear, labelId 等の既存フィールドが維持されること
+ *    - 2-5. contacts 配列内の全項目（div, name, tel）が空または空白のみのレコードが除外されること
+ *    - 2-6. contacts 配列内に有効な情報（1項目以上入力あり）を持つレコードが維持されること
+ *    - 2-7. contacts が未定義または非配列の場合、空配列 [] に正規化されること
+ *    - 2-8. 除外された空関係者の件数が summary.contactsFilteredCount に正確に集計されること
  *
  * 3. logs テーブル変換仕様:
  *    - 3-1. title が Markdown 本文（value）の先頭見出し・先頭行から正しく抽出されて付与されること
@@ -62,6 +66,11 @@ import type { DexieExportJsonStructure } from "../types/migration.types";
  *     - 12-2. logs テーブルの value 内の +{text}+ が [text](text) に変換されること
  *     - 12-3. notes テーブルの value 内の +{text}+ が [text](text) に変換されること
  *     - 12-4. scratches テーブルの value 内の +{text}+ が [text](text) に変換されること
+ *
+ * 13. 空関係者判定仕様（isContactEmpty）:
+ *     - 13-1. null, undefined, 非オブジェクトが渡された場合、空（true）と判定されること
+ *     - 13-2. div, name, tel のすべてが空文字または空白のみの場合、空（true）と判定されること
+ *     - 13-3. いずれか1項目でも空でない文字列が存在する場合、空でない（false）と判定されること
  *
  * 10. エラーハンドリング仕様:
  *     - 10-1. 不正な入力（null, undefined, 異なる databaseName）に対して適切なエラーをスローすること
@@ -343,6 +352,61 @@ describe("convertSnDbToStepNote", () => {
       expect(taskTable?.rows[0].description).toBe(
         "# タスク詳細\nテスト内容です。",
       );
+    });
+
+    it("2-5. contacts 配列内の全項目（div, name, tel）が空または空白のみのレコードが除外されること", () => {
+      const input = createMockLegacySnDbJson();
+      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      taskTableData.rows[1].contacts = [
+        { div: "", name: "", tel: "" },
+        { div: "   ", name: "", tel: "  " },
+      ];
+      const { migratedData } = convertSnDbToStepNote(input);
+      const taskTable = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+      expect(taskTable?.rows[1].contacts).toEqual([]);
+    });
+
+    it("2-6. contacts 配列内に有効な情報（1項目以上入力あり）を持つレコードが維持されること", () => {
+      const input = createMockLegacySnDbJson();
+      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      taskTableData.rows[1].contacts = [
+        { div: "", name: "佐藤", tel: "" },
+        { div: "", name: "", tel: "" },
+      ];
+      const { migratedData } = convertSnDbToStepNote(input);
+      const taskTable = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+      expect(taskTable?.rows[1].contacts).toEqual([
+        { div: "", name: "佐藤", tel: "" },
+      ]);
+    });
+
+    it("2-7. contacts が未定義または非配列の場合、空配列 [] に正規化されること", () => {
+      const input = createMockLegacySnDbJson();
+      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      delete taskTableData.rows[1].contacts;
+      const { migratedData } = convertSnDbToStepNote(input);
+      const taskTable = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+      expect(taskTable?.rows[1].contacts).toEqual([]);
+    });
+
+    it("2-8. 除外された空関係者の件数が summary.contactsFilteredCount に正確に集計されること", () => {
+      const input = createMockLegacySnDbJson();
+      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      taskTableData.rows[0].contacts = [
+        { div: "開発部", name: "山田", tel: "1234" },
+        { div: "", name: "", tel: "" },
+      ];
+      taskTableData.rows[1].contacts = [
+        { div: " ", name: "", tel: " " },
+      ];
+      const { summary } = convertSnDbToStepNote(input);
+      expect(summary.contactsFilteredCount).toBe(2);
     });
   });
 
@@ -717,6 +781,26 @@ describe("convertSnDbToStepNote", () => {
       expect(migratedScratches?.rows[0]?.value).toBe(
         "メモ帳で [snippet](snippet) を利用",
       );
+    });
+  });
+describe("13. 空関係者判定仕様 (isContactEmpty)", () => {
+    it("13-1. null, undefined, 非オブジェクトが渡された場合、空（true）と判定されること", () => {
+      expect(isContactEmpty(null)).toBe(true);
+      expect(isContactEmpty(undefined)).toBe(true);
+      expect(isContactEmpty("string")).toBe(true);
+      expect(isContactEmpty(123)).toBe(true);
+    });
+
+    it("13-2. div, name, tel のすべてが空文字または空白のみの場合、空（true）と判定されること", () => {
+      expect(isContactEmpty({ div: "", name: "", tel: "" })).toBe(true);
+      expect(isContactEmpty({ div: "   ", name: "", tel: "  " })).toBe(true);
+      expect(isContactEmpty({})).toBe(true);
+    });
+
+    it("13-3. いずれか1項目でも空でない文字列が存在する場合、空でない（false）と判定されること", () => {
+      expect(isContactEmpty({ div: "開発部", name: "", tel: "" })).toBe(false);
+      expect(isContactEmpty({ div: "", name: "佐藤", tel: "" })).toBe(false);
+      expect(isContactEmpty({ div: "", name: "", tel: "090-1234-5678" })).toBe(false);
     });
   });
 });

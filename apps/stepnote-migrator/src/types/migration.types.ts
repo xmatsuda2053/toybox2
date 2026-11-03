@@ -38,6 +38,7 @@ export interface MigrationSummary {
   logsCount: number;
   notesCount: number;
   notesFilteredCount: number;
+  contactsFilteredCount: number;
   labelsCount: number;
   scratchesCount: number;
   quickAccessCount: number;
@@ -50,4 +51,3 @@ export interface MigrationResult {
   migratedData: DexieExportJsonStructure;
   summary: MigrationSummary;
 }
-
