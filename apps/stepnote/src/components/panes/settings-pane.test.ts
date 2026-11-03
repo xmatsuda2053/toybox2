@@ -1,4 +1,4 @@
-﻿import * as fs from "node:fs";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
@@ -49,6 +49,10 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 4-8. .settings-pane__form-name にWeb Awesome公式サンプルに準拠したラベル左配置スタイル（gridまたはflexおよび::part(form-control-label)）が定義されていること
  *    - 4-9. .settings-pane__btn-save 内の wa-icon にワンサイズ大きいフォントサイズ（--wa-font-size-l）が指定されていること
  *    - 4-10. .settings-pane__form-body にスクロール定義（overflow-y: auto）およびスクロールバー余白が指定され、.settings-pane__name-row が固定（flex-shrink: 0）されていること
+ *    - 4-11. .settings-pane__master-item に視認性を高める背景色（var(--wa-color-surface-raised)）および境界線（var(--wa-color-border-subtle)）が定義されていること
+ *    - 4-12. .settings-pane__issue-item に視認性を高める背景色（var(--wa-color-surface-raised)）および境界線（var(--wa-color-border-subtle)）が定義されていること
+ *    - 4-13. .settings-pane__master-list および .settings-pane__issue-list にアイテム間の適切な余白（gap: var(--wa-space-xs, 6px)）が定義されていること
+ *    - 4-14. .settings-pane__master-item--selected および .settings-pane__issue-item--selected において、選択切り替え時の点滅を防ぐため transition: none が定義され、hover 時の背景色が選択時と同一に統一されていること
  *
  * 5. 自動エクスポート（Auto Export）設定タブ機能
  *    - 5-1. wa-tab-group 内に panel="auto-export" の wa-tab および wa-tab-panel がレンダリングされること
@@ -510,6 +514,52 @@ describe("SettingsPane Component", () => {
       );
       expect(scss).toMatch(
         /\.settings-pane__form-body\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
+      );
+    });
+
+    it("4-11. .settings-pane__master-item に視認性を高める背景色（var(--wa-color-surface-raised)）および境界線（var(--wa-color-border-subtle)）が定義されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__master-item\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\b/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__master-item\s*\{[^}]*?border:\s*1px\s+solid\s+var\(--wa-color-border-subtle\b/,
+      );
+    });
+
+    it("4-12. .settings-pane__issue-item に視認性を高める背景色（var(--wa-color-surface-raised)）および境界線（var(--wa-color-border-subtle)）が定義されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__issue-item\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\b/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__issue-item\s*\{[^}]*?border:\s*1px\s+solid\s+var\(--wa-color-border-subtle\b/,
+      );
+    });
+
+    it("4-13. .settings-pane__master-list および .settings-pane__issue-list にアイテム間の適切な余白（gap: var(--wa-space-xs, 6px)）が定義されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__master-list\s*\{[^}]*?gap:\s*var\(--wa-space-xs,\s*6px\)/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__issue-list\s*\{[^}]*?gap:\s*var\(--wa-space-xs,\s*6px\)/,
+      );
+    });
+
+    it("4-14. .settings-pane__master-item--selected および .settings-pane__issue-item--selected において、選択切り替え時の点滅を防ぐため transition: none が定義され、hover 時の背景色が選択時と同一に統一されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__master-item--selected\s*\{[^}]*?transition:\s*none\b/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__master-item--selected:hover\s*\{[^}]*?background-color:\s*var\(--wa-color-neutral-fill-normal\)/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__issue-item--selected\s*\{[^}]*?transition:\s*none\b/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__issue-item--selected:hover\s*\{[^}]*?background-color:\s*var\(--wa-color-neutral-fill-normal\)/,
       );
     });
   });

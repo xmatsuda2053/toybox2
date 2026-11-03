@@ -1,4 +1,4 @@
-﻿@use "../../styles/tokens.scss";
+@use "../../styles/tokens.scss";
 @use "../../styles/mixins.scss" as *;
 @use "./pane-common.scss" as *;
 
@@ -154,7 +154,7 @@
   padding-inline-end: var(--wa-space-xs, 8px);
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-3xs, 2px);
+  gap: var(--wa-space-xs, 6px);
 }
 
 .settings-pane__master-item {
@@ -165,8 +165,8 @@
   padding-block: var(--wa-space-2xs, 4px);
   padding-inline: var(--wa-space-xs, 8px);
   border-radius: var(--wa-border-radius-m, 4px);
-  border: 1px solid transparent;
-  background-color: transparent;
+  border: 1px solid var(--wa-color-border-subtle);
+  background-color: var(--wa-color-surface-raised);
   color: var(--wa-color-neutral-on-quiet, inherit);
   font-family: inherit;
   font-size: var(--wa-font-size-m, 14px);
@@ -185,20 +185,15 @@
 }
 
 .settings-pane__master-item--selected {
+  transition: none;
   font-weight: 600;
   color: var(--wa-color-neutral-on-normal);
   background-color: var(--wa-color-neutral-fill-normal);
+  border-color: var(--wa-color-surface-border);
 }
 
 .settings-pane__master-item--selected:hover {
-  background-color: var(
-    --wa-color-neutral-fill-normal-hover,
-    color-mix(
-      in oklab,
-      var(--wa-color-neutral-fill-normal),
-      var(--wa-color-mix-hover)
-    )
-  );
+  background-color: var(--wa-color-neutral-fill-normal);
 }
 
 .settings-pane__item-main {
@@ -395,7 +390,7 @@
   padding-inline-end: var(--wa-space-xs, 8px);
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-3xs, 2px);
+  gap: var(--wa-space-xs, 6px);
 }
 
 .settings-pane__issue-item {
@@ -406,8 +401,8 @@
   padding-block: var(--wa-space-2xs, 4px);
   padding-inline: var(--wa-space-xs, 8px);
   border-radius: var(--wa-border-radius-m, 4px);
-  border: 1px solid transparent;
-  background-color: transparent;
+  border: 1px solid var(--wa-color-border-subtle);
+  background-color: var(--wa-color-surface-raised);
   color: var(--wa-color-neutral-on-quiet, inherit);
   font-family: inherit;
   font-size: var(--wa-font-size-s, 14px);
@@ -426,20 +421,15 @@
 }
 
 .settings-pane__issue-item--selected {
+  transition: none;
   font-weight: 600;
   color: var(--wa-color-neutral-on-normal);
   background-color: var(--wa-color-neutral-fill-normal);
+  border-color: var(--wa-color-surface-border);
 }
 
 .settings-pane__issue-item--selected:hover {
-  background-color: var(
-    --wa-color-neutral-fill-normal-hover,
-    color-mix(
-      in oklab,
-      var(--wa-color-neutral-fill-normal),
-      var(--wa-color-mix-hover)
-    )
-  );
+  background-color: var(--wa-color-neutral-fill-normal);
 }
 
 .settings-pane__issue-dropdown {
