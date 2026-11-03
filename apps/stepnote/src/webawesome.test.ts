@@ -2,10 +2,10 @@
  * 【Web Awesome コンポーネント登録基盤 仕様 (StepNote)】
  *
  * 1. 定数・コンポーネント一覧仕様 (Constants & Component List)
- *    - 1-1. WEB_AWESOME_COMPONENTS に 16 種類の Web Awesome コンポーネント名が定義されていること
+ *    - 1-1. WEB_AWESOME_COMPONENTS に 24 種類の Web Awesome コンポーネント名が定義されていること
  *    - 1-2. 定義されたすべてのコンポーネント名が小文字の英数字およびハイフンで構成されていること
- *    - 1-3. 主要 UI で使用されるコンポーネント（button, dialog, divider, dropdown, dropdown-item, icon, input, option, popover, select, spinner, tab, tab-group, tab-panel, textarea, tooltip）が漏れなく網羅されていること
- *    - 1-4. WEB_AWESOME_TAG_NAMES に対応する 'wa-' プレフィックス付きカスタムタグ名一覧（16個）が定義されていること
+ *    - 1-3. 主要 UI で使用されるコンポーネントが漏れなく網羅されていること
+ *    - 1-4. WEB_AWESOME_TAG_NAMES に対応する 'wa-' プレフィックス付きカスタムタグ名一覧（24個）が定義されていること
  *
  * 2. ユーティリティ関数仕様 (Utility Functions)
  *    - 2-1. getWebAwesomeTagName がコンポーネント名から 'wa-${name}' 形式のタグ名を返すこと
@@ -27,9 +27,9 @@ import {
 
 describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
   describe("1. 定数・コンポーネント一覧仕様", () => {
-    it("WEB_AWESOME_COMPONENTS に 22 種類の Web Awesome コンポーネント名が定義されていること", () => {
+    it("WEB_AWESOME_COMPONENTS に 24 種類の Web Awesome コンポーネント名が定義されていること", () => {
       expect(WEB_AWESOME_COMPONENTS).toBeDefined();
-      expect(WEB_AWESOME_COMPONENTS.length).toBe(22);
+      expect(WEB_AWESOME_COMPONENTS.length).toBe(24);
     });
 
     it("定義されたすべてのコンポーネント名が小文字の英数字およびハイフンで構成されていること", () => {
@@ -61,6 +61,8 @@ describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
         "tab-group",
         "tab-panel",
         "textarea",
+        "time-input",
+        "toast",
         "tooltip",
       ];
       for (const name of required) {
@@ -81,12 +83,15 @@ describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
       expect(getWebAwesomeTagName("button")).toBe("wa-button");
       expect(getWebAwesomeTagName("input")).toBe("wa-input");
       expect(getWebAwesomeTagName("tab-group")).toBe("wa-tab-group");
+      expect(getWebAwesomeTagName("toast")).toBe("wa-toast");
+      expect(getWebAwesomeTagName("time-input")).toBe("wa-time-input");
     });
 
     it("isRegisteredWebAwesomeComponent が登録対象のコンポーネント名に対して true を返すこと", () => {
       expect(isRegisteredWebAwesomeComponent("button")).toBe(true);
       expect(isRegisteredWebAwesomeComponent("popover")).toBe(true);
-      expect(isRegisteredWebAwesomeComponent("dialog")).toBe(true);
+      expect(isRegisteredWebAwesomeComponent("toast")).toBe(true);
+      expect(isRegisteredWebAwesomeComponent("time-input")).toBe(true);
     });
 
     it("isRegisteredWebAwesomeComponent が未知・未登録のコンポーネント名に対して false を返すこと", () => {

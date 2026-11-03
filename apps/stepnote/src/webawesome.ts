@@ -27,6 +27,8 @@ import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
 import "@awesome.me/webawesome/dist/components/textarea/textarea.js";
+import "@awesome.me/webawesome/dist/components/time-input/time-input.js";
+import "@awesome.me/webawesome/dist/components/toast/toast.js";
 import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 
 /**
@@ -54,6 +56,8 @@ export const WEB_AWESOME_COMPONENTS = [
   "tab-group",
   "tab-panel",
   "textarea",
+  "time-input",
+  "toast",
   "tooltip",
 ] as const;
 

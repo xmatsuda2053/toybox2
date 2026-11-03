@@ -5,3 +5,4 @@ export * from "./labels.context";
 export * from "./quick-access.context";
 export * from "./theme.context";
 export * from "./task-template.context";
+export * from "./auto-export.context";

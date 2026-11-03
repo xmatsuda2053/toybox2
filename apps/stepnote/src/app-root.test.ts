@@ -1,4 +1,4 @@
-import "fake-indexeddb/auto";
+﻿import "fake-indexeddb/auto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ContextConsumer, type Context } from "@lit/context";
 import type { ReactiveControllerHost } from "lit";
@@ -13,6 +13,7 @@ import {
   issuesContext,
   themeContext,
   scratchContext,
+  autoExportContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -168,6 +169,17 @@ describe("AppRoot Provider (Phase 1)", () => {
       expect(appRoot.themeController).toBeInstanceOf(ThemeController);
       expect(appRoot.scratchController).toBeInstanceOf(ScratchController);
     });
+
+    it("2-11. autoExportContext が配下コンポーネントへ正しく配給されること", () => {
+      const consumed = consumeContext(appRoot, autoExportContext);
+      expect(consumed).toBeDefined();
+      expect(consumed).toBe(appRoot.autoExportController);
+    });
+
+    it("3-6. wa-toast 要素がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(/<wa-toast/);
+    });
   });
 
   describe("2. @lit/context による Context 配給 (Context Provision)", () => {
@@ -229,6 +241,17 @@ describe("AppRoot Provider (Phase 1)", () => {
       const consumed = consumeContext(appRoot, scratchContext);
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.scratchController);
+    });
+
+    it("2-11. autoExportContext が配下コンポーネントへ正しく配給されること", () => {
+      const consumed = consumeContext(appRoot, autoExportContext);
+      expect(consumed).toBeDefined();
+      expect(consumed).toBe(appRoot.autoExportController);
+    });
+
+    it("3-6. wa-toast 要素がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(/<wa-toast/);
     });
   });
 });
