@@ -106,7 +106,17 @@ trigger: always_on
 
 ---
 
-## 4. 静的解析ツールによる定量的品質ゲート
+## 4. モノレポ・ワークスペース管理規約（Monorepo & Workspace Management）
+
+### 4.1 新規ワークスペース追加時のルート package-lock.json 同期徹底
+- **CI（`npm ci`）失敗の未然防止**:
+  - モノレポ配下（`apps/*`, `packages/*`）に新しいアプリケーションや共有パッケージを追加した場合、必ずリポジトリルートで `npm install` を実行し、ルートの `package-lock.json` に新設ワークスペースの定義・依存関係を正しく同期させること。
+  - GitHub Actions 等の CI パイプラインでは整合性を厳格に検証する `npm ci --legacy-peer-deps` が実行されるため、`package-lock.json` に新ワークスペースが登録されていないと `npm error Missing: <workspace>@<version> from lock file (EUSAGE)` となりビルドが即座に失敗する。
+  - 新設ワークスペースのコードをコミットする際は、更新された `package-lock.json` も漏れなく同一コミット（または同一 PR）に含めてプッシュすること。
+
+---
+
+## 5. 静的解析ツールによる定量的品質ゲート
 
 リファクタリングで培った客観的・定量的診断手法を活用し、実装完了時（ワークフローの「品質検証フェーズ」）において以下のチェックを実行する。
 
@@ -120,4 +130,5 @@ trigger: always_on
 | **CSS構文違反** | SCSS静的チェック | `!important`, `@extend` の使用が 0 件であること |
 | **カラー直値** | SCSS走査 / リント | 新規SCSS内で Hex / RGB / RGBA 直値が 0 件（トークン参照）であること |
 | **コード重複** | `jscpd` | 他ファイルからの明らかなブロックコピペ（10行以上）が存在しないこと |
+| **依存関係整合性** | `git status` / `npm ci` | 新ワークスペース追加時に `package-lock.json` が同期されていること |
 | **リグレッション** | `npm test`<br/>`npm run build:stepnote` | 既存単体テストが全件パス、かつ単一 HTML ビルドが成功すること |
