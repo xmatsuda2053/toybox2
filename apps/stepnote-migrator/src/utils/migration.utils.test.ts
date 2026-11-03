@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { convertSnDbToStepNote } from "./migration.utils";
+import { convertSnDbToStepNote, convertCopySyntaxToMarkdownLink } from "./migration.utils";
 import type { DexieExportJsonStructure } from "../types/migration.types";
 
 /**
@@ -47,6 +47,21 @@ import type { DexieExportJsonStructure } from "../types/migration.types";
  *
  * 9. 移行対象外テーブルの除外仕様:
  *    - 9-1. 旧 config テーブルが新データから除外されること
+ *
+ * 11. Markdown記法変換仕様（convertCopySyntaxToMarkdownLink）:
+ *     - 11-1. 単一の +{text}+ が [text](text) に変換されること
+ *     - 11-2. URLを含む +{https://example.com}+ が [https://example.com](https://example.com) に変換されること
+ *     - 11-3. 同一行内に複数の +{...}+ が存在する場合、すべて置換されること
+ *     - 11-4. 複数行のテキストにおいて、各行の +{...}+ が正しく置換されること
+ *     - 11-5. 改行を挟む +{...\n...}+ は置換対象外としてそのまま維持されること
+ *     - 11-6. 空の +{}+ は置換されずそのまま維持されること
+ *     - 11-7. 空文字または falsy な値が渡された場合、安全にそのまま返却されること
+ *
+ * 12. 各テーブルへのMarkdown記法変換適用仕様（convertSnDbToStepNote）:
+ *     - 12-1. tasks テーブルの description 内の +{text}+ が [text](text) に変換されること
+ *     - 12-2. logs テーブルの value 内の +{text}+ が [text](text) に変換されること
+ *     - 12-3. notes テーブルの value 内の +{text}+ が [text](text) に変換されること
+ *     - 12-4. scratches テーブルの value 内の +{text}+ が [text](text) に変換されること
  *
  * 10. エラーハンドリング仕様:
  *     - 10-1. 不正な入力（null, undefined, 異なる databaseName）に対して適切なエラーをスローすること
@@ -565,5 +580,143 @@ describe("convertSnDbToStepNote", () => {
       ).toThrow("旧StepNote（SnDB）のエクスポートデータではありません");
     });
   });
-});
 
+  describe("11. Markdown記法変換仕様（convertCopySyntaxToMarkdownLink）", () => {
+    it("11-1. 単一の +{text}+ が [text](text) に変換されること", () => {
+      expect(convertCopySyntaxToMarkdownLink("+{sample}+")).toBe("[sample](sample)");
+      expect(convertCopySyntaxToMarkdownLink("前後のテキスト +{abc}+ テキスト")).toBe(
+        "前後のテキスト [abc](abc) テキスト",
+      );
+    });
+
+    it("11-2. URLを含む +{https://example.com}+ が [https://example.com](https://example.com) に変換されること", () => {
+      expect(convertCopySyntaxToMarkdownLink("+{https://example.com}+")).toBe(
+        "[https://example.com](https://example.com)",
+      );
+    });
+
+    it("11-3. 同一行内に複数の +{...}+ が存在する場合、すべて置換されること", () => {
+      expect(convertCopySyntaxToMarkdownLink("+{first}+ と +{second}+")).toBe(
+        "[first](first) と [second](second)",
+      );
+    });
+
+    it("11-4. 複数行のテキストにおいて、各行の +{...}+ が正しく置換されること", () => {
+      const input = "1行目: +{item1}+\n2行目: +{item2}+";
+      const expected = "1行目: [item1](item1)\n2行目: [item2](item2)";
+      expect(convertCopySyntaxToMarkdownLink(input)).toBe(expected);
+    });
+
+    it("11-5. 改行を挟む +{...\n...}+ は置換対象外としてそのまま維持されること", () => {
+      const input = "+{line1\nline2}+";
+      expect(convertCopySyntaxToMarkdownLink(input)).toBe(input);
+    });
+
+    it("11-6. 空の +{}+ は置換されずそのまま維持されること", () => {
+      expect(convertCopySyntaxToMarkdownLink("+{}+")).toBe("+{}+");
+    });
+
+    it("11-7. 空文字または falsy な値が渡された場合、安全にそのまま返却されること", () => {
+      expect(convertCopySyntaxToMarkdownLink("")).toBe("");
+    });
+  });
+
+  describe("12. 各テーブルへのMarkdown記法変換適用仕様（convertSnDbToStepNote）", () => {
+    it("12-1. tasks テーブルの description 内の +{text}+ が [text](text) に変換されること", () => {
+      const input = createMockLegacySnDbJson();
+      const tasksTable = input.data.data.find((t) => t.tableName === "tasks");
+      expect(tasksTable).toBeDefined();
+      tasksTable!.rows = [
+        {
+          id: 1,
+          name: "タスク1",
+          description: "詳細内の記法 +{https://task-link.com}+ です",
+          statusCode: 10,
+          dueDate: "2026-11-03",
+          fiscalYear: "2026",
+          selected: 1,
+          bookmark: 0,
+        },
+      ];
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const migratedTasks = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+      expect(migratedTasks?.rows[0]?.description).toBe(
+        "詳細内の記法 [https://task-link.com](https://task-link.com) です",
+      );
+    });
+
+    it("12-2. logs テーブルの value 内の +{text}+ が [text](text) に変換されること", () => {
+      const input = createMockLegacySnDbJson();
+      const logsTable = input.data.data.find((t) => t.tableName === "logs");
+      expect(logsTable).toBeDefined();
+      logsTable!.rows = [
+        {
+          id: 1,
+          taskId: 1,
+          value: "# ログ見出し\n作業中に +{copy-text}+ をコピー",
+          createdAt: "2026-11-03T00:00:00.000Z",
+          updatedAt: "2026-11-03T00:00:00.000Z",
+        },
+      ];
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const migratedLogs = migratedData.data.data.find(
+        (t) => t.tableName === "logs",
+      );
+      expect(migratedLogs?.rows[0]?.value).toBe(
+        "# ログ見出し\n作業中に [copy-text](copy-text) をコピー",
+      );
+    });
+
+    it("12-3. notes テーブルの value 内の +{text}+ が [text](text) に変換されること", () => {
+      const input = createMockLegacySnDbJson();
+      const notesTable = input.data.data.find((t) => t.tableName === "notes");
+      expect(notesTable).toBeDefined();
+      notesTable!.rows = [
+        {
+          id: 1,
+          taskId: 1,
+          value: "# メモタイトル\n参照先: +{https://note-url.org}+",
+          createdAt: "2026-11-03T00:00:00.000Z",
+          updatedAt: "2026-11-03T00:00:00.000Z",
+        },
+      ];
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const migratedNotes = migratedData.data.data.find(
+        (t) => t.tableName === "notes",
+      );
+      expect(migratedNotes?.rows[0]?.value).toBe(
+        "# メモタイトル\n参照先: [https://note-url.org](https://note-url.org)",
+      );
+    });
+
+    it("12-4. scratches テーブルの value 内の +{text}+ が [text](text) に変換されること", () => {
+      const input = createMockLegacySnDbJson();
+      const notebooksTable = input.data.data.find(
+        (t) => t.tableName === "notebooks",
+      );
+      expect(notebooksTable).toBeDefined();
+      notebooksTable!.rows = [
+        {
+          id: 1,
+          title: "スクラッチ1",
+          value: "メモ帳で +{snippet}+ を利用",
+          createdAt: "2026-11-03T00:00:00.000Z",
+          updatedAt: "2026-11-03T00:00:00.000Z",
+        },
+      ];
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const migratedScratches = migratedData.data.data.find(
+        (t) => t.tableName === "scratches",
+      );
+      expect(migratedScratches?.rows[0]?.value).toBe(
+        "メモ帳で [snippet](snippet) を利用",
+      );
+    });
+  });
+});
