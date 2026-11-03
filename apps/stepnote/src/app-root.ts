@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+﻿import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ContextProvider } from "@lit/context";
 import appRootStyles from "./app-root.scss?inline";
@@ -14,6 +14,7 @@ import {
   themeContext,
   scratchContext,
   taskTemplateContext,
+  autoExportContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -26,6 +27,7 @@ import { IssuesController } from "@/controllers/issues.controller.js";
 import { ThemeController } from "@/controllers/theme.controller.js";
 import { ScratchController } from "@/controllers/scratch.controller.js";
 import { TaskTemplateController } from "@/controllers/task-template.controller.js";
+import { AutoExportController } from "@/controllers/auto-export.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
@@ -80,6 +82,7 @@ export class AppRoot extends LitElement {
   public themeController!: ThemeController;
   public scratchController!: ScratchController;
   public taskTemplateController!: TaskTemplateController;
+  public autoExportController!: AutoExportController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
   public taskRepository!: TaskRepository;
@@ -134,14 +137,30 @@ export class AppRoot extends LitElement {
    * @private
    * @memberof AppRoot
    */
-  private setupControllers(): void {
+  /**
+   * コントローラーが利用するリポジトリ群を初期化する。
+   *
+   * @private
+   * @memberof AppRoot
+   */
+  private setupRepositories(): {
+    labelsRepository: LabelsRepository;
+    logsRepository: LogsRepository;
+    scratchRepository: ScratchRepository;
+  } {
     this.taskRepository = new TaskRepository();
     this.issuesRepository = new IssuesRepository();
     this.notesRepository = new NotesRepository();
-    const labelsRepository = new LabelsRepository();
-    const logsRepository = new LogsRepository();
-    const scratchRepository = new ScratchRepository();
+    return {
+      labelsRepository: new LabelsRepository(),
+      logsRepository: new LogsRepository(),
+      scratchRepository: new ScratchRepository(),
+    };
+  }
 
+  private setupControllers(): void {
+    const { labelsRepository, logsRepository, scratchRepository } =
+      this.setupRepositories();
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
       this,
@@ -185,6 +204,7 @@ export class AppRoot extends LitElement {
       this.systemLogService,
     );
     this.themeController = new ThemeController(this);
+    this.autoExportController = this.setupAutoExportController();
   }
 
   /**
@@ -193,6 +213,24 @@ export class AppRoot extends LitElement {
    * @private
    * @memberof AppRoot
    */
+  /**
+   * 自動エクスポート管理コントローラーを初期化する。
+   *
+   * @private
+   * @return {AutoExportController}
+   * @memberof AppRoot
+   */
+  private setupAutoExportController(): AutoExportController {
+    return new AutoExportController(this, {
+      exportCallback: async () => {
+        await this.handleExportDatabase();
+      },
+      notifyCallback: (fileName: string) => {
+        this.handleAutoExportNotified(fileName);
+      },
+    });
+  }
+
   private registerContextProviders(): void {
     new ContextProvider(this, {
       context: layoutUIContext,
@@ -237,6 +275,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: taskTemplateContext,
       initialValue: this.taskTemplateController,
+    });
+    new ContextProvider(this, {
+      context: autoExportContext,
+      initialValue: this.autoExportController,
     });
   }
 
@@ -415,7 +457,28 @@ export class AppRoot extends LitElement {
    *
    * @memberof AppRoot
    */
-  public handleExportDatabase = async (): Promise<void> => {
+  /**
+   * 自動エクスポート完了通知ハンドラー
+   *
+   * @param {string} fileName バックアップファイル名
+   * @memberof AppRoot
+   */
+  public handleAutoExportNotified = (fileName: string): void => {
+    const toast =
+      this.shadowRoot?.querySelector<
+        HTMLElement & { create: (message: string, options?: unknown) => void }
+      >("wa-toast") ??
+      this.renderRoot?.querySelector<
+        HTMLElement & { create: (message: string, options?: unknown) => void }
+      >("wa-toast");
+    if (toast && typeof toast.create === "function") {
+      toast.create(`自動バックアップを保存しました: ${fileName}`, {
+        variant: "success",
+        duration: 5000,
+      });
+    }
+  };
+    public handleExportDatabase = async (): Promise<void> => {
     try {
       await this.databaseBackupService.exportDatabase(db);
     } catch (error) {
@@ -811,6 +874,9 @@ export class AppRoot extends LitElement {
           data-theme=${resolvedTheme}
           @drawer-close=${this.handleCloseShortcutHelp}
         ></shortcut-help-drawer>
+
+        <!-- 自動バックアップ通知トースト -->
+        <wa-toast id="app-toast"></wa-toast>
       </div>
     `;
   }

@@ -11,6 +11,7 @@ import {
   layoutUIContext,
   scratchContext,
   taskTemplateContext,
+  autoExportContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -21,6 +22,7 @@ import type { LogsController } from "@/controllers/logs.controller";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller";
 import type { ScratchController } from "@/controllers/scratch.controller";
 import type { TaskTemplateController } from "@/controllers/task-template.controller";
+import type { AutoExportController } from "@/controllers/auto-export.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -325,4 +327,39 @@ export function WithTaskTemplateController<T extends LitElementConstructor>(
     }
   }
   return TaskTemplateConsumerClass;
+}
+
+/**
+ * AutoExportController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける autoExportController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithAutoExportController<T extends LitElementConstructor>(
+  Base: T,
+) {
+  class AutoExportConsumerClass extends Base {
+    private _autoExportController?: AutoExportController;
+
+    /** 自動エクスポート管理コントローラー */
+    public get autoExportController(): AutoExportController | undefined {
+      return this._autoExportController;
+    }
+
+    @consume({ context: autoExportContext, subscribe: true })
+    @property({ attribute: false })
+    public set autoExportController(
+      controller: AutoExportController | undefined,
+    ) {
+      this._autoExportController = this.subscriber.bind(
+        "autoExport",
+        this._autoExportController,
+        controller,
+      );
+    }
+  }
+  return AutoExportConsumerClass;
 }

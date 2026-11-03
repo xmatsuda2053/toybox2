@@ -1,4 +1,4 @@
-import * as fs from "node:fs";
+﻿import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
@@ -49,6 +49,22 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 4-8. .settings-pane__form-name にWeb Awesome公式サンプルに準拠したラベル左配置スタイル（gridまたはflexおよび::part(form-control-label)）が定義されていること
  *    - 4-9. .settings-pane__btn-save 内の wa-icon にワンサイズ大きいフォントサイズ（--wa-font-size-l）が指定されていること
  *    - 4-10. .settings-pane__form-body にスクロール定義（overflow-y: auto）およびスクロールバー余白が指定され、.settings-pane__name-row が固定（flex-shrink: 0）されていること
+ *
+ * 5. 自動エクスポート（Auto Export）設定タブ機能
+ *    - 5-1. wa-tab-group 内に panel="auto-export" の wa-tab および wa-tab-panel がレンダリングされること
+ *    - 5-2. 自動エクスポートタブ内に有効/無効切り替えスイッチ（wa-switch）がレンダリングされること
+ *    - 5-3. スイッチ操作で autoExportController.setEnabled が呼び出されること
+ *    - 5-4. 登録されたスケジュール時刻リストの各アイテムがレンダリングされること
+ *    - 5-5. 時刻追加ハンドラーで入力された時刻が autoExportController.addScheduleTime へ渡されること
+ *    - 5-6. 時刻削除ハンドラーで指定時刻が autoExportController.removeScheduleTime へ渡されること
+ *    - 5-7. 手動エクスポートボタンクリックで autoExportController.triggerManualExport が呼び出されること
+ *    - 5-8. 新規時刻入力欄に wa-time-input が hour-format="24" 付きでレンダリングされること
+ *    - 5-9. Auto Export タブが左右2つのペイン（.settings-pane__export-layout, .settings-pane__export-main, .settings-pane__export-schedule-pane）で構成され、スケジュール一覧が右側に配置されること
+ *    - 5-10. スケジュール時刻リスト（.settings-pane__schedule-list）にスクロール可能なスタイル（overflow-y: auto）が定義されていること
+ *    - 5-11. 時刻追加フォーム（.settings-pane__schedule-form）が右ペイン（.settings-pane__export-schedule-pane）内に配置され、左ペインには含まれないこと
+ *    - 5-12. 時刻追加ボタン（#settings-auto-export-add-btn）がプラスアイコン（plus-solid-full）かつ appearance="plain" で描画され、trigger="hover" のツールチップが付属すること
+ *    - 5-13. 時刻入力欄に値が入力されて追加ボタンがクリック可能になった場合、variant="brand" appearance="accent" および .settings-pane__btn-add-time--active で目立つスタイルになること
+ *    - 5-14. .settings-pane__schedule-item および .settings-pane__export-status が Light/Dark 両モードで浮き上がって見えるよう background-color: var(--wa-color-surface-raised) が指定されていること
  */
 describe("SettingsPane Component", () => {
   let element: SettingsPane;
@@ -494,6 +510,147 @@ describe("SettingsPane Component", () => {
       );
       expect(scss).toMatch(
         /\.settings-pane__form-body\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
+      );
+    });
+  });
+  describe("5. 自動エクスポート（Auto Export）設定タブ機能", () => {
+    const scssPath = path.resolve(__dirname, "./settings-pane.scss");
+    let mockAutoExportCtrl: {
+      state: {
+        enabled: boolean;
+        scheduleTimes: string[];
+        lastExportedSlot?: string;
+        lastExportedAt?: string;
+      };
+      setEnabled: ReturnType<typeof vi.fn>;
+      addScheduleTime: ReturnType<typeof vi.fn>;
+      removeScheduleTime: ReturnType<typeof vi.fn>;
+      setScheduleTimes: ReturnType<typeof vi.fn>;
+      triggerManualExport: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(() => {
+      mockAutoExportCtrl = {
+        state: {
+          enabled: true,
+          scheduleTimes: ["08:00", "12:00", "17:15"],
+          lastExportedSlot: "2026-11-03 12:00",
+          lastExportedAt: "2026-11-03T12:00:03.000Z",
+        },
+        setEnabled: vi.fn(),
+        addScheduleTime: vi.fn().mockReturnValue(true),
+        removeScheduleTime: vi.fn(),
+        setScheduleTimes: vi.fn(),
+        triggerManualExport: vi.fn().mockResolvedValue(true),
+      };
+      (element as any).autoExportController = mockAutoExportCtrl;
+    });
+
+    it("5-1. wa-tab-group 内に panel='auto-export' の wa-tab および wa-tab-panel がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tab[^>]*panel="auto-export"/);
+      expect(htmlStr).toMatch(/<wa-tab-panel[^>]*name="auto-export"/);
+    });
+
+    it("5-2. 自動エクスポートタブ内に有効/無効切り替えスイッチ（wa-switch）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-switch[^>]*class="[^"]*settings-pane__export-switch[^"]*"/);
+    });
+
+    it("5-3. スイッチ操作で autoExportController.setEnabled が呼び出されること", () => {
+      (element as any).handleToggleAutoExport({ target: { checked: false } } as unknown as Event);
+      expect(mockAutoExportCtrl.setEnabled).toHaveBeenCalledWith(false);
+    });
+
+    it("5-4. 登録されたスケジュール時刻リストの各アイテムがレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("08:00");
+      expect(htmlStr).toContain("12:00");
+      expect(htmlStr).toContain("17:15");
+    });
+
+    it("5-5. 時刻追加ハンドラーで入力された時刻が autoExportController.addScheduleTime へ渡されること", () => {
+      (element as any).newScheduleTimeInput = "15:30";
+      (element as any).handleAddScheduleTime();
+      expect(mockAutoExportCtrl.addScheduleTime).toHaveBeenCalledWith("15:30");
+      expect((element as any).newScheduleTimeInput).toBe("");
+    });
+
+    it("5-6. 時刻削除ハンドラーで指定時刻が autoExportController.removeScheduleTime へ渡されること", () => {
+      (element as any).handleRemoveScheduleTime("12:00");
+      expect(mockAutoExportCtrl.removeScheduleTime).toHaveBeenCalledWith("12:00");
+    });
+
+    it("5-7. 手動エクスポートボタンクリックで autoExportController.triggerManualExport が呼び出されること", async () => {
+      await (element as any).handleTriggerManualExport();
+      expect(mockAutoExportCtrl.triggerManualExport).toHaveBeenCalled();
+    });
+
+    it("5-8. 新規時刻入力欄に wa-time-input が hour-format='24' 付きでレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-time-input[^>]*hour-format="24"/);
+      expect(htmlStr).toMatch(/<wa-time-input[^>]*class="[^"]*settings-pane__time-input[^"]*"/);
+    });
+
+    it("5-9. Auto Export タブが左右2つのペイン（.settings-pane__export-layout, .settings-pane__export-main, .settings-pane__export-schedule-pane）で構成され、スケジュール一覧が右側に配置されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<div[^>]*class="[^"]*settings-pane__export-layout[^"]*"/);
+      expect(htmlStr).toMatch(/<div[^>]*class="[^"]*settings-pane__export-main[^"]*"/);
+      expect(htmlStr).toMatch(/<div[^>]*class="[^"]*settings-pane__export-schedule-pane[^"]*"/);
+    });
+
+    it("5-10. スケジュール時刻リスト（.settings-pane__schedule-list）にスクロール可能なスタイル（overflow-y: auto）が定義されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__schedule-list\s*\{[\s\S]*?overflow-y:\s*auto\b/,
+      );
+    });
+    it("5-11. 時刻追加フォーム（.settings-pane__schedule-form）が右ペイン（.settings-pane__export-schedule-pane）内に配置され、左ペインには含まれないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<div[^>]*class="[^"]*settings-pane__export-schedule-pane[^"]*"[^>]*>[\s\S]*?<div[^>]*class="[^"]*settings-pane__schedule-form[^"]*"/
+      );
+      const mainPaneMatch = htmlStr.match(
+        /<div[^>]*class="[^"]*settings-pane__export-main[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<div[^>]*class="[^"]*settings-pane__export-schedule-pane[^"]*"/
+      );
+      expect(mainPaneMatch).toBeTruthy();
+      expect(mainPaneMatch?.[1]).not.toContain("settings-pane__schedule-form");
+    });
+    it("5-12. 時刻追加ボタン（#settings-auto-export-add-btn）がプラスアイコン（plus-solid-full）かつ appearance='plain' で描画され、trigger='hover' のツールチップが付属すること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="settings-auto-export-add-btn"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*variant="neutral"[^>]*appearance="plain"[^>]*size="s"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*>[\s\S]*?<wa-icon[^>]*library="my-icons"[^>]*name="plus-solid-full"[^>]*><\/wa-icon>[\s\S]*?<\/wa-button>/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*>[\s\S]*?slot="prefix"[\s\S]*?<\/wa-button>/,
+      );
+    });
+    it("5-13. 時刻入力欄に値が入力されて追加ボタンがクリック可能になった場合、variant='brand' appearance='accent' および .settings-pane__btn-add-time--active で目立つスタイルになること", () => {
+      (element as any).newScheduleTimeInput = "09:30";
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*variant="brand"[^>]*appearance="accent"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*class="[^"]*settings-pane__btn-add-time--active[^"]*"/,
+      );
+      expect(htmlStr).not.toMatch(
+        /<wa-button[^>]*id="settings-auto-export-add-btn"[^>]*disabled/,
+      );
+    });
+    it("5-14. .settings-pane__schedule-item および .settings-pane__export-status が Light/Dark 両モードで浮き上がって見えるよう background-color: var(--wa-color-surface-raised) が指定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__schedule-item\s*\{[\s\S]*?background-color:\s*var\(--wa-color-surface-raised\)/,
+      );
+      expect(scss).toMatch(
+        /\.settings-pane__export-status\s*\{[\s\S]*?background-color:\s*var\(--wa-color-surface-raised\)/,
       );
     });
   });
