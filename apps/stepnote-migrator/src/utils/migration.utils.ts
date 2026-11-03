@@ -58,10 +58,32 @@ export function convertCopySyntaxToMarkdownLink(text: string): string {
 }
 
 /**
- * tasks テーブルレコードを新仕様へ変換する。
+ * 関係者（Contact）レコードの内容が空かどうかを判定する。
+ *
+ * @param contact 判定対象の関係者オブジェクト
+ * @returns 部署・氏名・連絡先のすべてが空白の場合は true
  */
-function migrateTasks(rows: Record<string, unknown>[]): Record<string, unknown>[] {
-  return rows.map((row) => {
+export function isContactEmpty(contact: unknown): boolean {
+  if (typeof contact !== "object" || contact === null) {
+    return true;
+  }
+  const c = contact as Record<string, unknown>;
+  const div = typeof c.div === "string" ? c.div : "";
+  const name = typeof c.name === "string" ? c.name : "";
+  const tel = typeof c.tel === "string" ? c.tel : "";
+  return isBlank(div) && isBlank(name) && isBlank(tel);
+}
+
+/**
+ * tasks テーブルレコードを新仕様へ変換する（空の Contact を除外）。
+ */
+function migrateTasks(rows: Record<string, unknown>[]): {
+  rows: Record<string, unknown>[];
+  filteredContactsCount: number;
+} {
+  let filteredContactsCount = 0;
+
+  const migratedRows = rows.map((row) => {
     const copy = { ...row };
     copy.bookmark = Boolean(row.bookmark);
     copy.selected = Boolean(row.selected);
@@ -69,8 +91,22 @@ function migrateTasks(rows: Record<string, unknown>[]): Record<string, unknown>[
       copy.description = convertCopySyntaxToMarkdownLink(row.description);
     }
     delete copy.currentStatus;
+
+    const rawContacts = Array.isArray(row.contacts) ? row.contacts : [];
+    const validContacts: Record<string, unknown>[] = [];
+    for (const contact of rawContacts) {
+      if (isContactEmpty(contact)) {
+        filteredContactsCount++;
+      } else {
+        validContacts.push(contact as Record<string, unknown>);
+      }
+    }
+    copy.contacts = validContacts;
+
     return copy;
   });
+
+  return { rows: migratedRows, filteredContactsCount };
 }
 
 /**
@@ -242,6 +278,7 @@ function buildMigrationResult(
     scratches: Record<string, unknown>[];
   },
   filteredNotesCount: number,
+  filteredContactsCount: number,
 ): MigrationResult {
   const rowCounts: Record<string, number> = {
     tasks: tables.tasks.length,
@@ -259,6 +296,7 @@ function buildMigrationResult(
     logsCount: tables.logs.length,
     notesCount: tables.notes.length,
     notesFilteredCount: filteredNotesCount,
+    contactsFilteredCount: filteredContactsCount,
     labelsCount: tables.labels.length,
     scratchesCount: tables.scratches.length,
     quickAccessCount: tables.quickAccess.length,
@@ -289,12 +327,16 @@ export function convertSnDbToStepNote(legacyData: unknown): MigrationResult {
   const validData = validateLegacySnDbData(legacyData);
   const src = validData.data.data;
 
-  const { rows: migratedNotes, filteredCount } = migrateNotes(
+  const { rows: migratedTasks, filteredContactsCount } = migrateTasks(
+    extractSourceRows(src, "tasks"),
+  );
+
+  const { rows: migratedNotes, filteredCount: filteredNotesCount } = migrateNotes(
     extractSourceRows(src, "notes"),
   );
 
   const tables = {
-    tasks: migrateTasks(extractSourceRows(src, "tasks")),
+    tasks: migratedTasks,
     logs: migrateLogs(extractSourceRows(src, "logs")),
     notes: migratedNotes,
     labels: migrateLabels(extractSourceRows(src, "labels")),
@@ -302,5 +344,5 @@ export function convertSnDbToStepNote(legacyData: unknown): MigrationResult {
     scratches: migrateScratches(extractSourceRows(src, "notebooks")),
   };
 
-  return buildMigrationResult(tables, filteredCount);
+  return buildMigrationResult(tables, filteredNotesCount, filteredContactsCount);
 }
