@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Step-Note データ移行ツール (SnDB to StepNote)</title>
+    <script type="module" crossorigin>(function(){let e=document.createElement(`link`).relList;if(e&&e.supports&&e.supports(`modulepreload`))return;for(let e of document.querySelectorAll(`link[rel="modulepreload"]`))n(e);new MutationObserver(e=>{for(let t of e)if(t.type===`childList`)for(let e of t.addedNodes)e.tagName===`LINK`&&e.rel===`modulepreload`&&n(e)}).observe(document,{childList:!0,subtree:!0});function t(e){let t={};return e.integrity&&(t.integrity=e.integrity),e.referrerPolicy&&(t.referrerPolicy=e.referrerPolicy),t.credentials=e.crossOrigin===`use-credentials`?`include`:e.crossOrigin===`anonymous`?`omit`:`same-origin`,t}function n(e){if(e.ep)return;e.ep=!0;let n=t(e);fetch(e.href,n)}})();function e(e,n=`yyyy/MM/dd HH:mm:ss`){let r=e=>String(e).padStart(2,`0`),i=e.getFullYear().toString(),a=r(e.getMonth()+1),o=r(e.getDate()),s=r(e.getHours()),c=r(e.getMinutes()),l=r(e.getSeconds());if(n===`yyyy/MM/dd HH:mm:ss`)return`${i}/${a}/${o} ${s}:${c}:${l}`;if(n===`yyyy/MM/dd`)return`${i}/${a}/${o}`;if(n===`yyyy-MM-dd`)return`${i}-${a}-${o}`;if(n===`yyyy-MM-dd (EEE)`)return`${i}-${a}-${o} (${t(e,`short`)})`;if(n===`yyyy年M月`)return`${i}年${e.getMonth()+1}月`;if(n===`yyyyMMdd_HHmmss`)return`${i}${a}${o}_${s}${c}${l}`;if(n===`HH:mm:ss`)return`${s}:${c}:${l}`;throw Error(`Unsupported format: ${n}`)}function t(e,t=`long`){return new Intl.DateTimeFormat(`ja-JP`,{weekday:t}).format(e)}function n(e){return e==null||e.trim()===``}function r(e){return!n(e)}function i(e,t=``){return r(e)&&(e.split(/\r?\n/)[0]?.trim()??``).replace(/^#+\s*/,``).trim()||t}var a={tasks:`++id, statusCode, name, dueDate, fiscalYear, selected`,issues:`++id, taskId, [taskId+id]`,logs:`++id, taskId, [taskId+id], title`,notes:`++id, taskId, [taskId+id], title`,quickAccess:`++id`,labels:`++id, name, isSelected`,scratches:`++id, createdAt, title`,taskTemplates:`++id, name, createdAt`};function o(e){if(typeof e!=`object`||!e)throw Error(`無効なバックアップデータです: オブジェクトではありません`);let t=e;if(!t.data||typeof t.data!=`object`)throw Error(`無効なバックアップデータです: data プロパティが存在しません`);if(t.data.databaseName!==`SnDB`)throw Error(`旧StepNote（SnDB）のエクスポートデータではありません: ${t.data.databaseName}`);return e}function s(e){return e.map(e=>{let t={...e};return t.bookmark=!!e.bookmark,t.selected=!!e.selected,delete t.currentStatus,t})}function c(e){return e.map(e=>{let t=typeof e.value==`string`?e.value:``;return{...e,title:i(t,`(無題のログ)`)}})}function l(e){let t=[],r=0;for(let a of e){let e=typeof a.value==`string`?a.value:``;if(n(e)){r++;continue}t.push({...a,title:i(e,`(無題のメモ)`)})}return{rows:t,filteredCount:r}}function u(e){return e.map(e=>{let t={...e};return t.isSelected=!!e.isSelected,t.description=typeof e.description==`string`?e.description:``,delete t.fiscalYear,delete t.createdAt,delete t.updatedAt,t})}function d(e){let t=[`isBookmarkSelected`,`isUncategorizedSelected`,`isOverdueSelected`,`isAsapSelected`,`isUpcomingSelected`,`isDoneSelected`,`isProgressSelected`,`isPendingSelected`];return e.map(e=>{let n={...e};for(let r of t)n[r]=!!e[r];return n})}function f(e){return e.map(e=>{let t={...e},n=typeof e.value==`string`?e.value:``,r=typeof e.title==`string`?e.title.trim():``;return t.title=r===``?i(n,`(無題のメモ)`):r,delete t.selected,delete t.pin,t})}function p(e,t){let n=e.find(e=>e.tableName===t);return n?.rows?[...n.rows]:[]}function m(e){return[`tasks`,`issues`,`logs`,`notes`,`quickAccess`,`labels`,`scratches`,`taskTemplates`].map(t=>({name:t,schema:a[t]??`++id`,rowCount:e[t]??0}))}function h(e){return[{tableName:`tasks`,inbound:!0,rows:e.tasks},{tableName:`issues`,inbound:!0,rows:[]},{tableName:`logs`,inbound:!0,rows:e.logs},{tableName:`notes`,inbound:!0,rows:e.notes},{tableName:`quickAccess`,inbound:!0,rows:e.quickAccess},{tableName:`labels`,inbound:!0,rows:e.labels},{tableName:`scratches`,inbound:!0,rows:e.scratches},{tableName:`taskTemplates`,inbound:!0,rows:[]}]}function g(e,t){let n={tasks:e.tasks.length,issues:0,logs:e.logs.length,notes:e.notes.length,quickAccess:e.quickAccess.length,labels:e.labels.length,scratches:e.scratches.length,taskTemplates:0},r={tasksCount:e.tasks.length,logsCount:e.logs.length,notesCount:e.notes.length,notesFilteredCount:t,labelsCount:e.labels.length,scratchesCount:e.scratches.length,quickAccessCount:e.quickAccess.length};return{migratedData:{formatName:`dexie`,formatVersion:1,data:{databaseName:`StepNote`,databaseVersion:4,tables:m(n),data:h(e)}},summary:r}}function _(e){let t=o(e).data.data,{rows:n,filteredCount:r}=l(p(t,`notes`));return g({tasks:s(p(t,`tasks`)),logs:c(p(t,`logs`)),notes:n,labels:u(p(t,`labels`)),quickAccess:d(p(t,`quickAccesses`)),scratches:f(p(t,`notebooks`))},r)}function v(t=new Date){return`stepnote_backup_${e(t,`yyyyMMdd_HHmmss`)}.json`}function y(e,t){let n=URL.createObjectURL(e),r=document.createElement(`a`);r.href=n,r.download=t,document.body.appendChild(r),r.click(),document.body.removeChild(r),URL.revokeObjectURL(n)}function b(e){let{summary:t}=e;return`
+    <div class="alert alert--success">
+      ✓ 新StepNote形式への変換が完了しました。
+    </div>
+    <table class="summary-table">
+      <tbody>
+        <tr><th>タスク件数</th><td>${t.tasksCount} 件</td></tr>
+        <tr><th>作業ログ件数</th><td>${t.logsCount} 件</td></tr>
+        <tr><th>メモ件数（移行対象）</th><td>${t.notesCount} 件</td></tr>
+        <tr><th>空メモ件数（除外）</th><td>${t.notesFilteredCount} 件</td></tr>
+        <tr><th>分類ラベル件数</th><td>${t.labelsCount} 件</td></tr>
+        <tr><th>共通メモ（スクラッチ）件数</th><td>${t.scratchesCount} 件</td></tr>
+        <tr><th>クイックアクセス設定</th><td>反映済み（boolean化）</td></tr>
+      </tbody>
+    </table>
+    <button id="downloadBtn" class="download-btn">変換後のバックアップJSONを再ダウンロード</button>
+    <div class="instructions">
+      <div class="instructions__title">【新StepNoteへの取り込み手順】</div>
+      <ol>
+        <li>ダウンロードされた <code>stepnote_backup_*.json</code> を確認します。</li>
+        <li>新 Step-Note アプリを開きます。</li>
+        <li>左ペインのメニュー（最左列）下部にある「バックアップ」または「復元」アイコンをクリックします。</li>
+        <li>ダウンロードした JSON ファイルを選択すると、データが復元されます。</li>
+      </ol>
+    </div>
+  `}function x(e){return`
+    <div class="alert alert--error">
+      <strong>変換エラー:</strong> ${e instanceof Error?e.message:String(e)}
+    </div>
+  `}async function S(e,t){t.className=`result result--visible`,t.innerHTML=`<div class="alert">変換処理を実行中...</div>`;try{let n=await e.text(),r=_(JSON.parse(n));t.innerHTML=b(r);let i=JSON.stringify(r.migratedData,null,2),a=new Blob([i],{type:`application/json`}),o=v();y(a,o),document.getElementById(`downloadBtn`)?.addEventListener(`click`,()=>{y(a,o)})}catch(e){t.innerHTML=x(e)}}function C(e,t,n){e.addEventListener(`click`,()=>t.click()),e.addEventListener(`dragover`,t=>{t.preventDefault(),e.classList.add(`dropzone--dragover`)}),e.addEventListener(`dragleave`,()=>{e.classList.remove(`dropzone--dragover`)}),e.addEventListener(`drop`,t=>{t.preventDefault(),e.classList.remove(`dropzone--dragover`);let r=t.dataTransfer?.files[0];r&&S(r,n)}),t.addEventListener(`change`,()=>{let e=t.files?.[0];e&&S(e,n)})}function w(){let e=document.getElementById(`app`);if(!e)return;e.innerHTML=`
+    <div class="container">
+      <header class="header">
+        <h1 class="header__title">Step-Note データ移行ツール</h1>
+        <p class="header__desc">旧StepNote（SnDB）のバックアップJSONを、新StepNote形式へ安全に変換します</p>
+      </header>
+
+      <div id="dropzone" class="dropzone">
+        <div class="dropzone__icon">📁</div>
+        <div class="dropzone__text">ここに旧バックアップJSONをドラッグ＆ドロップ</div>
+        <div class="dropzone__subtext">または クリックしてファイルを選択 (SnDB_backup_*.json)</div>
+        <input type="file" id="fileInput" accept=".json" style="display: none;" />
+      </div>
+
+      <div id="result" class="result"></div>
+
+      <footer class="footer">
+        ブラウザ内で完全に処理されます。外部サーバーへの通信は一切行われません。
+      </footer>
+    </div>
+  `;let t=document.getElementById(`dropzone`),n=document.getElementById(`fileInput`),r=document.getElementById(`result`);t&&n&&r&&C(t,n,r)}typeof document<`u`&&document.addEventListener(`DOMContentLoaded`,w);</script>
+    <style rel="stylesheet" crossorigin>:root{--bg-color:#f6f8fa;--surface-color:#fff;--border-color:#d0d7de;--text-main:#1f2328;--text-muted:#656d76;--accent-color:#0969da;--accent-hover:#0856b3;--success-color:#1a7f37;--success-bg:#dafbe1;--error-color:#cf222e;--error-bg:#ffebe9;--info-bg:#ddf4ff;--font-family:"Segoe UI", "BIZ UD Gothic", "Yu Gothic UI", Meiryo, sans-serif}@media (prefers-color-scheme:dark){:root{--bg-color:#0d1117;--surface-color:#161b22;--border-color:#30363d;--text-main:#e6edf3;--text-muted:#8b949e;--accent-color:#2f81f7;--accent-hover:#58a6ff;--success-color:#3fb950;--success-bg:#2ea04326;--error-color:#f85149;--error-bg:#f8514926;--info-bg:#388bfd26}}*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--font-family);background-color:var(--bg-color);color:var(--text-main);justify-content:center;align-items:center;min-height:100vh;padding:24px;line-height:1.5;display:flex}.container{background-color:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;width:100%;max-width:640px;padding:32px;box-shadow:0 4px 12px #00000014}.header{text-align:center;margin-bottom:24px}.header__title{margin-bottom:8px;font-size:20px;font-weight:600}.header__desc{color:var(--text-muted);font-size:13px}.dropzone{border:2px dashed var(--border-color);text-align:center;cursor:pointer;background-color:#80808005;border-radius:6px;padding:40px 20px;transition:border-color .2s,background-color .2s}.dropzone:hover,.dropzone--dragover{border-color:var(--accent-color);background-color:#0969da0a}.dropzone__icon{margin-bottom:8px;font-size:32px}.dropzone__text{font-size:14px;font-weight:500}.dropzone__subtext{color:var(--text-muted);margin-top:4px;font-size:12px}.result{margin-top:24px;display:none}.result--visible{display:block}.alert{border-radius:6px;margin-bottom:16px;padding:12px 16px;font-size:13px}.alert--success{background-color:var(--success-bg);color:var(--success-color);border:1px solid var(--success-color)}.alert--error{background-color:var(--error-bg);color:var(--error-color);border:1px solid var(--error-color)}.summary-table{border-collapse:collapse;width:100%;margin-bottom:16px;font-size:13px}.summary-table th,.summary-table td{border:1px solid var(--border-color);text-align:left;padding:8px 12px}.summary-table th{background-color:#8080800d;width:50%;font-weight:600}.summary-table td{font-variant-numeric:tabular-nums}.download-btn{background-color:var(--accent-color);color:#fff;cursor:pointer;text-align:center;border:none;border-radius:6px;width:100%;margin-bottom:16px;padding:10px;font-size:14px;font-weight:600;text-decoration:none;transition:background-color .2s;display:block}.download-btn:hover{background-color:var(--accent-hover)}.instructions{background-color:var(--info-bg);border-radius:6px;padding:16px;font-size:12px;line-height:1.6}.instructions__title{margin-bottom:4px;font-weight:600}.instructions ol{padding-left:20px}.footer{text-align:center;color:var(--text-muted);margin-top:24px;font-size:11px}
+/*$vite$:1*/</style>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
