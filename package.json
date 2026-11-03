@@ -7,8 +7,10 @@
   ],
   "scripts": {
     "dev:stepnote": "npm run dev --workspace=apps/stepnote",
+    "dev:migrator": "npm run dev --workspace=apps/stepnote-migrator",
     "dev:components": "npm run dev --workspace=packages/components",
     "build:stepnote": "npm run build --workspace=apps/stepnote",
+    "build:migrator": "npm run build --workspace=apps/stepnote-migrator",
     "build:all": "npm run build --workspaces",
     "type-check": "npm exec --workspaces -- tsc --noEmit",
     "lint": "eslint apps packages",
