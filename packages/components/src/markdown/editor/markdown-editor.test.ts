@@ -31,6 +31,9 @@
  *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
  *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
  *   - SCSS において :host([dark-theme='soft']) 用のスタイルが定義され、StepNote 調のエディタ・ガター配色が指定されていること
+ * 11. 内部入力と外部更新の分離によるカーソル保護（SN-007）
+ *   - エディタ内部での入力通知後、遅れて届いた updated でのエディタ全置換 dispatch がスキップされること
+ *   - 外部からの value 変更時には、updated でエディタへの全置換 dispatch が実行されること
  */
 
 import * as fs from "node:fs";
@@ -186,9 +189,19 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
   });
 
   type TestableMarkdownEditor = Omit<MarkdownEditor, "editorView"> & {
-    editorView?: { destroy: () => void; dispatch: () => void };
+    editorView?: {
+      destroy: () => void;
+      dispatch: (args?: unknown) => void;
+      state?: {
+        doc: {
+          toString: () => string;
+          length: number;
+        };
+      };
+    };
     reconfigureEditor: () => void;
     classList: DOMTokenList;
+    handleInternalDocChange: (newValue: string) => void;
   };
 
   describe("8. 拡張機能・プロパティ変更時の再構成制御とエディタ保護", () => {
@@ -275,6 +288,59 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     it("SCSS において soft ダーク用のスタイルが定義され、StepNote 調のエディタ・ガター配色が指定されていること", () => {
       expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
       expect(scssContent).toMatch(/--stepnote-bg-primary:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
+    });
+  });
+
+  describe("11. 内部入力と外部更新の分離によるカーソル保護（SN-007）", () => {
+    it("エディタ内部での入力通知後、遅れて届いた updated でのエディタ全置換 dispatch がスキップされること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        state: {
+          doc: {
+            toString: () => "入力テキスト最新",
+            length: 8,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      testable.handleInternalDocChange("入力テキスト");
+
+      editor.value = "入力テキスト";
+      editor.updated(new Map([["value", "古いテキスト"]]));
+
+      expect(dispatchSpy).not.toHaveBeenCalled();
+    });
+
+    it("外部からの value 変更時には、updated でエディタへの全置換 dispatch が実行されること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        state: {
+          doc: {
+            toString: () => "古いテキスト",
+            length: 5,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.value = "外部から渡された新しいテキスト";
+      editor.updated(new Map([["value", "古いテキスト"]]));
+
+      expect(dispatchSpy).toHaveBeenCalledTimes(1);
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: {
+            from: 0,
+            to: 6,
+            insert: "外部から渡された新しいテキスト",
+          },
+        }),
+      );
     });
   });
 });
