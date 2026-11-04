@@ -37,6 +37,8 @@
  * 12. 拡張機能構文テンプレート挿入時の選択文字列保持（SN-002）
  *   - 文字列選択時に callout テンプレートを挿入した際、選択文字列を内部に保持して dispatch されること
  *   - 文字列選択時に color テンプレートを挿入した際、選択文字列をカラー構文でラップして dispatch されること
+ * 13. 長い半角英数字（URL等）の自然な折り返し制御（SN-006）
+ *   - markdown-editor.scss において .cm-content および .cm-line に対し、word-break: break-all; および overflow-wrap: anywhere; が指定されていること
  */
 
 import * as fs from "node:fs";
@@ -404,6 +406,21 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
             insert: "/red:赤色文字/",
           },
         }),
+      );
+    });
+  });
+
+  describe("13. 長い半角英数字（URL等）の自然な折り返し制御（SN-006）", () => {
+    const scssPath = path.resolve(__dirname, "./markdown-editor.scss");
+
+    it("markdown-editor.scss において .cm-content および .cm-line に対し、word-break: break-all; および overflow-wrap: anywhere; が指定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scss).toMatch(
+        /\.cm-content[^{]*\{[^}]*word-break:\s*break-all;[^}]*overflow-wrap:\s*anywhere;/s,
+      );
+      expect(scss).toMatch(
+        /\.cm-line[^{]*\{[^}]*word-break:\s*break-all;[^}]*overflow-wrap:\s*anywhere;/s,
       );
     });
   });

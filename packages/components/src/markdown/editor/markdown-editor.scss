@@ -67,10 +67,14 @@
   font-family: inherit;
   caret-color: var(--stepnote-accent, #3b82f6);
   background-color: transparent !important;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .markdown-editor__container .cm-line {
   font-family: inherit;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 /* 選択範囲・ドラッグ操作時の視覚スタイル */
