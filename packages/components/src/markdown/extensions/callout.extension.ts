@@ -160,24 +160,145 @@ function tryTransformSingleParagraph(para: Paragraph): Content | null {
 }
 
 /**
+ * ノードの最深・末尾にある Text ノードを再帰的に取得する純粋関数
+ */
+function getLastTextNode(node: Content): Text | null {
+  if (node.type === "text") {
+    return node as Text;
+  }
+  if ("children" in node && Array.isArray((node as Parent).children)) {
+    const { children } = node as Parent;
+    for (let i = children.length - 1; i >= 0; i--) {
+      const res = getLastTextNode(children[i] as Content);
+      if (res) return res;
+    }
+  }
+  return null;
+}
+
+/**
+ * ノード末尾から CALLOUT_END_REGEX (///) を検出し、除去できた場合に true を返す純粋関数
+ */
+function stripCalloutEnd(node: Content): boolean {
+  const lastText = getLastTextNode(node);
+  if (!lastText) return false;
+
+  const endMatch = CALLOUT_END_REGEX.exec(lastText.value);
+  if (!endMatch) return false;
+
+  lastText.value = lastText.value.slice(0, endMatch.index).replace(/\r?\n$/, "");
+  return true;
+}
+
+/**
+ * 段落ノードが空（または空白テキストのみ）かどうかを判定する純粋関数
+ */
+function isEmptyParagraph(node: Content): boolean {
+  if (node.type !== "paragraph") return false;
+  const para = node as Paragraph;
+  return para.children.every(
+    (c) => c.type === "text" && (c as Text).value.trim() === "",
+  );
+}
+
+/**
+ * ブロックノードがマルチブロック・コールアウトの開始かどうかを判定・初期化する純粋関数
+ */
+function checkCalloutStart(node: Content): { meta: CalloutMeta; remainingNode: Content | null } | null {
+  if (node.type !== "paragraph") return null;
+  const para = node as Paragraph;
+  if (!para.children || para.children.length === 0) return null;
+
+  const first = para.children[0];
+  if (first.type !== "text") return null;
+
+  const startMatch = CALLOUT_START_REGEX.exec(first.value);
+  if (!startMatch) return null;
+
+  const meta = resolveCalloutMeta(startMatch[2]);
+  first.value = first.value.slice(startMatch[0].length).replace(/^\r?\n/, "");
+
+  para.children = para.children.filter(
+    (c) => c.type !== "text" || (c as Text).value.length > 0,
+  );
+
+  return {
+    meta,
+    remainingNode: para.children.length > 0 ? para : null,
+  };
+}
+
+/**
+ * 複数ブロックに跨がるコールアウトの収集・変換を試みる純粋ヘルパー関数
+ */
+function tryConsumeMultiBlockCallout(
+  children: Content[],
+  startIndex: number,
+): { calloutNode: Content; nextIndex: number } | null {
+  const startResult = checkCalloutStart(children[startIndex]);
+  if (!startResult) return null;
+
+  const { meta, remainingNode } = startResult;
+  const calloutContent: Content[] = [];
+  if (remainingNode) calloutContent.push(remainingNode);
+
+  let j = startIndex + 1;
+  while (j < children.length) {
+    const nextChild = children[j];
+    const hasEnd = stripCalloutEnd(nextChild);
+    if (hasEnd) {
+      if (!isEmptyParagraph(nextChild)) {
+        calloutContent.push(nextChild);
+      }
+      const processedInner = transformBlockContent(calloutContent);
+      return {
+        calloutNode: buildCalloutAstNode(meta, processedInner),
+        nextIndex: j + 1,
+      };
+    }
+    calloutContent.push(nextChild);
+    j++;
+  }
+
+  return null;
+}
+
+/**
  * 親ノードの子要素リストを走査して callout を変換する純粋関数
  */
 export function transformBlockContent(children: Content[]): Content[] {
   const newChildren: Content[] = [];
+  let i = 0;
 
-  for (const child of children) {
+  while (i < children.length) {
+    const child = children[i];
+
+    // 1. 単一段落で完結するコールアウトを検査（高速パス）
     if (child.type === "paragraph") {
-      const calloutNode = tryTransformSingleParagraph(child as Paragraph);
-      if (calloutNode) {
-        newChildren.push(calloutNode);
+      const singleCallout = tryTransformSingleParagraph(child as Paragraph);
+      if (singleCallout) {
+        newChildren.push(singleCallout);
+        i++;
         continue;
       }
     }
 
+    // 2. 複数ブロック要素に跨がるコールアウトを検査
+    const multiResult = tryConsumeMultiBlockCallout(children, i);
+    if (multiResult) {
+      newChildren.push(multiResult.calloutNode);
+      i = multiResult.nextIndex;
+      continue;
+    }
+
+    // 3. 通常ノードの子要素再帰走査
     if ("children" in child && Array.isArray((child as Parent).children)) {
-      (child as Parent).children = transformBlockContent((child as Parent).children as Content[]);
+      (child as Parent).children = transformBlockContent(
+        (child as Parent).children as Content[],
+      );
     }
     newChildren.push(child);
+    i++;
   }
 
   return newChildren;

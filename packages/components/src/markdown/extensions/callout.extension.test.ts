@@ -18,6 +18,10 @@
  *   - コールアウトブロックの前後に文章が存在しても欠損せず保持されること
  * 5. サニタイズ（XSS耐性）の安全性
  *   - wa-callout および wa-icon の安全な属性が許可され、不正なタグやスクリプトが除去されること
+ * 6. ブロック要素（リスト、複数段落、見出し等）をネストしたマルチブロック構文 (SN-001)
+ *   - コールアウト内にリスト構文（ul/ol）をネストした場合、wa-callout 内にリストがレンダリングされること
+ *   - コールアウト内に空行を挟む複数段落をネストした場合、wa-callout 内に複数段落がレンダリングされること
+ *   - コールアウト内に見出しやブロックコードをネストした場合、wa-callout 内にレンダリングされること
  */
 
 import { describe, it, expect } from "vitest";
@@ -233,6 +237,71 @@ describe("calloutExtension", () => {
       expect(html).not.toContain("<script>");
       expect(html).not.toContain("onerror");
       expect(html).toContain("<wa-callout");
+    });
+  });
+
+  describe("6. ブロック要素（リスト、複数段落、見出し等）をネストしたマルチブロック構文 (SN-001)", () => {
+    const createProcessor = () =>
+      createMarkdownProcessor({
+        remarkPlugins: calloutExtension.processor?.remarkPlugins,
+        sanitizeSchemaModifier:
+          calloutExtension.processor?.sanitizeSchemaModifier,
+      });
+
+    it("コールアウト内にリスト構文をネストした場合、wa-callout 内にリストがレンダリングされること", async () => {
+      const processor = createProcessor();
+      const markdown = [
+        "/// info",
+        "- リスト項目1",
+        "- リスト項目2",
+        "///",
+      ].join("\n");
+      const html = await processor.process(markdown);
+
+      expect(html).toContain("<wa-callout");
+      expect(html).toContain('variant="brand"');
+      expect(html).toContain("<ul>");
+      expect(html).toContain("<li>リスト項目1</li>");
+      expect(html).toContain("<li>リスト項目2</li>");
+      expect(html).toMatch(/<wa-callout[\s\S]*<ul>[\s\S]*<\/ul>[\s\S]*<\/wa-callout>/);
+    });
+
+    it("コールアウト内に空行を挟む複数段落をネストした場合、wa-callout 内に複数段落がレンダリングされること", async () => {
+      const processor = createProcessor();
+      const markdown = [
+        "/// warn",
+        "第1段落の警告テキスト",
+        "",
+        "第2段落の詳細テキスト",
+        "///",
+      ].join("\n");
+      const html = await processor.process(markdown);
+
+      expect(html).toContain("<wa-callout");
+      expect(html).toContain('variant="warning"');
+      expect(html).toContain("第1段落の警告テキスト");
+      expect(html).toContain("第2段落の詳細テキスト");
+      expect(html).toMatch(/<wa-callout[\s\S]*第1段落の警告テキスト[\s\S]*第2段落の詳細テキスト[\s\S]*<\/wa-callout>/);
+    });
+
+    it("コールアウト内に見出しやブロックコードをネストした場合、wa-callout 内にレンダリングされること", async () => {
+      const processor = createProcessor();
+      const markdown = [
+        "/// check",
+        "### 手順完了",
+        "",
+        "```typescript",
+        "const success = true;",
+        "```",
+        "///",
+      ].join("\n");
+      const html = await processor.process(markdown);
+
+      expect(html).toContain("<wa-callout");
+      expect(html).toContain('variant="success"');
+      expect(html).toContain("<h3>手順完了</h3>");
+      expect(html).toContain("const success = true;");
+      expect(html).toMatch(/<wa-callout[\s\S]*<h3>手順完了<\/h3>[\s\S]*<pre><code[\s\S]*<\/wa-callout>/);
     });
   });
 });
