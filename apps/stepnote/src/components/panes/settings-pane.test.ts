@@ -37,6 +37,9 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 3-17. テンプレート編集後に未保存の変更がある場合、保存ボタンがアクセント（variant="brand" appearance="accent"）されアイコンにアニメーション（animation="shake"）が設定されること
  *    - 3-18. テンプレート名入力・保存ボタン行（.settings-pane__name-row）と分離されたスクロール可能なフォームボディ（.settings-pane__form-body）がレンダリングされること
  *    - 3-19. 設定ペイン内のボタンおよび入力欄が Web Awesome の新仕様 size="s" でレンダリングされること
+ *    - 3-20. Issueリストのドロップダウンメニュー（wa-dropdown）に placement="bottom-end" およびクリック伝播防止が設定され、トリガーボタンからイベント伝播阻害（stopPropagation）が除去されていること
+ *    - 3-21. Issueメニューで「削除」を選択した際（handleIssueMenuSelect / removeIssue）、該当Issueが即座にformIssuesから削除され、selectedIssueIndexが適正に追従すること
+ *    - 3-22. 登録Issue一覧がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (settings-pane.scss) が存在し、ルートブロック .settings-pane および主要セレクタが定義されていること
@@ -413,6 +416,47 @@ describe("SettingsPane Component", () => {
       // 日数オフセット入力欄
       expect(htmlStr).toMatch(
         /<wa-input[^>]*size="s"[^>]*class="[^"]*settings-pane__issue-offset-input"[^>]*>/,
+      );
+    });
+
+    it("3-20. Issueリストのドロップダウンメニュー（wa-dropdown）に placement=\"bottom-end\" およびクリック伝播防止が設定され、トリガーボタンからイベント伝播阻害（stopPropagation）が除去されていること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-dropdown[^>]*class="[^"]*settings-pane__issue-dropdown[^"]*"[^>]*placement="bottom-end"/,
+      );
+      const tsPath = path.resolve(__dirname, "./settings-pane.ts");
+      const tsContent = fs.readFileSync(tsPath, "utf-8");
+      const dropdownFuncMatch = tsContent.match(/renderIssueItemDropdown[\s\S]*?<\/wa-dropdown>/);
+      expect(dropdownFuncMatch).not.toBeNull();
+      const dropdownCode = dropdownFuncMatch![0];
+      expect(dropdownCode).not.toMatch(/<wa-button[^>]*@click=\$\{[^}]*stopPropagation/);
+      expect(dropdownCode).toMatch(/<wa-dropdown[^>]*@click=\$\{[^}]*stopPropagation/);
+    });
+
+    it("3-21. Issueメニューで「削除」を選択した際（handleIssueMenuSelect / removeIssue）、該当Issueが即座にformIssuesから削除され、selectedIssueIndexが適正に追従すること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      expect(element.formIssues).toHaveLength(2);
+      element.selectedIssueIndex = 1;
+
+      element.handleIssueMenuSelect("delete", 1);
+      expect(element.formIssues).toHaveLength(1);
+      expect(element.formIssues[0].id).toBe("iss-1");
+      expect(element.selectedIssueIndex).toBe(0);
+
+      element.handleIssueMenuSelect("delete", 0);
+      expect(element.formIssues).toHaveLength(0);
+      expect(element.selectedIssueIndex).toBe(0);
+    });
+
+    it("3-22. 登録Issue一覧がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること", () => {
+      const tsPath = path.resolve(__dirname, "./settings-pane.ts");
+      const tsContent = fs.readFileSync(tsPath, "utf-8");
+      expect(tsContent).toMatch(
+        /import\s*\{[^}]*repeat[^}]*\}\s*from\s*["']lit\/directives\/repeat\.js["']/,
+      );
+      expect(tsContent).toMatch(
+        /repeat\(\s*this\.formIssues,\s*\((?:issue|iss)\)\s*=>\s*(?:issue|iss)\.id/,
       );
     });
   });
