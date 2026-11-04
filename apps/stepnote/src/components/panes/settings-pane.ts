@@ -1,5 +1,6 @@
 ﻿import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import "@shared/components";
 import type { MarkdownDisplayMode } from "@shared/components";
 import {
@@ -492,8 +493,12 @@ export class SettingsPane extends WithAutoExportController(
     return html`
       <wa-dropdown
         class="settings-pane__issue-dropdown"
-        @wa-select=${(e: CustomEvent) =>
-          this.handleIssueMenuSelect(e.detail.item.value, index)}
+        placement="bottom-end"
+        @click=${(e: MouseEvent) => e.stopPropagation()}
+        @wa-select=${(e: CustomEvent<{ item: { value: string } }>) => {
+          e.stopPropagation();
+          this.handleIssueMenuSelect(e.detail.item.value, index);
+        }}
       >
         <wa-button
           slot="trigger"
@@ -503,8 +508,6 @@ export class SettingsPane extends WithAutoExportController(
           size="s"
           aria-label="Issueメニュー"
           title="Issueメニュー"
-          @click=${(e: Event) => e.stopPropagation()}
-          @keydown=${(e: Event) => e.stopPropagation()}
         >
           <wa-icon library="my-icons" name="bars-solid-full"></wa-icon>
         </wa-button>
@@ -584,8 +587,10 @@ export class SettingsPane extends WithAutoExportController(
           </wa-button>
         </div>
         <div class="settings-pane__issue-list">
-          ${this.formIssues.map((issue, index) =>
-            this.renderIssueMasterItem(issue, index),
+          ${repeat(
+            this.formIssues,
+            (issue) => issue.id,
+            (issue, index) => this.renderIssueMasterItem(issue, index),
           )}
         </div>
       </div>

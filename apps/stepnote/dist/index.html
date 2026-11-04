@@ -8382,7 +8382,9 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
     `}renderIssueItemDropdown(e,t,n){return A`
       <wa-dropdown
         class="settings-pane__issue-dropdown"
-        @wa-select=${t=>this.handleIssueMenuSelect(t.detail.item.value,e)}
+        placement="bottom-end"
+        @click=${e=>e.stopPropagation()}
+        @wa-select=${t=>{t.stopPropagation(),this.handleIssueMenuSelect(t.detail.item.value,e)}}
       >
         <wa-button
           slot="trigger"
@@ -8392,8 +8394,6 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
           size="s"
           aria-label="Issueメニュー"
           title="Issueメニュー"
-          @click=${e=>e.stopPropagation()}
-          @keydown=${e=>e.stopPropagation()}
         >
           <wa-icon library="my-icons" name="bars-solid-full"></wa-icon>
         </wa-button>
@@ -8448,7 +8448,7 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
           </wa-button>
         </div>
         <div class="settings-pane__issue-list">
-          ${this.formIssues.map((e,t)=>this.renderIssueMasterItem(e,t))}
+          ${dd(this.formIssues,e=>e.id,(e,t)=>this.renderIssueMasterItem(e,t))}
         </div>
       </div>
     `}renderIssueDetail(){let e=this.formIssues[this.selectedIssueIndex];if(!e)return A`
