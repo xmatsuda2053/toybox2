@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { html } from "lit";
+import { repeat } from "lit/directives/repeat.js";
 import { flattenTemplate } from "./template.utils";
 
 /**
@@ -19,6 +20,9 @@ import { flattenTemplate } from "./template.utils";
  * 4. Lit ブール属性（?attribute=${bool}）の評価再現
  *    - [x] 4-1. ブール値 true がバインドされた場合、属性名のみが保持されること
  *    - [x] 4-2. ブール値 false がバインドされた場合、属性名および記号が除去されること
+ *
+ * 5. Lit ディレクティブ（repeat 等）の展開
+ *    - [x] 5-1. repeat ディレクティブで生成された要素が展開・連結されること
  */
 describe("flattenTemplate", () => {
   describe("1. プリミティブ値および空値の処理", () => {
@@ -78,6 +82,28 @@ describe("flattenTemplate", () => {
       const isHidden = false;
       const tpl = html`<section class="pane" ?hidden=${isHidden}></section>`;
       expect(flattenTemplate(tpl)).toBe('<section class="pane" ></section>');
+    });
+  });
+
+  describe("5. Lit ディレクティブ（repeat 等）の展開", () => {
+    it("5-1. repeat ディレクティブで生成された要素が展開・連結されること", () => {
+      const items = [
+        { id: 1, name: "Alpha" },
+        { id: 2, name: "Beta" },
+      ];
+      const tpl = html`
+        <ul>
+          ${repeat(
+            items,
+            (item) => item.id,
+            (item) => html`<li>${item.name}</li>`,
+          )}
+        </ul>
+      `;
+      const result = flattenTemplate(tpl);
+      expect(result).toContain("<li>Alpha</li>");
+      expect(result).toContain("<li>Beta</li>");
+      expect(result).not.toContain("[object Object]");
     });
   });
 });

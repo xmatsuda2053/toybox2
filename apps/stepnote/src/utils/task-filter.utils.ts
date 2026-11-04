@@ -109,7 +109,10 @@ export function sortIssuesByDueDateAndTitle(
 ): IssueRecord[] {
   return [...issues].sort((a, b) => {
     const timeDiff = compareDueDates(a.dueDate, b.dueDate);
-    return timeDiff !== 0 ? timeDiff : a.title.localeCompare(b.title, "ja");
+    if (timeDiff !== 0) return timeDiff;
+    const titleDiff = a.title.localeCompare(b.title, "ja");
+    if (titleDiff !== 0) return titleDiff;
+    return (a.id ?? 0) - (b.id ?? 0);
   });
 }
 
