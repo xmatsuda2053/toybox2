@@ -92,6 +92,9 @@ const createMockHost = () => {
  *
  * 5. 状態購読（subscribe）の検証
  *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
+ *
+ * 6. システムログ連携仕様
+ *    - [x] 6-5. updateIssue で期日が変更された場合でも、logIssueDueDateChanged が呼び出されないこと（システムログ出力の抑止）
  */
 describe("IssuesController (TDD)", () => {
   let fakeRepository: FakeIssuesRepository;
@@ -425,18 +428,11 @@ describe("IssuesController (TDD)", () => {
       );
     });
 
-    it("6-5. updateIssue で期日が変更された場合、logIssueDueDateChanged が呼び出されること", async () => {
+    it("6-5. updateIssue で期日が変更された場合でも、logIssueDueDateChanged が呼び出されないこと（システムログ出力の抑止）", async () => {
       const newDate = new Date(2026, 11, 31);
       await controller.updateIssue(1, { dueDate: newDate });
 
-      expect(fakeSystemLogService.logIssueDueDateChanged).toHaveBeenCalledTimes(1);
-      expect(fakeSystemLogService.logIssueDueDateChanged).toHaveBeenCalledWith(
-        1,
-        1,
-        "Issue 1-1",
-        new Date("2026-05-01"),
-        newDate,
-      );
+      expect(fakeSystemLogService.logIssueDueDateChanged).not.toHaveBeenCalled();
     });
 
     it("6-6. deleteIssue 実行時に systemLogService.logIssueDeleted が呼び出されること", async () => {
