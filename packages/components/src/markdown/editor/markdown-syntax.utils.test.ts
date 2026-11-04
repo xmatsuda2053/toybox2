@@ -21,6 +21,12 @@
  *   - task-list: 複数行テキストの各行頭に '- [ ] ' を付与すること
  *   - ordered-list: 複数行テキストの各行頭に '1. ' を付与すること
  *   - 途中の空行はスキップしてプレフィックスを付与しないこと
+ * 6. 構文テンプレートへの選択文字列適用 (applyTemplateToSelection) (SN-002)
+ *   - 選択文字列が空の場合、元のテンプレート文字列をそのまま返すこと
+ *   - callout テンプレート（/// info\n\n///）に対し、選択文字列がブロック内部に挿入されること
+ *   - color テンプレート（/red:テキスト/）に対し、選択文字列がカラー構文でラップされること
+ *   - custom-badge テンプレート（:badge[ラベル]:）に対し、角括弧内が選択文字列に置換されること
+ *   - id-link テンプレート（#{ID}{テキスト}）に対し、波括弧内が選択文字列に置換されること
  */
 
 import { describe, it, expect } from "vitest";
@@ -30,6 +36,7 @@ import {
   getSurroundingSyntax,
   formatSurroundingDelimiter,
   applyMultiLineListPrefix,
+  applyTemplateToSelection,
 } from "./markdown-syntax.utils.js";
 
 describe("markdown-syntax.utils", () => {
@@ -177,6 +184,52 @@ describe("markdown-syntax.utils", () => {
       const input = "項目1\n\n項目2";
       const result = applyMultiLineListPrefix("bullet-list", input);
       expect(result).toBe("- 項目1\n\n- 項目2");
+    });
+  });
+
+  describe("applyTemplateToSelection (構文テンプレートへの選択文字列適用: SN-002)", () => {
+    it("選択文字列が空の場合、元のテンプレート文字列をそのまま返すこと", () => {
+      expect(applyTemplateToSelection("/// info\n\n///", "")).toBe("/// info\n\n///");
+      expect(applyTemplateToSelection("/red:テキスト/", "")).toBe("/red:テキスト/");
+      expect(applyTemplateToSelection(":badge[ラベル]:", "")).toBe(":badge[ラベル]:");
+    });
+
+    it("callout テンプレート（/// info\n\n///）に対し、選択文字列がブロック内部に挿入されること", () => {
+      const template = "/// info\n\n///";
+      const selected = "重要なお知らせです";
+      expect(applyTemplateToSelection(template, selected)).toBe("/// info\n重要なお知らせです\n///");
+    });
+
+    it("callout テンプレート（/// warn\n内容\n///）の既定内容が選択文字列に置換されること", () => {
+      const template = "/// warn\n内容\n///";
+      const selected = "注意してください";
+      expect(applyTemplateToSelection(template, selected)).toBe("/// warn\n注意してください\n///");
+    });
+
+    it("複数行の選択文字列に対しても callout ブロック内に正しく展開されること", () => {
+      const template = "/// check\n\n///";
+      const selected = "ステップ1: 準備\nステップ2: 実行";
+      expect(applyTemplateToSelection(template, selected)).toBe(
+        "/// check\nステップ1: 準備\nステップ2: 実行\n///",
+      );
+    });
+
+    it("color テンプレート（/red:テキスト/）に対し、選択文字列がカラー構文でラップされること", () => {
+      const template = "/red:テキスト/";
+      const selected = "エラーメッセージ";
+      expect(applyTemplateToSelection(template, selected)).toBe("/red:エラーメッセージ/");
+    });
+
+    it("custom-badge テンプレート（:badge[ラベル]:）に対し、角括弧内が選択文字列に置換されること", () => {
+      const template = ":badge[ラベル]:";
+      const selected = "優先度高";
+      expect(applyTemplateToSelection(template, selected)).toBe(":badge[優先度高]:");
+    });
+
+    it("id-link テンプレート（#{ID}{テキスト}）に対し、波括弧内が選択文字列に置換されること", () => {
+      const template = "#{ID}{テキスト}";
+      const selected = "詳細リンク";
+      expect(applyTemplateToSelection(template, selected)).toBe("#{ID}{詳細リンク}");
     });
   });
 });

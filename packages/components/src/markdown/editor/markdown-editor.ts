@@ -46,6 +46,7 @@ import type {
 } from "../types.js";
 import {
   applyMultiLineListPrefix,
+  applyTemplateToSelection,
   getFallbackMarkdownText,
   getLinePrefixForAction,
   getSurroundingSyntax,
@@ -472,14 +473,16 @@ export class MarkdownEditor extends LitElement {
 
   /**
    * 拡張機能などの構文テンプレートをエディタに挿入する。
+   * 選択中の文字列が存在する場合は、テンプレートの対応箇所に選択文字列を埋め込んで挿入する。
    *
-   * @param template 構文テンプレート (例: ":badge[ラベル]:")
+   * @param template 構文テンプレート (例: ":badge[ラベル]:", "/// info\n\n///", "/red:テキスト/")
    */
   public insertTemplate(template: string): void {
     if (this.disabled) return;
 
     if (!this.editorView) {
-      this.value = this.value ? `${this.value}\n${template}` : template;
+      const textToInsert = applyTemplateToSelection(template, "");
+      this.value = this.value ? `${this.value}\n${textToInsert}` : textToInsert;
       this.notifyChange(this.value);
       return;
     }
@@ -489,10 +492,7 @@ export class MarkdownEditor extends LitElement {
     const { from, to } = state.selection.main;
     const selectedText = state.sliceDoc(from, to);
 
-    let insertText = template;
-    if (selectedText && /\[.*?\]/.test(template)) {
-      insertText = template.replace(/\[.*?\]/, `[${selectedText}]`);
-    }
+    const insertText = applyTemplateToSelection(template, selectedText);
 
     const newAnchor = from + insertText.length;
     this.dispatchChangeAndFocus(view, from, to, insertText, {

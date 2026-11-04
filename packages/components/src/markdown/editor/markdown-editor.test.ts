@@ -34,6 +34,9 @@
  * 11. 内部入力と外部更新の分離によるカーソル保護（SN-007）
  *   - エディタ内部での入力通知後、遅れて届いた updated でのエディタ全置換 dispatch がスキップされること
  *   - 外部からの value 変更時には、updated でエディタへの全置換 dispatch が実行されること
+ * 12. 拡張機能構文テンプレート挿入時の選択文字列保持（SN-002）
+ *   - 文字列選択時に callout テンプレートを挿入した際、選択文字列を内部に保持して dispatch されること
+ *   - 文字列選択時に color テンプレートを挿入した際、選択文字列をカラー構文でラップして dispatch されること
  */
 
 import * as fs from "node:fs";
@@ -338,6 +341,67 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
             from: 0,
             to: 6,
             insert: "外部から渡された新しいテキスト",
+          },
+        }),
+      );
+    });
+  });
+
+  describe("12. 拡張機能構文テンプレート挿入時の選択文字列保持（SN-002）", () => {
+    it("文字列選択時に callout テンプレートを挿入した際、選択文字列を内部に保持して dispatch されること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        focus: vi.fn(),
+        state: {
+          selection: {
+            main: { from: 5, to: 10 },
+          },
+          sliceDoc: vi.fn((from: number, to: number) => {
+            if (from === 5 && to === 10) return "重要テキスト";
+            return "";
+          }),
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.insertTemplate("/// info\n\n///");
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: {
+            from: 5,
+            to: 10,
+            insert: "/// info\n重要テキスト\n///",
+          },
+        }),
+      );
+    });
+
+    it("文字列選択時に color テンプレートを挿入した際、選択文字列をカラー構文でラップして dispatch されること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        focus: vi.fn(),
+        state: {
+          selection: {
+            main: { from: 0, to: 4 },
+          },
+          sliceDoc: vi.fn(() => "赤色文字"),
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.insertTemplate("/red:テキスト/");
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: {
+            from: 0,
+            to: 4,
+            insert: "/red:赤色文字/",
           },
         }),
       );
