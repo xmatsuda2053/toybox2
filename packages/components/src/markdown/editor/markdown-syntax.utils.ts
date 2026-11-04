@@ -250,5 +250,49 @@ export function applyMultiLineListPrefix(
     })
     .join("\n");
 }
+/**
+ * 構文テンプレートに対し、選択文字列を適切に埋め込んで適用した文字列を生成する純粋関数
+ *
+ * @param template 構文テンプレート（例: "/// info\n\n///", "/red:テキスト/", ":badge[ラベル]:", "#{ID}{テキスト}" 等）
+ * @param selectedText 選択中の文字列
+ * @returns 選択文字列が適用されたテンプレート文字列
+ */
+export function applyTemplateToSelection(
+  template: string,
+  selectedText: string,
+): string {
+  if (!selectedText) {
+    return template;
+  }
 
+  // 1. callout などの三重スラッシュブロック構文 (/// <type>\n...\n///)
+  const calloutMatch = template.match(
+    /^(\/{3}\s*[a-zA-Z0-9_-]+[^\n]*\n)([\s\S]*?)(\n\s*\/{3})$/,
+  );
+  if (calloutMatch) {
+    return `${calloutMatch[1]}${selectedText}${calloutMatch[3]}`;
+  }
 
+  // 2. color 構文 (/color:テキスト/)
+  const colorMatch = template.match(/^\/([a-zA-Z0-9_-]+):(.*)\/$/);
+  if (colorMatch) {
+    return `/${colorMatch[1]}:${selectedText}/`;
+  }
+
+  // 3. custom-badge 構文 (:badge[ラベル]:) や 角括弧を含むテンプレート
+  if (/\[.*?\]/.test(template)) {
+    return template.replace(/\[.*?\]/, `[${selectedText}]`);
+  }
+
+  // 4. id-link 構文 (#{ID}{テキスト}) のように波括弧が連続または末尾にあるテンプレート
+  if (/\{テキスト\}/.test(template)) {
+    return template.replace(/\{テキスト\}/, `{${selectedText}}`);
+  }
+  const curlyMatch = template.match(/^(.*?)(\{[^{}]*\})$/);
+  if (curlyMatch) {
+    return `${curlyMatch[1]}{${selectedText}}`;
+  }
+
+  // 5. 該当するパターンがない場合は、テンプレートの直後に選択文字列を付与
+  return `${template} ${selectedText}`;
+}
