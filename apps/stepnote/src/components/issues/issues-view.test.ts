@@ -29,11 +29,13 @@ import { IssuesView } from "./issues-view.js";
  *    - 2-8. 未完了Issueの期限日に応じて、期限切れ・当日・間近の各状態に対応するアイコンおよび修飾クラス（--overdue, --asap, --upcoming）が適用されること
  *    - 2-9. 完了済みIssue（statusCode === 9）については、期限日が過去であっても期限警告のアイコンおよび修飾クラスが適用されないこと
  *    - 2-10. 各Issueアイテム（.issues-view__item）にID要素（.issues-view__item-id）が描画され、#1 などのIDが表示されること
+ *    - 2-11. セクション内の各Issue行がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること
  *
  * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
  *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
  *    - 3-2. アイテム内の datepicker-input で日付変更（datepicker-change）した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
  *    - 3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger="hover" が設定され、「ステータスを変更」と表示されること
+ *    - 3-4. 複数Issueが存在する状態で特定Issueのステータス変更時、対象外の他IssueのステータスやIDが変更されないこと
  *
  * 4. インライン詳細アコーディオン展開と編集・自動保存・削除 (Inline Detail & Auto-save)
  *    - 4-1. Issue行（.issues-view__item）クリックで該当Issueがインライン詳細（.issues-view__detail-container）として展開され、Markdownエディタ（markdown-editor-preview）が表示されること
@@ -336,6 +338,17 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("#2");
       expect(htmlStr).toContain("#3");
     });
+
+    it("2-11. セクション内の各Issue行がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること", () => {
+      const tsPath = path.resolve(__dirname, "./issues-view.ts");
+      const tsContent = fs.readFileSync(tsPath, "utf-8");
+      expect(tsContent).toMatch(
+        /import\s*\{[^}]*repeat[^}]*\}\s*from\s*["']lit\/directives\/repeat\.js["']/,
+      );
+      expect(tsContent).toMatch(
+        /repeat\(\s*issues,\s*\((?:issue|i)\)\s*=>\s*(?:issue|i)\.id/,
+      );
+    });
   });
 
   describe("3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)", () => {
@@ -370,6 +383,15 @@ describe("IssuesView Component", () => {
         /<wa-tooltip[^>]*for=["']issues-view-status-btn-1["'][^>]*trigger=["']hover["']/,
       );
       expect(htmlStr).toContain("ステータスを変更");
+    });
+
+    it("3-4. 複数Issueが存在する状態で特定Issueのステータス変更時、対象外の他IssueのステータスやIDが変更されないこと", async () => {
+      const mockUpdate = mockIssuesController.updateIssue;
+      await element.handleStatusChange(2, 9);
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+      expect(mockUpdate).toHaveBeenCalledWith(2, { statusCode: 9 });
+      expect(mockUpdate).not.toHaveBeenCalledWith(1, expect.anything());
+      expect(mockUpdate).not.toHaveBeenCalledWith(3, expect.anything());
     });
   });
 

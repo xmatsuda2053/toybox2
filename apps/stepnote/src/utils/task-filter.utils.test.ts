@@ -276,6 +276,17 @@ describe("task-filter.utils", () => {
       expect(sorted.map((i) => i.id)).toEqual([2, 3, 1]);
     });
 
+    it("期限日およびタイトルが同一の場合、IssueのID昇順で正しくソートされること", () => {
+      const sameDueDate = new Date("2026-10-15T00:00:00.000Z");
+      const issues = [
+        createDummyIssue({ id: 5, dueDate: sameDueDate, title: "同一タイトル" }),
+        createDummyIssue({ id: 2, dueDate: sameDueDate, title: "同一タイトル" }),
+        createDummyIssue({ id: 8, dueDate: sameDueDate, title: "同一タイトル" }),
+      ];
+      const sorted = sortIssuesByDueDateAndTitle(issues);
+      expect(sorted.map((i) => i.id)).toEqual([2, 5, 8]);
+    });
+
     it("期限日が同一の場合、Issueタイトルの日本語五十音順で正しくソートされること", () => {
       const sameDueDate = new Date("2026-10-15T00:00:00.000Z");
       const issues = [

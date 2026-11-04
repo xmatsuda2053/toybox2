@@ -5,6 +5,7 @@ import {
   type PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import "@shared/components";
 import type {
   DatePickerChangeEventDetail,
@@ -583,7 +584,11 @@ export class IssuesView extends WithIssuesController(
         <div class="issues-view__section-header">
           ${title} (${issues.length})
         </div>
-        ${issues.map((issue) => this.renderIssueRow(issue))}
+        ${repeat(
+          issues,
+          (issue) => issue.id,
+          (issue) => this.renderIssueRow(issue),
+        )}
       </div>
     `;
   }

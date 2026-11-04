@@ -82,9 +82,42 @@ function resolveBooleanAttribute(
 /**
  * テンプレート内に埋め込まれた動的値を再帰的またはプリミティブ値として文字列展開する
  */
+interface LitDirectiveResult {
+  _$litDirective$?: unknown;
+  values?: unknown[];
+}
+
+function isDirectiveResult(val: unknown): val is LitDirectiveResult {
+  return (
+    typeof val === "object" &&
+    val !== null &&
+    "_$litDirective$" in val &&
+    Array.isArray((val as LitDirectiveResult).values)
+  );
+}
+
+function resolveDirectiveResult(directive: LitDirectiveResult): unknown {
+  const values = directive.values ?? [];
+  const [items, keyOrTemplate, templateFn] = values;
+  const fn =
+    typeof templateFn === "function"
+      ? templateFn
+      : typeof keyOrTemplate === "function"
+        ? keyOrTemplate
+        : null;
+
+  if (Array.isArray(items) && fn) {
+    return items.map((item, index) => fn(item, index));
+  }
+  return "";
+}
+
 function stringifyValue(val: unknown): string {
   if (val === null || val === undefined) {
     return "";
+  }
+  if (isDirectiveResult(val)) {
+    return stringifyValue(resolveDirectiveResult(val));
   }
   if (Array.isArray(val)) {
     return val.map((v) => flattenTemplate(v)).join("");
