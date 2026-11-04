@@ -130,14 +130,5 @@ export class IssuesController extends BaseTaskSubItemController<
         data.statusCode,
       );
     }
-    if (data.dueDate !== undefined && data.dueDate.getTime() !== before.dueDate.getTime()) {
-      await this.systemLogService.logIssueDueDateChanged(
-        taskId,
-        issueId,
-        before.title,
-        before.dueDate,
-        data.dueDate,
-      );
-    }
   }
 }
