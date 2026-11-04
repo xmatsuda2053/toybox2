@@ -164,6 +164,7 @@ export class MarkdownEditor extends LitElement {
   private disabledCompartment = new Compartment();
   private customExtensionsCompartment = new Compartment();
   private lastAppliedDarkMode = false;
+  private lastInternalValue: string | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -183,11 +184,19 @@ export class MarkdownEditor extends LitElement {
     super.updated(changedProperties);
 
     if (changedProperties.has("value") && this.editorView) {
-      const currentDoc = this.editorView.state.doc.toString();
-      if (this.value !== currentDoc) {
-        this.editorView.dispatch({
-          changes: { from: 0, to: currentDoc.length, insert: this.value },
-        });
+      if (
+        this.lastInternalValue !== null &&
+        this.value === this.lastInternalValue
+      ) {
+        this.lastInternalValue = null;
+      } else {
+        this.lastInternalValue = null;
+        const currentDoc = this.editorView.state.doc.toString();
+        if (this.value !== currentDoc) {
+          this.editorView.dispatch({
+            changes: { from: 0, to: currentDoc.length, insert: this.value },
+          });
+        }
       }
     }
 
@@ -282,8 +291,7 @@ export class MarkdownEditor extends LitElement {
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           const newValue = update.state.doc.toString();
-          this.value = newValue;
-          this.notifyChange(newValue);
+          this.handleInternalDocChange(newValue);
         }
       }),
       this.disabledCompartment.of(
@@ -346,9 +354,23 @@ export class MarkdownEditor extends LitElement {
   }
 
   /**
+   * エディタ内部の入力・変更によるドキュメント更新を処理する。
+   * 内部起因の更新フラグ（lastInternalValue）を保持してから value を更新し、
+   * 外部への変更通知を発火する。
+   *
+   * @param newValue 更新後のドキュメント文字列
+   */
+  public handleInternalDocChange(newValue: string): void {
+    this.lastInternalValue = newValue;
+    this.value = newValue;
+    this.notifyChange(newValue);
+  }
+
+  /**
    * エディタのテキストを外部から更新する。
    */
   public setValue(newValue: string): void {
+    this.lastInternalValue = null;
     this.value = newValue;
     if (this.editorView) {
       const currentDoc = this.editorView.state.doc.toString();
