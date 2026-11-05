@@ -1,4 +1,10 @@
-import { html, unsafeCSS, nothing, type HTMLTemplateResult } from "lit";
+import {
+  html,
+  unsafeCSS,
+  nothing,
+  type HTMLTemplateResult,
+  type PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
 import {
@@ -41,6 +47,22 @@ export class JournalPane extends WithScratchController(
 
   @state()
   public activeTab: string = "logs";
+
+  private lastTaskId?: number;
+
+  override willUpdate(changedProperties: PropertyValues): void {
+    super.willUpdate(changedProperties);
+    this.syncParentTaskState();
+  }
+
+  /** 親タスク切り替え時の状態初期化 */
+  private syncParentTaskState(): void {
+    const parentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId !== parentTaskId) {
+      this.lastTaskId = parentTaskId;
+      this.activeTab = "logs";
+    }
+  }
 
   /**
    * ジャーナルエリアの開閉状態を解決する。
