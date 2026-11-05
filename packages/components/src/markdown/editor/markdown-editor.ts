@@ -166,6 +166,7 @@ export class MarkdownEditor extends LitElement {
   private customExtensionsCompartment = new Compartment();
   private lastAppliedDarkMode = false;
   private lastInternalValue: string | null = null;
+  private resizeObserver?: ResizeObserver;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -175,6 +176,17 @@ export class MarkdownEditor extends LitElement {
         this.syncTheme(true);
       }
     });
+
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            this.refresh();
+          }
+        }
+      });
+      this.resizeObserver.observe(this);
+    }
   }
 
   override firstUpdated(): void {
@@ -236,6 +248,8 @@ export class MarkdownEditor extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.disconnectThemeObserver?.();
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
     this.editorView?.destroy();
     this.editorView = undefined;
   }
@@ -370,6 +384,23 @@ export class MarkdownEditor extends LitElement {
   /**
    * エディタのテキストを外部から更新する。
    */
+  /**
+   * エディタの Viewport および DOM 計測を強制的に再実行し、最新値との同期を保証する。
+   * display: none や非表示タブから復帰した際に呼び出す。
+   */
+  public refresh(): void {
+    if (!this.editorView) return;
+
+    const currentDoc = this.editorView.state.doc.toString();
+    if (this.value !== currentDoc) {
+      this.editorView.dispatch({
+        changes: { from: 0, to: currentDoc.length, insert: this.value },
+      });
+    }
+
+    this.editorView.requestMeasure();
+  }
+
   public setValue(newValue: string): void {
     this.lastInternalValue = null;
     this.value = newValue;

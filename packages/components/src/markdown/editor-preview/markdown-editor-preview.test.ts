@@ -124,7 +124,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { MarkdownEditorPreview } from "./markdown-editor-preview.js";
 import type { Plugin } from "unified";
@@ -1432,6 +1432,40 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(scssContent).toMatch(/overflow:\s*hidden;/);
       expect(scssContent).toMatch(/text-overflow:\s*ellipsis;/);
       expect(scssContent).toMatch(/white-space:\s*nowrap;/);
+    });
+  });
+
+  describe("17. 表示モード切替時のエディタ計測・表示リフレッシュ（SN-021）", () => {
+    it("setMode('edit') 呼び出し時にエディタ要素のリフレッシュが呼び出されること", () => {
+      element.mode = "preview";
+      let refreshed = false;
+      element.refreshEditor = () => {
+        refreshed = true;
+      };
+
+      element.setMode("edit");
+      expect(refreshed).toBe(true);
+    });
+
+    it("setMode('split') 呼び出し時にエディタ要素のリフレッシュが呼び出されること", () => {
+      element.mode = "preview";
+      element.allowSplit = true;
+      let refreshed = false;
+      element.refreshEditor = () => {
+        refreshed = true;
+      };
+
+      element.setMode("split");
+      expect(refreshed).toBe(true);
+    });
+
+    it("refreshEditor() 実行時に editorElement.refresh() が呼び出されること", () => {
+      const mockRefresh = vi.fn();
+      const mockEditor = { refresh: mockRefresh } as unknown as MarkdownEditor;
+      vi.spyOn(element, "editorElement", "get").mockReturnValue(mockEditor);
+
+      element.refreshEditor();
+      expect(mockRefresh).toHaveBeenCalledOnce();
     });
   });
 });

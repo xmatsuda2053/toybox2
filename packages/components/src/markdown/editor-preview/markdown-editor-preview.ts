@@ -155,6 +155,21 @@ function computeEffectiveEditorExtensions(
 export class MarkdownEditorPreview extends LitElement {
   public static override styles = unsafeCSS(editorPreviewStyles);
 
+  /** 内部エディタ要素への参照を取得する */
+  public get editorElement(): MarkdownEditor | null {
+    return (this.renderRoot?.querySelector?.("markdown-editor") as MarkdownEditor) ?? null;
+  }
+
+  /**
+   * 内部エディタの表示・サイズ計測をリフレッシュする。
+   */
+  public refreshEditor(): void {
+    const editor = this.editorElement;
+    if (editor && typeof editor.refresh === "function") {
+      editor.refresh();
+    }
+  }
+
   /** ドキュメントテキスト */
   @property({ type: String })
   public value = "";
@@ -415,6 +430,15 @@ export class MarkdownEditorPreview extends LitElement {
         this.style.height = this.effectiveHeight || "";
       }
     }
+
+    if (changedProperties.has("mode")) {
+      if (this.mode === "edit" || this.mode === "split") {
+        this.refreshEditor();
+        if (typeof queueMicrotask !== "undefined") {
+          queueMicrotask(() => this.refreshEditor());
+        }
+      }
+    }
   }
 
   /**
@@ -459,6 +483,13 @@ export class MarkdownEditorPreview extends LitElement {
         composed: true,
       }),
     );
+
+    if (newMode === "edit" || newMode === "split") {
+      this.refreshEditor();
+      if (typeof queueMicrotask !== "undefined") {
+        queueMicrotask(() => this.refreshEditor());
+      }
+    }
   }
 
   /**
