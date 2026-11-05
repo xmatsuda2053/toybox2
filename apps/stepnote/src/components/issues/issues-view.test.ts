@@ -3,7 +3,6 @@ import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
-import type { TaskStatusCode } from "@/types";
 import type { SearchInputEventDetail } from "@shared/components";
 import type { IssuesController } from "@/controllers/issues.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
@@ -15,7 +14,7 @@ import { IssuesView } from "./issues-view.js";
  * 1. 初期描画と空状態 (Initial Render & Empty State)
  *    - 1-1. issuesController.state が空配列の場合、空状態メッセージ（.issues-view__empty）が表示されること
  *    - 1-2. 一覧ヘッダーに共通部品 search-input（.issues-view__search-input）がレンダリングされること
- *    - 1-3. 一覧ヘッダーに単一追加ボタン（.issues-view__btn-add）および一括追加ボタン（.issues-view__btn-bulk-add）が表示されること
+ *    - 1-3. 一覧ヘッダーにIssue追加ボタン（.issues-view__btn-add）が表示され、旧一括追加ボタン（.issues-view__btn-bulk-add）が存在しないこと
  *    - 1-4. 完了表示切り替えスイッチ（#issues-view-toggle-completed）が存在しないこと（廃止）
  *
  * 2. 一覧セクション表示と進捗可視化 (Sections & List View)
@@ -46,18 +45,17 @@ import { IssuesView } from "./issues-view.js";
  *    - 4-6. Markdownエディタの削除要求（markdown-delete）で削除確認ダイアログ（wa-dialog）が開き、確認後に issuesController.deleteIssue が実行され、詳細が閉じること
  *    - 4-7. 各Issue行（.issues-view__item）とインライン詳細（.issues-view__detail-container）が一体化ラッパー（.issues-view__row-group）に内包され、不要な余白なく連結描画されること
  *    - 4-8. Issue展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview' モード、handleModeChange によりモードが更新されること
- *    - 4-9. 新規追加ボタン（handleCreateIssue）で作成された Issue はエディタモード（.mode='edit'）で自動展開されること
- *    - 4-10. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること
- *    - 4-11. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
- *    - 4-12. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセット（issueModeMap が初期化）され、展開状態もクリアされること
- *    - 4-13. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること
- *    - 4-14. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
- *    - 4-15. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること
+ *    - 4-9. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること
+ *    - 4-10. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること
+ *    - 4-11. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセット（issueModeMap が初期化）され、展開状態もクリアされること
+ *    - 4-12. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること
+ *    - 4-13. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
+ *    - 4-14. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること
  *
- * 5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)
- *    - 5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること
- *    - 5-2. 一括追加ボタン（.issues-view__btn-bulk-add）クリック時、一括作成ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと
- *    - 5-3. 一括作成ダイアログ内の wa-textarea に入力し、作成ボタンをクリックすると issuesController.createMultipleIssues が呼ばれ、ダイアログが閉じること
+ * 5. 新規Issue作成（Issue追加ダイアログによる一本化） (Creation Actions)
+ *    - 5-1. Issue追加ボタン（.issues-view__btn-add）クリック時、Issue追加ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと
+ *    - 5-2. Issue追加ダイアログの説明文に期日自動設定の誤記が含まれず「1行につき1件のIssueを作成します。」と案内されること
+ *    - 5-3. ダイアログ内の wa-textarea に複数行（または単一タイトル）を入力し作成ボタンをクリックすると、createMultipleIssues が呼ばれダイアログが閉じること
  *    - 5-4. キャンセルボタンクリックでダイアログが閉じること
  *
  * 6. BEM設計およびSCSSスタイルの検証
@@ -155,12 +153,13 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toMatch(/size=["']s["']/);
     });
 
-    it("1-3. 一覧ヘッダーに単一追加ボタン（.issues-view__btn-add）および一括追加ボタン（.issues-view__btn-bulk-add）が表示されること", () => {
+    it("1-3. 一覧ヘッダーにIssue追加ボタン（.issues-view__btn-add）が表示され、旧一括追加ボタン（.issues-view__btn-bulk-add）が存在しないこと", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__btn-add");
-      expect(htmlStr).toContain("issues-view__btn-bulk-add");
+      expect(htmlStr).not.toContain("issues-view__btn-bulk-add");
       expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']plus-solid-full["']/);
-      expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']list-check-solid-full["']/);
+      expect(htmlStr).not.toMatch(/<wa-icon[^>]*name=["']list-check-solid-full["']/);
+      expect(htmlStr).toContain("Issueを追加");
     });
 
     it("1-4. 完了表示切り替えスイッチ（#issues-view-toggle-completed）が存在しないこと（廃止）", () => {
@@ -503,44 +502,14 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
     });
 
-    it("4-9. 新規追加ボタン（handleCreateIssue）で作成された Issue はエディタモード（.mode='edit'）で自動展開されること", async () => {
-      mockIssuesController.createIssue.mockImplementation(
-        async (issue: {
-          title: string;
-          value: string;
-          statusCode: TaskStatusCode;
-          dueDate: Date;
-        }) => {
-          const id = 100;
-          mockIssuesController.state.push({
-            id,
-            taskId: 10,
-            title: issue.title,
-            value: issue.value,
-            statusCode: issue.statusCode,
-            dueDate: issue.dueDate,
-          });
-          return id;
-        },
-      );
-
-      await element.handleCreateIssue();
-      expect(element.expandedIssueIds.has(100)).toBe(true);
-      expect(element.issueModeMap.get(100)).toBe("edit");
-
-      const template = element.render();
-      const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
-    });
-
-    it("4-10. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること", async () => {
+    it("4-9. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること", async () => {
       element.issueModeMap.set(1, "edit");
       element.handleRequestDelete(1);
       await element.handleConfirmDelete();
       expect(element.issueModeMap.has(1)).toBe(false);
     });
 
-    it("4-11. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
+    it("4-10. Issue詳細を手動で開閉トグルした際（一度 edit に切り替えて閉じた後に再度開いた場合を含む）、プレビューモード（preview）で初期化されて表示されること", () => {
       element.handleToggleExpand(1);
       element.handleModeChange(1, "edit");
       expect(element.issueModeMap.get(1)).toBe("edit");
@@ -555,7 +524,7 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
     });
 
-    it("4-12. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
+    it("4-11. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
       element.handleToggleExpand(1);
       element.handleModeChange(1, "edit");
       expect(element.expandedIssueIds.has(1)).toBe(true);
@@ -572,7 +541,7 @@ describe("IssuesView Component", () => {
       expect(element.issueModeMap.size).toBe(0);
     });
 
-    it("4-13. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること", () => {
+    it("4-12. resetModesToPreview() の呼び出しにより、すべての Issue のエディタモードがプレビューモードへリセットされること", () => {
       element.issueModeMap.set(1, "edit");
       element.issueModeMap.set(2, "edit");
 
@@ -582,7 +551,7 @@ describe("IssuesView Component", () => {
       expect(element.issueModeMap.get(2)).toBe("preview");
     });
 
-    it("4-14. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること", () => {
+    it("4-13. インライン詳細の markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること", () => {
       element.expandedIssueIds.add(1);
       const template = element.render();
       const htmlStr = flattenTemplate(template);
@@ -590,7 +559,7 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.commands=/);
     });
 
-    it("4-15. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること", async () => {
+    it("4-14. handleCopyJumpTag 実行時に #[issueId]{title} の形式でクリップボードへ書き込みが行われること", async () => {
       const originalClipboard = navigator.clipboard;
       const writeTextMock = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, "clipboard", {
@@ -609,59 +578,56 @@ describe("IssuesView Component", () => {
     });
   });
 
-  describe("5. 新規Issue作成（単一作成 & 一括作成） (Creation Actions)", () => {
-    it("5-1. 単一追加ボタン（.issues-view__btn-add）クリック時、画面遷移せず即座に createIssue が呼び出され、新しく作成されたIssue行が自動展開されること", async () => {
-      await element.handleCreateIssue();
-
-      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "新規Issue",
-          value: "### 新規Issue\n\n",
-          statusCode: 0,
-        }),
-      );
-      expect(element.expandedIssueIds.has(100)).toBe(true);
-    });
-
-    it("5-1-2. 単一追加（handleCreateIssue）で作成時、dueDate が undefined（空）として渡されること", async () => {
-      await element.handleCreateIssue();
-
-      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dueDate: undefined,
-        }),
-      );
-    });
-
-    it("5-2. 一括追加ボタン（.issues-view__btn-bulk-add）クリック時、一括作成ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと", () => {
-      element.handleOpenBulkAddDialog();
-      expect(element.isBulkAddDialogOpen).toBe(true);
+  describe("5. 新規Issue作成（Issue追加ダイアログによる一本化） (Creation Actions)", () => {
+    it("5-1. Issue追加ボタン（.issues-view__btn-add）クリック時、Issue追加ダイアログ（wa-dialog.issues-view__add-dialog）が開くこと", () => {
+      element.handleOpenAddDialog();
+      expect(element.isAddDialogOpen).toBe(true);
 
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("issues-view__bulk-dialog");
+      expect(htmlStr).toContain("issues-view__add-dialog");
       expect(htmlStr).toContain("wa-textarea");
+      expect(htmlStr).toMatch(/label=["']Issueの追加["']/);
     });
 
-    it("5-3. 一括作成ダイアログ内の wa-textarea に入力し、作成ボタンをクリックすると issuesController.createMultipleIssues が呼ばれ、ダイアログが閉じること", async () => {
-      element.handleOpenBulkAddDialog();
-      element.bulkAddText = "一括1\n一括2\n  \n一括3";
+    it("5-2. Issue追加ダイアログの説明文に期日自動設定の誤記が含まれず「1行につき1件のIssueを作成します。」と案内されること", () => {
+      element.handleOpenAddDialog();
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("1行につき1件のIssueを作成します。");
+      expect(htmlStr).not.toContain("期日は本日の日付が設定されます");
+    });
 
-      await element.handleConfirmBulkAdd();
+    it("5-3. ダイアログ内の wa-textarea に複数行（または単一タイトル）を入力し作成ボタンをクリックすると、createMultipleIssues が呼ばれダイアログが閉じること", async () => {
+      element.handleOpenAddDialog();
+      element.addText = "一括1\n一括2\n  \n一括3";
+
+      await element.handleConfirmAdd();
 
       expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
         ["一括1", "一括2", "一括3"],
       );
-      expect(element.isBulkAddDialogOpen).toBe(false);
-      expect(element.bulkAddText).toBe("");
+      expect(element.isAddDialogOpen).toBe(false);
+      expect(element.addText).toBe("");
+
+      // 単一タイトル入力時も同一処理で作成されること
+      element.handleOpenAddDialog();
+      element.addText = "単体Issue";
+
+      await element.handleConfirmAdd();
+
+      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
+        ["単体Issue"],
+      );
+      expect(element.isAddDialogOpen).toBe(false);
+      expect(element.addText).toBe("");
     });
 
     it("5-4. キャンセルボタンクリックでダイアログが閉じること", () => {
-      element.handleOpenBulkAddDialog();
-      element.bulkAddText = "キャンセル対象テキスト";
+      element.handleOpenAddDialog();
+      element.addText = "キャンセル対象テキスト";
 
-      element.handleCloseBulkAddDialog();
-      expect(element.isBulkAddDialogOpen).toBe(false);
-      expect(element.bulkAddText).toBe("");
+      element.handleCloseAddDialog();
+      expect(element.isAddDialogOpen).toBe(false);
+      expect(element.addText).toBe("");
     });
   });
 

@@ -80,10 +80,10 @@ export class IssuesView extends WithIssuesController(
   public deletingIssueId?: number;
 
   @state()
-  public isBulkAddDialogOpen: boolean = false;
+  public isAddDialogOpen: boolean = false;
 
   @state()
-  public bulkAddText: string = "";
+  public addText: string = "";
 
   @state()
   public issueModeMap: Map<number, MarkdownDisplayMode> = new Map();
@@ -191,43 +191,25 @@ export class IssuesView extends WithIssuesController(
     }
   };
 
-  /** 単一新規 Issue 追加ハンドラー（即時作成して自動展開、エディタモード初期化） */
-  public handleCreateIssue = async (): Promise<void> => {
-    if (!this.issuesController) return;
-
-    const title = "新規Issue";
-    const newId = await this.issuesController.createIssue({
-      title,
-      value: `### ${title}\n\n`,
-      statusCode: 0,
-      dueDate: undefined,
-    });
-
-    if (newId !== undefined) {
-      this.handleToggleExpand(newId);
-      this.issueModeMap.set(newId, "edit");
-    }
+  /** Issue追加ダイアログを開く */
+  public handleOpenAddDialog = (): void => {
+    this.addText = "";
+    this.isAddDialogOpen = true;
   };
 
-  /** 複数Issue一括作成ダイアログを開く */
-  public handleOpenBulkAddDialog = (): void => {
-    this.bulkAddText = "";
-    this.isBulkAddDialogOpen = true;
+  /** Issue追加ダイアログを閉じる */
+  public handleCloseAddDialog = (): void => {
+    this.isAddDialogOpen = false;
+    this.addText = "";
   };
 
-  /** 複数Issue一括作成ダイアログを閉じる */
-  public handleCloseBulkAddDialog = (): void => {
-    this.isBulkAddDialogOpen = false;
-    this.bulkAddText = "";
-  };
-
-  /** 複数Issue一括作成確定ハンドラー */
-  public handleConfirmBulkAdd = async (): Promise<void> => {
-    const titles = parseBulkIssuesInput(this.bulkAddText);
+  /** Issue追加確定ハンドラー（単一・複数行一括対応） */
+  public handleConfirmAdd = async (): Promise<void> => {
+    const titles = parseBulkIssuesInput(this.addText);
     if (titles.length > 0 && this.issuesController) {
       await this.issuesController.createMultipleIssues(titles);
     }
-    this.handleCloseBulkAddDialog();
+    this.handleCloseAddDialog();
   };
 
   /** 行内でのステータス変更ハンドラー */
@@ -322,29 +304,11 @@ export class IssuesView extends WithIssuesController(
     return html`
       <div class="issues-view__actions">
         <wa-tooltip
-          for="issues-view-btn-bulk-add"
-          placement="bottom"
-          trigger="hover"
-        >
-          複数Issueを一括追加
-        </wa-tooltip>
-        <wa-button
-          id="issues-view-btn-bulk-add"
-          class="issues-view__btn-bulk-add"
-          variant="neutral"
-          appearance="plain"
-          size="s"
-          aria-label="複数Issueを一括追加"
-          @click=${this.handleOpenBulkAddDialog}
-        >
-          <wa-icon library="my-icons" name="list-check-solid-full"></wa-icon>
-        </wa-button>
-        <wa-tooltip
           for="issues-view-btn-add"
           placement="bottom"
           trigger="hover"
         >
-          新規Issueを追加
+          Issueを追加
         </wa-tooltip>
         <wa-button
           id="issues-view-btn-add"
@@ -352,8 +316,8 @@ export class IssuesView extends WithIssuesController(
           variant="neutral"
           appearance="plain"
           size="s"
-          aria-label="新規Issueを追加"
-          @click=${this.handleCreateIssue}
+          aria-label="Issueを追加"
+          @click=${this.handleOpenAddDialog}
         >
           <wa-icon library="my-icons" name="plus-solid-full"></wa-icon>
         </wa-button>
@@ -623,42 +587,42 @@ export class IssuesView extends WithIssuesController(
     `;
   }
 
-  /** 複数Issue一括作成ダイアログの描画 */
-  private renderBulkAddDialog(): HTMLTemplateResult {
+  /** Issue追加ダイアログの描画 */
+  private renderAddDialog(): HTMLTemplateResult {
     return html`
       <wa-dialog
-        class="issues-view__bulk-dialog"
-        label="複数Issueの一括作成"
-        ?open=${this.isBulkAddDialogOpen}
-        @wa-after-hide=${this.handleCloseBulkAddDialog}
+        class="issues-view__add-dialog"
+        label="Issueの追加"
+        ?open=${this.isAddDialogOpen}
+        @wa-after-hide=${this.handleCloseAddDialog}
       >
-        <div class="issues-view__bulk-dialog-body">
-          <div class="issues-view__bulk-dialog-description">
-            1行につき1件のIssueを作成します。期日は本日の日付が設定されます。
+        <div class="issues-view__add-dialog-body">
+          <div class="issues-view__add-dialog-description">
+            1行につき1件のIssueを作成します。
           </div>
           <wa-textarea
-            class="issues-view__bulk-textarea"
+            class="issues-view__add-textarea"
             rows="6"
-            placeholder="Issueタイトルを1行ずつ入力...&#10;例:&#10;仕様の確認&#10;画面モック作成&#10;API結合テスト"
-            .value=${this.bulkAddText}
+            placeholder="Issueタイトルを入力（改行で複数件追加）...&#10;例:&#10;仕様の確認&#10;画面モック作成&#10;API結合テスト"
+            .value=${this.addText}
             @input=${(e: Event) => {
-              this.bulkAddText = (e.target as HTMLTextAreaElement).value;
+              this.addText = (e.target as HTMLTextAreaElement).value;
             }}
           ></wa-textarea>
         </div>
-        <div slot="footer" class="issues-view__bulk-dialog-footer">
+        <div slot="footer" class="issues-view__add-dialog-footer">
           <wa-button
             variant="neutral"
             appearance="plain"
             size="s"
-            @click=${this.handleCloseBulkAddDialog}
+            @click=${this.handleCloseAddDialog}
           >
             キャンセル
           </wa-button>
           <wa-button
             variant="brand"
             size="s"
-            @click=${this.handleConfirmBulkAdd}
+            @click=${this.handleConfirmAdd}
           >
             作成
           </wa-button>
@@ -679,7 +643,7 @@ export class IssuesView extends WithIssuesController(
         ${this.renderHeader()}
         ${this.renderList(filteredIssues)}
         ${this.renderDeleteDialog()}
-        ${this.renderBulkAddDialog()}
+        ${this.renderAddDialog()}
       </div>
     `;
   }
