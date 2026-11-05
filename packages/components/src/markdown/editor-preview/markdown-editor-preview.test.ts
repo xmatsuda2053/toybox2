@@ -127,6 +127,7 @@ import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { MarkdownEditorPreview } from "./markdown-editor-preview.js";
+import type { MarkdownEditor } from "../editor/markdown-editor.js";
 import type { Plugin } from "unified";
 import type { Root as MdastRoot } from "mdast";
 import { EditorView } from "@codemirror/view";
