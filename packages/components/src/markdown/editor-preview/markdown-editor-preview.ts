@@ -725,12 +725,13 @@ export class MarkdownEditorPreview extends LitElement {
    */
   public async handleMenuCopyAction(): Promise<void> {
     this.toggleActionMenu(false);
+    const textToCopy = this.editorElement?.getValue() ?? this.value;
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(this.value);
+      await navigator.clipboard.writeText(textToCopy);
     }
     this.dispatchEvent(
       new CustomEvent("markdown-copy", {
-        detail: { value: this.value },
+        detail: { value: textToCopy },
         bubbles: true,
         composed: true,
       }),
