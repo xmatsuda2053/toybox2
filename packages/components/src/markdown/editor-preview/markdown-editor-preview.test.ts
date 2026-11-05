@@ -93,6 +93,8 @@
  *   - メニューボタンが slot='trigger' として配置され、アイコンが bars-solid-full であり、title と aria-label が「エディタメニュー」であること
  *   - wa-dropdown 内に「コピー（value='copy'）」「構文ヘルプ（value='help'）」の各 wa-dropdown-item が含まれ、「整形（value='format'）」は含まれないこと
  *   - メニュー内の「コピー」実行時、value がクリップボードにコピーされ markdown-copy イベントが発火すること
+ *   - メニュー内の「コピー」実行時、editorElement が存在する場合は getValue()（生ドキュメントテキスト）が優先してクリップボードにコピーされること
+ *   - メニュー内の「コピー」実行時、editorElement が未接続（null）の場合は this.value がフォールバックとしてコピーされること
  *   - メニュー内の「構文ヘルプ」実行時、toggleHelp(true) が呼び出されること
  * 22. テーマスタイルバリアント制御（darkTheme / lightTheme）と soft ダークスタイル
  *   - darkTheme の初期値が 'contrast'、lightTheme の初期値が 'default' であること
@@ -1131,6 +1133,68 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
         expect(copiedText).toBe("# コピー対象テキスト");
         expect(copyEventFired).toBe(true);
+      } finally {
+        if (originalClipboard) {
+          Object.assign(globalThis.navigator, { clipboard: originalClipboard });
+        }
+      }
+    });
+
+    it("メニュー内の「コピー」実行時、editorElement が存在する場合は getValue() から取得した生テキストがクリップボードへコピーされること", async () => {
+      element.value = "古いキャッシュ値";
+      const rawDocText = "C:\\Program Files (x86)\\My App\\test.exe & [リンク](url)";
+      const mockGetValue = vi.fn().mockReturnValue(rawDocText);
+      const mockEditor = {
+        getValue: mockGetValue,
+      } as unknown as MarkdownEditor;
+
+      vi.spyOn(element, "editorElement", "get").mockReturnValue(mockEditor);
+
+      let copiedText = "";
+      const originalClipboard = globalThis.navigator?.clipboard;
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      try {
+        let copyEventDetail: { value: string } | null = null;
+        element.addEventListener("markdown-copy", (e: Event) => {
+          copyEventDetail = (e as CustomEvent<{ value: string }>).detail;
+        });
+
+        await element.handleMenuCopyAction();
+
+        expect(mockGetValue).toHaveBeenCalled();
+        expect(copiedText).toBe(rawDocText);
+        expect(copyEventDetail).toEqual({ value: rawDocText });
+      } finally {
+        if (originalClipboard) {
+          Object.assign(globalThis.navigator, { clipboard: originalClipboard });
+        }
+      }
+    });
+
+    it("メニュー内の「コピー」実行時、editorElement が未接続（null）の場合は this.value がフォールバックとしてコピーされること", async () => {
+      element.value = "フォールバックテキスト";
+      vi.spyOn(element, "editorElement", "get").mockReturnValue(null);
+
+      let copiedText = "";
+      const originalClipboard = globalThis.navigator?.clipboard;
+      Object.assign(globalThis.navigator || {}, {
+        clipboard: {
+          writeText: async (text: string) => {
+            copiedText = text;
+          },
+        },
+      });
+
+      try {
+        await element.handleMenuCopyAction();
+        expect(copiedText).toBe("フォールバックテキスト");
       } finally {
         if (originalClipboard) {
           Object.assign(globalThis.navigator, { clipboard: originalClipboard });
