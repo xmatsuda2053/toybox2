@@ -288,6 +288,16 @@ describe("IssuesController (TDD)", () => {
       expect(mockHost.requestUpdateMock).toHaveBeenCalled();
     });
 
+    it("3-4-2. createMultipleIssues 実行時に dueDate が省略された場合、dueDate は undefined（空）となること", async () => {
+      const titles = ["期日未設定タスク"];
+
+      await controller.createMultipleIssues(titles);
+
+      expect(controller.state).toHaveLength(1);
+      expect(controller.state[0].title).toBe("期日未設定タスク");
+      expect(controller.state[0].dueDate).toBeUndefined();
+    });
+
     it("3-5. taskId が undefined またはタイトル配列が空の場合、createMultipleIssues は何も作成しないこと", async () => {
       await controller.createMultipleIssues([]);
       expect(controller.state).toHaveLength(0);

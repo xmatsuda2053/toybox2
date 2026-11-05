@@ -2,12 +2,16 @@ import type { TaskStatusCode } from "@/types/domain/task-status.type";
 
 /**
  * Date オブジェクトを "YYYY-MM-DD" 形式の文字列に変換する。
+ * 未指定または null の場合は "未設定" を返す。
  *
  * @export
- * @param {Date} date
- * @return {string} "YYYY-MM-DD"
+ * @param {Date | null | undefined} date
+ * @return {string} "YYYY-MM-DD" または "未設定"
  */
-export function formatDateString(date: Date): string {
+export function formatDateString(date?: Date | null): string {
+  if (!date) {
+    return "未設定";
+  }
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -187,13 +191,14 @@ export function formatTaskFiscalYearChangedLog(
  *
  * @export
  * @param {number} issueId 採番されたIssueID
- * @param {Date} dueDate 期日
+ * @param {Date} [dueDate] 期日（未指定可）
  * @param {TaskStatusCode} [statusCode=0] 初期ステータスコード
+ * @param {string} [title] Issueタイトル
  * @return {string} Markdown文字列
  */
 export function formatIssueCreatedLog(
   issueId: number,
-  dueDate: Date,
+  dueDate?: Date,
   statusCode: TaskStatusCode = 0,
   title?: string,
 ): string {
@@ -298,7 +303,7 @@ export function formatIssueDueDateChangedLog(
  *   id: number;
  *   title: string;
  *   statusCode: TaskStatusCode;
- *   dueDate: Date;
+ *   dueDate?: Date;
  * }} issue 削除対象Issue
  * @return {string} Markdown文字列
  */
@@ -306,7 +311,7 @@ export function formatIssueDeletedLog(issue: {
   id?: number;
   title: string;
   statusCode: TaskStatusCode;
-  dueDate: Date;
+  dueDate?: Date;
 }): string {
   const statusLabel = getStatusLabel(issue.statusCode);
   const dueDateStr = formatDateString(issue.dueDate);

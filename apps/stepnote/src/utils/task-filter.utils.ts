@@ -74,12 +74,19 @@ export function toDueDateTimestamp(dueDate: Date | string): number {
 
 /**
  * 2つの期限日を比較し、昇順ソート用の差分値を返す。
+ * 未設定（undefined または null）の場合は末尾として扱う。
  *
- * @param {Date | string} a 期限日A
- * @param {Date | string} b 期限日B
+ * @param {Date | string | undefined | null} a 期限日A
+ * @param {Date | string | undefined | null} b 期限日B
  * @return {number} 差分ミリ秒（a < b の場合は負数、a > b の場合は正数、同一は 0）
  */
-export function compareDueDates(a: Date | string, b: Date | string): number {
+export function compareDueDates(
+  a?: Date | string | null,
+  b?: Date | string | null,
+): number {
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
   return toDueDateTimestamp(a) - toDueDateTimestamp(b);
 }
 
@@ -183,8 +190,20 @@ export function parseBulkIssuesInput(text: string): string[] {
 }
 
 /**
+ * Issue（課題）一覧をID昇順でソートする純粋関数。
+ * 元の配列を変更せず、新しいソート済み配列を返す。
+ *
+ * @export
+ * @param {readonly IssueRecord[]} issues ソート対象のIssue配列
+ * @return {IssueRecord[]} ソート後のIssue配列
+ */
+export function sortIssuesById(issues: readonly IssueRecord[]): IssueRecord[] {
+  return [...issues].sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+}
+
+/**
  * Issue配列を未完了（statusCode !== 9）と完了（statusCode === 9）に分離し、
- * それぞれの中で期日昇順・タイトル五十音順にソートして返却する。
+ * それぞれの中でID昇順（作成順）にソートして返却する。
  *
  * @export
  * @param {readonly IssueRecord[]} issues ソート対象のIssue配列
@@ -206,8 +225,8 @@ export function groupAndSortIssues(issues: readonly IssueRecord[]): {
   }
 
   return {
-    openIssues: sortIssuesByDueDateAndTitle(openIssues),
-    completedIssues: sortIssuesByDueDateAndTitle(completedIssues),
+    openIssues: sortIssuesById(openIssues),
+    completedIssues: sortIssuesById(completedIssues),
   };
 }
 

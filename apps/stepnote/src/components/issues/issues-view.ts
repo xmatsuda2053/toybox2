@@ -17,7 +17,6 @@ import { format } from "@shared/utils";
 import type { IssueRecord } from "@/db/models/task.model";
 import type { TaskStatusCode } from "@/types";
 import {
-  TASK_STATUS_LIST,
   TASK_STATUS_ICON_MAP,
   TASK_STATUS_TYPE_MAP,
 } from "@/constants/task-status.constants.js";
@@ -201,7 +200,7 @@ export class IssuesView extends WithIssuesController(
       title,
       value: `### ${title}\n\n`,
       statusCode: 0,
-      dueDate: new Date(),
+      dueDate: undefined,
     });
 
     if (newId !== undefined) {
@@ -226,7 +225,7 @@ export class IssuesView extends WithIssuesController(
   public handleConfirmBulkAdd = async (): Promise<void> => {
     const titles = parseBulkIssuesInput(this.bulkAddText);
     if (titles.length > 0 && this.issuesController) {
-      await this.issuesController.createMultipleIssues(titles, new Date());
+      await this.issuesController.createMultipleIssues(titles);
     }
     this.handleCloseBulkAddDialog();
   };
@@ -240,6 +239,19 @@ export class IssuesView extends WithIssuesController(
     event?.stopPropagation();
     if (this.issuesController) {
       await this.issuesController.updateIssue(issueId, { statusCode });
+    }
+  };
+
+  /** 行内でのステータストグル（0 ⇄ 9）ハンドラー */
+  public handleToggleStatus = async (
+    issueId: number,
+    currentStatusCode: TaskStatusCode,
+    event?: Event,
+  ): Promise<void> => {
+    event?.stopPropagation();
+    const nextStatusCode: TaskStatusCode = currentStatusCode === 9 ? 0 : 9;
+    if (this.issuesController) {
+      await this.issuesController.updateIssue(issueId, { statusCode: nextStatusCode });
     }
   };
 
@@ -365,32 +377,7 @@ export class IssuesView extends WithIssuesController(
     `;
   }
 
-  /** ステータスドロップダウンの選択肢を描画 */
-  private renderStatusDropdownOptions(
-    selectedCode: TaskStatusCode,
-  ): HTMLTemplateResult[] {
-    return TASK_STATUS_LIST.map(
-      (status) => html`
-        <wa-dropdown-item
-          value=${String(status.code)}
-          type="checkbox"
-          ?checked=${status.code === selectedCode}
-        >
-          <wa-icon
-            slot="icon"
-            library="my-icons"
-            name=${TASK_STATUS_ICON_MAP[status.code]}
-            class="issues-view__status-icon type-${TASK_STATUS_TYPE_MAP[
-              status.code
-            ]}"
-          ></wa-icon>
-          ${status.labelJa}
-        </wa-dropdown-item>
-      `,
-    );
-  }
-
-  /** 一覧アイテム内のステータス選択ドロップダウンの描画 */
+  /** 一覧アイテム内のステータス選択・トグルボタンの描画 */
   private renderIssueStatusDropdown(
     issue: IssueRecord,
     typeName: string,
@@ -404,35 +391,24 @@ export class IssuesView extends WithIssuesController(
       >
         ステータスを変更
       </wa-tooltip>
-      <wa-dropdown
-        class="issues-view__status-dropdown"
-        @click=${(e: MouseEvent) => e.stopPropagation()}
-        @wa-select=${(e: CustomEvent<{ item: { value: string } }>) => {
+      <button
+        id="issues-view-status-btn-${issue.id}"
+        type="button"
+        class="issues-view__status-btn"
+        aria-label="ステータス変更"
+        @click=${(e: MouseEvent) => {
           e.stopPropagation();
           if (issue.id !== undefined) {
-            this.handleStatusChange(
-              issue.id,
-              Number(e.detail.item.value) as TaskStatusCode,
-              e,
-            );
+            this.handleToggleStatus(issue.id, issue.statusCode, e);
           }
         }}
       >
-        <button
-          id="issues-view-status-btn-${issue.id}"
-          type="button"
-          slot="trigger"
-          class="issues-view__status-btn"
-          aria-label="ステータス変更"
-        >
-          <wa-icon
-            class="issues-view__item-status type-${typeName}"
-            library="my-icons"
-            name=${iconName}
-          ></wa-icon>
-        </button>
-        ${this.renderStatusDropdownOptions(issue.statusCode)}
-      </wa-dropdown>
+        <wa-icon
+          class="issues-view__item-status type-${typeName}"
+          library="my-icons"
+          name=${iconName}
+        ></wa-icon>
+      </button>
     `;
   }
 
