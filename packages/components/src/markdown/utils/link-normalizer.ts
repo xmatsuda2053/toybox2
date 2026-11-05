@@ -68,12 +68,77 @@ export function resolveMarkdownLinkMeta(href: string): MarkdownLinkMeta {
 }
 
 /**
+ * [label]( の直後から、バランスした対応する閉じ括弧 ) のインデックスを探索する純粋関数
+ *
+ * @param text 対象テキスト
+ * @param startIndex URL走査開始インデックス
+ * @returns 終端閉じ括弧のインデックス（未検出時は -1）
+ */
+function findMatchingClosingParenIndex(text: string, startIndex: number): number {
+  let openCount = 1;
+  let isEscaped = false;
+
+  for (let i = startIndex; i < text.length; i++) {
+    const char = text[i];
+    if (char === "\n") return -1;
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      isEscaped = true;
+      continue;
+    }
+
+    if (char === "(") {
+      openCount++;
+    } else if (char === ")") {
+      openCount--;
+      if (openCount === 0) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+}
+
+/**
+ * 単一のリンクURL内容をスペース・エスケープ・CommonMark仕様に応じて正規化する純粋関数
+ *
+ * @param label リンクテキスト
+ * @param rawUrl 生のURLまたはパス文字列
+ * @returns 正規化後の [label](url) 文字列
+ */
+function formatNormalizedLink(label: string, rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
+    return `[${label}](${rawUrl})`;
+  }
+  if (/["']/.test(trimmed)) {
+    return `[${label}](${rawUrl})`;
+  }
+
+  const escaped = trimmed.replace(/\\/g, "\\\\");
+  if (escaped.includes(" ")) {
+    return `[${label}](<${escaped}>)`;
+  }
+  if (escaped !== trimmed) {
+    return `[${label}](${escaped})`;
+  }
+  return `[${label}](${rawUrl})`;
+}
+
+/**
  * Markdown テキスト内のスペースやバックスラッシュを含むリンク記法を正規化する純粋関数
  *
  * CommonMark では [text](url) の url にスペースが含まれる場合は構文エラーとなり、
  * バックスラッシュ（Windows パス等）が含まれる場合はエスケープシーケンスとして解釈される。
  * 入力された Markdown 内のリンク URL に対してバックスラッシュのエスケープおよび
  * スペースを含む場合の <url> 形式への補正を行う。
+ * また、URL内の半角括弧 (...) のネストバランスを正しく考慮して終端を検出する。
  *
  * @param markdown 入力 Markdown 文字列
  * @returns 補正後の Markdown 文字列
@@ -83,25 +148,29 @@ export function normalizeMarkdownLinksWithSpaces(markdown: string): string {
     return markdown;
   }
 
-  return markdown.replace(
-    /\[([^\]]+)\]\(([^)\n]+)\)/g,
-    (match, label: string, urlContent: string) => {
-      const trimmedUrl = urlContent.trim();
-      if (trimmedUrl.startsWith("<") && trimmedUrl.endsWith(">")) {
-        return match;
-      }
-      if (/["']/.test(trimmedUrl)) {
-        return match;
-      }
+  let result = "";
+  let currentIndex = 0;
+  const linkStartPattern = /\[([^\]\n]+)\]\(/g;
+  let match: RegExpExecArray | null;
 
-      const escapedUrl = trimmedUrl.replace(/\\/g, "\\\\");
-      if (escapedUrl.includes(" ")) {
-        return `[${label}](<${escapedUrl}>)`;
-      }
-      if (escapedUrl !== trimmedUrl) {
-        return `[${label}](${escapedUrl})`;
-      }
-      return match;
-    },
-  );
+  while ((match = linkStartPattern.exec(markdown)) !== null) {
+    const matchStart = match.index;
+    const label = match[1];
+    const urlStartIndex = matchStart + match[0].length;
+
+    const closingIndex = findMatchingClosingParenIndex(markdown, urlStartIndex);
+    if (closingIndex === -1) {
+      continue;
+    }
+
+    result += markdown.slice(currentIndex, matchStart);
+    const rawUrl = markdown.slice(urlStartIndex, closingIndex);
+    result += formatNormalizedLink(label, rawUrl);
+
+    currentIndex = closingIndex + 1;
+    linkStartPattern.lastIndex = currentIndex;
+  }
+
+  result += markdown.slice(currentIndex);
+  return result;
 }
