@@ -424,4 +424,50 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
       );
     });
   });
+
+  describe("14. 表示復帰・計測リフレッシュ機能 (refresh) (SN-021)", () => {
+    it("14-1. MarkdownEditor に refresh() メソッドが実装されていること", () => {
+      const editor = new MarkdownEditor();
+      expect(typeof editor.refresh).toBe("function");
+    });
+
+    it("14-2. refresh() 呼び出し時に editorView.requestMeasure() が呼び出されること", () => {
+      const editor = new MarkdownEditor();
+      const mockMeasure = vi.fn();
+      editor["editorView"] = {
+        state: {
+          doc: {
+            toString: () => "",
+          },
+        },
+        requestMeasure: mockMeasure,
+      } as unknown as EditorView;
+
+      editor.refresh();
+      expect(mockMeasure).toHaveBeenCalledOnce();
+    });
+
+    it("14-3. refresh() 呼び出し時に this.value と doc に差分がある場合、最新の value で同期更新されること", () => {
+      const editor = new MarkdownEditor();
+      editor.value = "# 最新テキスト";
+      const mockDispatch = vi.fn();
+      const mockMeasure = vi.fn();
+      editor["editorView"] = {
+        state: {
+          doc: {
+            toString: () => "旧テキスト",
+            length: 5,
+          },
+        },
+        dispatch: mockDispatch,
+        requestMeasure: mockMeasure,
+      } as unknown as EditorView;
+
+      editor.refresh();
+      expect(mockDispatch).toHaveBeenCalledWith({
+        changes: { from: 0, to: 5, insert: "# 最新テキスト" },
+      });
+      expect(mockMeasure).toHaveBeenCalledOnce();
+    });
+  });
 });
