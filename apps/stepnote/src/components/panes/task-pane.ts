@@ -1,4 +1,9 @@
-import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import {
+  html,
+  unsafeCSS,
+  type HTMLTemplateResult,
+  type PropertyValues,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
 import type { TaskStatusCode } from "@/types";
@@ -51,9 +56,21 @@ export class TaskPane extends WithIssuesController(
   @state()
   public isDeleteDialogOpen: boolean = false;
 
-  override willUpdate(changedProperties: Map<string, unknown>): void {
+  private lastTaskId?: number;
+
+  override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
+    this.syncParentTaskState();
     void this.updateCanComplete();
+  }
+
+  /** 親タスク切り替え時の状態初期化 */
+  private syncParentTaskState(): void {
+    const parentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId !== parentTaskId) {
+      this.lastTaskId = parentTaskId;
+      this.activeTab = "summary";
+    }
   }
 
   /**

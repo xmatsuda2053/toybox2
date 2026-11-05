@@ -33,6 +33,8 @@ import { JournalPane } from "./journal-pane.js";
  *    - 3-6. handleTabShow 呼び出しにより activeTab プロパティが 'logs' または 'scratch' で更新されること
  *    - 3-7. handleTabShow 呼び出し時に、切り替え先の子コンポーネントの resetModesToPreview が呼び出されること
  *    - 3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
+ *    - 3-9. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、activeTab が 'logs' に初期化されること
+ *    - 3-10. 同一タスクの再描画（taskId 変更なし）の場合、現在の activeTab が維持されること
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (journal-pane.scss) が存在し、ルートブロック .journal-pane および主要BEMセレクタ（.journal-pane__empty等）が定義されていること
@@ -314,6 +316,36 @@ describe("JournalPane Component", () => {
 
       expect(element.activeTab).toBe("logs");
       expect(resetLogsSpy).not.toHaveBeenCalled();
+    });
+
+    it("3-9. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、activeTab が 'logs' に初期化されること", () => {
+      // 初回同期（taskId 101）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      element.activeTab = "scratch";
+      expect(element.activeTab).toBe("scratch");
+
+      // 親タスクの切り替えをシミュレート (taskId 101 -> 102)
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 102,
+      };
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.activeTab).toBe("logs");
+    });
+
+    it("3-10. 同一タスクの再描画（taskId 変更なし）の場合、現在の activeTab が維持されること", () => {
+      // 初回同期（taskId 101）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      element.activeTab = "scratch";
+      expect(element.activeTab).toBe("scratch");
+
+      // 同一タスクでの再描画（taskId 101 のまま）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.activeTab).toBe("scratch");
     });
   });
 

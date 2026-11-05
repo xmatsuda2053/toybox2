@@ -38,6 +38,8 @@ import { TaskPane } from "./task-pane.js";
  *    - 3-8. handleTabShow 呼び出し時に、子コンポーネント（issues-view, notes-view 等）の resetModesToPreview が呼び出されること
  *    - 3-9. 無効なタブ名（子孫コンポーネントのタブID等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *    - 3-10. issuesController.state 内に期限ステータスを持つ未完了Issueが存在する場合、Issuesタブ内に期限アイコン（.task-pane__tab-due-icon）および修飾子クラスが表示されること
+ *    - 3-11. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、activeTab が 'summary' に初期化されること
+ *    - 3-12. 同一タスクの再描画（taskId 変更なし）の場合、現在の activeTab が維持されること
  *
  * 4. コントローラー購読（Context連携）
  *    - 4-1. taskController 設定時に controller.subscribe が呼び出されること
@@ -454,6 +456,36 @@ describe("TaskPane Component", () => {
       ];
       const doneHtml = flattenTemplate(element.render());
       expect(doneHtml).not.toContain("task-pane__tab-due-icon");
+    });
+
+    it("3-11. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、activeTab が 'summary' に初期化されること", () => {
+      // 初回同期（taskId 101）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      element.activeTab = "notes";
+      expect(element.activeTab).toBe("notes");
+
+      // 親タスクの切り替えをシミュレート (taskId 101 -> 102)
+      mockTaskController.state = {
+        ...mockTaskController.state!,
+        id: 102,
+      };
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.activeTab).toBe("summary");
+    });
+
+    it("3-12. 同一タスクの再描画（taskId 変更なし）の場合、現在の activeTab が維持されること", () => {
+      // 初回同期（taskId 101）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      element.activeTab = "property";
+      expect(element.activeTab).toBe("property");
+
+      // 同一タスクでの再描画（taskId 101 のまま）
+      element.willUpdate(new Map([["taskController", undefined]]));
+
+      expect(element.activeTab).toBe("property");
     });
   });
 
