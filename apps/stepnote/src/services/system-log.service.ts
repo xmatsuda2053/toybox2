@@ -156,7 +156,7 @@ export class SystemLogService {
   public async logIssueCreated(
     taskId: number,
     issueId: number,
-    dueDate: Date,
+    dueDate?: Date,
     statusCode: TaskStatusCode = 0,
   ): Promise<void> {
     const log = formatIssueCreatedLog(issueId, dueDate, statusCode);
@@ -214,7 +214,7 @@ export class SystemLogService {
       id?: number;
       title: string;
       statusCode: TaskStatusCode;
-      dueDate: Date;
+      dueDate?: Date;
     },
   ): Promise<void> {
     const log = formatIssueDeletedLog(issue);

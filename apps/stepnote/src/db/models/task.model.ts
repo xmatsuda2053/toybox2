@@ -49,8 +49,8 @@ export type IssueRecord = {
   title: string;
   /** 課題内容・説明 */
   value: string;
-  /** 期日 */
-  dueDate: Date;
+  /** 期日（未設定時は undefined） */
+  dueDate?: Date;
   /** 作成日時 */
   createdAt?: Date;
   /** 更新日時 */

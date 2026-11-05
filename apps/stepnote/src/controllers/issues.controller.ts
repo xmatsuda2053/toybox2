@@ -55,13 +55,13 @@ export class IssuesController extends BaseTaskSubItemController<
    * 複数のタイトルからIssueを一括作成する。
    *
    * @param {string[]} titles 作成するIssueのタイトル配列
-   * @param {Date} [dueDate] 期日（省略時は当日日付）
+   * @param {Date} [dueDate] 期日（省略時は未設定）
    * @return {*} {Promise<number[]>} 採番されたID配列
    * @memberof IssuesController
    */
   public createMultipleIssues = async (
     titles: string[],
-    dueDate: Date = new Date(),
+    dueDate?: Date,
   ): Promise<number[]> => {
     if (this._taskId === undefined || titles.length === 0) {
       return [];

@@ -475,10 +475,10 @@ describe("task-filter.utils", () => {
       expect(completedIssues.every((i) => i.statusCode === 9)).toBe(true);
     });
 
-    it("未完了・完了のそれぞれの中で期日昇順・五十音順でソートされること", () => {
+    it("未完了・完了のそれぞれの中でID昇順でソートされること", () => {
       const { openIssues, completedIssues } = groupAndSortIssues(mixedIssues);
-      expect(openIssues.map((i) => i.id)).toEqual([3, 1]); // 5/1 -> 5/10
-      expect(completedIssues.map((i) => i.id)).toEqual([2, 4]); // 5/2 -> 5/5
+      expect(openIssues.map((i) => i.id)).toEqual([1, 3]); // ID昇順: 1 -> 3
+      expect(completedIssues.map((i) => i.id)).toEqual([2, 4]); // ID昇順: 2 -> 4
     });
 
     it("該当するIssueが存在しないグループは空配列となること", () => {

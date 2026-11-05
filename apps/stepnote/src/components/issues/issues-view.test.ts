@@ -184,16 +184,16 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("完了 (1)");
     });
 
-    it("2-3. 未完了・完了のそれぞれの中で期日昇順（期限の近い順）にソートされて描画されること", () => {
+    it("2-3. 未完了・完了のそれぞれの中でID昇順（作成順）にソートされて描画されること", () => {
       const htmlStr = flattenTemplate(element.render());
-      // 未完了: 4/15 (設計書のレビュー実施) -> 4/20 (APIエンドポイント実装)
+      // 未完了: ID 1 (設計書のレビュー実施) -> ID 2 (APIエンドポイント実装)
       const reviewIdx = htmlStr.indexOf("設計書のレビュー実施");
       const apiIdx = htmlStr.indexOf("APIエンドポイント実装");
       expect(reviewIdx).toBeGreaterThan(-1);
       expect(apiIdx).toBeGreaterThan(-1);
       expect(reviewIdx).toBeLessThan(apiIdx);
 
-      // 完了: 4/10 (テストデータ準備)
+      // 完了: ID 3 (テストデータ準備)
       const testDataIdx = htmlStr.indexOf("テストデータ準備");
       expect(testDataIdx).toBeGreaterThan(-1);
     });
@@ -361,6 +361,32 @@ describe("IssuesView Component", () => {
       expect(stopPropagationMock).toHaveBeenCalled();
       expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
         statusCode: 5,
+      });
+    });
+
+    it("3-1-2. ステータストグル（handleToggleStatus）により、未完了(0)が完了(9)に更新されること", async () => {
+      const stopPropagationMock = vi.fn();
+      await element.handleToggleStatus(1, 0, {
+        stopPropagation: stopPropagationMock,
+      } as unknown as Event);
+
+      expect(stopPropagationMock).toHaveBeenCalled();
+      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
+        statusCode: 9,
+      });
+    });
+
+    it("3-1-3. ステータストグル（handleToggleStatus）により、完了(9)が未完了(0)に更新されること", async () => {
+      await element.handleToggleStatus(2, 9);
+      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(2, {
+        statusCode: 0,
+      });
+    });
+
+    it("3-1-4. 既存データで対応中(5)の場合も、ステータストグル（handleToggleStatus）により完了(9)に安全に更新されること", async () => {
+      await element.handleToggleStatus(3, 5);
+      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(3, {
+        statusCode: 9,
       });
     });
 
@@ -597,6 +623,16 @@ describe("IssuesView Component", () => {
       expect(element.expandedIssueIds.has(100)).toBe(true);
     });
 
+    it("5-1-2. 単一追加（handleCreateIssue）で作成時、dueDate が undefined（空）として渡されること", async () => {
+      await element.handleCreateIssue();
+
+      expect(mockIssuesController.createIssue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dueDate: undefined,
+        }),
+      );
+    });
+
     it("5-2. 一括追加ボタン（.issues-view__btn-bulk-add）クリック時、一括作成ダイアログ（wa-dialog.issues-view__bulk-dialog）が開くこと", () => {
       element.handleOpenBulkAddDialog();
       expect(element.isBulkAddDialogOpen).toBe(true);
@@ -614,7 +650,6 @@ describe("IssuesView Component", () => {
 
       expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
         ["一括1", "一括2", "一括3"],
-        expect.any(Date),
       );
       expect(element.isBulkAddDialogOpen).toBe(false);
       expect(element.bulkAddText).toBe("");
