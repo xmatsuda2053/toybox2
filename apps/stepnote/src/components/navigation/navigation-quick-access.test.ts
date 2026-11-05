@@ -5,6 +5,7 @@ import { flattenTemplate } from "@shared/utils";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
+import type { LabelsController } from "@/controllers/labels.controller.js";
 import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
 import {
@@ -67,10 +68,22 @@ import { NavigationQuickAccess } from "./navigation-quick-access";
  *    - [x] 8-3. disconnectedCallback 呼び出し時に taskListController の購読解除関数が実行されること
  *    - [x] 8-4. 同一の taskListController が再設定された場合、重複して subscribe が呼び出されないこと
  *    - [x] 8-5. taskListController に undefined が設定された場合、購読解除関数が呼び出されること
+ *
+ * 9. 期限フィルター選択時におけるラベル選択解除連動 (SN-013)
+ *    - 9-1. 「期限切れ」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること
+ *    - 9-2. 「期限当日」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること
+ *    - 9-3. 「期限間近」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること
+ *    - 9-4. 期限フィルターをOFF（無効化）にした際は、labelsController.clearAllSelected が呼び出されないこと
+ *    - 9-5. 期限以外のフィルター（ブックマーク、未分類等）操作時は、labelsController.clearAllSelected が呼び出されないこと
+ *    - 9-6. labelsController の設定・購読および解除が正しく動作すること
  */
 
 describe("NavigationQuickAccess Component", () => {
   let element: NavigationQuickAccess;
+  let mockLabelsController: {
+    clearAllSelected: ReturnType<typeof vi.fn>;
+    subscribe: ReturnType<typeof vi.fn>;
+  };
   let mockLayoutUIController: {
     state: {
       isQuickAccessOpen: boolean;
@@ -94,12 +107,14 @@ describe("NavigationQuickAccess Component", () => {
   };
   let layoutUIUnsubMock: ReturnType<typeof vi.fn>;
   let quickAccessUnsubMock: ReturnType<typeof vi.fn>;
+  let labelsUnsubMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     element = new NavigationQuickAccess();
 
     layoutUIUnsubMock = vi.fn();
     quickAccessUnsubMock = vi.fn();
+    labelsUnsubMock = vi.fn();
 
     mockLayoutUIController = {
       state: {
@@ -127,10 +142,17 @@ describe("NavigationQuickAccess Component", () => {
       subscribe: vi.fn().mockReturnValue(quickAccessUnsubMock),
     };
 
+    mockLabelsController = {
+      clearAllSelected: vi.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn().mockReturnValue(labelsUnsubMock),
+    };
+
     element.layoutUIController =
       mockLayoutUIController as unknown as LayoutUIController;
     element.quickAccessController =
       mockQuickAccessController as unknown as QuickAccessController;
+    element.labelsController =
+      mockLabelsController as unknown as LabelsController;
   });
 
   describe("1. タイトル部（Header）の描画と開閉動作", () => {
@@ -515,8 +537,12 @@ describe("NavigationQuickAccess Component", () => {
       );
       expect(scssContent).not.toContain("#0969da");
       expect(scssContent).not.toContain("#218bff");
-      expect(scssContent).toMatch(/background-color:\s*var\(--wa-color-brand-50\);/);
-      expect(scssContent).toMatch(/background-color:\s*var\(--wa-color-brand-60\);/);
+      expect(scssContent).toMatch(
+        /background-color:\s*var\(--wa-color-brand-50\);/,
+      );
+      expect(scssContent).toMatch(
+        /background-color:\s*var\(--wa-color-brand-60\);/,
+      );
     });
 
     it("7-7. navigation-quick-access.scss 全体においてハードコードされたカラーコード（#[0-9a-fA-F]{3,8}, rgba(...)）が 0 件（完全ゼロ）であること", () => {
@@ -524,7 +550,9 @@ describe("NavigationQuickAccess Component", () => {
         new URL("./navigation-quick-access.scss", import.meta.url),
         "utf-8",
       );
-      const colorMatches = scssContent.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
+      const colorMatches = scssContent.match(
+        /(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g,
+      );
       expect(colorMatches).toBeNull();
     });
   });
@@ -601,6 +629,67 @@ describe("NavigationQuickAccess Component", () => {
       element.taskListController = undefined;
       expect(taskListUnsubMock).toHaveBeenCalledTimes(1);
       expect(element.taskListController).toBeUndefined();
+    });
+  });
+
+  describe("9. 期限フィルター選択時におけるラベル選択解除連動 (SN-013)", () => {
+    it("9-1. 「期限切れ」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること", async () => {
+      mockQuickAccessController.state.isOverdueSelected = false;
+
+      await element.handleToggleOverdue();
+
+      expect(
+        mockQuickAccessController.toggleOverdueSelected,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockLabelsController.clearAllSelected).toHaveBeenCalledTimes(1);
+    });
+
+    it("9-2. 「期限当日」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること", async () => {
+      mockQuickAccessController.state.isAsapSelected = false;
+
+      await element.handleToggleAsap();
+
+      expect(
+        mockQuickAccessController.toggleAsapSelected,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockLabelsController.clearAllSelected).toHaveBeenCalledTimes(1);
+    });
+
+    it("9-3. 「期限間近」フィルターをON（有効化）にした際、labelsController.clearAllSelected が呼び出されること", async () => {
+      mockQuickAccessController.state.isUpcomingSelected = false;
+
+      await element.handleToggleUpcoming();
+
+      expect(
+        mockQuickAccessController.toggleUpcomingSelected,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockLabelsController.clearAllSelected).toHaveBeenCalledTimes(1);
+    });
+
+    it("9-4. 期限フィルターをOFF（無効化）にした際は、labelsController.clearAllSelected が呼び出されないこと", async () => {
+      mockQuickAccessController.state.isOverdueSelected = true;
+
+      await element.handleToggleOverdue();
+
+      expect(
+        mockQuickAccessController.toggleOverdueSelected,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockLabelsController.clearAllSelected).not.toHaveBeenCalled();
+    });
+
+    it("9-5. 期限以外のフィルター（ブックマーク、未分類等）操作時は、labelsController.clearAllSelected が呼び出されないこと", async () => {
+      await element.handleToggleBookmark();
+      await element.handleToggleUncategorized();
+      await element.handleToggleDone();
+
+      expect(mockLabelsController.clearAllSelected).not.toHaveBeenCalled();
+    });
+
+    it("9-6. labelsController の購読およびクリーンアップ（subscribe, unsubscribe）が正しく動作すること", () => {
+      expect(mockLabelsController.subscribe).toHaveBeenCalledTimes(1);
+
+      element.disconnectedCallback();
+      expect(labelsUnsubMock).toHaveBeenCalledTimes(1);
     });
   });
 });
