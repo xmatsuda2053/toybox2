@@ -40,7 +40,7 @@
 | [SN-018](#sn-018-htmlの言語属性langの日本語化ja設定) | 仕様変更 | 基盤 / HTML | HTMLの言語属性（lang）の日本語化（ja）設定 | 低 | 未着手 | - |
 | [SN-019](#sn-019-タスク切替時におけるtaskjournalペインのタブ選択状態初期化) | 仕様変更 | Task / Journal | タスク切替時におけるTask・Journalペインのタブ選択状態初期化 | 中 | 未着手 | - |
 | [SN-020](#sn-020-半角括弧を含むurlにおけるmarkdownレンダリング途切れ不具合) | バグ | Markdown表示 | 半角括弧を含むURLにおけるMarkdownレンダリング途切れ不具合 | 高 | 完了 | #386 |
-| [SN-021](#sn-021-markdownエディタのpreviewからedit切替時における描画消失不具合) | バグ | Markdownエディタ | MarkdownエディタのPreviewからEdit切替時における描画消失不具合 | 高 | 着手中 | #388 |
+| [SN-021](#sn-021-markdownエディタのpreviewからedit切替時における描画消失不具合) | バグ | Markdownエディタ | MarkdownエディタのPreviewからEdit切替時における描画消失不具合 | 高 | 完了 | #388 |
 | [SN-022](#sn-022-markdownコピー時における不要なエスケープ文字混入の解消) | バグ | Markdownツール | Markdownコピー時における不要なエスケープ文字（\）混入の解消 | 中 | 未着手 | - |
 | [SN-023](#sn-023-issue一覧のソート廃止およびid昇順固定ソートへの簡素化) | 仕様変更 | Task（Issues） | Issue一覧のソート廃止およびID昇順固定ソートへの簡素化 | 中 | 未着手 | - |
 | [SN-024](#sn-024-issue追加uiの複数追加一本化単体追加フォームボタンの廃止) | 仕様変更 | Task（Issues） | Issue追加UIの複数追加一本化（単体追加フォーム・ボタンの廃止） | 高 | 未着手 | - |
