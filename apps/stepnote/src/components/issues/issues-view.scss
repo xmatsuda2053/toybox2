@@ -36,8 +36,7 @@
     gap: var(--wa-space-2xs, 4px);
   }
 
-  &__btn-add,
-  &__btn-bulk-add {
+  &__btn-add {
     @include flex-center;
     cursor: pointer;
   }
@@ -273,29 +272,29 @@
     gap: var(--wa-space-s);
   }
 
-  &__bulk-dialog {
+  &__add-dialog {
     --width: 520px;
   }
 
-  &__bulk-dialog-body {
+  &__add-dialog-body {
     display: flex;
     flex-direction: column;
     gap: var(--wa-space-s);
   }
 
-  &__bulk-dialog-description {
+  &__add-dialog-description {
     font-size: var(--wa-font-size-s);
     color: var(--wa-color-text-quiet);
     line-height: var(--wa-line-height-normal);
   }
 
-  &__bulk-textarea {
+  &__add-textarea {
     width: 100%;
     min-height: 160px;
     font-family: inherit;
   }
 
-  &__bulk-dialog-footer {
+  &__add-dialog-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--wa-space-s);
