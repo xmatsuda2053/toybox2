@@ -11,10 +11,12 @@ import {
   layoutUIContext,
   quickAccessContext,
   taskListContext,
+  labelsContext,
 } from "@/contexts/index.js";
 import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
+import type { LabelsController } from "@/controllers/labels.controller.js";
 import type { QuickAccessRecord } from "@/db/models/navigation.model.js";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type.js";
 import { ControllerSubscriber } from "@/utils/controller-subscriber.js";
@@ -189,6 +191,15 @@ export class NavigationQuickAccess extends LitElement {
   private _taskListController?: TaskListController;
 
   /**
+   * 内部で保持する LabelsController インスタンス
+   *
+   * @private
+   * @type {LabelsController | undefined}
+   * @memberof NavigationQuickAccess
+   */
+  private _labelsController?: LabelsController;
+
+  /**
    * レイアウト開閉状態管理コントローラーを取得する。
    *
    * @type {LayoutUIController | undefined}
@@ -266,6 +277,31 @@ export class NavigationQuickAccess extends LitElement {
   }
 
   /**
+   * ラベル管理コントローラーを取得する。
+   *
+   * @type {LabelsController | undefined}
+   * @memberof NavigationQuickAccess
+   */
+  public get labelsController(): LabelsController | undefined {
+    return this._labelsController;
+  }
+
+  /**
+   * ラベル管理コントローラーを設定し、状態変更の購読を開始する。
+   * コントローラーが差し替えられた場合は既存の購読を解除し、新たなインスタンスを購読します。
+   *
+   * @memberof NavigationQuickAccess
+   */
+  @consume({ context: labelsContext, subscribe: true })
+  public set labelsController(controller: LabelsController | undefined) {
+    this._labelsController = this.subscriber.bind(
+      "labels",
+      this._labelsController,
+      controller,
+    );
+  }
+
+  /**
    * コンポーネントが DOM から切断された際のクリーンアップ処理。
    * メモリリーク防止のため、各コントローラーへの購読を確実に解除する。
    *
@@ -313,34 +349,49 @@ export class NavigationQuickAccess extends LitElement {
   /**
    * 「期限切れ」フィルターボタン押下ハンドラー。
    * QuickAccessController を通じて期限切れフィルターの選択状態を排他的に反転させる。
+   * 期限切れフィルターが有効化される場合、選択中のラベルを自動解除する。
    *
-   * @return {void}
+   * @return {Promise<void>}
    * @memberof NavigationQuickAccess
    */
-  public handleToggleOverdue = (): void => {
-    this.quickAccessController?.toggleOverdueSelected();
+  public handleToggleOverdue = async (): Promise<void> => {
+    const isSelecting = !this.quickAccessController?.state?.isOverdueSelected;
+    await this.quickAccessController?.toggleOverdueSelected();
+    if (isSelecting) {
+      await this.labelsController?.clearAllSelected();
+    }
   };
 
   /**
    * 「期限当日」フィルターボタン押下ハンドラー。
    * QuickAccessController を通じて期限当日フィルターの選択状態を排他的に反転させる。
+   * 期限当日フィルターが有効化される場合、選択中のラベルを自動解除する。
    *
-   * @return {void}
+   * @return {Promise<void>}
    * @memberof NavigationQuickAccess
    */
-  public handleToggleAsap = (): void => {
-    this.quickAccessController?.toggleAsapSelected();
+  public handleToggleAsap = async (): Promise<void> => {
+    const isSelecting = !this.quickAccessController?.state?.isAsapSelected;
+    await this.quickAccessController?.toggleAsapSelected();
+    if (isSelecting) {
+      await this.labelsController?.clearAllSelected();
+    }
   };
 
   /**
    * 「期限間近」フィルターボタン押下ハンドラー。
    * QuickAccessController を通じて期限間近フィルターの選択状態を排他的に反転させる。
+   * 期限間近フィルターが有効化される場合、選択中のラベルを自動解除する。
    *
-   * @return {void}
+   * @return {Promise<void>}
    * @memberof NavigationQuickAccess
    */
-  public handleToggleUpcoming = (): void => {
-    this.quickAccessController?.toggleUpcomingSelected();
+  public handleToggleUpcoming = async (): Promise<void> => {
+    const isSelecting = !this.quickAccessController?.state?.isUpcomingSelected;
+    await this.quickAccessController?.toggleUpcomingSelected();
+    if (isSelecting) {
+      await this.labelsController?.clearAllSelected();
+    }
   };
 
   /**
