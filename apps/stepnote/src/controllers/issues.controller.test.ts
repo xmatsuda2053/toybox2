@@ -88,6 +88,7 @@ const createMockHost = () => {
  *    - [x] 3-5. taskId が undefined またはタイトル配列が空の場合、createMultipleIssues は何も作成しないこと
  *    - [x] 3-6. applyTemplate 実行時にテンプレートからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること
  *    - [x] 3-7. taskId が undefined またはテンプレートの issues が空の場合、applyTemplate は何も作成せず空配列を返すこと
+ *    - [ ] 3-8. taskDueDate が文字列型の場合でも applyTemplate が例外なく動作し、Issueが一括追加されること
  *
  * 4. Issue 更新・削除 (Issue Update & Deletion)
  *    - [x] 4-1. updateIssue 実行時に対象Issueが更新され、state が更新されて requestUpdate() が呼ばれること
@@ -354,6 +355,26 @@ describe("IssuesController (TDD)", () => {
       };
       const result2 = await controller.applyTemplate(validTemplate);
       expect(result2).toEqual([]);
+    });
+
+    it("3-8. taskDueDate が文字列型の場合でも applyTemplate が例外なく動作し、Issueが一括追加されること", async () => {
+      const template: TaskTemplateRecord = {
+        id: 1,
+        name: "開発フロー",
+        description: "開発の標準テンプレート",
+        issues: [
+          { id: "tpl-1", order: 1, value: "### 要件定義\n\n仕様確認", dayOffset: 1 },
+        ],
+      };
+      // 文字列型の日付が渡されるケース
+      const taskDueDate = "2026-12-31" as unknown as Date;
+
+      const createdIds = await controller.applyTemplate(template, taskDueDate);
+
+      expect(createdIds).toHaveLength(1);
+      expect(controller.state).toHaveLength(1);
+      expect(controller.state[0].title).toBe("要件定義");
+      expect(controller.state[0].dueDate).toBeInstanceOf(Date);
     });
   });
 

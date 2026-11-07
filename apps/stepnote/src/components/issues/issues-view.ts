@@ -208,7 +208,10 @@ export class IssuesView extends WithIssuesController(
   };
 
   /** Issue追加ダイアログを閉じる */
-  public handleCloseAddDialog = (): void => {
+  public handleCloseAddDialog = (e?: Event): void => {
+    if (e && e.target !== e.currentTarget) {
+      return;
+    }
     this.isAddDialogOpen = false;
     this.addText = "";
   };
@@ -228,20 +231,26 @@ export class IssuesView extends WithIssuesController(
     this.selectedTemplateId = null;
   };
 
-  /** テンプレート適用ダイアログを閉じる */
-  public handleCloseTemplateDialog = (): void => {
+  /** テンプレート適用ダイアログを閉じる（子要素からのバブリングを無視） */
+  public handleCloseTemplateDialog = (e?: Event): void => {
+    if (e && e.target !== e.currentTarget) {
+      return;
+    }
     this.isTemplateDialogOpen = false;
     this.selectedTemplateId = null;
   };
 
   /** テンプレート選択変更ハンドラー */
   public handleSelectTemplate = (e: Event): void => {
-    const select = e.target as HTMLSelectElement | null;
-    if (!select || !select.value) {
+    const target = (e.currentTarget ?? e.target) as
+      | (HTMLElement & { value?: string })
+      | null;
+    const value = target?.value;
+    if (!value) {
       this.selectedTemplateId = null;
       return;
     }
-    const id = Number(select.value);
+    const id = Number(value);
     this.selectedTemplateId = Number.isNaN(id) ? null : id;
   };
 
@@ -257,9 +266,23 @@ export class IssuesView extends WithIssuesController(
       return;
     }
 
-    const taskDueDate = this.taskController?.state?.dueDate;
-    await this.issuesController.applyTemplate(template, taskDueDate);
-    this.handleCloseTemplateDialog();
+    try {
+      const parentTaskId = this.taskController?.state?.id;
+      if (
+        parentTaskId !== undefined &&
+        this.issuesController.taskId !== parentTaskId &&
+        typeof this.issuesController.setTaskId === "function"
+      ) {
+        await this.issuesController.setTaskId(parentTaskId);
+      }
+
+      const taskDueDate = this.taskController?.state?.dueDate;
+      await this.issuesController.applyTemplate(template, taskDueDate);
+    } catch (error) {
+      console.error("Failed to apply issue template:", error);
+    } finally {
+      this.handleCloseTemplateDialog();
+    }
   };
 
   /** 行内でのステータス変更ハンドラー */
@@ -320,8 +343,11 @@ export class IssuesView extends WithIssuesController(
     this.deletingIssueId = this.deleteDialog.deletingId;
   };
 
-  /** 削除確認ダイアログを閉じる */
-  public handleCloseDeleteDialog = (): void => {
+  /** 削除確認ダイアログを閉じる（子要素からのバブリングを無視） */
+  public handleCloseDeleteDialog = (e?: Event): void => {
+    if (e && e.target !== e.currentTarget) {
+      return;
+    }
     this.deleteDialog.close();
     this.isDeleteDialogOpen = false;
     this.deletingIssueId = undefined;

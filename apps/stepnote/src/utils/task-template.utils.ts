@@ -6,13 +6,38 @@ import type { IssueRecord } from "@/db/models/task.model.js";
 import { extractIssueTitle } from "./task-filter.utils.js";
 
 /**
- * 日付オブジェクトの時刻部分を午前0時0分0秒0ミリ秒に正規化する。
+ * 日付オブジェクトまたは文字列・数値を安全にDate型に変換し、時刻部分を午前0時0分0秒0ミリ秒に正規化する。
  *
- * @param {Date} date 正規化対象の日付
+ * @param {(Date | string | number | undefined)} date 正規化対象の日付
  * @return {Date} 正規化された新しい日付インスタンス
  */
-function normalizeToStartOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+function normalizeToStartOfDay(date: Date | string | number | undefined): Date {
+  if (date === undefined || date === null || date === "") {
+    const fallback = new Date();
+    return new Date(
+      fallback.getFullYear(),
+      fallback.getMonth(),
+      fallback.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+  }
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) {
+    const fallback = new Date();
+    return new Date(
+      fallback.getFullYear(),
+      fallback.getMonth(),
+      fallback.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+  }
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
 }
 
 /**
@@ -23,15 +48,15 @@ function normalizeToStartOfDay(date: Date): Date {
  * - タスク期限日の前日が基準日より過去になる場合は、基準日を下限として返却する。
  *
  * @export
- * @param {Date} baseDate 基準日（本日日付）
+ * @param {(Date | string | number)} baseDate 基準日（本日日付）
  * @param {number} dayOffset 相対オフセット日数
- * @param {Date} [taskDueDate] 親タスクの期限日
+ * @param {(Date | string | number)} [taskDueDate] 親タスクの期限日
  * @return {Date} 計算された期限日
  */
 export function calculateTemplateIssueDueDate(
-  baseDate: Date,
+  baseDate: Date | string | number,
   dayOffset: number,
-  taskDueDate?: Date,
+  taskDueDate?: Date | string | number,
 ): Date {
   const baseStart = normalizeToStartOfDay(baseDate);
   const calculated = new Date(
@@ -44,7 +69,7 @@ export function calculateTemplateIssueDueDate(
     0,
   );
 
-  if (!taskDueDate) {
+  if (taskDueDate === undefined || taskDueDate === null || taskDueDate === "") {
     return calculated;
   }
 
@@ -147,15 +172,15 @@ export function reorderTemplateIssues(
  *
  * @export
  * @param {TaskTemplateRecord} template 反映するテンプレート
- * @param {Date} baseDate 基準日（本日日付）
- * @param {Date} taskDueDate 親タスクの期限日
+ * @param {(Date | string | number)} baseDate 基準日（本日日付）
+ * @param {(Date | string | number)} taskDueDate 親タスクの期限日
  * @param {number} taskId 親タスクID
  * @return {Omit<IssueRecord, "id">[]} 生成されたIssueレコード配列
  */
 export function generateTemplateIssuePayloads(
   template: TaskTemplateRecord,
-  baseDate: Date,
-  taskDueDate: Date,
+  baseDate: Date | string | number,
+  taskDueDate: Date | string | number,
   taskId: number,
 ): Omit<IssueRecord, "id">[] {
   const sortedIssues = [...(template.issues ?? [])].sort(
