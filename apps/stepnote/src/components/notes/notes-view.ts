@@ -161,6 +161,26 @@ export class NotesView extends WithNotesController(
     }
   }
 
+  protected override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+    const select = this.renderRoot?.querySelector("wa-select") as
+      | (HTMLElement & {
+          displayLabel?: string;
+          selectionChanged?: () => void;
+        })
+      | null;
+    if (select) {
+      select.selectionChanged?.();
+      const activeNote = this.activeNote;
+      if (activeNote) {
+        const title = activeNote.title || extractNoteTitle(activeNote.value);
+        const prefix =
+          this.showTabId && activeNote.id !== undefined ? `#${activeNote.id} ` : "";
+        select.displayLabel = `${prefix}${title}`;
+      }
+    }
+  }
+
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this.debounceManager.clear();
@@ -194,7 +214,7 @@ export class NotesView extends WithNotesController(
     this.searchQuery = extractSearchQuery(eventOrQuery);
   };
 
-  /** タブ選択ハンドラー（別ノートへの切り替え時のみプレビューモードで初期化） */
+  /** ノート選択ハンドラー（別ノートへの切り替え時のみプレビューモードで初期化） */
   public handleSelectNote = (noteId: number): void => {
     if (this.activeNoteId !== noteId) {
       this.activeNoteId = noteId;
@@ -202,12 +222,13 @@ export class NotesView extends WithNotesController(
     }
   };
 
-  /** wa-tab 切り替えハンドラー */
-  public handleTabShow = (e: CustomEvent<{ name: string }>): void => {
+  /** wa-select 変更ハンドラー */
+  public handleSelectChange = (e: Event): void => {
     e.stopPropagation();
-    const tabName = e.detail?.name;
-    if (tabName) {
-      const id = Number(tabName);
+    const target = e.target as HTMLElement & { value?: string };
+    const val = target?.value;
+    if (val) {
+      const id = Number(val);
       if (!isNaN(id)) {
         this.handleSelectNote(id);
       }
@@ -325,32 +346,31 @@ export class NotesView extends WithNotesController(
     `;
   }
 
-  /** ページタブバー（wa-tab-group）の描画 */
-  private renderTabs(notes: NoteItemRecord[]): HTMLTemplateResult {
+  /** ノート選択セレクトボックス（wa-select）の描画 */
+  private renderSelector(notes: NoteItemRecord[]): HTMLTemplateResult {
     const activeId = this.effectiveActiveNoteId;
 
     return html`
-      <wa-tab-group
-        class="notes-view__tab-group"
-        active=${String(activeId ?? "")}
-        @wa-tab-show=${this.handleTabShow}
-      >
-        ${notes.map((note, index) => {
-          const title = note.title || extractNoteTitle(note.value, index + 1);
-          const isActive = note.id === activeId;
-          const idClass = isActive
-            ? "notes-view__tab-id notes-view__tab-id--active"
-            : "notes-view__tab-id";
-          return html`
-            <wa-tab slot="nav" panel=${String(note.id)}>
-              ${this.showTabId && note.id !== undefined
-                ? html`<span class="${idClass}">#${note.id}</span>`
-                : ""}
-              <span class="notes-view__tab-title">${title}</span>
-            </wa-tab>
-          `;
-        })}
-      </wa-tab-group>
+      <div class="notes-view__selector">
+        <wa-select
+          class="notes-view__select"
+          size="s"
+          .value=${String(activeId ?? "")}
+          @change=${this.handleSelectChange}
+        >
+          ${notes.map((note, index) => {
+            const title = note.title || extractNoteTitle(note.value, index + 1);
+            const prefix =
+              this.showTabId && note.id !== undefined ? `#${note.id} ` : "";
+            const labelText = `${prefix}${title}`;
+            return html`
+              <wa-option value=${String(note.id)} .label=${labelText}>
+                ${labelText}
+              </wa-option>
+            `;
+          })}
+        </wa-select>
+      </div>
     `;
   }
 
@@ -430,7 +450,7 @@ export class NotesView extends WithNotesController(
           : filtered.length === 0
             ? html`<div class="notes-view__no-results">一致するメモが見つかりません。</div>`
             : html`
-                ${this.renderTabs(filtered)}
+                ${this.renderSelector(filtered)}
                 ${activeNote ? this.renderEditor(activeNote) : html``}
               `}
         ${this.renderDeleteDialog()}

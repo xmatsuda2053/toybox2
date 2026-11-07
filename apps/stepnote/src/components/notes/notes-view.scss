@@ -48,31 +48,15 @@
   cursor: pointer;
 }
 
-/* ページタブバー */
-.notes-view__tab-group {
+/* ページ選択セレクト */
+.notes-view__selector {
   margin-bottom: var(--wa-space-xs, 8px);
   flex-shrink: 0;
-
-  wa-tab {
-    font-size: var(--wa-font-size-xs, 12px);
-  }
 }
 
-.notes-view__tab-id {
-  color: var(--wa-color-text-quiet);
-  margin-right: var(--wa-space-2xs, 4px);
-  font-weight: var(--wa-font-weight-normal, 400);
-  user-select: none;
-
-  &--active {
-    color: inherit;
-  }
-}
-
-.notes-view__tab-title {
-  @include text-ellipsis;
-  display: inline-block;
-  max-width: 140px;
+.notes-view__select {
+  width: 100%;
+  font-size: var(--wa-font-size-xs, 12px);
 }
 
 /* エディタ表示領域 */

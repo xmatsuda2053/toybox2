@@ -1,10 +1,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { PropertyValues } from "lit";
 import { flattenTemplate } from "@shared/utils";
 import type { NoteRecord } from "@/db/models/journal.model";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { TaskController } from "@/controllers/task.controller";
+import type { NotesManagerController } from "@/types/view/ui.types.js";
 import { NotesView } from "./notes-view";
 
 /**
@@ -15,16 +17,18 @@ import { NotesView } from "./notes-view";
  *    - 1-2. ヘッダーに共通部品 search-input（.notes-view__search、size="s"）および新規追加ボタン（.notes-view__btn-add）が表示されること
  *    - 1-3. ノートが存在する場合、初期状態で先頭ノートがアクティブ（activeNoteId）として選択されること
  *
- * 2. ページタブ表示と切り替え (Page Tabs & Switch)
- *    - 2-1. ノートが存在する場合、wa-tab-group（.notes-view__tab-group）および wa-tab が描画されること
- *    - 2-2. 各 wa-tab に抽出されたノートタイトル（1行目見出し記号除去済み）が表示されること
- *    - 2-3. wa-tab-show イベントまたは handleSelectNote でアクティブなNoteID（activeNoteId）が切り替わること
- *    - 2-4. wa-tab-group の active 属性にアクティブなNoteIDがバインドされていること
- *    - 2-5. 各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画され、#201 などのIDが表示されること
- *    - 2-6. アクティブなノートのタブID要素に修飾クラス（.notes-view__tab-id--active）が付与され、非アクティブなノートには付与されないこと
+ * 2. ページセレクト表示と切り替え (Page Select & Switch)
+ *    - 2-1. ノートが存在する場合、セレクトボックス（wa-select、.notes-view__select）および wa-option が描画されること
+ *    - 2-2. 各 wa-option に抽出されたノートタイトルが表示されること
+ *    - 2-3. wa-select の change イベント（handleSelectChange）または handleSelectNote でアクティブなNoteID（activeNoteId）が切り替わること
+ *    - 2-4. wa-select の .value 属性にアクティブなNoteIDがバインドされていること
+ *    - 2-5. showTabId が true の場合、各 wa-option 内に #201 などのIDプレフィックスが表示されること
+ *    - 2-6. showTabId が false の場合、各 wa-option 内に #ID プレフィックスが表示されずタイトルのみ表示されること
+ *    - 2-7. ノートのタイトル（1行目見出し）が変更された場合、セレクトボックス（wa-select）および wa-option のラベル表示に最新タイトルが反映されること
+ *    - 2-8. updated 実行時に wa-select の displayLabel がアクティブノートの最新タイトルへ同期されること
  *
  * 3. 検索フィルタリング (Search Filtering)
- *    - 3-1. search-input 入力（handleSearchInput）によりタブ一覧がリアルタイムに絞り込まれること
+ *    - 3-1. search-input 入力（handleSearchInput）によりセレクト候補一覧がリアルタイムに絞り込まれること
  *    - 3-2. 絞り込みによって現在アクティブなノートが除外された場合、絞り込み結果の先頭ノートへ自動でアクティブが切り替わること
  *    - 3-3. 絞り込み結果が0件の場合、検索ヒット0件メッセージ（.notes-view__no-results）が表示されること
  *
@@ -37,11 +41,11 @@ import { NotesView } from "./notes-view";
  *    - 4-6. handleContentChange が連続で呼び出された場合、前回のタイマーがキャンセルされ、最後の入力から 300ms 後に1度だけ呼び出されること
  *    - 4-7. disconnectedCallback 実行時に保留中のデバウンスタイマーがクリアされること
  *    - 4-8. 新規作成されたノートはエディタモード（.mode='edit'）で表示され、handleModeChange によりモードが更新されること
- *    - 4-9. ノートタブ切り替え時（handleSelectNote / handleTabShow）に、切り替え先ノートがプレビューモード（preview）で表示されること
+ *    - 4-9. ノートセレクト切り替え時（handleSelectNote / handleSelectChange）に、切り替え先ノートがプレビューモード（preview）で表示されること
  *    - 4-10. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、全ノートのエディタモードがプレビューモードへリセット（noteModeMap が初期化）されること
  *    - 4-11. resetModesToPreview() の呼び出しにより、全ノートのエディタモードがプレビューモードへリセットされること
- *    - 4-12. 新規ノート作成後（handleCreateNote）に wa-tab-show イベントが発火してもエディタモード（edit）がプレビューモードで上書きされず維持されること
- *    - 4-13. handleTabShow 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること
+ *    - 4-12. 新規ノート作成後（handleCreateNote）に同一ノートへの選択イベントが発生してもエディタモード（edit）がプレビューモードで上書きされず維持されること
+ *    - 4-13. handleSelectChange 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること
  *    - 4-14. markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
  *    - 4-15. handleCopyJumpTag 実行時に #(noteId){title} の形式でクリップボードへ書き込みが行われること
  *
@@ -55,15 +59,15 @@ import { NotesView } from "./notes-view";
  *    - 6-4. 最後の1件を削除した後は空状態（.notes-view__empty）に戻ること
  *
  * 7. BEM設計およびSCSSスタイルの検証
- *    - 7-1. SCSSスタイルシート（notes-view.scss）が存在し、ルートブロック .notes-view および主要BEMセレクタが定義されていること
+ *    - 7-1. SCSSスタイルシート（notes-view.scss）が存在し、ルートブロック .notes-view および主要BEMセレクタ（.notes-view__select 等）が定義されていること
  *    - 7-2. notes-view.scss に !important および @extend が一切含まれていないこと
  *    - 7-3. notes-view.scss 全体においてハードコードされたカラーコード（Hex/RGB/RGBA）が 0 件であること
  *    - 7-4. テーマ切替トランジション等のCSS変数指定（--stepnote-transition-theme または @include theme-transition）が定義されていること
  *
- * 8. コントローラー注入およびタブID表示制御
+ * 8. コントローラー注入およびノートID表示制御
  *    - 8-1. controller プロパティが指定されている場合、渡された controller の state およびメソッドが使用されること
- *    - 8-2. showTabId プロパティが false の場合、各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画されないこと
- *    - 8-3. showTabId プロパティのデフォルト値が true であり、ノートID要素が描画されること
+ *    - 8-2. showTabId プロパティが false の場合、wa-option 内にノートID（#番号）が表示されないこと
+ *    - 8-3. showTabId プロパティのデフォルト値が true であり、wa-option 内にノートID（#番号）が表示されること
  */
 describe("NotesView Component", () => {
   let element: NotesView;
@@ -102,7 +106,7 @@ describe("NotesView Component", () => {
     mockNotesController = {
       taskId: 1,
       setTaskId: vi.fn(),
-      state: [...sampleNotes],
+      state: sampleNotes.map((n) => ({ ...n })),
       createNote: vi.fn().mockResolvedValue(203),
       updateNote: vi.fn().mockResolvedValue(undefined),
       deleteNote: vi.fn().mockResolvedValue(undefined),
@@ -146,17 +150,17 @@ describe("NotesView Component", () => {
     });
   });
 
-  describe("2. ページタブ表示と切り替え (Page Tabs & Switch)", () => {
-    it("2-1. ノートが存在する場合、wa-tab-group（.notes-view__tab-group）および wa-tab が描画されること", () => {
+  describe("2. ページセレクト表示と切り替え (Page Select & Switch)", () => {
+    it("2-1. ノートが存在する場合、セレクトボックス（wa-select、.notes-view__select）および wa-option が描画されること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toContain("wa-tab-group");
-      expect(htmlStr).toContain("notes-view__tab-group");
-      expect(htmlStr).toContain("<wa-tab");
+      expect(htmlStr).toContain("wa-select");
+      expect(htmlStr).toContain("notes-view__select");
+      expect(htmlStr).toContain("<wa-option");
     });
 
-    it("2-2. 各 wa-tab に抽出されたノートタイトル（1行目見出し記号除去済み）が表示されること", () => {
+    it("2-2. 各 wa-option に抽出されたノートタイトルが表示されること", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
@@ -164,46 +168,83 @@ describe("NotesView Component", () => {
       expect(htmlStr).toContain("会議メモ");
     });
 
-    it("2-3. wa-tab-show イベントまたは handleSelectNote でアクティブなNoteID（activeNoteId）が切り替わること", () => {
+    it("2-3. wa-select の change イベント（handleSelectChange）または handleSelectNote でアクティブなNoteID（activeNoteId）が切り替わること", () => {
       element.handleSelectNote(202);
       expect(element.activeNoteId).toBe(202);
       expect(element.effectiveActiveNoteId).toBe(202);
 
-      element.handleTabShow(
-        new CustomEvent("wa-tab-show", {
-          detail: { name: "201" },
-        }) as unknown as CustomEvent<{ name: string }>,
-      );
+      const mockEvent = {
+        stopPropagation: vi.fn(),
+        target: { value: "201" },
+      } as unknown as Event;
+
+      element.handleSelectChange(mockEvent);
       expect(element.activeNoteId).toBe(201);
     });
 
-    it("2-4. wa-tab-group の active 属性にアクティブなNoteIDがバインドされていること", () => {
+    it("2-4. wa-select の .value 属性にアクティブなNoteIDがバインドされていること", () => {
       element.activeNoteId = 201;
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toMatch(/<wa-tab-group[^>]*\bactive=["']?201["']?/);
+      expect(htmlStr).toMatch(/<wa-select[^>]*\.value=["']?201["']?/);
     });
 
-    it("2-5. 各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画され、#201 などのIDが表示されること", () => {
+    it("2-5. showTabId が true の場合、各 wa-option 内に #201 などのIDプレフィックスが表示されること", () => {
+      element.showTabId = true;
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toContain("notes-view__tab-id");
-      expect(htmlStr).toContain("#201");
-      expect(htmlStr).toContain("#202");
+      expect(htmlStr).toContain("#201 仕様メモ");
+      expect(htmlStr).toContain("#202 会議メモ");
     });
 
-    it("2-6. アクティブなノートのタブID要素に修飾クラス（.notes-view__tab-id--active）が付与され、非アクティブなノートには付与されないこと", () => {
-      element.activeNoteId = 201;
-      const htmlStr = flattenTemplate(element.render());
+    it("2-6. showTabId が false の場合、各 wa-option 内に #ID プレフィックスが表示されずタイトルのみ表示されること", () => {
+      element.showTabId = false;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toMatch(
-        /class=["'][^"']*notes-view__tab-id--active[^"']*["'][^>]*>#201<\/span>/,
-      );
-      expect(htmlStr).not.toMatch(
-        /class=["'][^"']*notes-view__tab-id--active[^"']*["'][^>]*>#202<\/span>/,
-      );
+      expect(htmlStr).not.toContain("#201");
+      expect(htmlStr).not.toContain("#202");
+      expect(htmlStr).toContain("仕様メモ");
+      expect(htmlStr).toContain("会議メモ");
+    });
+
+    it("2-7. ノートのタイトル（1行目見出し）が変更された場合、セレクトボックス（wa-select）および wa-option のラベル表示に最新タイトルが反映されること", () => {
+      element.activeNoteId = 201;
+      let template = element.render();
+      let htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("#201 仕様メモ");
+
+      // ノートの本文見出しを変更
+      mockNotesController.state[0].value = "## 改訂版の仕様メモ\n内容が変更されました。";
+
+      template = element.render();
+      htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("#201 改訂版の仕様メモ");
+    });
+
+    it("2-8. updated 実行時に wa-select の displayLabel がアクティブノートの最新タイトルへ同期されること", () => {
+      const mockSelect = {
+        displayLabel: "旧タイトル",
+        selectionChanged: vi.fn(),
+      };
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockReturnValue(mockSelect),
+        },
+      });
+
+      element.activeNoteId = 201;
+      // protected updated メソッドの呼び出し
+      const updatedMethod = Reflect.get(element, "updated") as (
+        changed: PropertyValues,
+      ) => void;
+      updatedMethod.call(element, new Map());
+
+      expect(mockSelect.selectionChanged).toHaveBeenCalledTimes(1);
+      expect(mockSelect.displayLabel).toBe("#201 仕様メモ");
     });
   });
 
@@ -330,7 +371,7 @@ describe("NotesView Component", () => {
       expect(element.currentEditorMode).toBe("preview");
     });
 
-    it("4-9. ノートタブ切り替え時（handleSelectNote / handleTabShow）に、切り替え先ノートがプレビューモード（preview）で表示されること", () => {
+    it("4-9. ノートセレクト切り替え時（handleSelectNote / handleSelectChange）に、切り替え先ノートがプレビューモード（preview）で表示されること", () => {
       // 201 番ノートを edit にする
       element.handleSelectNote(201);
       element.handleModeChange("edit");
@@ -371,7 +412,7 @@ describe("NotesView Component", () => {
       expect(element.currentEditorMode).toBe("preview");
     });
 
-    it("4-12. 新規ノート作成後（handleCreateNote）に wa-tab-show イベントが発火してもエディタモード（edit）がプレビューモードで上書きされず維持されること", async () => {
+    it("4-12. 新規ノート作成後（handleCreateNote）に同一ノートへの選択イベントが発生してもエディタモード（edit）がプレビューモードで上書きされず維持されること", async () => {
       mockNotesController.createNote.mockImplementation(async (note: { value: string }) => {
         const id = 203;
         mockNotesController.state.push({ id, taskId: 1, value: note.value });
@@ -382,22 +423,26 @@ describe("NotesView Component", () => {
       expect(element.activeNoteId).toBe(203);
       expect(element.currentEditorMode).toBe("edit");
 
-      // wa-tab-group からの wa-tab-show イベント発火をシミュレート
-      element.handleTabShow(
-        new CustomEvent("wa-tab-show", { detail: { name: "203" } }),
-      );
+      // wa-select からの change イベント発火をシミュレート
+      const event = {
+        stopPropagation: vi.fn(),
+        target: { value: "203" },
+      } as unknown as Event;
+      element.handleSelectChange(event);
 
       // 上書きされず edit モードのままであること
       expect(element.currentEditorMode).toBe("edit");
     });
 
-    it("4-13. handleTabShow 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること", () => {
-      const event = new CustomEvent("wa-tab-show", { detail: { name: "201" } });
-      const stopPropagationSpy = vi.spyOn(event, "stopPropagation");
+    it("4-13. handleSelectChange 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること", () => {
+      const event = {
+        stopPropagation: vi.fn(),
+        target: { value: "201" },
+      } as unknown as Event;
 
-      element.handleTabShow(event);
+      element.handleSelectChange(event);
 
-      expect(stopPropagationSpy).toHaveBeenCalledTimes(1);
+      expect(event.stopPropagation).toHaveBeenCalledTimes(1);
     });
 
     it("4-14. markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること", () => {
@@ -509,7 +554,7 @@ describe("NotesView Component", () => {
       expect(content).toContain(".notes-view");
       expect(content).toContain(".notes-view__header");
       expect(content).toContain(".notes-view__search");
-      expect(content).toContain(".notes-view__tab-group");
+      expect(content).toContain(".notes-view__select");
       expect(content).toContain(".notes-view__editor");
       expect(content).toContain(".notes-view__empty");
     });
@@ -560,7 +605,7 @@ describe("NotesView Component", () => {
         subscribe: vi.fn().mockReturnValue(() => {}),
       };
 
-      (element as any).controller = customController;
+      element.controller = customController as unknown as NotesManagerController;
 
       expect(element.effectiveNotes).toHaveLength(1);
       expect(element.effectiveNotes[0].value).toContain("カスタムメモ");
@@ -585,21 +630,21 @@ describe("NotesView Component", () => {
       expect(customController.deleteNote).toHaveBeenCalledWith(991);
     });
 
-    it("8-2. showTabId プロパティが false の場合、各 wa-tab 内にノートID要素（.notes-view__tab-id）が描画されないこと", () => {
-      (element as any).showTabId = false;
+    it("8-2. showTabId プロパティが false の場合、各 wa-option 内にノートID（#番号）が表示されないこと", () => {
+      element.showTabId = false;
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).not.toContain("notes-view__tab-id");
-      expect(htmlStr).toContain("notes-view__tab-title");
+      expect(htmlStr).not.toContain("#201");
+      expect(htmlStr).toContain("仕様メモ");
     });
 
-    it("8-3. showTabId プロパティのデフォルト値が true であり、ノートID要素が描画されること", () => {
-      expect((element as any).showTabId ?? true).toBe(true);
+    it("8-3. showTabId プロパティのデフォルト値が true であり、wa-option 内にノートID（#番号）が表示されること", () => {
+      expect(element.showTabId).toBe(true);
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toContain("notes-view__tab-id");
+      expect(htmlStr).toContain("#201");
     });
   });
 });
