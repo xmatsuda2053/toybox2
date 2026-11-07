@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   SubscriberElement,
   WithLabelsController,
@@ -11,6 +11,7 @@ import {
   WithScratchController,
   WithTaskTemplateController,
   WithAutoExportController,
+  WithTaskHistoryController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -20,6 +21,7 @@ import type { LogsController } from "@/controllers/logs.controller";
 import type { ScratchController } from "@/controllers/scratch.controller";
 import type { TaskTemplateController } from "@/controllers/task-template.controller";
 import type { AutoExportController } from "@/controllers/auto-export.controller";
+import type { TaskHistoryController } from "@/controllers/task-history.controller";
 
 /**
  * テスト仕様一覧:
@@ -238,6 +240,25 @@ describe("controller-consumers.mixin", () => {
       // 同一インスタンスを再代入
       el.labelsController = mockLabelsCtrl;
       expect(mockLabelsCtrl.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it("10-4. WithTaskHistoryController で taskHistoryController の設定と解除が行えること", () => {
+      class HistoryConsumerElement extends WithTaskHistoryController(
+        SubscriberElement,
+      ) {}
+      const el = new HistoryConsumerElement();
+      const unsubMock = vi.fn();
+      const mockHistoryCtrl = {
+        subscribe: vi.fn().mockReturnValue(unsubMock),
+      } as unknown as TaskHistoryController;
+
+      el.taskHistoryController = mockHistoryCtrl;
+      expect(el.taskHistoryController).toBe(mockHistoryCtrl);
+      expect(mockHistoryCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      el.taskHistoryController = undefined;
+      expect(el.taskHistoryController).toBeUndefined();
+      expect(unsubMock).toHaveBeenCalledTimes(1);
     });
   });
 });

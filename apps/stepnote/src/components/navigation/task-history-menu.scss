@@ -1,0 +1,53 @@
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  @include theme-transition;
+}
+
+.task-history-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+
+  &__trigger {
+    color: var(--stepnote-color-header-text, var(--wa-color-text-subtle));
+    border-radius: var(--wa-border-radius-s);
+    transition: var(--stepnote-transition-theme);
+
+    &:hover {
+      color: var(--stepnote-color-header-icon-hover, var(--wa-color-primary-600));
+      background-color: var(--stepnote-color-header-icon-hover-bg, var(--wa-color-neutral-100));
+    }
+  }
+
+  &__dropdown {
+    min-width: 280px;
+    max-width: 380px;
+  }
+
+  &__item {
+    font-size: var(--wa-font-size-s);
+    max-width: 380px;
+  }
+
+  &__item-label {
+    font-size: var(--wa-font-size-2xs);
+    padding: 1px 6px;
+    border-radius: var(--wa-border-radius-s);
+    background-color: var(--wa-color-neutral-200);
+    color: var(--wa-color-text-subtle);
+    white-space: nowrap;
+  }
+
+  &__empty {
+    font-size: var(--wa-font-size-s);
+    color: var(--wa-color-text-subtle);
+  }
+
+  &__clear-item {
+    font-size: var(--wa-font-size-s);
+  }
+}

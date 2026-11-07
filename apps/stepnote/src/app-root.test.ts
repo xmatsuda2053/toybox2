@@ -1,4 +1,4 @@
-﻿import "fake-indexeddb/auto";
+import "fake-indexeddb/auto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ContextConsumer, type Context } from "@lit/context";
 import type { ReactiveControllerHost } from "lit";
@@ -14,6 +14,7 @@ import {
   themeContext,
   scratchContext,
   autoExportContext,
+  taskHistoryContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -25,6 +26,7 @@ import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
 import { ThemeController } from "@/controllers/theme.controller.js";
 import { ScratchController } from "@/controllers/scratch.controller.js";
+import { TaskHistoryController } from "@/controllers/task-history.controller.js";
 import { flattenTemplate } from "@shared/utils";
 import { AppRoot } from "./app-root.js";
 
@@ -168,12 +170,19 @@ describe("AppRoot Provider (Phase 1)", () => {
       expect(appRoot.issuesController).toBeInstanceOf(IssuesController);
       expect(appRoot.themeController).toBeInstanceOf(ThemeController);
       expect(appRoot.scratchController).toBeInstanceOf(ScratchController);
+      expect(appRoot.taskHistoryController).toBeInstanceOf(TaskHistoryController);
     });
 
     it("2-11. autoExportContext が配下コンポーネントへ正しく配給されること", () => {
       const consumed = consumeContext(appRoot, autoExportContext);
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.autoExportController);
+    });
+
+    it("2-12. taskHistoryContext が配下コンポーネントへ正しく配給されること", () => {
+      const consumed = consumeContext(appRoot, taskHistoryContext);
+      expect(consumed).toBeDefined();
+      expect(consumed).toBe(appRoot.taskHistoryController);
     });
 
     it("3-6. wa-toast 要素がレンダリングされること", () => {
@@ -247,6 +256,12 @@ describe("AppRoot Provider (Phase 1)", () => {
       const consumed = consumeContext(appRoot, autoExportContext);
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.autoExportController);
+    });
+
+    it("2-12. taskHistoryContext が配下コンポーネントへ正しく配給されること", () => {
+      const consumed = consumeContext(appRoot, taskHistoryContext);
+      expect(consumed).toBeDefined();
+      expect(consumed).toBe(appRoot.taskHistoryController);
     });
 
     it("3-6. wa-toast 要素がレンダリングされること", () => {
@@ -371,6 +386,12 @@ describe("AppRoot Header Theme Switcher 配置仕様 (Phase 4)", () => {
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toContain("header-actions");
       expect(htmlStr).toContain("<theme-switcher");
+    });
+
+    it("6-2. ヘッダーの header-actions 内に task-history-menu コンポーネントがレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain("header-actions");
+      expect(htmlStr).toContain("<task-history-menu");
     });
   });
 });
@@ -1110,6 +1131,39 @@ describe("AppRoot Controller 状態連携仕様", () => {
       (appRoot as any).handleGlobalKeyDown(ctrlAltSEvent);
       expect(toggleScratchSpy).toHaveBeenCalled();
       expect(ctrlAltSEvent.preventDefault).toHaveBeenCalled();
+    });
+  });
+
+  describe("16. タスク閲覧履歴（Task History）連携仕様", () => {
+    it("16-1. task-history-select イベント受信時に selectAndShowTask が実行されること", async () => {
+      const selectSpy = vi
+        .spyOn(appRoot, "selectAndShowTask")
+        .mockResolvedValue(true);
+
+      appRoot.dispatchEvent(
+        new CustomEvent("task-history-select", {
+          detail: { taskId: 42 },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+      expect(selectSpy).toHaveBeenCalledWith(42);
+    });
+
+    it("16-2. taskController の状態変化契機で taskHistoryController.record が呼び出されること", async () => {
+      const recordSpy = vi.spyOn(appRoot.taskHistoryController, "record");
+
+      (appRoot.taskController as any)._state = {
+        id: 99,
+        name: "テストタスク",
+      };
+
+      appRoot.setupControllerSubscriptions();
+      (appRoot.taskController as any).notify();
+
+      expect(recordSpy).toHaveBeenCalledWith(99);
     });
   });
 });

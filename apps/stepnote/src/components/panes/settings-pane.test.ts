@@ -78,6 +78,13 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 5-12. 時刻追加ボタン（#settings-auto-export-add-btn）がプラスアイコン（plus-solid-full）かつ appearance="plain" で描画され、trigger="hover" のツールチップが付属すること
  *    - 5-13. 時刻入力欄に値が入力されて追加ボタンがクリック可能になった場合、variant="brand" appearance="accent" および .settings-pane__btn-add-time--active で目立つスタイルになること
  *    - 5-14. .settings-pane__schedule-item および .settings-pane__export-status が Light/Dark 両モードで浮き上がって見えるよう background-color: var(--wa-color-surface-raised) が指定されていること
+ *
+ * 6. 閲覧履歴（Task History）設定タブ機能
+ *    - 6-1. wa-tab-group 内に panel="history" の wa-tab および wa-tab-panel がレンダリングされること
+ *    - 6-2. 閲覧履歴設定タブ内に最大保持件数セレクター（wa-select）がレンダリングされること
+ *    - 6-3. 最大保持件数セレクター変更時に taskHistoryController.setMaxCount が呼び出されること
+ *    - 6-4. 履歴クリアボタンをクリックした際、taskHistoryController.clear() が呼び出されること
+ *    - 6-5. 履歴クリアボタンが variant="danger" でレンダリングされ、trash-solid-full アイコンが表示されること
  */
 describe("SettingsPane Component", () => {
   let element: SettingsPane;
@@ -825,6 +832,58 @@ describe("SettingsPane Component", () => {
       );
       expect(scss).toMatch(
         /\.settings-pane__export-status\s*\{[\s\S]*?background-color:\s*var\(--wa-color-surface-raised\)/,
+      );
+    });
+  });
+
+  describe("6. タスク閲覧履歴（History）設定タブ機能", () => {
+    let mockHistoryCtrl: {
+      history: { taskId: number; accessedAt: number }[];
+      maxCount: number;
+      setMaxCount: ReturnType<typeof vi.fn>;
+      clear: ReturnType<typeof vi.fn>;
+    };
+
+    beforeEach(() => {
+      mockHistoryCtrl = {
+        history: [{ taskId: 1, accessedAt: 1000 }, { taskId: 2, accessedAt: 2000 }],
+        maxCount: 10,
+        setMaxCount: vi.fn(),
+        clear: vi.fn(),
+      };
+      (element as any).taskHistoryController = mockHistoryCtrl;
+    });
+
+    it("6-1. wa-tab-group 内に panel='history' の wa-tab および wa-tab-panel がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tab[^>]*panel="history"/);
+      expect(htmlStr).toMatch(/<wa-tab-panel[^>]*name="history"/);
+    });
+
+    it("6-2. 閲覧履歴設定タブ内に最大保持件数セレクター（wa-select）がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-select[^>]*id="settings-history-max-count"/);
+    });
+
+    it("6-3. 最大保持件数セレクター変更時に taskHistoryController.setMaxCount が呼び出されること", () => {
+      (element as any).handleHistoryMaxCountChange({
+        target: { value: "20" },
+      } as unknown as CustomEvent);
+      expect(mockHistoryCtrl.setMaxCount).toHaveBeenCalledWith(20);
+    });
+
+    it("6-4. 履歴クリアボタンをクリックした際、taskHistoryController.clear() が呼び出されること", () => {
+      (element as any).handleClearHistorySettings();
+      expect(mockHistoryCtrl.clear).toHaveBeenCalledTimes(1);
+    });
+
+    it('6-5. 履歴クリアボタンが variant="danger" でレンダリングされ、trash-solid-full アイコンが表示されること', () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*variant="danger"[^>]*class="[^"]*settings-pane__btn-clear-history[^"]*"/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-icon[^>]*name="trash-solid-full"[^>]*>/,
       );
     });
   });

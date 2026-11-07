@@ -1,4 +1,4 @@
-﻿import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ContextProvider } from "@lit/context";
 import appRootStyles from "./app-root.scss?inline";
@@ -15,6 +15,7 @@ import {
   scratchContext,
   taskTemplateContext,
   autoExportContext,
+  taskHistoryContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
@@ -28,7 +29,9 @@ import { ThemeController } from "@/controllers/theme.controller.js";
 import { ScratchController } from "@/controllers/scratch.controller.js";
 import { TaskTemplateController } from "@/controllers/task-template.controller.js";
 import { AutoExportController } from "@/controllers/auto-export.controller.js";
+import { TaskHistoryController } from "@/controllers/task-history.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
+import "@/components/navigation/task-history-menu.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
 import "@/components/navigation/navigation-labels.js";
@@ -83,6 +86,7 @@ export class AppRoot extends LitElement {
   public scratchController!: ScratchController;
   public taskTemplateController!: TaskTemplateController;
   public autoExportController!: AutoExportController;
+  public taskHistoryController!: TaskHistoryController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
   public taskRepository!: TaskRepository;
@@ -128,6 +132,12 @@ export class AppRoot extends LitElement {
     });
     this.addEventListener("id-jump", (e: Event) => {
       this.handleIdJumpEvent(e);
+    });
+    this.addEventListener("task-history-select", (e: Event) => {
+      const customEvent = e as CustomEvent<{ taskId: number }>;
+      if (customEvent.detail?.taskId) {
+        void this.selectAndShowTask(customEvent.detail.taskId);
+      }
     });
   }
 
@@ -205,6 +215,7 @@ export class AppRoot extends LitElement {
     );
     this.themeController = new ThemeController(this);
     this.autoExportController = this.setupAutoExportController();
+    this.taskHistoryController = new TaskHistoryController(this);
   }
 
   /**
@@ -279,6 +290,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: autoExportContext,
       initialValue: this.autoExportController,
+    });
+    new ContextProvider(this, {
+      context: taskHistoryContext,
+      initialValue: this.taskHistoryController,
     });
   }
 
@@ -575,6 +590,9 @@ export class AppRoot extends LitElement {
       if (this.notesController.taskId !== currentTaskId) {
         this.notesController.setTaskId(currentTaskId);
       }
+      if (currentTaskId) {
+        this.taskHistoryController.record(currentTaskId);
+      }
       await this.taskListController.refresh();
     });
 
@@ -644,6 +662,10 @@ export class AppRoot extends LitElement {
           </button>
         </div>
         <div class="header-actions">
+          <task-history-menu
+            .taskRepository=${this.taskRepository}
+            data-theme=${this.themeController.resolvedTheme}
+          ></task-history-menu>
           <theme-switcher></theme-switcher>
         </div>
       </header>

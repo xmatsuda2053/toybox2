@@ -5,6 +5,9 @@ import { logsContext, notesContext, scratchContext } from "./journal.context";
 import { labelsContext } from "./labels.context";
 import { quickAccessContext } from "./quick-access.context";
 import { themeContext } from "./theme.context";
+import { taskTemplateContext } from "./task-template.context";
+import { autoExportContext } from "./auto-export.context";
+import { taskHistoryContext } from "./task-history.context";
 import * as allContexts from "./index";
 
 /** ContextKey の実体である Symbol を取得するヘルパー関数 */
@@ -103,6 +106,9 @@ describe("contexts の定義とエクスポート", () => {
         quickAccessContext,
         themeContext,
         scratchContext,
+        taskTemplateContext,
+        autoExportContext,
+        taskHistoryContext,
       ];
       const descriptions = contexts.map((ctx) => asSymbol(ctx).description);
       const uniqueDescriptions = new Set(descriptions);
@@ -125,6 +131,9 @@ describe("contexts の定義とエクスポート", () => {
       expect(allContexts.quickAccessContext).toBe(quickAccessContext);
       expect(allContexts.themeContext).toBe(themeContext);
       expect(allContexts.scratchContext).toBe(scratchContext);
+      expect(allContexts.taskTemplateContext).toBe(taskTemplateContext);
+      expect(allContexts.autoExportContext).toBe(autoExportContext);
+      expect(allContexts.taskHistoryContext).toBe(taskHistoryContext);
     });
   });
 });

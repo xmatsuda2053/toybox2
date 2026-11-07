@@ -12,6 +12,7 @@ import {
   scratchContext,
   taskTemplateContext,
   autoExportContext,
+  taskHistoryContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TaskController } from "@/controllers/task.controller";
@@ -23,6 +24,7 @@ import type { LayoutUIController } from "@/controllers/layout-ui.controller";
 import type { ScratchController } from "@/controllers/scratch.controller";
 import type { TaskTemplateController } from "@/controllers/task-template.controller";
 import type { AutoExportController } from "@/controllers/auto-export.controller";
+import type { TaskHistoryController } from "@/controllers/task-history.controller";
 import { ControllerSubscriber } from "./controller-subscriber.js";
 
 /**
@@ -362,4 +364,39 @@ export function WithAutoExportController<T extends LitElementConstructor>(
     }
   }
   return AutoExportConsumerClass;
+}
+
+/**
+ * TaskHistoryController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける taskHistoryController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithTaskHistoryController<T extends LitElementConstructor>(
+  Base: T,
+) {
+  class TaskHistoryConsumerClass extends Base {
+    private _taskHistoryController?: TaskHistoryController;
+
+    /** タスク閲覧履歴管理コントローラー */
+    public get taskHistoryController(): TaskHistoryController | undefined {
+      return this._taskHistoryController;
+    }
+
+    @consume({ context: taskHistoryContext, subscribe: true })
+    @property({ attribute: false })
+    public set taskHistoryController(
+      controller: TaskHistoryController | undefined,
+    ) {
+      this._taskHistoryController = this.subscriber.bind(
+        "taskHistory",
+        this._taskHistoryController,
+        controller,
+      );
+    }
+  }
+  return TaskHistoryConsumerClass;
 }
