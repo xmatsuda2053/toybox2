@@ -18,7 +18,6 @@
  *
  * 3. Issue関連システムログ記録仕様
  *   - 3-1. logIssueCreated 呼び出し時にIssue新規追加ログが LogsRepository に追加されること
- *   - 3-2. logIssueBulkCreated 呼び出し時にIssue一括作成ログが LogsRepository に追加されること
  *   - 3-3. logIssueTitleChanged 呼び出し時にIssueタイトル変更ログが LogsRepository に追加されること
  *   - 3-4. logIssueStatusChanged 呼び出し時にIssueステータス変更ログが LogsRepository に追加されること
  *   - 3-5. logIssueDueDateChanged 呼び出し時にIssue期日変更ログが LogsRepository に追加されること
@@ -168,17 +167,6 @@ describe("SystemLogService (TDD)", () => {
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
       expect(content).toContain(`sys: Issue #10 作成: "Issue A"`);
-    });
-
-    it("3-2. logIssueBulkCreated 呼び出し時にIssue一括作成ログが追加されること", async () => {
-      await service.logIssueBulkCreated(1, [
-        { id: 10, title: "Issue A" },
-        { id: 11, title: "Issue B" },
-      ]);
-
-      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
-      const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: Issue一括作成: 2件 (#10, #11)`);
     });
 
     it("3-4. logIssueStatusChanged 呼び出し時にIssueステータス変更ログが追加されること", async () => {

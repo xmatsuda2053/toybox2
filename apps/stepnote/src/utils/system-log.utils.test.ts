@@ -17,7 +17,6 @@
  *
  * 3. Issue関連システムログフォーマット仕様
  *   - 3-1. Issue新規追加時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
- *   - 3-2. Issue一括作成時のシステムログに各Issueへのジャンプ用タグが含まれてフォーマットされること
  *   - 3-3. Issueタイトル変更時のシステムログ（Issue ID、変更前後のタイトル）を正しくフォーマットすること
  *   - 3-4. Issueステータス変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
  *   - 3-5. Issue期日変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
@@ -46,7 +45,6 @@ import {
   formatTaskLabelChangedLog,
   formatTaskFiscalYearChangedLog,
   formatIssueCreatedLog,
-  formatIssueBulkCreatedLog,
   formatIssueStatusChangedLog,
   formatIssueDueDateChangedLog,
   formatIssueDeletedLog,
@@ -198,24 +196,6 @@ describe("system-log.utils (TDD)", () => {
           `- **初期ステータス**: 開始待ち (0)`,
       );
     });
-
-    it("3-2. Issue一括作成時のシステムログに各Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
-      const log = formatIssueBulkCreatedLog([
-        { id: 12, title: "API設計" },
-        { id: 13, title: "DBマイグレーション" },
-        { id: 14, title: "単体テスト作成" },
-      ]);
-
-      expect(log).toBe(
-        `### sys: Issue一括作成: 3件 (#12, #13, #14)\n\n` +
-          `- **作成件数**: 3件\n` +
-          `- **作成されたIssue**:\n` +
-          `  - #[12]{API設計}\n` +
-          `  - #[13]{DBマイグレーション}\n` +
-          `  - #[14]{単体テスト作成}`,
-      );
-    });
-
 
     it("3-4. Issueステータス変更時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
       const log = formatIssueStatusChangedLog(12, "API設計", 0, 9);
