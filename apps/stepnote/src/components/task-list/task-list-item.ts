@@ -3,13 +3,13 @@ import { customElement, property } from "lit/decorators.js";
 import "@shared/components";
 import {
   format,
-  isOverdue,
-  isAsap,
-  isWithinAnyDaysBefore,
   dispatchCustomEvent,
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
-import type { TaskDueIconInfo } from "@/utils/task-due.utils";
+import {
+  getTaskDueIconInfo,
+  type TaskDueIconInfo,
+} from "@/utils/task-due.utils";
 import taskListItemStyles from "./task-list-item.scss?inline";
 
 /**
@@ -133,40 +133,22 @@ export class TaskListItem extends LitElement {
    * 期限の状態に応じたアイコン名を取得する
    */
   private getDueIconName(): string {
-    if (!this.task?.dueDate) {
+    if (!this.task?.dueDate || this.task.statusCode === 9) {
       return "calendar-solid-full";
     }
-    const dueDate = new Date(this.task.dueDate);
-    if (isOverdue(dueDate)) {
-      return "fire-solid-full";
-    }
-    if (isAsap(dueDate)) {
-      return "triangle-exclamation-solid-full";
-    }
-    if (isWithinAnyDaysBefore(dueDate, 3)) {
-      return "calendar-solid-full";
-    }
-    return "calendar-solid-full";
+    const dueInfo = getTaskDueIconInfo(this.task.dueDate);
+    return dueInfo?.icon ?? "calendar-solid-full";
   }
 
   /**
    * 期限の状態に応じた修飾子クラス名を取得する
    */
   private getDueModifierClass(): string {
-    if (!this.task?.dueDate) {
+    if (!this.task?.dueDate || this.task.statusCode === 9) {
       return "";
     }
-    const dueDate = new Date(this.task.dueDate);
-    if (isOverdue(dueDate)) {
-      return "task-list-item__due-icon--overdue";
-    }
-    if (isAsap(dueDate)) {
-      return "task-list-item__due-icon--asap";
-    }
-    if (isWithinAnyDaysBefore(dueDate, 3)) {
-      return "task-list-item__due-icon--upcoming";
-    }
-    return "";
+    const dueInfo = getTaskDueIconInfo(this.task.dueDate);
+    return dueInfo ? `task-list-item__due-icon--${dueInfo.status}` : "";
   }
 
   /**
