@@ -24,7 +24,8 @@
  *
  * 4. Note関連システムログ記録仕様
  *   - 4-1. logNoteCreated 呼び出し時にNote新規追加ログが LogsRepository に追加されること
- *   - 4-2. logNoteDeleted 呼び出し時にNote削除ログが LogsRepository に追加されること
+ *   - 4-2. logNoteCreated 呼び出し時にタイトルが指定された場合、1行目にタイトルが含まれること
+ *   - 4-3. logNoteDeleted 呼び出し時にNote削除ログが LogsRepository に追加されること
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -201,7 +202,15 @@ describe("SystemLogService (TDD)", () => {
       expect(content).toContain(`sys: Note #5 作成`);
     });
 
-    it("4-2. logNoteDeleted 呼び出し時にNote削除ログが追加されること", async () => {
+    it("4-2. logNoteCreated 呼び出し時にタイトルが指定された場合、1行目にタイトルが含まれること", async () => {
+      await service.logNoteCreated(1, 5, "定例議事録");
+
+      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
+      const content = fakeLogsRepository.add.mock.calls[0][0].value;
+      expect(content).toContain(`sys: Note #5 作成: "定例議事録"`);
+    });
+
+    it("4-3. logNoteDeleted 呼び出し時にNote削除ログが追加されること", async () => {
       await service.logNoteDeleted(1, 5, "定例議事録");
 
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);

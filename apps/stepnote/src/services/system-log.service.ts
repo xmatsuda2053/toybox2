@@ -194,8 +194,12 @@ export class SystemLogService {
   }
 
   /** Note新規作成ログを記録する */
-  public async logNoteCreated(taskId: number, noteId: number): Promise<void> {
-    const log = formatNoteCreatedLog(noteId);
+  public async logNoteCreated(
+    taskId: number,
+    noteId: number,
+    title?: string,
+  ): Promise<void> {
+    const log = formatNoteCreatedLog(noteId, title);
     await this.recordLog(taskId, log);
   }
 

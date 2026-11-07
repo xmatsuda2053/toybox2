@@ -43,7 +43,7 @@ export class NotesController extends BaseTaskSubItemController<
     const title = data.title ?? extractMarkdownTitle(data.value, "(無題のメモ)");
     const newId = await this.createSubItem({ ...data, title });
     if (this.systemLogService && this._taskId !== undefined && newId !== undefined) {
-      await this.systemLogService.logNoteCreated(this._taskId, newId);
+      await this.systemLogService.logNoteCreated(this._taskId, newId, title);
     }
     return newId;
   };
