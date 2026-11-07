@@ -95,13 +95,13 @@ export class IssuesController extends BaseTaskSubItemController<
    * テンプレートからIssue群を一括作成・適用する。
    *
    * @param {TaskTemplateRecord} template 適用するタスクテンプレート
-   * @param {Date} [taskDueDate] 親タスクの期限日
+   * @param {(Date | string | number)} [taskDueDate] 親タスクの期限日
    * @return {Promise<number[]>} 採番されたID配列
    * @memberof IssuesController
    */
   public applyTemplate = async (
     template: TaskTemplateRecord,
-    taskDueDate?: Date,
+    taskDueDate?: Date | string | number,
   ): Promise<number[]> => {
     if (this._taskId === undefined || !template.issues || template.issues.length === 0) {
       return [];

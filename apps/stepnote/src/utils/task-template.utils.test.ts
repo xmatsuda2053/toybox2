@@ -87,6 +87,25 @@ describe("task-template.utils", () => {
       expect(result.getMonth()).toBe(10);
       expect(result.getDate()).toBe(5);
     });
+
+    it("タスク期日（taskDueDate）が文字列型の場合でも例外をスローせず安全に期日を計算すること", () => {
+      const baseDate = new Date(2026, 10, 1, 0, 0, 0); // 2026-11-01
+      const taskDueDate = "2026-11-10" as unknown as Date;
+      const result = calculateTemplateIssueDueDate(baseDate, 2, taskDueDate);
+
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(10);
+      expect(result.getDate()).toBe(3);
+    });
+
+    it("基準日（baseDate）が文字列型の場合でも例外をスローせず安全に期日を計算すること", () => {
+      const baseDate = "2026-11-01T00:00:00.000Z" as unknown as Date;
+      const taskDueDate = "2026-11-10T00:00:00.000Z" as unknown as Date;
+      const result = calculateTemplateIssueDueDate(baseDate, 1, taskDueDate);
+
+      expect(result).toBeInstanceOf(Date);
+      expect(Number.isNaN(result.getTime())).toBe(false);
+    });
   });
 
   describe("cloneTaskTemplate", () => {

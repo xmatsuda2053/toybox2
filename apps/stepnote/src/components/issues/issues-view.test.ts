@@ -80,6 +80,9 @@ import { IssuesView } from "./issues-view.js";
  *    - 7-5. 適用ボタン（#issues-view-btn-confirm-apply）押下で issuesController.applyTemplate が呼ばれ、ダイアログが閉じること
  *    - 7-6. テンプレート未選択時、適用ボタンが disabled であること
  *    - 7-7. テンプレートが1件も登録されていない場合、空メッセージ（.issues-view__template-empty-message）が表示されること
+ *    - 7-8. issuesController.taskId が未設定の場合、親タスクの ID を用いて setTaskId が補正呼び出しされた上で applyTemplate が実行されること
+ *    - 7-9. handleSelectTemplate 実行時、e.currentTarget または e.target から安全にテンプレートIDが設定されること
+ *    - 7-10. 子要素（wa-select や popover 等）からバブリングした wa-after-hide イベントではテンプレート適用ダイアログが閉じないこと
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
@@ -798,6 +801,61 @@ describe("IssuesView Component", () => {
       (element as any).handleOpenTemplateDialog();
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("issues-view__template-empty-message");
+    });
+
+    it("7-8. issuesController.taskId が未設定の場合、親タスクの ID を用いて setTaskId が補正呼び出しされた上で applyTemplate が実行されること", async () => {
+      mockIssuesController.taskId = undefined;
+      mockIssuesController.setTaskId = vi.fn().mockImplementation(async (id: number) => {
+        mockIssuesController.taskId = id;
+      });
+
+      (element as any).handleOpenTemplateDialog();
+      (element as any).selectedTemplateId = 1;
+      await (element as any).handleConfirmApplyTemplate();
+
+      expect(mockIssuesController.setTaskId).toHaveBeenCalledWith(10);
+      expect(mockIssuesController.applyTemplate).toHaveBeenCalledWith(
+        mockTaskTemplateController.state[0],
+        element.taskController?.state?.dueDate,
+      );
+    });
+
+    it("7-9. handleSelectTemplate 実行時、e.currentTarget または e.target から安全にテンプレートIDが設定されること", () => {
+      // currentTarget からの取得
+      const eventWithCurrentTarget = {
+        currentTarget: { value: "1" },
+        target: { value: undefined },
+      } as unknown as Event;
+      (element as any).handleSelectTemplate(eventWithCurrentTarget);
+      expect((element as any).selectedTemplateId).toBe(1);
+
+      // target からの取得フォールバック
+      const eventWithTarget = {
+        currentTarget: null,
+        target: { value: "2" },
+      } as unknown as Event;
+      (element as any).handleSelectTemplate(eventWithTarget);
+      expect((element as any).selectedTemplateId).toBe(2);
+
+      // 空値でクリア
+      const clearEvent = {
+        currentTarget: { value: "" },
+      } as unknown as Event;
+      (element as any).handleSelectTemplate(clearEvent);
+      expect((element as any).selectedTemplateId).toBeNull();
+    });
+
+    it("7-10. 子要素（wa-select や popover 等）からバブリングした wa-after-hide イベントではテンプレート適用ダイアログが閉じないこと", () => {
+      (element as any).handleOpenTemplateDialog();
+      expect((element as any).isTemplateDialogOpen).toBe(true);
+
+      const bubblingEvent = {
+        target: { tagName: "WA-SELECT" },
+        currentTarget: { tagName: "WA-DIALOG" },
+      } as unknown as Event;
+
+      (element as any).handleCloseTemplateDialog(bubblingEvent);
+      expect((element as any).isTemplateDialogOpen).toBe(true);
     });
   });
 });
