@@ -280,9 +280,12 @@ export function formatIssueDeletedLog(issue: {
  * @return {string} Markdown文字列
  */
 export function formatNoteCreatedLog(noteId: number, title?: string): string {
-  const tagLabel = title?.trim() || `Note #${noteId}`;
+  const trimmedTitle = title?.trim();
+  const tagLabel = trimmedTitle || `Note #${noteId}`;
+  const titleSuffix = trimmedTitle ? `: "${trimmedTitle}"` : "";
   return (
-    `### sys: Note #${noteId} 作成\n\n` + `- **対象**: #(${noteId}){${tagLabel}}`
+    `### sys: Note #${noteId} 作成${titleSuffix}\n\n` +
+    `- **対象**: #(${noteId}){${tagLabel}}`
   );
 }
 

@@ -85,6 +85,12 @@ export class NotesView extends WithNotesController(
   public deletingNoteId?: number;
 
   @state()
+  public isAddDialogOpen: boolean = false;
+
+  @state()
+  public inputTitle: string = "";
+
+  @state()
   public noteModeMap: Map<number, MarkdownDisplayMode> = new Map();
 
   private readonly debounceManager = new KeyedDebounceManager();
@@ -165,11 +171,27 @@ export class NotesView extends WithNotesController(
     super.updated(changedProperties);
     const select = this.renderRoot?.querySelector("wa-select") as
       | (HTMLElement & {
+          value?: string;
           displayLabel?: string;
           selectionChanged?: () => void;
         })
       | null;
     if (select) {
+      const activeId = this.effectiveActiveNoteId;
+      if (activeId !== undefined) {
+        const strId = String(activeId);
+        if (select.value !== strId) {
+          select.value = strId;
+        }
+      }
+      const options = Array.from(
+        select.querySelectorAll<HTMLElement & { selected?: boolean; value?: string }>(
+          "wa-option",
+        ),
+      );
+      for (const opt of options) {
+        opt.selected = opt.value === String(activeId);
+      }
       select.selectionChanged?.();
       const activeNote = this.activeNote;
       if (activeNote) {
@@ -244,7 +266,64 @@ export class NotesView extends WithNotesController(
     }
   };
 
-  /** 新規ノート作成ハンドラー（初期値 "## Note\n\n"、エディタモード初期化） */
+  /** 新規追加ダイアログを開く */
+  public handleOpenAddDialog = (): void => {
+    this.inputTitle = "";
+    this.isAddDialogOpen = true;
+  };
+
+  /** 新規追加ダイアログを閉じる */
+  public handleCloseAddDialog = (): void => {
+    this.isAddDialogOpen = false;
+    this.inputTitle = "";
+  };
+
+  /** タイトル入力変更ハンドラー */
+  public handleTitleInput = (event: Event): void => {
+    const target = event.target as (HTMLInputElement & { value?: string }) | null;
+    this.inputTitle = target?.value ?? "";
+  };
+
+  /** タイトル入力欄でのキーダウンハンドラー（Enterで作成、IME確定Enter時は無視） */
+  public handleTitleKeyDown = (event: KeyboardEvent): void => {
+    if (event.isComposing || event.keyCode === 229) {
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void this.handleConfirmAddNote();
+    }
+  };
+
+  /** 新規ノート/スクラッチ作成確定ハンドラー */
+  public handleConfirmAddNote = async (): Promise<void> => {
+    const ctrl = this.activeController;
+    if (!ctrl) return;
+
+    const inputElem = this.renderRoot?.querySelector<HTMLElement & { value?: string }>(
+      ".notes-view__input-title",
+    );
+    const rawTitle =
+      inputElem?.value !== undefined && inputElem.value !== ""
+        ? inputElem.value
+        : this.inputTitle;
+    const trimmed = rawTitle.trim();
+    const title = trimmed || "(無題のメモ)";
+
+    const newId = await ctrl.createNote({
+      title,
+      value: `## ${title}\n\n`,
+    });
+
+    if (newId !== undefined) {
+      this.activeNoteId = newId;
+      this.noteModeMap.set(newId, "edit");
+    }
+
+    this.handleCloseAddDialog();
+  };
+
+  /** 新規ノート作成ハンドラー（後方互換用: 初期値 "## Note\n\n"、エディタモード初期化） */
   public handleCreateNote = async (): Promise<void> => {
     const ctrl = this.activeController;
     if (!ctrl) return;
@@ -333,7 +412,7 @@ export class NotesView extends WithNotesController(
             appearance="plain"
             size="s"
             aria-label="新規ページを追加"
-            @click=${this.handleCreateNote}
+            @click=${this.handleOpenAddDialog}
           >
             <wa-icon
               library="my-icons"
@@ -363,8 +442,13 @@ export class NotesView extends WithNotesController(
             const prefix =
               this.showTabId && note.id !== undefined ? `#${note.id} ` : "";
             const labelText = `${prefix}${title}`;
+            const isSelected = note.id === activeId;
             return html`
-              <wa-option value=${String(note.id)} .label=${labelText}>
+              <wa-option
+                value=${String(note.id)}
+                .selected=${isSelected}
+                .label=${labelText}
+              >
                 ${labelText}
               </wa-option>
             `;
@@ -436,6 +520,50 @@ export class NotesView extends WithNotesController(
     `;
   }
 
+  /** 新規作成ダイアログの描画 */
+  private renderAddDialog(): HTMLTemplateResult {
+    const dialogLabel = this.showTabId ? "新規ノートの作成" : "新規スクラッチの作成";
+
+    return html`
+      <wa-dialog
+        class="notes-view__add-dialog"
+        label=${dialogLabel}
+        ?open=${this.isAddDialogOpen}
+        @wa-after-hide=${this.handleCloseAddDialog}
+      >
+        <div class="notes-view__add-form">
+          <wa-input
+            class="notes-view__input-title"
+            placeholder="タイトルを入力..."
+            .value=${this.inputTitle}
+            @input=${this.handleTitleInput}
+            @wa-input=${this.handleTitleInput}
+            @keydown=${this.handleTitleKeyDown}
+            autofocus
+          ></wa-input>
+        </div>
+        <wa-button
+          slot="footer"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          @click=${this.handleCloseAddDialog}
+        >
+          キャンセル
+        </wa-button>
+        <wa-button
+          slot="footer"
+          class="notes-view__btn-confirm-add"
+          variant="brand"
+          size="s"
+          @click=${this.handleConfirmAddNote}
+        >
+          作成
+        </wa-button>
+      </wa-dialog>
+    `;
+  }
+
   /** メインレンダリング */
   public override render(): HTMLTemplateResult {
     const totalNotes = this.effectiveNotes;
@@ -454,6 +582,7 @@ export class NotesView extends WithNotesController(
                 ${activeNote ? this.renderEditor(activeNote) : html``}
               `}
         ${this.renderDeleteDialog()}
+        ${this.renderAddDialog()}
       </div>
     `;
   }

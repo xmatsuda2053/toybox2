@@ -324,14 +324,28 @@ describe("NotesController (TDD)", () => {
       await controller.initialized;
     });
 
-    it("6-1. createNote 実行時に systemLogService.logNoteCreated が呼び出されること", async () => {
+    it("6-1. createNote 実行時に systemLogService.logNoteCreated が呼び出され、自動抽出されたタイトルが渡されること", async () => {
       const newId = await controller.createNote({ value: "## Note\n\n新規ノート本文" });
 
       expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledTimes(1);
-      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledWith(1, newId);
+      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledWith(1, newId, "Note");
     });
 
-    it("6-2. deleteNote 実行時に systemLogService.logNoteDeleted が呼び出されること", async () => {
+    it("6-2. createNote で title を明示指定した場合、systemLogService.logNoteCreated にそのタイトルが渡されること", async () => {
+      const newId = await controller.createNote({
+        title: "カスタムタイトル",
+        value: "## カスタムタイトル\n\n新規ノート本文",
+      });
+
+      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logNoteCreated).toHaveBeenCalledWith(
+        1,
+        newId,
+        "カスタムタイトル",
+      );
+    });
+
+    it("6-3. deleteNote 実行時に systemLogService.logNoteDeleted が呼び出されること", async () => {
       await controller.deleteNote(1);
 
       expect(fakeSystemLogService.logNoteDeleted).toHaveBeenCalledTimes(1);

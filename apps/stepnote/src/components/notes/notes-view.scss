@@ -92,3 +92,19 @@
 .notes-view__delete-dialog {
   --width: 400px;
 }
+
+/* 新規追加ダイアログ */
+.notes-view__add-dialog {
+  --width: 440px;
+}
+
+.notes-view__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s, 12px);
+  padding: var(--wa-space-xs, 8px) 0;
+}
+
+.notes-view__input-title {
+  width: 100%;
+}

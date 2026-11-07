@@ -50,7 +50,14 @@ import { NotesView } from "./notes-view";
  *    - 4-15. handleCopyJumpTag 実行時に #(noteId){title} の形式でクリップボードへ書き込みが行われること
  *
  * 5. 新規ページ作成 (Create Page)
- *    - 5-1. 新規追加ボタンクリック（handleCreateNote）で notesController.createNote が初期値 "## Note" で呼び出され、作成された新しいNoteが自動的にアクティブになること
+ *    - 5-1. 新規追加ボタンクリック（handleOpenAddDialog）で isAddDialogOpen が true となり、タイトル入力ダイアログが開くこと
+ *    - 5-2. タイトル入力ダイアログに wa-input（@input バインド付き）、キャンセルボタン、作成ボタンがレンダリングされること
+ *    - 5-2-2. handleTitleInput により input イベントから inputTitle が正しく更新されること
+ *    - 5-2-3. handleTitleKeyDown で IME 変換中の Enter は無視され、確定時の Enter で handleConfirmAddNote が実行されること
+ *    - 5-3. タイトルを入力して作成確定（handleConfirmAddNote）した場合、指定タイトルおよび ## <タイトル>\n\n で createNote が呼び出され、新規ノートがアクティブ（editモード）となりダイアログが閉じること
+ *    - 5-4. タイトル未入力（空文字）のまま作成確定した場合、デフォルトタイトル「(無題のメモ)」および ## (無題のメモ)\n\n で createNote が呼び出されること
+ *    - 5-5. キャンセル操作（handleCloseAddDialog）でダイアログが閉じ、createNote は呼び出されないこと
+ *    - 5-6. showTabId が true（ノート時）はダイアログラベルが「新規ノートの作成」、false（スクラッチ時）は「新規スクラッチの作成」となること
  *
  * 6. ページ削除 (Delete Page)
  *    - 6-1. エディタメニューからの削除リクエスト（handleRequestDelete）で削除確認ダイアログ（wa-dialog）が開くこと
@@ -182,12 +189,13 @@ describe("NotesView Component", () => {
       expect(element.activeNoteId).toBe(201);
     });
 
-    it("2-4. wa-select の .value 属性にアクティブなNoteIDがバインドされていること", () => {
+    it("2-4. wa-select の .value 属性にアクティブなNoteIDがバインドされ、対象の wa-option に .selected プロパティがバインドされること", () => {
       element.activeNoteId = 201;
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
       expect(htmlStr).toMatch(/<wa-select[^>]*\.value=["']?201["']?/);
+      expect(htmlStr).toMatch(/<wa-option[^>]*value=["']?201["']?[^>]*\.selected=/);
     });
 
     it("2-5. showTabId が true の場合、各 wa-option 内に #201 などのIDプレフィックスが表示されること", () => {
@@ -224,10 +232,16 @@ describe("NotesView Component", () => {
       expect(htmlStr).toContain("#201 改訂版の仕様メモ");
     });
 
-    it("2-8. updated 実行時に wa-select の displayLabel がアクティブノートの最新タイトルへ同期されること", () => {
+    it("2-8. updated 実行時に wa-select の value/displayLabel および各 wa-option の selected がアクティブノートへ同期されること", () => {
+      const mockOptions = [
+        { value: "201", selected: true },
+        { value: "202", selected: true },
+      ];
       const mockSelect = {
+        value: "999",
         displayLabel: "旧タイトル",
         selectionChanged: vi.fn(),
+        querySelectorAll: vi.fn().mockReturnValue(mockOptions),
       };
       Object.defineProperty(element, "renderRoot", {
         configurable: true,
@@ -244,7 +258,10 @@ describe("NotesView Component", () => {
       updatedMethod.call(element, new Map());
 
       expect(mockSelect.selectionChanged).toHaveBeenCalledTimes(1);
+      expect(mockSelect.value).toBe("201");
       expect(mockSelect.displayLabel).toBe("#201 仕様メモ");
+      expect(mockOptions[0].selected).toBe(true);
+      expect(mockOptions[1].selected).toBe(false);
     });
   });
 
@@ -474,14 +491,132 @@ describe("NotesView Component", () => {
   });
 
   describe("5. 新規ページ作成 (Create Page)", () => {
-    it("5-1. 新規追加ボタンクリック（handleCreateNote）で notesController.createNote が初期値 '## Note' で呼び出され、作成された新しいNoteが自動的にアクティブになること", async () => {
-      await element.handleCreateNote();
+    it("5-1. 新規追加ボタンクリック（handleOpenAddDialog）で isAddDialogOpen が true となり、タイトル入力ダイアログが開くこと", () => {
+      expect(element.isAddDialogOpen).toBe(false);
+
+      element.handleOpenAddDialog();
+      expect(element.isAddDialogOpen).toBe(true);
+      expect(element.inputTitle).toBe("");
+
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("notes-view__add-dialog");
+      expect(htmlStr).toContain("notes-view__input-title");
+    });
+
+    it("5-2. タイトル入力ダイアログに wa-input（@input バインド付き）、キャンセルボタン、作成ボタンがレンダリングされること", () => {
+      element.isAddDialogOpen = true;
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toContain("notes-view__add-dialog");
+      expect(htmlStr).toContain("notes-view__input-title");
+      expect(htmlStr).toMatch(/@input=/);
+      expect(htmlStr).toContain("キャンセル");
+      expect(htmlStr).toContain("notes-view__btn-confirm-add");
+      expect(htmlStr).toContain("作成");
+    });
+
+    it("5-2-2. handleTitleInput により input イベントから inputTitle が正しく更新されること", () => {
+      element.handleTitleInput({
+        target: { value: "入力テストタイトル" },
+      } as unknown as Event);
+      expect(element.inputTitle).toBe("入力テストタイトル");
+    });
+
+    it("5-2-3. handleTitleKeyDown で IME 変換中の Enter は無視され、確定時の Enter で handleConfirmAddNote が実行されること", () => {
+      const confirmSpy = vi
+        .spyOn(element, "handleConfirmAddNote")
+        .mockResolvedValue(undefined);
+
+      // IME 変換中 (isComposing: true)
+      element.handleTitleKeyDown({
+        key: "Enter",
+        isComposing: true,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent);
+      expect(confirmSpy).not.toHaveBeenCalled();
+
+      // IME 確定後 (isComposing: false)
+      element.handleTitleKeyDown({
+        key: "Enter",
+        isComposing: false,
+        preventDefault: vi.fn(),
+      } as unknown as KeyboardEvent);
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("5-3. タイトルを入力して作成確定（handleConfirmAddNote）した場合、指定タイトルおよび ## <タイトル>\\n\\n で createNote が呼び出され、新規ノートがアクティブ（editモード）となりダイアログが閉じること", async () => {
+      mockNotesController.createNote.mockImplementation(
+        async (payload: { title?: string; value: string }) => {
+          mockNotesController.state.push({
+            id: 203,
+            taskId: 1,
+            title: payload.title,
+            value: payload.value,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          return 203;
+        },
+      );
+
+      element.isAddDialogOpen = true;
+      element.inputTitle = "仕様設計メモ";
+
+      await element.handleConfirmAddNote();
 
       expect(mockNotesController.createNote).toHaveBeenCalledTimes(1);
       expect(mockNotesController.createNote).toHaveBeenCalledWith({
-        value: "## Note\n\n",
+        title: "仕様設計メモ",
+        value: "## 仕様設計メモ\n\n",
       });
       expect(element.activeNoteId).toBe(203);
+      expect(element.effectiveActiveNoteId).toBe(203);
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toMatch(/<wa-select[^>]*\.value=["']?203["']?/);
+      expect(htmlStr).toMatch(/<wa-option[^>]*value=["']?203["']?[^>]*\.selected=/);
+      expect(element.currentEditorMode).toBe("edit");
+      expect(element.isAddDialogOpen).toBe(false);
+      expect(element.inputTitle).toBe("");
+    });
+
+    it("5-4. タイトル未入力（空文字または空白）のまま作成確定した場合、デフォルトタイトル「(無題のメモ)」および ## (無題のメモ)\\n\\n で createNote が呼び出されること", async () => {
+      element.isAddDialogOpen = true;
+      element.inputTitle = "   ";
+
+      await element.handleConfirmAddNote();
+
+      expect(mockNotesController.createNote).toHaveBeenCalledTimes(1);
+      expect(mockNotesController.createNote).toHaveBeenCalledWith({
+        title: "(無題のメモ)",
+        value: "## (無題のメモ)\n\n",
+      });
+      expect(element.activeNoteId).toBe(203);
+      expect(element.isAddDialogOpen).toBe(false);
+    });
+
+    it("5-5. キャンセル操作（handleCloseAddDialog）でダイアログが閉じ、createNote は呼び出されないこと", () => {
+      element.isAddDialogOpen = true;
+      element.inputTitle = "下書きタイトル";
+
+      element.handleCloseAddDialog();
+
+      expect(element.isAddDialogOpen).toBe(false);
+      expect(element.inputTitle).toBe("");
+      expect(mockNotesController.createNote).not.toHaveBeenCalled();
+    });
+
+    it("5-6. showTabId が true（ノート時）はダイアログラベルが「新規ノートの作成」、false（スクラッチ時）は「新規スクラッチの作成」となること", () => {
+      element.isAddDialogOpen = true;
+      element.showTabId = true;
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/label="?新規ノートの作成"?/);
+
+      element.showTabId = false;
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/label="?新規スクラッチの作成"?/);
     });
   });
 
