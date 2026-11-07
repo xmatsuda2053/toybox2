@@ -19,8 +19,7 @@
  *   - 3-1. Issue新規追加時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
  *   - 3-2. Issue一括作成時のシステムログに各Issueへのジャンプ用タグが含まれてフォーマットされること
  *   - 3-3. Issueタイトル変更時のシステムログ（Issue ID、変更前後のタイトル）を正しくフォーマットすること
- *   - 3-4. Issueステータス変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
- *   - 3-5. Issue期日変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること
+ *   - 3-4. Issueステータス変更時のシステムログ見出しに対象Issue名と変更後ステータスが含まれ、本文に対象ジャンプ用タグのみが含まれてフォーマットされること
  *   - 3-6. Issue削除時のシステムログ（Issue ID、タイトル、削除時ステータス・期日）を正しくフォーマットすること
  *
  * 4. Note関連システムログフォーマット仕様
@@ -48,7 +47,6 @@ import {
   formatIssueCreatedLog,
   formatIssueBulkCreatedLog,
   formatIssueStatusChangedLog,
-  formatIssueDueDateChangedLog,
   formatIssueDeletedLog,
   formatNoteCreatedLog,
   formatNoteDeletedLog,
@@ -217,42 +215,19 @@ describe("system-log.utils (TDD)", () => {
     });
 
 
-    it("3-4. Issueステータス変更時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
+    it("3-4. Issueステータス変更時のシステムログ見出しに対象Issue名と変更後ステータスが含まれ、本文に対象ジャンプ用タグのみが含まれてフォーマットされること", () => {
       const log = formatIssueStatusChangedLog(12, "API設計", 0, 9);
 
       expect(log).toBe(
-        `### sys: Issue #12 "API設計" ステータス変更: 開始待ち → 完了\n\n` +
-          `- **対象**: #[12]{API設計}\n` +
-          `- **項目**: ステータス\n` +
-          `- **変更前**: 開始待ち (0)\n` +
-          `- **変更後**: 完了 (9)`,
+        `### sys: Issue #12 "API設計": 完了\n\n` +
+          `- **対象**: #[12]{API設計}`,
       );
 
       // タイトル空時のフォールバック動作
       const logWithoutTitle = formatIssueStatusChangedLog(12, "", 0, 9);
       expect(logWithoutTitle).toBe(
-        `### sys: Issue #12 ステータス変更: 開始待ち → 完了\n\n` +
-          `- **対象**: #[12]{}\n` +
-          `- **項目**: ステータス\n` +
-          `- **変更前**: 開始待ち (0)\n` +
-          `- **変更後**: 完了 (9)`,
-      );
-    });
-
-    it("3-5. Issue期日変更時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
-      const log = formatIssueDueDateChangedLog(
-        12,
-        "API設計",
-        new Date(2026, 9, 22),
-        new Date(2026, 9, 25),
-      );
-
-      expect(log).toBe(
-        `### sys: Issue #12 "API設計" 期日変更: 2026-10-22 → 2026-10-25\n\n` +
-          `- **対象**: #[12]{API設計}\n` +
-          `- **項目**: 期日\n` +
-          `- **変更前**: 2026-10-22\n` +
-          `- **変更後**: 2026-10-25`,
+        `### sys: Issue #12: 完了\n\n` +
+          `- **対象**: #[12]{}`,
       );
     });
 
