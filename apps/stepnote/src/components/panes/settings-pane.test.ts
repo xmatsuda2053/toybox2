@@ -60,6 +60,8 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 4-12. .settings-pane__issue-item に視認性を高める背景色（var(--wa-color-surface-raised)）および境界線（var(--wa-color-border-subtle)）が定義されていること
  *    - 4-13. .settings-pane__master-list および .settings-pane__issue-list にアイテム間の適切な余白（gap: var(--wa-space-xs, 6px)）が定義されていること
  *    - 4-14. .settings-pane__master-item--selected および .settings-pane__issue-item--selected において、選択切り替え時の点滅を防ぐため transition: none が定義され、hover 時の背景色が選択時と同一に統一されていること
+ *    - 4-15. .settings-pane__issue-offset-row にフォーカスリングの下端欠損を防ぐ上下余白（padding-block または padding）が定義されていること (SN-003)
+ *    - 4-16. .settings-pane__issue-section が固定高さ（height: 320px）ではなく縦領域を活用して伸長するスタイル（flex: 1）が定義されていること (SN-005)
  *
  * 5. 自動エクスポート（Auto Export）設定タブ機能
  *    - 5-1. wa-tab-group 内に panel="auto-export" の wa-tab および wa-tab-panel がレンダリングされること
@@ -660,6 +662,28 @@ describe("SettingsPane Component", () => {
       );
       expect(scss).toMatch(
         /\.settings-pane__issue-item--selected:hover\s*\{[^}]*?background-color:\s*var\(--wa-color-neutral-fill-normal\)/,
+      );
+    });
+
+    it("4-15. .settings-pane__issue-offset-row にフォーカスリングの下端欠損を防ぐ上下余白（padding-block または padding）が定義されていること (SN-003)", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.settings-pane__issue-offset-row\s*\{[^}]*?(?:padding-block|padding):\s*(?:var\(--wa-space-[^,)]+,\s*\d+px\)|\d+px)/,
+      );
+    });
+
+    it("4-16. .settings-pane__issue-section が固定高さ（height: 320px）ではなく縦領域を活用して伸長するスタイル（flex: 1）が定義され、.settings-pane__desc-container がディスプレイサイズ連動（clamp）となっていること (SN-005)", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      // 固定 height: 320px ではなく flex: 1 で伸長すること
+      expect(scss).toMatch(
+        /\.settings-pane__issue-section\s*\{[^}]*?flex:\s*1\b/,
+      );
+      expect(scss).not.toMatch(
+        /\.settings-pane__issue-section\s*\{[^}]*?height:\s*320px\b/,
+      );
+      // タスク概要コンテナがディスプレイサイズに連動すること（clamp(..., vh, ...)）
+      expect(scss).toMatch(
+        /\.settings-pane__desc-container\s*\{[^}]*?height:\s*clamp\(/,
       );
     });
   });
