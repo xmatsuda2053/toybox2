@@ -39,6 +39,14 @@
  *   - 文字列選択時に color テンプレートを挿入した際、選択文字列をカラー構文でラップして dispatch されること
  * 13. 長い半角英数字（URL等）の自然な折り返し制御（SN-006）
  *   - markdown-editor.scss において .cm-content および .cm-line に対し、word-break: break-all; および overflow-wrap: anywhere; が指定されていること
+ * 14. 表示復帰・計測リフレッシュ機能 (refresh) (SN-021)
+ *   - refresh() メソッドが実装されていること
+ *   - refresh() 呼び出し時に editorView.requestMeasure() が呼び出されること
+ *   - refresh() 呼び出し時に this.value と doc に差分がある場合、最新の value で同期更新されること
+ * 15. フォーカス保護およびカーソル位置保持によるカーソルジャンプ防止（Issue #426）
+ *   - エディタがフォーカス中（hasFocus: true）の場合、親からの遅延した value 変更（updated）による全置換 dispatch がスキップされること
+ *   - 非フォーカス時に外部から value が変更された場合、全置換 dispatch 時に現在のカーソル位置（selection）がクランプ保持されること
+ *   - setValue() 実行時には、フォーカス状態に関わらずエディタドキュメントが新しい値へ更新されること
  */
 
 import * as fs from "node:fs";
@@ -468,6 +476,92 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
         changes: { from: 0, to: 5, insert: "# 最新テキスト" },
       });
       expect(mockMeasure).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("15. フォーカス保護およびカーソル位置保持によるカーソルジャンプ防止（Issue #426）", () => {
+    it("15-1. エディタがフォーカス中（hasFocus: true）の場合、親からの遅延した value 変更（updated）による全置換 dispatch がスキップされること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        hasFocus: true,
+        state: {
+          doc: {
+            toString: () => "タグ挿入後の最新テキスト",
+            length: 12,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      // ユーザーがエディタを編集中（フォーカスあり）の状態で、
+      // 300ms デバウンスなどで遅れて親から古いテキストが届いた場合
+      editor.value = "タグ挿入前の古いテキスト";
+      editor.updated(new Map([["value", "古いテキスト"]]));
+
+      // 編集中（フォーカス中）はエディタ内部の最新テキストが優先され、全置換はスキップされるべき
+      expect(dispatchSpy).not.toHaveBeenCalled();
+    });
+
+    it("15-2. 非フォーカス時に外部から value が変更された場合、全置換 dispatch 時に現在のカーソル位置（selection）がクランプ保持されること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        hasFocus: false,
+        state: {
+          doc: {
+            toString: () => "古いテキスト",
+            length: 6,
+          },
+          selection: {
+            main: { anchor: 4, head: 4 },
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.value = "新テキスト"; // 長さ 5
+      editor.updated(new Map([["value", "古いテキスト"]]));
+
+      expect(dispatchSpy).toHaveBeenCalledTimes(1);
+      // selection が新テキストの長さに合わせてクランプ保持されていること
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: { from: 0, to: 6, insert: "新テキスト" },
+          selection: { anchor: 4, head: 4 },
+        }),
+      );
+    });
+
+    it("15-3. setValue() 実行時には、フォーカス状態に関わらずエディタドキュメントが新しい値へ更新されること", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      const dispatchSpy = vi.fn();
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: dispatchSpy,
+        hasFocus: true,
+        state: {
+          doc: {
+            toString: () => "変更前テキスト",
+            length: 7,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.setValue("明示的に設定された新しいテキスト");
+
+      expect(dispatchSpy).toHaveBeenCalledTimes(1);
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          changes: {
+            from: 0,
+            to: 7,
+            insert: "明示的に設定された新しいテキスト",
+          },
+        }),
+      );
     });
   });
 });
