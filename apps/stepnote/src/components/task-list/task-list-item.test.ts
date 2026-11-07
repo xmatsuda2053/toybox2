@@ -27,6 +27,8 @@ import { TaskListItem } from "./task-list-item.js";
  *    - 3-5. labelName が未指定（空）の場合、フォールバック（未分類）が表示されること
  *    - 3-6. 垂直ディバイダー（wa-divider[orientation="vertical"]）が区切りとしてレンダリングされること
  *    - 3-7. 期限情報表示において、期限アイコン（.task-list-item__due-icon）が期限日（.task-list-item__due-date）の直前に配置されていること（アイコン > ラベルの順序）
+ *    - 3-8. 完了タスク（statusCode: 9）の場合、期限日が過去日であっても遅延アイコン（fire-solid-full）や修飾子クラス（--overdue）が表示されず、通常のカレンダーアイコン（calendar-solid-full）が修飾子クラスなしでレンダリングされること
+ *    - 3-9. 完了タスク（statusCode: 9）の場合、期限日が当日や直前であっても警告修飾子クラス（--asap, --upcoming）が表示されず、通常のカレンダーアイコンが修飾子クラスなしでレンダリングされること
  *
  * 4. ユーザーインタラクションとカスタムイベント発火
  *    - 4-1. アイテム本体のクリック時に task-select カスタムイベント（detail: { taskId }）がディスパッチされること
@@ -212,6 +214,31 @@ describe("TaskListItem Component", () => {
       expect(dueIconIndex).toBeGreaterThan(-1);
       expect(dueDateIndex).toBeGreaterThan(-1);
       expect(dueIconIndex).toBeLessThan(dueDateIndex);
+    });
+
+    it("3-8. 完了タスク（statusCode: 9）の場合、期限日が過去日であっても遅延アイコンや修飾子クラスが表示されず、通常カレンダーアイコンが描画されること", () => {
+      element.task = {
+        ...baseTask,
+        statusCode: 9,
+        dueDate: new Date("2020-01-01"),
+      };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("calendar-solid-full");
+      expect(htmlStr).not.toContain("fire-solid-full");
+      expect(htmlStr).not.toContain("task-list-item__due-icon--overdue");
+    });
+
+    it("3-9. 完了タスク（statusCode: 9）の場合、期限日が当日や直前であっても警告アイコンや修飾子クラスが表示されず、通常カレンダーアイコンが描画されること", () => {
+      element.task = {
+        ...baseTask,
+        statusCode: 9,
+        dueDate: new Date(),
+      };
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("calendar-solid-full");
+      expect(htmlStr).not.toContain("triangle-exclamation-solid-full");
+      expect(htmlStr).not.toContain("task-list-item__due-icon--asap");
+      expect(htmlStr).not.toContain("task-list-item__due-icon--upcoming");
     });
   });
 
