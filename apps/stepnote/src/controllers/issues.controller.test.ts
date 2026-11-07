@@ -98,7 +98,7 @@ const createMockHost = () => {
  *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  *
  * 6. システムログ連携仕様
- *    - [x] 6-5. updateIssue で期日が変更された場合でも、logIssueDueDateChanged が呼び出されないこと（システムログ出力の抑止）
+ *    - [x] 6-5. updateIssue で期日のみが変更された場合、システムログが呼び出されないこと（システムログ出力の抑止）
  *    - [x] 6-7. applyTemplate 実行時、systemLogService.logIssueBulkCreated が呼び出されること
  */
 describe("IssuesController (TDD)", () => {
@@ -440,7 +440,6 @@ describe("IssuesController (TDD)", () => {
       logIssueCreated: ReturnType<typeof vi.fn>;
       logIssueBulkCreated: ReturnType<typeof vi.fn>;
       logIssueStatusChanged: ReturnType<typeof vi.fn>;
-      logIssueDueDateChanged: ReturnType<typeof vi.fn>;
       logIssueDeleted: ReturnType<typeof vi.fn>;
     };
 
@@ -451,7 +450,6 @@ describe("IssuesController (TDD)", () => {
         logIssueCreated: vi.fn().mockResolvedValue(undefined),
         logIssueBulkCreated: vi.fn().mockResolvedValue(undefined),
         logIssueStatusChanged: vi.fn().mockResolvedValue(undefined),
-        logIssueDueDateChanged: vi.fn().mockResolvedValue(undefined),
         logIssueDeleted: vi.fn().mockResolvedValue(undefined),
       };
       controller = new IssuesController(
@@ -509,11 +507,11 @@ describe("IssuesController (TDD)", () => {
       );
     });
 
-    it("6-5. updateIssue で期日が変更された場合でも、logIssueDueDateChanged が呼び出されないこと（システムログ出力の抑止）", async () => {
+    it("6-5. updateIssue で期日のみが変更された場合、システムログが呼び出されないこと（システムログ出力の抑止）", async () => {
       const newDate = new Date(2026, 11, 31);
       await controller.updateIssue(1, { dueDate: newDate });
 
-      expect(fakeSystemLogService.logIssueDueDateChanged).not.toHaveBeenCalled();
+      expect(fakeSystemLogService.logIssueStatusChanged).not.toHaveBeenCalled();
     });
 
     it("6-6. deleteIssue 実行時に systemLogService.logIssueDeleted が呼び出されること", async () => {
