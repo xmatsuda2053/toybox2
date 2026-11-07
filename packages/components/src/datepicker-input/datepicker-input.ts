@@ -147,6 +147,12 @@ export class DatePickerInput extends LitElement {
   public required: boolean = false;
 
   /**
+   * 選択中日付の再クリックによるクリア（未選択化）を許可するフラグ
+   */
+  @property({ type: Boolean })
+  public clearable: boolean = true;
+
+  /**
    * 入力欄のサイズ
    */
   @property({ type: String })
@@ -255,10 +261,41 @@ export class DatePickerInput extends LitElement {
   };
 
   /**
+   * 日付クリア処理（未選択状態にリセット）
+   */
+  public handleClear = (): void => {
+    if (this.disabled || this.required || !this.clearable) return;
+
+    this.value = "";
+    if (this._internals?.setFormValue) {
+      this._internals.setFormValue("");
+    }
+
+    if (this._calendarPopover) {
+      this._calendarPopover.open = false;
+    }
+
+    dispatchCustomEvent<DatePickerChangeEventDetail>(this, "datepicker-change", {
+      detail: {
+        value: "",
+        date: null,
+      },
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+  };
+
+  /**
    * 日付セルクリック時の選択処理
    */
   public handleDateClick = (dateStr: string): void => {
     if (this.disabled) return;
+
+    if (this.value === dateStr && this.clearable && !this.required) {
+      this.handleClear();
+      return;
+    }
 
     this.value = dateStr;
     if (this._internals?.setFormValue) {
@@ -416,7 +453,7 @@ export class DatePickerInput extends LitElement {
         aria-label=${label}
         @click=${onClick}
       >
-        <wa-tooltip for=${id}>${label}</wa-tooltip>
+        <wa-tooltip for=${id} trigger="hover">${label}</wa-tooltip>
         <wa-icon
           class="datepicker-calendar__btn-icon"
           library="my-icons"
@@ -505,10 +542,13 @@ export class DatePickerInput extends LitElement {
   private renderCalendarGrid(cells: CalendarCellData[]): HTMLTemplateResult {
     return html`
       <div class="datepicker-calendar__grid">
-        ${cells.map(
-          (c) => html`
+        ${cells.map((c) => {
+          const isClearableCurrent =
+            c.isCurrent && !this.required && this.clearable;
+          return html`
             <button
               type="button"
+              id=${isClearableCurrent ? "datepicker-cell-current" : undefined}
               class="datepicker-calendar__cell ${c.isCurrent
                 ? "datepicker-calendar__cell--current"
                 : ""} ${c.isToday
@@ -519,14 +559,19 @@ export class DatePickerInput extends LitElement {
                 ? "datepicker-calendar__cell--weekend"
                 : ""}"
               data-date=${c.dateStr}
-              aria-label=${c.dateStr}
+              aria-label=${isClearableCurrent
+                ? `${c.dateStr} (クリックして日付をクリア)`
+                : c.dateStr}
               aria-selected=${c.isCurrent ? "true" : "false"}
               @click=${() => this.handleDateClick(c.dateStr)}
             >
+              ${isClearableCurrent
+                ? html`<wa-tooltip for="datepicker-cell-current" trigger="hover">クリックして日付をクリア</wa-tooltip>`
+                : ""}
               ${c.day}
             </button>
-          `,
-        )}
+          `;
+        })}
       </div>
     `;
   }

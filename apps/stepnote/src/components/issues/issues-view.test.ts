@@ -35,6 +35,7 @@ import { IssuesView } from "./issues-view.js";
  * 3. 行内操作（ステータス変更・期日変更） (In-place Status & Due Date Changes)
  *    - 3-1. アイテム内のステータスドロップダウンでステータスを選択した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
  *    - 3-2. アイテム内の datepicker-input で日付変更（datepicker-change）した際、行展開はトリガーされず issuesController.updateIssue が呼び出されること
+ *    - 3-2-2. アイテム内の datepicker-input で日付クリア（datepicker-change で date: null）された際、issuesController.updateIssue が dueDate: undefined で呼び出されること
  *    - 3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger="hover" が設定され、「ステータスを変更」と表示されること
  *    - 3-4. 複数Issueが存在する状態で特定Issueのステータス変更時、対象外の他IssueのステータスやIDが変更されないこと
  *
@@ -434,6 +435,18 @@ describe("IssuesView Component", () => {
       expect(stopPropagationMock).toHaveBeenCalled();
       expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
         dueDate: newDate,
+      });
+    });
+
+    it("3-2-2. アイテム内の datepicker-input で日付クリア（datepicker-change で date: null）された際、issuesController.updateIssue が dueDate: undefined で呼び出されること", async () => {
+      const stopPropagationMock = vi.fn();
+      await element.handleDueDateChange(1, null, {
+        stopPropagation: stopPropagationMock,
+      } as unknown as Event);
+
+      expect(stopPropagationMock).toHaveBeenCalled();
+      expect(mockIssuesController.updateIssue).toHaveBeenCalledWith(1, {
+        dueDate: undefined,
       });
     });
 
