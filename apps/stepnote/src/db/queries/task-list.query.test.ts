@@ -28,6 +28,9 @@ import {
  *    - 2-6. isDoneSelected が false の場合、ステータスが完了（statusCode: 9）のタスクが除外されること
  *    - 2-7. isProgressSelected が false の場合、ステータスが対応中（statusCode: 5）のタスクが除外されること
  *    - 2-8. isPendingSelected が false の場合、ステータスが未着手（statusCode: 0）のタスクが除外されること
+ *    - 2-9. タスク本体の期限は未来だが、紐づく未完了 Issue が期限切れ（overdue）の場合、isOverdueSelected: true で抽出されること
+ *    - 2-10. タスク本体の期限は未来だが、紐づく未完了 Issue が期限当日（asap）の場合、isAsapSelected: true で抽出されること
+ *    - 2-11. タスク本体の期限は未来だが、紐づく未完了 Issue が期限間近（upcoming）の場合、isUpcomingSelected: true で抽出されること
  *
  * 3. 複合フィルタリングおよびソート
  *    - 3-1. fiscalYear, labelId, QuickAccess, 検索キーワードを同時に指定した場合、全ての条件を満たすタスクのみ抽出されること
@@ -40,10 +43,15 @@ import {
  *    - 4-4. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限当日（isAsap）の件数が正しく集計され、完了タスクは除外されること
  *    - 4-5. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限間近（isWithinAnyDaysBefore 3日以内）の件数が正しく集計され、完了タスクは除外されること
  *    - 4-6. 異なる年度のタスクが混在する場合、指定した年度のタスクのみが集計対象となること
+ *    - 4-7. タスク本体の期限は未来だが、紐づく未完了 Issue が期限切れの場合、overdue 件数に加算されること
+ *    - 4-8. タスク本体の期限は未来だが、紐づく未完了 Issue が期限当日の場合、asap 件数に加算されること
+ *    - 4-9. タスク本体の期限は未来だが、紐づく未完了 Issue が期限間近の場合、upcoming 件数に加算されること
+ *    - 4-10. 完了タスク（statusCode: 9）に紐づく未完了 Issue が期限切れであっても、overdue 件数には加算されないこと
  *
  * 5. QuickAccess タスク件数の純粋関数集計（calculateQuickAccessTaskCounts）
  *    - 5-1. 未完了タスクの期限日判定が正しく反映されること
  *    - 5-2. bookmark および未分類がステータスに関わらず正確に集計されること
+ *    - 5-3. taskIssueDueStatusMap が渡された場合、未完了Issueの期限ステータスが overdue / asap / upcoming 件数に反映されること
  *
  * 6. Issues 件数の集計機能（getTaskIssueCounts）
  *    - 6-1. 指定会計年度のタスクに紐づく Issue の完了件数（done）と総件数（total）をタスクIDごとの Map で取得できること
@@ -540,6 +548,93 @@ describe("TaskListQuery Tests", () => {
       expect(results.length).toBe(1);
       expect(results[0].id).toBe(idDone);
     });
+
+    it("2-9. タスク本体の期限は未来だが、紐づく未完了 Issue が期限切れ（overdue）の場合、isOverdueSelected: true で抽出されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 0,
+        title: "遅延中のサブ課題",
+        value: "",
+        dueDate: overdueDate,
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        quickAccess: { isOverdueSelected: true },
+      });
+
+      expect(results.length).toBe(1);
+      expect(results[0].id).toBe(taskId);
+    });
+
+    it("2-10. タスク本体の期限は未来だが、紐づく未完了 Issue が期限当日（asap）の場合、isAsapSelected: true で抽出されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 5,
+        title: "本日対応のサブ課題",
+        value: "",
+        dueDate: asapDate,
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        quickAccess: { isAsapSelected: true },
+      });
+
+      expect(results.length).toBe(1);
+      expect(results[0].id).toBe(taskId);
+    });
+
+    it("2-11. タスク本体の期限は未来だが、紐づく未完了 Issue が期限間近（upcoming）の場合、isUpcomingSelected: true で抽出されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 0,
+        title: "明日対応のサブ課題",
+        value: "",
+        dueDate: upcomingDate,
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        quickAccess: { isUpcomingSelected: true },
+      });
+
+      expect(results.length).toBe(1);
+      expect(results[0].id).toBe(taskId);
+    });
   });
 
   describe("3. 複合フィルタリングおよびソート", () => {
@@ -938,6 +1033,102 @@ describe("TaskListQuery Tests", () => {
       expect(counts.uncategorized).toBe(1);
       expect(counts.overdue).toBe(1);
     });
+
+    it("4-7. タスク本体の期限は未来だが、紐づく未完了 Issue が期限切れの場合、overdue 件数に加算されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 0,
+        title: "遅延中のサブ課題",
+        value: "",
+        dueDate: overdueDate,
+      });
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.overdue).toBe(1);
+    });
+
+    it("4-8. タスク本体の期限は未来だが、紐づく未完了 Issue が期限当日の場合、asap 件数に加算されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 5,
+        title: "本日対応のサブ課題",
+        value: "",
+        dueDate: asapDate,
+      });
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.asap).toBe(1);
+    });
+
+    it("4-9. タスク本体の期限は未来だが、紐づく未完了 Issue が期限間近の場合、upcoming 件数に加算されること", async () => {
+      const taskId = await db.tasks.add({
+        name: "タスク本体は余裕あり",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 0,
+        title: "明日対応のサブ課題",
+        value: "",
+        dueDate: upcomingDate,
+      });
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.upcoming).toBe(1);
+    });
+
+    it("4-10. 完了タスク（statusCode: 9）に紐づく未完了 Issue が期限切れであっても、overdue 件数には加算されないこと", async () => {
+      const taskId = await db.tasks.add({
+        name: "完了タスク",
+        statusCode: 9,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.issues.add({
+        taskId,
+        statusCode: 0,
+        title: "未完了だが親は完了",
+        value: "",
+        dueDate: overdueDate,
+      });
+
+      const counts = await query.getQuickAccessTaskCounts(2026);
+      expect(counts.overdue).toBe(0);
+    });
   });
 
   describe("5. calculateQuickAccessTaskCounts の直接単体テスト", () => {
@@ -1011,6 +1202,57 @@ describe("TaskListQuery Tests", () => {
       );
       expect(counts.bookmark).toBe(2);
       expect(counts.uncategorized).toBe(2);
+    });
+
+    it("5-3. taskIssueDueStatusMap が渡された場合、未完了Issueの期限ステータスが overdue / asap / upcoming 件数に反映されること", () => {
+      const dummyTasks = [
+        {
+          id: 1,
+          name: "タスク1（本体未来だがIssueがoverdue）",
+          statusCode: 0,
+          dueDate: futureDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          id: 2,
+          name: "タスク2（本体未来だがIssueがasap）",
+          statusCode: 5,
+          dueDate: futureDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          id: 3,
+          name: "タスク3（本体未来だがIssueがupcoming）",
+          statusCode: 0,
+          dueDate: futureDate,
+          bookmark: false,
+          labelId: 1,
+        },
+        {
+          id: 4,
+          name: "タスク4（完了タスク・Issueがoverdue）",
+          statusCode: 9,
+          dueDate: futureDate,
+          bookmark: false,
+          labelId: 1,
+        },
+      ];
+      const issueStatusMap = new Map([
+        [1, "overdue" as const],
+        [2, "asap" as const],
+        [3, "upcoming" as const],
+        [4, "overdue" as const],
+      ]);
+
+      const counts = calculateQuickAccessTaskCounts(
+        dummyTasks as unknown as TaskRecord[],
+        issueStatusMap,
+      );
+      expect(counts.overdue).toBe(1);
+      expect(counts.asap).toBe(1);
+      expect(counts.upcoming).toBe(1);
     });
   });
 

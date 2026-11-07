@@ -1,6 +1,10 @@
 import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
+import {
+  getCompositeTaskDueStatus,
+  type TaskDueStatus,
+} from "./task-due.utils";
 
 /**
  * 期限属性フィルターの合致判定を行う。
@@ -16,6 +20,23 @@ export function matchesDueDateFilter(
   if (qa.isOverdueSelected && !isOverdue(dueDate)) return false;
   if (qa.isAsapSelected && !isAsap(dueDate)) return false;
   if (qa.isUpcomingSelected && !isWithinAnyDaysBefore(dueDate, 3)) return false;
+  return true;
+}
+
+/**
+ * 総合期限ステータスに基づき、期限フィルター条件に合致するか判定する。
+ *
+ * @param {TaskDueStatus | null} dueStatus 判定対象の総合期限ステータス
+ * @param {Partial<QuickAccessRecord>} qa クイックアクセス設定
+ * @return {boolean} フィルター条件に合致する場合は true
+ */
+export function matchesCompositeDueStatusFilter(
+  dueStatus: TaskDueStatus | null,
+  qa: Partial<QuickAccessRecord>,
+): boolean {
+  if (qa.isOverdueSelected && dueStatus !== "overdue") return false;
+  if (qa.isAsapSelected && dueStatus !== "asap") return false;
+  if (qa.isUpcomingSelected && dueStatus !== "upcoming") return false;
   return true;
 }
 
@@ -41,22 +62,35 @@ export function matchesStatusFilter(
  *
  * @param {TaskRecord[]} tasks フィルター対象のタスク配列
  * @param {Partial<QuickAccessRecord>} qa クイックアクセス設定
+ * @param {Map<number, TaskDueStatus | null>} [taskIssueDueStatusMap] タスクIDごとの未完了Issue最優先期限ステータスMap
  * @return {TaskRecord[]} フィルター適用後のタスク配列
  */
 export function applyQuickAccessFilter(
   tasks: TaskRecord[],
   qa: Partial<QuickAccessRecord>,
+  taskIssueDueStatusMap?: Map<number, TaskDueStatus | null>,
 ): TaskRecord[] {
   return tasks.filter((task) => {
     if (qa.isBookmarkSelected && !task.bookmark) return false;
     if (qa.isUncategorizedSelected && task.labelId && task.labelId !== 0) {
       return false;
     }
+    if (!matchesStatusFilter(task.statusCode, qa)) return false;
+
+    if (!qa.isOverdueSelected && !qa.isAsapSelected && !qa.isUpcomingSelected) {
+      return true;
+    }
+
+    if (taskIssueDueStatusMap) {
+      const issueStatus =
+        task.id !== undefined ? (taskIssueDueStatusMap.get(task.id) ?? null) : null;
+      const compositeStatus = getCompositeTaskDueStatus(task, issueStatus);
+      return matchesCompositeDueStatusFilter(compositeStatus, qa);
+    }
+
     const dueDate =
       task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
-    if (!matchesDueDateFilter(dueDate, qa)) return false;
-    if (!matchesStatusFilter(task.statusCode, qa)) return false;
-    return true;
+    return matchesDueDateFilter(dueDate, qa);
   });
 }
 

@@ -91,3 +91,52 @@ export function getIssuesDueStatus(
   return null;
 }
 
+/**
+ * 2つの期限ステータスを比較し、より緊急度の高いステータス（overdue > asap > upcoming）を返す。
+ *
+ * @export
+ * @param {TaskDueStatus | null} [statusA] ステータスA
+ * @param {TaskDueStatus | null} [statusB] ステータスB
+ * @return {TaskDueStatus | null} 最優先ステータスまたは null
+ */
+export function resolveHigherDueStatus(
+  statusA?: TaskDueStatus | null,
+  statusB?: TaskDueStatus | null,
+): TaskDueStatus | null {
+  if (statusA === "overdue" || statusB === "overdue") {
+    return "overdue";
+  }
+  if (statusA === "asap" || statusB === "asap") {
+    return "asap";
+  }
+  if (statusA === "upcoming" || statusB === "upcoming") {
+    return "upcoming";
+  }
+  return null;
+}
+
+/**
+ * タスク本体と紐づく未完了Issueの期限状態を合成し、最も緊急度の高い期限ステータスを取得する。
+ * タスクが完了（statusCode: 9）の場合は常に null を返す。
+ *
+ * @export
+ * @param {{ statusCode: number; dueDate?: Date | string | null }} task 判定対象タスク
+ * @param {TaskDueStatus | null} [issueDueStatus] 紐づく未完了Issueの最優先期限ステータス
+ * @return {TaskDueStatus | null} 総合期限ステータス（該当なしの場合は null）
+ */
+export function getCompositeTaskDueStatus(
+  task: {
+    statusCode: number;
+    dueDate?: Date | string | null;
+  },
+  issueDueStatus?: TaskDueStatus | null,
+): TaskDueStatus | null {
+  if (task.statusCode === 9) {
+    return null;
+  }
+
+  const taskDueInfo = getTaskDueIconInfo(task.dueDate);
+  return resolveHigherDueStatus(taskDueInfo?.status, issueDueStatus);
+}
+
+
