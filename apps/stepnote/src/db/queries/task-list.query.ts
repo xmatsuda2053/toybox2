@@ -9,7 +9,10 @@ import {
 } from "@/utils/task-filter.utils";
 import {
   getTaskDueIconInfo,
+  getCompositeTaskDueStatus,
+  resolveHigherDueStatus,
   type TaskDueIconInfo,
+  type TaskDueStatus,
 } from "@/utils/task-due.utils";
 
 /**
@@ -140,10 +143,48 @@ export class TaskListQuery {
     }
 
     if (options.quickAccess) {
-      tasks = applyQuickAccessFilter(tasks, options.quickAccess);
+      const issueStatusMap = await this.getTaskIssueDueStatusMap(tasks);
+      tasks = applyQuickAccessFilter(tasks, options.quickAccess, issueStatusMap);
     }
 
     return sortTasksByDueDateAndName(tasks);
+  }
+
+  /**
+   * 指定したタスク配列に紐づく未完了Issueの最優先期限ステータスマップを取得する。
+   *
+   * @private
+   * @param {readonly TaskRecord[]} tasks 対象タスク一覧
+   * @return {Promise<Map<number, TaskDueStatus | null>>} タスクIDごとの最優先期限ステータスマップ
+   * @memberof TaskListQuery
+   */
+  private async getTaskIssueDueStatusMap(
+    tasks: readonly TaskRecord[],
+  ): Promise<Map<number, TaskDueStatus | null>> {
+    const taskIds = new Set(
+      tasks
+        .map((t) => t.id)
+        .filter((id): id is number => id !== undefined),
+    );
+    if (taskIds.size === 0) {
+      return new Map();
+    }
+
+    const issues = await this.db.issues.toArray();
+    const map = new Map<number, TaskDueStatus | null>();
+
+    for (const issue of issues) {
+      if (!taskIds.has(issue.taskId) || issue.statusCode === 9) {
+        continue;
+      }
+      const dueInfo = getTaskDueIconInfo(issue.dueDate);
+      if (!dueInfo) continue;
+
+      const current = map.get(issue.taskId);
+      map.set(issue.taskId, resolveHigherDueStatus(current, dueInfo.status));
+    }
+
+    return map;
   }
 
   /**
@@ -171,20 +212,23 @@ export class TaskListQuery {
     fiscalYear: number,
   ): Promise<QuickAccessTaskCounts> {
     const tasks = await this.getTasksByFiscalYear(fiscalYear);
-    return calculateQuickAccessTaskCounts(tasks);
+    const issueStatusMap = await this.getTaskIssueDueStatusMap(tasks);
+    return calculateQuickAccessTaskCounts(tasks, issueStatusMap);
   }
 
   /**
    * タスク一覧から各 QuickAccess フィルターの該当件数を集計する。
    *
    * @param {readonly TaskRecord[]} tasks 対象タスク一覧
+   * @param {Map<number, TaskDueStatus | null>} [taskIssueDueStatusMap] タスクIDごとの未完了Issue最優先期限ステータスマップ
    * @return {*}  {QuickAccessTaskCounts} 集計結果
    * @memberof TaskListQuery
    */
   public calculateQuickAccessTaskCounts(
     tasks: readonly TaskRecord[],
+    taskIssueDueStatusMap?: Map<number, TaskDueStatus | null>,
   ): QuickAccessTaskCounts {
-    return calculateQuickAccessTaskCounts(tasks);
+    return calculateQuickAccessTaskCounts(tasks, taskIssueDueStatusMap);
   }
 
   /**
@@ -273,14 +317,32 @@ function updateDueAlertCounts(dueDate: Date, counts: DueAlertCounts): void {
 }
 
 /**
+ * 総合期限ステータスに基づき、期限警告件数を加算する。
+ */
+function updateCompositeDueAlertCounts(
+  status: TaskDueStatus | null,
+  counts: DueAlertCounts,
+): void {
+  if (status === "overdue") {
+    counts.overdue += 1;
+  } else if (status === "asap") {
+    counts.asap += 1;
+  } else if (status === "upcoming") {
+    counts.upcoming += 1;
+  }
+}
+
+/**
  * タスク一覧から各 QuickAccess フィルターの該当件数を集計する純粋関数。
  *
  * @export
  * @param {readonly TaskRecord[]} tasks 対象タスク一覧
+ * @param {Map<number, TaskDueStatus | null>} [taskIssueDueStatusMap] タスクIDごとの未完了Issue最優先期限ステータスマップ
  * @return {*}  {QuickAccessTaskCounts} 集計結果
  */
 export function calculateQuickAccessTaskCounts(
   tasks: readonly TaskRecord[],
+  taskIssueDueStatusMap?: Map<number, TaskDueStatus | null>,
 ): QuickAccessTaskCounts {
   let bookmark = 0;
   let uncategorized = 0;
@@ -299,7 +361,16 @@ export function calculateQuickAccessTaskCounts(
     }
     // 期限警告系は未完了タスク（対応中・開始待ち、statusCode !== 9）のみをカウント
     if (task.statusCode !== 9) {
-      updateDueAlertCounts(new Date(task.dueDate), dueCounts);
+      if (taskIssueDueStatusMap) {
+        const issueStatus =
+          task.id !== undefined
+            ? (taskIssueDueStatusMap.get(task.id) ?? null)
+            : null;
+        const compositeStatus = getCompositeTaskDueStatus(task, issueStatus);
+        updateCompositeDueAlertCounts(compositeStatus, dueCounts);
+      } else {
+        updateDueAlertCounts(new Date(task.dueDate), dueCounts);
+      }
     }
   }
 

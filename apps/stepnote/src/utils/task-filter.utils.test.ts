@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
+import type { TaskDueStatus } from "./task-due.utils";
 import {
   matchesDueDateFilter,
   matchesStatusFilter,
@@ -32,6 +33,10 @@ import {
  *    - isBookmarkSelected が true の場合、ブックマーク付きタスクのみ抽出すること
  *    - isUncategorizedSelected が true の場合、未分類（labelId 未指定または 0）タスクのみ抽出すること
  *    - 期限フィルターとステータスフィルターの複合条件を正しく判定・除外すること
+ *    - taskIssueDueStatusMap が渡された場合、未完了Issueが overdue のタスクを isOverdueSelected で抽出できること
+ *    - taskIssueDueStatusMap が渡された場合、未完了Issueが asap のタスクを isAsapSelected で抽出できること
+ *    - taskIssueDueStatusMap が渡された場合、未完了Issueが upcoming のタスクを isUpcomingSelected で抽出できること
+ *    - taskIssueDueStatusMap で overdue な Issue があっても完了タスク（statusCode=9）は期限フィルターで除外されること
  * 4. sortTasksByDueDateAndName
  *    - 期限日（dueDate）の昇順で正しくソートされること
  *    - 期限日が同一の場合、タスク名の日本語五十音順で正しくソートされること
@@ -203,6 +208,101 @@ describe("task-filter.utils", () => {
       });
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(2);
+    });
+
+    it("taskIssueDueStatusMap が渡された場合、未完了Issueが overdue のタスクを isOverdueSelected で抽出できること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          statusCode: 0,
+          dueDate: new Date("2099-01-01T00:00:00.000Z"), // タスク期限は未来
+        }),
+        createDummyTask({
+          id: 2,
+          statusCode: 0,
+          dueDate: new Date("2099-01-01T00:00:00.000Z"),
+        }),
+      ];
+      const issueStatusMap = new Map<number, TaskDueStatus | null>([
+        [1, "overdue"],
+        [2, null],
+      ]);
+
+      const result = applyQuickAccessFilter(
+        tasks,
+        { isOverdueSelected: true },
+        issueStatusMap,
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("taskIssueDueStatusMap が渡された場合、未完了Issueが asap のタスクを isAsapSelected で抽出できること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          statusCode: 0,
+          dueDate: new Date("2099-01-01T00:00:00.000Z"),
+        }),
+        createDummyTask({
+          id: 2,
+          statusCode: 0,
+          dueDate: new Date("2099-01-01T00:00:00.000Z"),
+        }),
+      ];
+      const issueStatusMap = new Map<number, TaskDueStatus | null>([
+        [1, "asap"],
+        [2, null],
+      ]);
+
+      const result = applyQuickAccessFilter(
+        tasks,
+        { isAsapSelected: true },
+        issueStatusMap,
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("taskIssueDueStatusMap が渡された場合、未完了Issueが upcoming のタスクを isUpcomingSelected で抽出できること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          statusCode: 0,
+          dueDate: new Date("2099-01-01T00:00:00.000Z"),
+        }),
+      ];
+      const issueStatusMap = new Map<number, TaskDueStatus | null>([
+        [1, "upcoming"],
+      ]);
+
+      const result = applyQuickAccessFilter(
+        tasks,
+        { isUpcomingSelected: true },
+        issueStatusMap,
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it("taskIssueDueStatusMap で overdue な Issue があっても完了タスク（statusCode=9）は期限フィルターで除外されること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          statusCode: 9, // 完了タスク
+          dueDate: new Date("2099-01-01T00:00:00.000Z"),
+        }),
+      ];
+      const issueStatusMap = new Map<number, TaskDueStatus | null>([
+        [1, "overdue"],
+      ]);
+
+      const result = applyQuickAccessFilter(
+        tasks,
+        { isOverdueSelected: true },
+        issueStatusMap,
+      );
+      expect(result).toHaveLength(0);
     });
   });
 
