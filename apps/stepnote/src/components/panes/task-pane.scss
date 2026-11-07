@@ -37,18 +37,28 @@
 .task-pane__header-left {
   display: flex;
   align-items: center;
-  gap: var(--wa-space-s);
+  gap: var(--wa-space-2xs, 4px);
 }
 
 .task-pane__title {
   @include pane-section-title;
-  cursor: pointer;
   padding: var(--wa-space-3xs, 2px) var(--wa-space-xs, 8px);
   border-radius: var(--wa-border-radius-s);
   @include theme-transition;
+}
+
+.task-pane__btn-copy-tag {
+  @include flex-center;
+  color: var(--wa-color-text-quiet);
+
+  &::part(button) {
+    padding-inline: var(--wa-space-3xs, 4px);
+    height: 28px;
+    color: inherit;
+    @include theme-transition;
+  }
 
   &:hover {
-    background-color: var(--wa-color-neutral-fill-quiet);
     color: var(--wa-color-brand-60, var(--wa-color-text-normal));
   }
 }
