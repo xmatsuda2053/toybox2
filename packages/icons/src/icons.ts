@@ -24,6 +24,7 @@ import circle_play_solid_full from "./assets/icons/circle-play-solid-full.svg?ra
 import circle_plus_solid_full from "./assets/icons/circle-plus-solid-full.svg?raw";
 import circle_stop_solid_full from "./assets/icons/circle-stop-solid-full.svg?raw";
 import circle_xmark_solid_full from "./assets/icons/circle-xmark-solid-full.svg?raw";
+import clock_rotate_left_solid_full from "./assets/icons/clock-rotate-left-solid-full.svg?raw";
 import code_branch_solid_full from "./assets/icons/code-branch-solid-full.svg?raw";
 import code_solid_full from "./assets/icons/code-solid-full.svg?raw";
 import compress_solid_full from "./assets/icons/compress-solid-full.svg?raw";
@@ -112,6 +113,7 @@ export const icons: Record<string, string> = {
   "circle-stop-solid-full": circle_stop_solid_full,
   "circle-xmark-solid-full": circle_xmark_solid_full,
   "circle-xmark": circle_xmark_solid_full,
+  "clock-rotate-left-solid-full": clock_rotate_left_solid_full,
   "code-branch-solid-full": code_branch_solid_full,
   "code-solid-full": code_solid_full,
   "compress-solid-full": compress_solid_full,

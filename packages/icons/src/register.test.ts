@@ -73,6 +73,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("folder-solid-full")).toBe(true);
       expect(hasIcon("house-solid-full")).toBe(true);
       expect(hasIcon("house-regular-full")).toBe(true);
+      expect(hasIcon("clock-rotate-left-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }
