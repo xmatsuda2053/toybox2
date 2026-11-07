@@ -11,7 +11,6 @@ import {
   formatTaskFiscalYearChangedLog,
   formatIssueCreatedLog,
   formatIssueStatusChangedLog,
-  formatIssueDueDateChangedLog,
   formatIssueDeletedLog,
   formatNoteCreatedLog,
   formatNoteDeletedLog,
@@ -172,23 +171,6 @@ export class SystemLogService {
     after: TaskStatusCode,
   ): Promise<void> {
     const log = formatIssueStatusChangedLog(
-      issueId,
-      title,
-      before,
-      after,
-    );
-    await this.recordLog(taskId, log);
-  }
-
-  /** Issue期日変更ログを記録する */
-  public async logIssueDueDateChanged(
-    taskId: number,
-    issueId: number,
-    title: string,
-    before: Date,
-    after: Date,
-  ): Promise<void> {
-    const log = formatIssueDueDateChangedLog(
       issueId,
       title,
       before,

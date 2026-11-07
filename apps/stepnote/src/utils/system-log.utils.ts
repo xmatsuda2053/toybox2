@@ -222,55 +222,22 @@ export function formatIssueCreatedLog(
  * @export
  * @param {number} issueId 対象IssueID
  * @param {string} title 対象Issueのタイトル
- * @param {TaskStatusCode} before 変更前コード
+ * @param {TaskStatusCode} _before 変更前コード（非表示）
  * @param {TaskStatusCode} after 変更後コード
  * @return {string} Markdown文字列
  */
 export function formatIssueStatusChangedLog(
   issueId: number,
   title: string,
-  before: TaskStatusCode,
+  _before: TaskStatusCode,
   after: TaskStatusCode,
 ): string {
-  const beforeLabel = getStatusLabel(before);
-  const afterLabel = getStatusLabel(after);
+  const statusLabel = getStatusLabel(after);
   const titlePart = title?.trim() ? ` "${title.trim()}"` : "";
 
   return (
-    `### sys: Issue #${issueId}${titlePart} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
-    `- **対象**: #[${issueId}]{${title}}\n` +
-    `- **項目**: ステータス\n` +
-    `- **変更前**: ${beforeLabel} (${before})\n` +
-    `- **変更後**: ${afterLabel} (${after})`
-  );
-}
-
-/**
- * Issue期日変更時のシステムログ文字列を生成する。
- *
- * @export
- * @param {number} issueId 対象IssueID
- * @param {string} title 対象Issueのタイトル
- * @param {Date} before 変更前期日
- * @param {Date} after 変更後期日
- * @return {string} Markdown文字列
- */
-export function formatIssueDueDateChangedLog(
-  issueId: number,
-  title: string,
-  before: Date,
-  after: Date,
-): string {
-  const beforeStr = formatDateString(before);
-  const afterStr = formatDateString(after);
-  const titlePart = title?.trim() ? ` "${title.trim()}"` : "";
-
-  return (
-    `### sys: Issue #${issueId}${titlePart} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
-    `- **対象**: #[${issueId}]{${title}}\n` +
-    `- **項目**: 期日\n` +
-    `- **変更前**: ${beforeStr}\n` +
-    `- **変更後**: ${afterStr}`
+    `### sys: Issue #${issueId}${titlePart}: ${statusLabel}\n\n` +
+    `- **対象**: #[${issueId}]{${title}}`
   );
 }
 

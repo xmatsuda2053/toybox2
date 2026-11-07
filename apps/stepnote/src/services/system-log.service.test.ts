@@ -20,7 +20,6 @@
  *   - 3-1. logIssueCreated 呼び出し時にIssue新規追加ログが LogsRepository に追加されること
  *   - 3-3. logIssueTitleChanged 呼び出し時にIssueタイトル変更ログが LogsRepository に追加されること
  *   - 3-4. logIssueStatusChanged 呼び出し時にIssueステータス変更ログが LogsRepository に追加されること
- *   - 3-5. logIssueDueDateChanged 呼び出し時にIssue期日変更ログが LogsRepository に追加されること
  *   - 3-6. logIssueDeleted 呼び出し時にIssue削除ログが LogsRepository に追加されること
  *
  * 4. Note関連システムログ記録仕様
@@ -175,23 +174,7 @@ describe("SystemLogService (TDD)", () => {
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
       expect(content).toContain(
-        `sys: Issue #10 "Issue A" ステータス変更: 開始待ち → 完了`,
-      );
-    });
-
-    it("3-5. logIssueDueDateChanged 呼び出し時にIssue期日変更ログが追加されること", async () => {
-      await service.logIssueDueDateChanged(
-        1,
-        10,
-        "Issue A",
-        new Date(2026, 9, 20),
-        new Date(2026, 9, 25),
-      );
-
-      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
-      const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(
-        `sys: Issue #10 "Issue A" 期日変更: 2026-10-20 → 2026-10-25`,
+        `sys: Issue #10 "Issue A": 完了`,
       );
     });
 
