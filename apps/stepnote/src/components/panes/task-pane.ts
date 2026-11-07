@@ -258,12 +258,31 @@ export class TaskPane extends WithIssuesController(
     const isDoneOption = status.code === 9;
     const isDisabled = isDoneOption && !this.canComplete;
 
-    const item = html`
+    if (isDoneOption) {
+      return html`
+        <wa-dropdown-item
+          id="task-pane-status-done"
+          value=${String(status.code)}
+          type="checkbox"
+          ?checked=${status.code === currentCode}
+          ?disabled=${isDisabled}
+        >
+          <wa-icon
+            slot="icon"
+            library="my-icons"
+            name=${TASK_STATUS_ICON_MAP[status.code]}
+            class="task-pane__status-icon type-${TASK_STATUS_TYPE_MAP[status.code]}"
+          ></wa-icon>
+          ${status.labelJa}
+        </wa-dropdown-item>
+      `;
+    }
+
+    return html`
       <wa-dropdown-item
         value=${String(status.code)}
         type="checkbox"
         ?checked=${status.code === currentCode}
-        ?disabled=${isDisabled}
       >
         <wa-icon
           slot="icon"
@@ -274,17 +293,6 @@ export class TaskPane extends WithIssuesController(
         ${status.labelJa}
       </wa-dropdown-item>
     `;
-
-    if (isDisabled) {
-      return html`
-        <wa-tooltip placement="left" trigger="hover">
-          <span slot="content">未完了のIssueが存在するため完了にできません</span>
-          ${item}
-        </wa-tooltip>
-      `;
-    }
-
-    return item;
   }
 
   /**
@@ -349,6 +357,17 @@ export class TaskPane extends WithIssuesController(
           )}
           ${this.renderDropdownDeleteAction()}
         </wa-dropdown>
+        ${!this.canComplete
+          ? html`
+              <wa-tooltip
+                for="task-pane-status-done"
+                placement="left"
+                trigger="hover"
+              >
+                未完了のIssueが存在するため完了にできません
+              </wa-tooltip>
+            `
+          : null}
       </div>
     `;
   }

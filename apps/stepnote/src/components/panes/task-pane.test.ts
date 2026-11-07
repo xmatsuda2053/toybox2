@@ -22,6 +22,9 @@ import { TaskPane } from "./task-pane.js";
  *    - 2-4. ステータスUI（.task-pane__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library="my-icons"・slot="start" が設定されていること
  *    - 2-5. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること
  *    - 2-6. ステータス変更ボタン（.task-pane__status）に Caret 表示属性（with-caret）が設定されていること
+ *    - 2-7. Summary タブ以外がアクティブな場合、ステータス変更ドロップダウンがレンダリングされないこと
+ *    - 2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for="task-pane-status-done" かつ trigger="hover" のツールチップが紐づくこと
+ *    - 2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと
  *    - 2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること
  *    - 2-11. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること
  *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
@@ -208,19 +211,26 @@ describe("TaskPane Component", () => {
       expect(htmlStr).not.toContain("task-pane__status");
     });
 
-    it("2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となりツールチップが表示されること", async () => {
+    it("2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for='task-pane-status-done' かつ trigger='hover' のツールチップが紐づくこと", async () => {
       mockTaskController.canCompleteTask.mockResolvedValue(false);
       element.canComplete = false;
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+      // 完了アイテム（value="9"）に id="task-pane-status-done" と disabled が付与されていること
+      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*id="task-pane-status-done"[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+      // wa-dropdown-item が wa-tooltip でラップされていないこと（直下に存在すること）
+      expect(htmlStr).not.toMatch(/<wa-tooltip[^>]*>[\s\S]*?<wa-dropdown-item/);
+      // ツールチップが for="task-pane-status-done"、trigger="hover"、placement="left" でレンダリングされていること
+      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="task-pane-status-done"[^>]*placement="left"[^>]*trigger="hover"/);
       expect(htmlStr).toContain("未完了のIssueが存在するため完了にできません");
     });
 
-    it("2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならないこと", async () => {
+    it("2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと", async () => {
       mockTaskController.canCompleteTask.mockResolvedValue(true);
       element.canComplete = true;
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+      expect(htmlStr).not.toContain("<wa-tooltip");
+      expect(htmlStr).not.toContain("未完了のIssueが存在するため完了にできません");
     });
 
     it("2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること", () => {

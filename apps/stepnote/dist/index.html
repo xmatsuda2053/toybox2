@@ -7968,12 +7968,27 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
           TASK #${e?.id}
         </span>
       </div>
-    `}renderStatusDropdownItem(e,t){let n=e.code===9&&!this.canComplete,r=A`
+    `}renderStatusDropdownItem(e,t){let n=e.code===9,r=n&&!this.canComplete;return n?A`
+        <wa-dropdown-item
+          id="task-pane-status-done"
+          value=${String(e.code)}
+          type="checkbox"
+          ?checked=${e.code===t}
+          ?disabled=${r}
+        >
+          <wa-icon
+            slot="icon"
+            library="my-icons"
+            name=${Tq[e.code]}
+            class="task-pane__status-icon type-${Eq[e.code]}"
+          ></wa-icon>
+          ${e.labelJa}
+        </wa-dropdown-item>
+      `:A`
       <wa-dropdown-item
         value=${String(e.code)}
         type="checkbox"
         ?checked=${e.code===t}
-        ?disabled=${n}
       >
         <wa-icon
           slot="icon"
@@ -7983,12 +7998,7 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
         ></wa-icon>
         ${e.labelJa}
       </wa-dropdown-item>
-    `;return n?A`
-        <wa-tooltip placement="left" trigger="hover">
-          <span slot="content">未完了のIssueが存在するため完了にできません</span>
-          ${r}
-        </wa-tooltip>
-      `:r}renderDropdownDeleteAction(){return A`
+    `}renderDropdownDeleteAction(){return A`
       <wa-divider></wa-divider>
       <wa-dropdown-item
         value="delete"
@@ -8028,6 +8038,15 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
           ${wq.map(t=>this.renderStatusDropdownItem(t,e))}
           ${this.renderDropdownDeleteAction()}
         </wa-dropdown>
+        ${this.canComplete?null:A`
+              <wa-tooltip
+                for="task-pane-status-done"
+                placement="left"
+                trigger="hover"
+              >
+                未完了のIssueが存在するため完了にできません
+              </wa-tooltip>
+            `}
       </div>
     `}renderHeader(){return A`
       <div class="task-pane__header">
