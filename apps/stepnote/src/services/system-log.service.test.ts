@@ -157,11 +157,17 @@ describe("SystemLogService (TDD)", () => {
 
   describe("3. Issue関連システムログ記録仕様", () => {
     it("3-1. logIssueCreated 呼び出し時にIssue新規追加ログが追加されること", async () => {
-      await service.logIssueCreated(1, 10, new Date(2026, 9, 25), 0);
+      await service.logIssueCreated(
+        1,
+        10,
+        new Date(2026, 9, 25),
+        0,
+        "Issue A",
+      );
 
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: Issue #10 作成`);
+      expect(content).toContain(`sys: Issue #10 作成: "Issue A"`);
     });
 
     it("3-2. logIssueBulkCreated 呼び出し時にIssue一括作成ログが追加されること", async () => {
@@ -180,7 +186,9 @@ describe("SystemLogService (TDD)", () => {
 
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: Issue #10 ステータス変更: 開始待ち → 完了`);
+      expect(content).toContain(
+        `sys: Issue #10 "Issue A" ステータス変更: 開始待ち → 完了`,
+      );
     });
 
     it("3-5. logIssueDueDateChanged 呼び出し時にIssue期日変更ログが追加されること", async () => {
@@ -194,7 +202,9 @@ describe("SystemLogService (TDD)", () => {
 
       expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: Issue #10 期日変更: 2026-10-20 → 2026-10-25`);
+      expect(content).toContain(
+        `sys: Issue #10 "Issue A" 期日変更: 2026-10-20 → 2026-10-25`,
+      );
     });
 
     it("3-6. logIssueDeleted 呼び出し時にIssue削除ログが追加されること", async () => {
