@@ -217,31 +217,6 @@ export function formatIssueCreatedLog(
 }
 
 /**
- * Issue一括追加時のシステムログ文字列を生成する。
- *
- * @export
- * @param {Array<{ id: number; title: string }>} issues 作成されたIssue配列
- * @return {string} Markdown文字列
- */
-export function formatIssueBulkCreatedLog(
-  issues: Array<{ id: number; title: string }>,
-): string {
-  const count = issues.length;
-  const idList = issues.map((i) => `#${i.id}`).join(", ");
-  const issueLines = issues
-    .map((i) => `  - #[${i.id}]{${i.title}}`)
-    .join("\n");
-
-  return (
-    `### sys: Issue一括作成: ${count}件 (${idList})\n\n` +
-    `- **作成件数**: ${count}件\n` +
-    `- **作成されたIssue**:\n` +
-    `${issueLines}`
-  );
-}
-
-
-/**
  * Issueステータス変更時のシステムログ文字列を生成する。
  *
  * @export

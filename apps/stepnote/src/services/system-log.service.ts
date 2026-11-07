@@ -10,7 +10,6 @@ import {
   formatTaskLabelChangedLog,
   formatTaskFiscalYearChangedLog,
   formatIssueCreatedLog,
-  formatIssueBulkCreatedLog,
   formatIssueStatusChangedLog,
   formatIssueDeletedLog,
   formatNoteCreatedLog,
@@ -162,16 +161,6 @@ export class SystemLogService {
     const log = formatIssueCreatedLog(issueId, dueDate, statusCode, title);
     await this.recordLog(taskId, log);
   }
-
-  /** Issue一括作成ログを記録する */
-  public async logIssueBulkCreated(
-    taskId: number,
-    issues: Array<{ id: number; title: string }>,
-  ): Promise<void> {
-    const log = formatIssueBulkCreatedLog(issues);
-    await this.recordLog(taskId, log);
-  }
-
 
   /** Issueステータス変更ログを記録する */
   public async logIssueStatusChanged(

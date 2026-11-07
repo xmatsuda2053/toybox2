@@ -85,8 +85,15 @@ export class IssuesController extends BaseTaskSubItemController<
     await this.loadState();
 
     if (this.systemLogService && ids.length > 0) {
-      const createdIssues = ids.map((id, index) => ({ id, title: titles[index] }));
-      await this.systemLogService.logIssueBulkCreated(this._taskId, createdIssues);
+      for (let i = 0; i < ids.length; i++) {
+        await this.systemLogService.logIssueCreated(
+          this._taskId,
+          ids[i],
+          dueDate,
+          0,
+          titles[i],
+        );
+      }
     }
 
     return ids;
@@ -127,11 +134,16 @@ export class IssuesController extends BaseTaskSubItemController<
     await this.loadState();
 
     if (this.systemLogService && ids.length > 0) {
-      const createdIssues = ids.map((id, index) => ({
-        id,
-        title: payloads[index].title,
-      }));
-      await this.systemLogService.logIssueBulkCreated(this._taskId, createdIssues);
+      for (let i = 0; i < ids.length; i++) {
+        const payload = payloads[i];
+        await this.systemLogService.logIssueCreated(
+          this._taskId,
+          ids[i],
+          payload.dueDate,
+          payload.statusCode ?? 0,
+          payload.title,
+        );
+      }
     }
 
     return ids;

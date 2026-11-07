@@ -98,8 +98,9 @@ const createMockHost = () => {
  *    - [x] 5-1. subscribe で登録したリスナーが状態更新時に呼び出され、解除関数で購読解除できること
  *
  * 6. システムログ連携仕様
+ *    - [x] 6-2. createMultipleIssues 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること
  *    - [x] 6-5. updateIssue で期日のみが変更された場合、システムログが呼び出されないこと（システムログ出力の抑止）
- *    - [x] 6-7. applyTemplate 実行時、systemLogService.logIssueBulkCreated が呼び出されること
+ *    - [x] 6-7. applyTemplate 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること
  */
 describe("IssuesController (TDD)", () => {
   let fakeRepository: FakeIssuesRepository;
@@ -435,10 +436,18 @@ describe("IssuesController (TDD)", () => {
     });
   });
 
+  /**
+   * 6. システムログ連携仕様
+   * - 6-1. createIssue 実行時に systemLogService.logIssueCreated が呼び出されること
+   * - 6-2. createMultipleIssues 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること
+   * - 6-4. updateIssue でステータスが変更された場合、logIssueStatusChanged が呼び出されること
+   * - 6-5. updateIssue で期日のみが変更された場合、システムログが呼び出されないこと
+   * - 6-6. deleteIssue 実行時に systemLogService.logIssueDeleted が呼び出されること
+   * - 6-7. applyTemplate 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること
+   */
   describe("6. システムログ連携仕様", () => {
     let fakeSystemLogService: {
       logIssueCreated: ReturnType<typeof vi.fn>;
-      logIssueBulkCreated: ReturnType<typeof vi.fn>;
       logIssueStatusChanged: ReturnType<typeof vi.fn>;
       logIssueDeleted: ReturnType<typeof vi.fn>;
     };
@@ -448,7 +457,6 @@ describe("IssuesController (TDD)", () => {
       fakeRepository = new FakeIssuesRepository(testIssues);
       fakeSystemLogService = {
         logIssueCreated: vi.fn().mockResolvedValue(undefined),
-        logIssueBulkCreated: vi.fn().mockResolvedValue(undefined),
         logIssueStatusChanged: vi.fn().mockResolvedValue(undefined),
         logIssueDeleted: vi.fn().mockResolvedValue(undefined),
       };
@@ -480,16 +488,26 @@ describe("IssuesController (TDD)", () => {
       );
     });
 
-    it("6-2. createMultipleIssues 実行時に systemLogService.logIssueBulkCreated が呼び出されること", async () => {
-      await controller.createMultipleIssues(["Issue A", "Issue B"]);
+    it("6-2. createMultipleIssues 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること", async () => {
+      const dueDate = new Date(2026, 9, 25);
+      await controller.createMultipleIssues(["Issue A", "Issue B"], dueDate);
 
-      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledTimes(1);
-      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledWith(
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenCalledTimes(2);
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenNthCalledWith(
         1,
-        expect.arrayContaining([
-          expect.objectContaining({ title: "Issue A" }),
-          expect.objectContaining({ title: "Issue B" }),
-        ]),
+        1,
+        expect.any(Number),
+        dueDate,
+        0,
+        "Issue A",
+      );
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenNthCalledWith(
+        2,
+        1,
+        expect.any(Number),
+        dueDate,
+        0,
+        "Issue B",
       );
     });
 
@@ -527,7 +545,7 @@ describe("IssuesController (TDD)", () => {
       );
     });
 
-    it("6-7. applyTemplate 実行時、systemLogService.logIssueBulkCreated が呼び出されること", async () => {
+    it("6-7. applyTemplate 実行時に作成された各Issueに対して個別に systemLogService.logIssueCreated が順次呼び出されること", async () => {
       const template: TaskTemplateRecord = {
         id: 1,
         name: "開発テンプレート",
@@ -537,16 +555,26 @@ describe("IssuesController (TDD)", () => {
           { id: "tpl-2", order: 2, value: "### 検証", dayOffset: 1 },
         ],
       };
+      const taskDueDate = new Date("2026-10-01");
 
-      await controller.applyTemplate(template);
+      await controller.applyTemplate(template, taskDueDate);
 
-      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledTimes(1);
-      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledWith(
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenCalledTimes(2);
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenNthCalledWith(
         1,
-        expect.arrayContaining([
-          expect.objectContaining({ title: "設計" }),
-          expect.objectContaining({ title: "検証" }),
-        ]),
+        1,
+        expect.any(Number),
+        expect.any(Date),
+        0,
+        "設計",
+      );
+      expect(fakeSystemLogService.logIssueCreated).toHaveBeenNthCalledWith(
+        2,
+        1,
+        expect.any(Number),
+        expect.any(Date),
+        0,
+        "検証",
       );
     });
   });
