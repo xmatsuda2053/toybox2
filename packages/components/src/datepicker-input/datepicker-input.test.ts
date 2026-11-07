@@ -13,6 +13,8 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 1-4. 曜日ヘッダー（.datepicker-calendar__weekdays）に日〜土の7曜日がレンダリングされること
  *    - 1-5. 日付グリッド（.datepicker-calendar__grid）に42個の日付セルがレンダリングされること
  *    - 1-6. wa-input に exportparts="form-control-label, label, input" が指定され、外側からのスタイリングが可能であること
+ *    - 1-7. 選択中の日付セルに、ホバー時にクリア案内を行う wa-tooltip（trigger="hover"）が付与され、「クリックして日付をクリア」と表示されること
+ *    - 1-8. required: true が設定されている場合、選択中の日付セルにクリア案内の wa-tooltip が付与されないこと
  *
  * 2. プロパティ・フォーマット・初期表示（Properties & Formatting）
  *    - 2-1. value に指定された日付（例: "2026-04-15"）が入力欄にフォーマット（"2026-04-15 (水)"）されて反映されること
@@ -38,6 +40,11 @@ import { DatePickerInput, type DatePickerChangeEventDetail } from "./datepicker-
  *    - 4-1. 日付セルクリック（handleDateClick）時に value が選択された日付（"yyyy-MM-dd"）に更新されること
  *    - 4-2. 日付セルクリック時に専用カスタムイベント datepicker-change が発火し、detail に { value, date } が渡されること
  *    - 4-3. datepicker-change イベントは bubbles: true, composed: true で発火され、Shadow DOM 境界を越えて伝播すること
+ *    - 4-4. 選択中の日付セル（現在の value と一致する日付）を再クリックした際、required が false であれば value が空文字 "" にクリアされること
+ *    - 4-5. 選択中の日付セルを再クリックしてクリアされた際、専用カスタムイベント datepicker-change が発火し、detail に { value: "", date: null } が渡されること
+ *    - 4-6. required: true が設定されている場合、選択中の日付セルを再クリックしてもクリアされず日付選択状態（value）が維持されること
+ *    - 4-7. clearable: false が設定されている場合、選択中の日付セルを再クリックしてもクリアされず日付選択状態（value）が維持されること
+ *    - 4-8. handleClear を直接呼び出した際、value が空文字にクリアされ datepicker-change イベントが発火すること
  *
  * 5. SCSSスタイル設計規約（SCSS / BEM）
  *    - 5-1. SCSSスタイルシートが存在し、ルートブロック .datepicker-input および .datepicker-calendar の簡易BEMセレクタが定義されていること
@@ -103,6 +110,22 @@ describe("DatePickerInput Component", () => {
     it("1-6. wa-input に exportparts=\"form-control-label, label, input\" が指定され、外側からのスタイリングが可能であること", () => {
       const rendered = flattenTemplate(element.render());
       expect(rendered).toContain('exportparts="form-control-label, label, input"');
+    });
+
+    it("1-7. 選択中の日付セルに、ホバー時にクリア案内を行う wa-tooltip（trigger=\"hover\"）が付与され、「クリックして日付をクリア」と表示されること", () => {
+      element.value = "2026-04-15";
+      element.required = false;
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).toMatch(
+        /<wa-tooltip[^>]*trigger=["']hover["'][^>]*>クリックして日付をクリア<\/wa-tooltip>/,
+      );
+    });
+
+    it("1-8. required: true が設定されている場合、選択中の日付セルにクリア案内の wa-tooltip が付与されないこと", () => {
+      element.value = "2026-04-15";
+      element.required = true;
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).not.toContain("クリックして日付をクリア");
     });
   });
 
@@ -257,6 +280,63 @@ describe("DatePickerInput Component", () => {
       const customEvent = listener.mock.calls[0][0] as CustomEvent;
       expect(customEvent.bubbles).toBe(true);
       expect(customEvent.composed).toBe(true);
+    });
+
+    it("4-4. 選択中の日付セル（現在の value と一致する日付）を再クリックした際、required が false であれば value が空文字 \"\" にクリアされること", () => {
+      element.value = "2026-04-15";
+      element.required = false;
+
+      element.handleDateClick("2026-04-15");
+
+      expect(element.value).toBe("");
+    });
+
+    it("4-5. 選択中の日付セルを再クリックしてクリアされた際、専用カスタムイベント datepicker-change が発火し、detail に { value: \"\", date: null } が渡されること", () => {
+      element.value = "2026-04-15";
+      element.required = false;
+      const listener = vi.fn();
+      element.addEventListener("datepicker-change", listener);
+
+      element.handleDateClick("2026-04-15");
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const customEvent = listener.mock.calls[0][0] as CustomEvent<DatePickerChangeEventDetail>;
+      expect(customEvent.detail.value).toBe("");
+      expect(customEvent.detail.date).toBeNull();
+    });
+
+    it("4-6. required: true が設定されている場合、選択中の日付セルを再クリックしてもクリアされず日付選択状態（value）が維持されること", () => {
+      element.value = "2026-04-15";
+      element.required = true;
+
+      element.handleDateClick("2026-04-15");
+
+      expect(element.value).toBe("2026-04-15");
+    });
+
+    it("4-7. clearable: false が設定されている場合、選択中の日付セルを再クリックしてもクリアされず日付選択状態（value）が維持されること", () => {
+      element.value = "2026-04-15";
+      element.required = false;
+      (element as unknown as { clearable: boolean }).clearable = false;
+
+      element.handleDateClick("2026-04-15");
+
+      expect(element.value).toBe("2026-04-15");
+    });
+
+    it("4-8. handleClear を直接呼び出した際、value が空文字にクリアされ datepicker-change イベントが発火すること", () => {
+      element.value = "2026-04-15";
+      element.required = false;
+      const listener = vi.fn();
+      element.addEventListener("datepicker-change", listener);
+
+      (element as unknown as { handleClear: () => void }).handleClear();
+
+      expect(element.value).toBe("");
+      expect(listener).toHaveBeenCalledTimes(1);
+      const customEvent = listener.mock.calls[0][0] as CustomEvent<DatePickerChangeEventDetail>;
+      expect(customEvent.detail.value).toBe("");
+      expect(customEvent.detail.date).toBeNull();
     });
   });
 

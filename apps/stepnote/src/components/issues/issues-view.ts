@@ -313,12 +313,14 @@ export class IssuesView extends WithIssuesController(
   /** 行内での期日変更ハンドラー */
   public handleDueDateChange = async (
     issueId: number,
-    dueDate: Date,
+    dueDate: Date | null,
     event?: Event,
   ): Promise<void> => {
     event?.stopPropagation();
     if (this.issuesController) {
-      await this.issuesController.updateIssue(issueId, { dueDate });
+      await this.issuesController.updateIssue(issueId, {
+        dueDate: dueDate ?? undefined,
+      });
     }
   };
 
@@ -515,8 +517,8 @@ export class IssuesView extends WithIssuesController(
           e: CustomEvent<DatePickerChangeEventDetail>,
         ) => {
           e.stopPropagation();
-          if (issue.id !== undefined && e.detail?.date) {
-            this.handleDueDateChange(issue.id, e.detail.date, e);
+          if (issue.id !== undefined) {
+            this.handleDueDateChange(issue.id, e.detail?.date ?? null, e);
           }
         }}
       ></datepicker-input>
