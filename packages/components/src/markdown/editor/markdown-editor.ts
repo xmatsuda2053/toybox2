@@ -196,24 +196,52 @@ export class MarkdownEditor extends LitElement {
   override updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);
 
-    if (changedProperties.has("value") && this.editorView) {
-      if (
-        this.lastInternalValue !== null &&
-        this.value === this.lastInternalValue
-      ) {
-        this.lastInternalValue = null;
-      } else {
-        this.lastInternalValue = null;
-        const currentDoc = this.editorView.state.doc.toString();
-        if (this.value !== currentDoc) {
-          this.editorView.dispatch({
-            changes: { from: 0, to: currentDoc.length, insert: this.value },
-          });
-        }
-      }
+    if (changedProperties.has("value")) {
+      this.syncExternalValue();
     }
 
     this.handleDynamicReconfigure(changedProperties);
+  }
+
+  /**
+   * 外部からの value 変更をエディタビューへ安全に反映する。
+   * エディタがフォーカス中（編集中）の場合は最新入力を保護し、
+   * 非フォーカス時でもカーソル位置（selection）をクランプ保持する。
+   */
+  private syncExternalValue(): void {
+    if (!this.editorView) return;
+
+    if (
+      this.lastInternalValue !== null &&
+      this.value === this.lastInternalValue
+    ) {
+      this.lastInternalValue = null;
+      return;
+    }
+    this.lastInternalValue = null;
+
+    if (this.editorView.hasFocus) {
+      return;
+    }
+
+    const currentDoc = this.editorView.state.doc.toString();
+    if (this.value === currentDoc) {
+      return;
+    }
+
+    const currentSelection = this.editorView.state.selection;
+    const newLength = this.value.length;
+    const selection = currentSelection?.main
+      ? {
+          anchor: Math.min(currentSelection.main.anchor, newLength),
+          head: Math.min(currentSelection.main.head, newLength),
+        }
+      : undefined;
+
+    this.editorView.dispatch({
+      changes: { from: 0, to: currentDoc.length, insert: this.value },
+      ...(selection ? { selection } : {}),
+    });
   }
 
   /**
