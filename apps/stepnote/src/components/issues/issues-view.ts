@@ -15,6 +15,7 @@ import type {
 } from "@shared/components";
 import { format } from "@shared/utils";
 import type { IssueRecord } from "@/db/models/task.model";
+import type { TaskTemplateRecord } from "@/db/models/template.model.js";
 import type { TaskStatusCode } from "@/types";
 import {
   TASK_STATUS_ICON_MAP,
@@ -24,6 +25,7 @@ import {
   SubscriberElement,
   WithIssuesController,
   WithTaskController,
+  WithTaskTemplateController,
 } from "@/utils/controller-consumers.mixin.js";
 import {
   filterIssuesByKeyword,
@@ -49,11 +51,13 @@ import styles from "./issues-view.scss?inline";
  *
  * @export
  * @class IssuesView
- * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
+ * @extends {WithIssuesController(WithTaskController(WithTaskTemplateController(SubscriberElement)))}
  */
 @customElement("issues-view")
 export class IssuesView extends WithIssuesController(
-  WithTaskController(SubscriberElement),
+  WithTaskController(
+    WithTaskTemplateController(SubscriberElement),
+  ),
 ) {
   public static override styles = unsafeCSS(styles);
 
@@ -84,6 +88,12 @@ export class IssuesView extends WithIssuesController(
 
   @state()
   public addText: string = "";
+
+  @state()
+  public isTemplateDialogOpen: boolean = false;
+
+  @state()
+  public selectedTemplateId: number | null = null;
 
   @state()
   public issueModeMap: Map<number, MarkdownDisplayMode> = new Map();
@@ -212,6 +222,46 @@ export class IssuesView extends WithIssuesController(
     this.handleCloseAddDialog();
   };
 
+  /** テンプレート適用ダイアログを開く */
+  public handleOpenTemplateDialog = (): void => {
+    this.isTemplateDialogOpen = true;
+    this.selectedTemplateId = null;
+  };
+
+  /** テンプレート適用ダイアログを閉じる */
+  public handleCloseTemplateDialog = (): void => {
+    this.isTemplateDialogOpen = false;
+    this.selectedTemplateId = null;
+  };
+
+  /** テンプレート選択変更ハンドラー */
+  public handleSelectTemplate = (e: Event): void => {
+    const select = e.target as HTMLSelectElement | null;
+    if (!select || !select.value) {
+      this.selectedTemplateId = null;
+      return;
+    }
+    const id = Number(select.value);
+    this.selectedTemplateId = Number.isNaN(id) ? null : id;
+  };
+
+  /** テンプレート適用確定ハンドラー */
+  public handleConfirmApplyTemplate = async (): Promise<void> => {
+    if (this.selectedTemplateId === null || !this.issuesController) {
+      return;
+    }
+    const template = this.taskTemplateController?.state.find(
+      (t) => t.id === this.selectedTemplateId,
+    );
+    if (!template) {
+      return;
+    }
+
+    const taskDueDate = this.taskController?.state?.dueDate;
+    await this.issuesController.applyTemplate(template, taskDueDate);
+    this.handleCloseTemplateDialog();
+  };
+
   /** 行内でのステータス変更ハンドラー */
   public handleStatusChange = async (
     issueId: number,
@@ -303,6 +353,24 @@ export class IssuesView extends WithIssuesController(
   private renderHeaderActions(): HTMLTemplateResult {
     return html`
       <div class="issues-view__actions">
+        <wa-tooltip
+          for="issues-view-btn-template"
+          placement="bottom"
+          trigger="hover"
+        >
+          テンプレートを適用
+        </wa-tooltip>
+        <wa-button
+          id="issues-view-btn-template"
+          class="issues-view__btn-template"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          aria-label="テンプレートを適用"
+          @click=${this.handleOpenTemplateDialog}
+        >
+          <wa-icon library="my-icons" name="list-check-solid-full"></wa-icon>
+        </wa-button>
         <wa-tooltip
           for="issues-view-btn-add"
           placement="bottom"
@@ -631,6 +699,124 @@ export class IssuesView extends WithIssuesController(
     `;
   }
 
+  /** テンプレートプレビュー一覧の描画 */
+  private renderTemplatePreview(
+    template: TaskTemplateRecord,
+  ): HTMLTemplateResult {
+    const issues = template.issues ?? [];
+    if (issues.length === 0) {
+      return html`
+        <div class="issues-view__template-preview">
+          <div class="issues-view__template-preview-empty">
+            このテンプレートにはIssueが登録されていません。
+          </div>
+        </div>
+      `;
+    }
+    return html`
+      <div class="issues-view__template-preview">
+        <div class="issues-view__template-preview-header">
+          含まれるIssue（${issues.length}件）:
+        </div>
+        <ul class="issues-view__template-preview-list">
+          ${issues.map(
+            (issue) => html`
+              <li class="issues-view__template-preview-item">
+                ${issue.value ? extractIssueTitle(issue.value) : "（無題）"}
+              </li>
+            `,
+          )}
+        </ul>
+      </div>
+    `;
+  }
+
+  /** テンプレート適用ダイアログ本文の描画 */
+  private renderTemplateDialogBody(
+    templates: readonly TaskTemplateRecord[],
+    selectedTemplate?: TaskTemplateRecord,
+  ): HTMLTemplateResult {
+    if (templates.length === 0) {
+      return html`
+        <div class="issues-view__template-empty-message">
+          利用可能なテンプレートがありません（設定画面から作成できます）。
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="issues-view__template-select-container">
+        <label
+          class="issues-view__template-label"
+          for="issues-view-template-select"
+        >
+          適用するテンプレート
+        </label>
+        <wa-select
+          id="issues-view-template-select"
+          class="issues-view__template-select"
+          placeholder="テンプレートを選択..."
+          .value=${this.selectedTemplateId !== null
+            ? String(this.selectedTemplateId)
+            : ""}
+          @change=${this.handleSelectTemplate}
+        >
+          ${templates.map(
+            (t) =>
+              html`<wa-option value=${String(t.id)}>
+                ${t.name}
+              </wa-option>`,
+          )}
+        </wa-select>
+      </div>
+      ${selectedTemplate ? this.renderTemplatePreview(selectedTemplate) : null}
+    `;
+  }
+
+  /** Issueテンプレート適用ダイアログの描画 */
+  private renderTemplateDialog(): HTMLTemplateResult {
+    const templates = this.taskTemplateController?.state ?? [];
+    const selectedTemplate = templates.find(
+      (t) => t.id === this.selectedTemplateId,
+    );
+    const isApplyDisabled =
+      this.selectedTemplateId === null ||
+      !selectedTemplate ||
+      (selectedTemplate.issues?.length ?? 0) === 0;
+
+    return html`
+      <wa-dialog
+        class="issues-view__template-dialog"
+        label="Issueテンプレートの適用"
+        ?open=${this.isTemplateDialogOpen}
+        @wa-after-hide=${this.handleCloseTemplateDialog}
+      >
+        <div class="issues-view__template-dialog-body">
+          ${this.renderTemplateDialogBody(templates, selectedTemplate)}
+        </div>
+        <div slot="footer" class="issues-view__template-dialog-footer">
+          <wa-button
+            variant="neutral"
+            appearance="plain"
+            size="s"
+            @click=${this.handleCloseTemplateDialog}
+          >
+            キャンセル
+          </wa-button>
+          <wa-button
+            id="issues-view-btn-confirm-apply"
+            variant="brand"
+            size="s"
+            ?disabled=${isApplyDisabled}
+            @click=${this.handleConfirmApplyTemplate}
+          >
+            適用
+          </wa-button>
+        </div>
+      </wa-dialog>
+    `;
+  }
+
   override render(): HTMLTemplateResult {
     const allIssues = this.issuesController?.state ?? [];
     const filteredIssues = filterIssuesByKeyword(
@@ -644,6 +830,7 @@ export class IssuesView extends WithIssuesController(
         ${this.renderList(filteredIssues)}
         ${this.renderDeleteDialog()}
         ${this.renderAddDialog()}
+        ${this.renderTemplateDialog()}
       </div>
     `;
   }

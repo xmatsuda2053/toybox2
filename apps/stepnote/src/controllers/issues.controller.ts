@@ -2,6 +2,8 @@ import type { ReactiveControllerHost } from "lit";
 import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { IssueRecord } from "@/db/models/task.model";
+import type { TaskTemplateRecord } from "@/db/models/template.model";
+import { generateTemplateIssuePayloads } from "@/utils/task-template.utils.js";
 import { BaseTaskSubItemController } from "./base-reactive.controller";
 
 /**
@@ -83,6 +85,51 @@ export class IssuesController extends BaseTaskSubItemController<
 
     if (this.systemLogService && ids.length > 0) {
       const createdIssues = ids.map((id, index) => ({ id, title: titles[index] }));
+      await this.systemLogService.logIssueBulkCreated(this._taskId, createdIssues);
+    }
+
+    return ids;
+  };
+
+  /**
+   * テンプレートからIssue群を一括作成・適用する。
+   *
+   * @param {TaskTemplateRecord} template 適用するタスクテンプレート
+   * @param {Date} [taskDueDate] 親タスクの期限日
+   * @return {Promise<number[]>} 採番されたID配列
+   * @memberof IssuesController
+   */
+  public applyTemplate = async (
+    template: TaskTemplateRecord,
+    taskDueDate?: Date,
+  ): Promise<number[]> => {
+    if (this._taskId === undefined || !template.issues || template.issues.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const taskDue = taskDueDate ?? now;
+    const payloads = generateTemplateIssuePayloads(
+      template,
+      now,
+      taskDue,
+      this._taskId,
+    );
+
+    const items: Array<Omit<IssueRecord, "id">> = payloads.map((payload) => ({
+      ...payload,
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    const ids = await this.repository.bulkAdd(items);
+    await this.loadState();
+
+    if (this.systemLogService && ids.length > 0) {
+      const createdIssues = ids.map((id, index) => ({
+        id,
+        title: payloads[index].title,
+      }));
       await this.systemLogService.logIssueBulkCreated(this._taskId, createdIssues);
     }
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
 import { IssuesController } from "@/controllers/issues.controller";
 import type { IssueRecord } from "@/db/models/task.model";
+import type { TaskTemplateRecord } from "@/db/models/template.model";
 
 /**
  * RepositoryのMock
@@ -85,6 +86,8 @@ const createMockHost = () => {
  *    - [x] 3-3. taskId が undefined の場合、createIssue を呼び出しても追加処理は行われず undefined が返ること
  *    - [x] 3-4. createMultipleIssues 実行時に複数タイトルからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること
  *    - [x] 3-5. taskId が undefined またはタイトル配列が空の場合、createMultipleIssues は何も作成しないこと
+ *    - [x] 3-6. applyTemplate 実行時にテンプレートからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること
+ *    - [x] 3-7. taskId が undefined またはテンプレートの issues が空の場合、applyTemplate は何も作成せず空配列を返すこと
  *
  * 4. Issue 更新・削除 (Issue Update & Deletion)
  *    - [x] 4-1. updateIssue 実行時に対象Issueが更新され、state が更新されて requestUpdate() が呼ばれること
@@ -95,6 +98,7 @@ const createMockHost = () => {
  *
  * 6. システムログ連携仕様
  *    - [x] 6-5. updateIssue で期日が変更された場合でも、logIssueDueDateChanged が呼び出されないこと（システムログ出力の抑止）
+ *    - [x] 6-7. applyTemplate 実行時、systemLogService.logIssueBulkCreated が呼び出されること
  */
 describe("IssuesController (TDD)", () => {
   let fakeRepository: FakeIssuesRepository;
@@ -306,6 +310,51 @@ describe("IssuesController (TDD)", () => {
       await controller.createMultipleIssues(["タイトル"]);
       expect(controller.state).toHaveLength(0);
     });
+
+    it("3-6. applyTemplate 実行時にテンプレートからIssueが一括作成され、state が更新されて requestUpdate() が呼ばれること", async () => {
+      const template: TaskTemplateRecord = {
+        id: 1,
+        name: "開発フロー",
+        description: "開発の標準テンプレート",
+        issues: [
+          { id: "tpl-1", order: 1, value: "### 要件定義\n\n仕様確認", dayOffset: 1 },
+          { id: "tpl-2", order: 2, value: "### 実装\n\nTDDで実装", dayOffset: 3 },
+        ],
+      };
+      const taskDueDate = new Date("2026-12-31");
+
+      const createdIds = await controller.applyTemplate(template, taskDueDate);
+
+      expect(createdIds).toHaveLength(2);
+      expect(controller.state).toHaveLength(2);
+      expect(controller.state[0].title).toBe("要件定義");
+      expect(controller.state[0].value).toBe("### 要件定義\n\n仕様確認");
+      expect(controller.state[0].taskId).toBe(1);
+      expect(controller.state[1].title).toBe("実装");
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+    });
+
+    it("3-7. taskId が undefined またはテンプレートの issues が空の場合、applyTemplate は何も作成せず空配列を返すこと", async () => {
+      const emptyTemplate: TaskTemplateRecord = {
+        id: 2,
+        name: "空テンプレート",
+        description: "",
+        issues: [],
+      };
+      const result1 = await controller.applyTemplate(emptyTemplate);
+      expect(result1).toEqual([]);
+      expect(controller.state).toHaveLength(0);
+
+      await controller.setTaskId(undefined);
+      const validTemplate: TaskTemplateRecord = {
+        id: 1,
+        name: "テンプレート",
+        description: "",
+        issues: [{ id: "tpl-1", order: 1, value: "タスク", dayOffset: 0 }],
+      };
+      const result2 = await controller.applyTemplate(validTemplate);
+      expect(result2).toEqual([]);
+    });
   });
 
   describe("4. Issue 更新・削除 (Issue Update & Deletion)", () => {
@@ -455,6 +504,29 @@ describe("IssuesController (TDD)", () => {
           id: 1,
           title: "Issue 1-1",
         }),
+      );
+    });
+
+    it("6-7. applyTemplate 実行時、systemLogService.logIssueBulkCreated が呼び出されること", async () => {
+      const template: TaskTemplateRecord = {
+        id: 1,
+        name: "開発テンプレート",
+        description: "",
+        issues: [
+          { id: "tpl-1", order: 1, value: "### 設計", dayOffset: 0 },
+          { id: "tpl-2", order: 2, value: "### 検証", dayOffset: 1 },
+        ],
+      };
+
+      await controller.applyTemplate(template);
+
+      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledTimes(1);
+      expect(fakeSystemLogService.logIssueBulkCreated).toHaveBeenCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({ title: "設計" }),
+          expect.objectContaining({ title: "検証" }),
+        ]),
       );
     });
   });
