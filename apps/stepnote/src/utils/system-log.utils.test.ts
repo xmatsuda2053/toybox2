@@ -170,10 +170,28 @@ describe("system-log.utils (TDD)", () => {
   });
 
   describe("3. Issue関連システムログフォーマット仕様", () => {
-    it("3-1. Issue新規追加時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
-      const log = formatIssueCreatedLog(12, new Date(2026, 9, 25), 0);
+    it("3-1. Issue新規追加時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
+      const logWithTitle = formatIssueCreatedLog(
+        12,
+        new Date(2026, 9, 25),
+        0,
+        "API設計",
+      );
 
-      expect(log).toBe(
+      expect(logWithTitle).toBe(
+        `### sys: Issue #12 作成: "API設計"\n\n` +
+          `- **対象**: #[12]{API設計}\n` +
+          `- **期日**: 2026-10-25\n` +
+          `- **初期ステータス**: 開始待ち (0)`,
+      );
+
+      // タイトル未指定時のフォールバック動作
+      const logWithoutTitle = formatIssueCreatedLog(
+        12,
+        new Date(2026, 9, 25),
+        0,
+      );
+      expect(logWithoutTitle).toBe(
         `### sys: Issue #12 作成\n\n` +
           `- **対象**: #[12]{Issue #12}\n` +
           `- **期日**: 2026-10-25\n` +
@@ -199,19 +217,29 @@ describe("system-log.utils (TDD)", () => {
     });
 
 
-    it("3-4. Issueステータス変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
+    it("3-4. Issueステータス変更時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
       const log = formatIssueStatusChangedLog(12, "API設計", 0, 9);
 
       expect(log).toBe(
-        `### sys: Issue #12 ステータス変更: 開始待ち → 完了\n\n` +
+        `### sys: Issue #12 "API設計" ステータス変更: 開始待ち → 完了\n\n` +
           `- **対象**: #[12]{API設計}\n` +
+          `- **項目**: ステータス\n` +
+          `- **変更前**: 開始待ち (0)\n` +
+          `- **変更後**: 完了 (9)`,
+      );
+
+      // タイトル空時のフォールバック動作
+      const logWithoutTitle = formatIssueStatusChangedLog(12, "", 0, 9);
+      expect(logWithoutTitle).toBe(
+        `### sys: Issue #12 ステータス変更: 開始待ち → 完了\n\n` +
+          `- **対象**: #[12]{}\n` +
           `- **項目**: ステータス\n` +
           `- **変更前**: 開始待ち (0)\n` +
           `- **変更後**: 完了 (9)`,
       );
     });
 
-    it("3-5. Issue期日変更時のシステムログに対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
+    it("3-5. Issue期日変更時のシステムログ見出しにタイトルが含まれ、対象Issueへのジャンプ用タグが含まれてフォーマットされること", () => {
       const log = formatIssueDueDateChangedLog(
         12,
         "API設計",
@@ -220,7 +248,7 @@ describe("system-log.utils (TDD)", () => {
       );
 
       expect(log).toBe(
-        `### sys: Issue #12 期日変更: 2026-10-22 → 2026-10-25\n\n` +
+        `### sys: Issue #12 "API設計" 期日変更: 2026-10-22 → 2026-10-25\n\n` +
           `- **対象**: #[12]{API設計}\n` +
           `- **項目**: 期日\n` +
           `- **変更前**: 2026-10-22\n` +
@@ -287,7 +315,11 @@ describe("system-log.utils (TDD)", () => {
   describe("5. システムログ判定仕様 (isSystemLog)", () => {
     it("5-1. ### sys: で始まる文字列の場合は true を返すこと", () => {
       expect(isSystemLog('### sys: タスク作成: "新機能設計"')).toBe(true);
+      expect(isSystemLog('### sys: Issue #10 作成: "要件定義"')).toBe(true);
       expect(isSystemLog("### sys: Issue #10 作成")).toBe(true);
+      expect(
+        isSystemLog('### sys: Issue #10 "要件定義" ステータス変更: 開始待ち → 完了'),
+      ).toBe(true);
       expect(isSystemLog("### sys: Note #5 作成")).toBe(true);
     });
 

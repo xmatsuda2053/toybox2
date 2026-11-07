@@ -158,8 +158,9 @@ export class SystemLogService {
     issueId: number,
     dueDate?: Date,
     statusCode: TaskStatusCode = 0,
+    title?: string,
   ): Promise<void> {
-    const log = formatIssueCreatedLog(issueId, dueDate, statusCode);
+    const log = formatIssueCreatedLog(issueId, dueDate, statusCode, title);
     await this.recordLog(taskId, log);
   }
 

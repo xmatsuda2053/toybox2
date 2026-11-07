@@ -48,6 +48,7 @@ export class IssuesController extends BaseTaskSubItemController<
         newId,
         data.dueDate,
         data.statusCode,
+        data.title,
       );
     }
     return newId;

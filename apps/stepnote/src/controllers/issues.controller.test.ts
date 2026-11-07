@@ -478,6 +478,7 @@ describe("IssuesController (TDD)", () => {
         newId,
         dueDate,
         0,
+        "新規Issue",
       );
     });
 

@@ -204,10 +204,12 @@ export function formatIssueCreatedLog(
 ): string {
   const dueDateStr = formatDateString(dueDate);
   const statusLabel = getStatusLabel(statusCode);
-  const tagLabel = title?.trim() || `Issue #${issueId}`;
+  const trimmedTitle = title?.trim();
+  const tagLabel = trimmedTitle || `Issue #${issueId}`;
+  const titleSuffix = trimmedTitle ? `: "${trimmedTitle}"` : "";
 
   return (
-    `### sys: Issue #${issueId} 作成\n\n` +
+    `### sys: Issue #${issueId} 作成${titleSuffix}\n\n` +
     `- **対象**: #[${issueId}]{${tagLabel}}\n` +
     `- **期日**: ${dueDateStr}\n` +
     `- **初期ステータス**: ${statusLabel} (${statusCode})`
@@ -257,9 +259,10 @@ export function formatIssueStatusChangedLog(
 ): string {
   const beforeLabel = getStatusLabel(before);
   const afterLabel = getStatusLabel(after);
+  const titlePart = title?.trim() ? ` "${title.trim()}"` : "";
 
   return (
-    `### sys: Issue #${issueId} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
+    `### sys: Issue #${issueId}${titlePart} ステータス変更: ${beforeLabel} → ${afterLabel}\n\n` +
     `- **対象**: #[${issueId}]{${title}}\n` +
     `- **項目**: ステータス\n` +
     `- **変更前**: ${beforeLabel} (${before})\n` +
@@ -285,9 +288,10 @@ export function formatIssueDueDateChangedLog(
 ): string {
   const beforeStr = formatDateString(before);
   const afterStr = formatDateString(after);
+  const titlePart = title?.trim() ? ` "${title.trim()}"` : "";
 
   return (
-    `### sys: Issue #${issueId} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
+    `### sys: Issue #${issueId}${titlePart} 期日変更: ${beforeStr} → ${afterStr}\n\n` +
     `- **対象**: #[${issueId}]{${title}}\n` +
     `- **項目**: 期日\n` +
     `- **変更前**: ${beforeStr}\n` +
