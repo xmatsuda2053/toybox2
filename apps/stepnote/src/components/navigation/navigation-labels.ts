@@ -10,6 +10,7 @@ import {
   SubscriberElement,
   WithLabelsController,
 } from "@/utils/controller-consumers.mixin.js";
+import { sortLabelsByNameAsc } from "./navigation-labels.utils.js";
 import labelsStyles from "./navigation-labels.scss?inline";
 
 /**
@@ -524,6 +525,18 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
   }
 
   /**
+   * ラベル名の昇順（辞書順）でソートされたラベル一覧を取得する
+   *
+   * @readonly
+   * @type {readonly LabelRecord[]}
+   * @memberof NavigationLabels
+   */
+  public get sortedLabels(): readonly LabelRecord[] {
+    const raw = this.labelsController?.state ?? [];
+    return sortLabelsByNameAsc(raw);
+  }
+
+  /**
    * コンポーネント描画
    *
    * @override
@@ -531,7 +544,7 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
    * @memberof NavigationLabels
    */
   override render(): HTMLTemplateResult {
-    const labels = this.labelsController?.state ?? [];
+    const labels = this.sortedLabels;
 
     return html`
       <div class="labels__container">

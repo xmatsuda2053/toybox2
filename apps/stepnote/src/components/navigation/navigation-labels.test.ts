@@ -21,6 +21,7 @@ import { NavigationLabels } from "./navigation-labels";
  *    - 2-4. isSelected が true のラベルにはアクティブ状態を示すクラス（is-active）が付与されること
  *    - 2-5. 各ラベルボタンにメニュー（三点リーダー ellipsis-vertical-solid-full アイコン等）がレンダリングされること
  *    - 2-6. キーボード操作（handleLabelKeyDown で Enter または Space キー押下）により、toggleLabel が呼び出されること
+ *    - 2-7. labelsController.state のラベル一覧がラベル名（文字列）の昇順（辞書順）でソートされてレンダリングされること
  *
  * 3. 新規登録・編集ダイアログ（Dialog）の動作
  *    - 3-1. ラベル登録ダイアログ（wa-dialog#label-dialog）にタイトル入力欄（#label-name）、説明入力欄（#label-description）、保存ボタンがレンダリングされること
@@ -186,6 +187,27 @@ describe("NavigationLabels Component", () => {
       element.handleLabelKeyDown(spaceEvent, 2);
       expect(preventDefaultSpace).toHaveBeenCalled();
       expect(mockLabelsController.toggleLabel).toHaveBeenCalledWith(2);
+    });
+
+    it("2-7. labelsController.state のラベル一覧がラベル名（文字列）の昇順（辞書順）でソートされてレンダリングされること", () => {
+      mockLabelsController.state = [
+        { id: 1, name: "プロジェクトA", description: "", isSelected: false },
+        { id: 2, name: "プライベート", description: "", isSelected: false },
+        { id: 3, name: "あさひ", description: "", isSelected: false },
+      ];
+
+      const htmlStr = flattenTemplate(element.render());
+      const posAsahi = htmlStr.indexOf("あさひ");
+      const posPrivate = htmlStr.indexOf("プライベート");
+      const posProject = htmlStr.indexOf("プロジェクトA");
+
+      expect(posAsahi).toBeGreaterThan(-1);
+      expect(posPrivate).toBeGreaterThan(-1);
+      expect(posProject).toBeGreaterThan(-1);
+
+      // "あさひ" < "プライベート" < "プロジェクトA" の順序でレンダリングされていること
+      expect(posAsahi).toBeLessThan(posPrivate);
+      expect(posPrivate).toBeLessThan(posProject);
     });
   });
 
