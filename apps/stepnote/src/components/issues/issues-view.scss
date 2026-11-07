@@ -36,6 +36,11 @@
     gap: var(--wa-space-2xs, 4px);
   }
 
+  &__btn-template {
+    @include flex-center;
+    cursor: pointer;
+  }
+
   &__btn-add {
     @include flex-center;
     cursor: pointer;
@@ -295,6 +300,80 @@
   }
 
   &__add-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--wa-space-s);
+  }
+
+  &__template-dialog {
+    --width: 520px;
+  }
+
+  &__template-dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wa-space-m);
+  }
+
+  &__template-empty-message {
+    padding: var(--wa-space-m);
+    color: var(--wa-color-text-quiet);
+    font-size: var(--wa-font-size-s);
+    text-align: center;
+  }
+
+  &__template-select-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wa-space-2xs);
+  }
+
+  &__template-label {
+    font-size: var(--wa-font-size-xs);
+    font-weight: var(--wa-font-weight-semibold);
+    color: var(--wa-color-text-quiet);
+  }
+
+  &__template-select {
+    width: 100%;
+  }
+
+  &__template-preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wa-space-xs);
+    padding: var(--wa-space-s);
+    background-color: var(--wa-color-surface-subtle);
+    border: 1px solid var(--wa-color-border-subtle);
+    border-radius: var(--wa-border-radius-m);
+  }
+
+  &__template-preview-header {
+    font-size: var(--wa-font-size-xs);
+    font-weight: var(--wa-font-weight-semibold);
+    color: var(--wa-color-text-quiet);
+  }
+
+  &__template-preview-empty {
+    font-size: var(--wa-font-size-xs);
+    color: var(--wa-color-text-quiet);
+    font-style: italic;
+  }
+
+  &__template-preview-list {
+    margin: 0;
+    padding-left: var(--wa-space-l);
+    display: flex;
+    flex-direction: column;
+    gap: var(--wa-space-2xs);
+  }
+
+  &__template-preview-item {
+    font-size: var(--wa-font-size-s);
+    color: var(--wa-color-text-normal);
+  }
+
+  &__template-dialog-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--wa-space-s);

@@ -6,6 +6,8 @@ import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { SearchInputEventDetail } from "@shared/components";
 import type { IssuesController } from "@/controllers/issues.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
+import type { TaskTemplateController } from "@/controllers/task-template.controller.js";
+import type { TaskTemplateRecord } from "@/db/models/template.model.js";
 import { IssuesView } from "./issues-view.js";
 
 /**
@@ -69,6 +71,15 @@ import { IssuesView } from "./issues-view.js";
  *    - 6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること
  *    - 6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること
  *    - 6-10. issues-view.scss において .issues-view__item-due の状態別修飾クラス（--overdue, --asap, --upcoming）が定義され、デザイントークンのカラーが指定されていること
+ *
+ * 7. Issueテンプレートの部分適用 (Template Application)
+ *    - 7-1. 一覧ヘッダーにテンプレート適用ボタン（#issues-view-btn-template）が表示され、wa-tooltip（trigger="hover"、「テンプレートを適用」）が紐づいていること
+ *    - 7-2. テンプレート適用ボタンクリックでテンプレート適用ダイアログ（.issues-view__template-dialog）が開き、キャンセルで閉じること
+ *    - 7-3. taskTemplateController.state のテンプレート一覧が wa-select（#issues-view-template-select）に option として表示されること
+ *    - 7-4. テンプレート選択時、含まれるIssue一覧のプレビュー（.issues-view__template-preview）が表示されること
+ *    - 7-5. 適用ボタン（#issues-view-btn-confirm-apply）押下で issuesController.applyTemplate が呼ばれ、ダイアログが閉じること
+ *    - 7-6. テンプレート未選択時、適用ボタンが disabled であること
+ *    - 7-7. テンプレートが1件も登録されていない場合、空メッセージ（.issues-view__template-empty-message）が表示されること
  */
 describe("IssuesView Component", () => {
   let element: IssuesView;
@@ -78,12 +89,17 @@ describe("IssuesView Component", () => {
     state: IssueRecord[];
     createIssue: ReturnType<typeof vi.fn>;
     createMultipleIssues: ReturnType<typeof vi.fn>;
+    applyTemplate: ReturnType<typeof vi.fn>;
     updateIssue: ReturnType<typeof vi.fn>;
     deleteIssue: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
   let mockTaskController: {
     state: TaskRecord | undefined;
+    subscribe: ReturnType<typeof vi.fn>;
+  };
+  let mockTaskTemplateController: {
+    state: TaskTemplateRecord[];
     subscribe: ReturnType<typeof vi.fn>;
   };
 
@@ -122,6 +138,7 @@ describe("IssuesView Component", () => {
       state: [...sampleIssues],
       createIssue: vi.fn().mockResolvedValue(100),
       createMultipleIssues: vi.fn().mockResolvedValue([101, 102]),
+      applyTemplate: vi.fn().mockResolvedValue([101, 102]),
       updateIssue: vi.fn().mockResolvedValue(undefined),
       deleteIssue: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(() => {}),
@@ -130,11 +147,27 @@ describe("IssuesView Component", () => {
       state: { id: 10, name: "親タスク" } as TaskRecord,
       subscribe: vi.fn().mockReturnValue(() => {}),
     };
+    mockTaskTemplateController = {
+      state: [
+        {
+          id: 1,
+          name: "標準開発フロー",
+          description: "標準開発",
+          issues: [
+            { id: "t1", order: 1, value: "### 設計\n\n仕様策定", dayOffset: 1 },
+            { id: "t2", order: 2, value: "### 実装\n\nTDD実装", dayOffset: 2 },
+          ],
+        },
+      ] as TaskTemplateRecord[],
+      subscribe: vi.fn().mockReturnValue(() => {}),
+    };
 
     element = new IssuesView();
     element.issuesController =
       mockIssuesController as unknown as IssuesController;
     element.taskController = mockTaskController as unknown as TaskController;
+    element.taskTemplateController =
+      mockTaskTemplateController as unknown as TaskTemplateController;
   });
 
   describe("1. 初期描画と空状態 (Initial Render & Empty State)", () => {
@@ -158,7 +191,6 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("issues-view__btn-add");
       expect(htmlStr).not.toContain("issues-view__btn-bulk-add");
       expect(htmlStr).toMatch(/<wa-icon[^>]*name=["']plus-solid-full["']/);
-      expect(htmlStr).not.toMatch(/<wa-icon[^>]*name=["']list-check-solid-full["']/);
       expect(htmlStr).toContain("Issueを追加");
     });
 
@@ -700,6 +732,72 @@ describe("IssuesView Component", () => {
       expect(scssContent).toMatch(/&--overdue\s*\{[^}]*var\(--quick-access-icon-overdue\)/);
       expect(scssContent).toMatch(/&--asap\s*\{[^}]*var\(--quick-access-icon-asap\)/);
       expect(scssContent).toMatch(/&--upcoming\s*\{[^}]*var\(--quick-access-icon-upcoming\)/);
+    });
+  });
+
+  describe("7. Issueテンプレートの部分適用 (Template Application)", () => {
+    it("7-1. 一覧ヘッダーにテンプレート適用ボタン（#issues-view-btn-template）が表示され、wa-tooltip（trigger=\"hover\"、「テンプレートを適用」）が紐づいていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/id="issues-view-btn-template"/);
+      expect(htmlStr).toMatch(/for="issues-view-btn-template"/);
+      expect(htmlStr).toMatch(/trigger="hover"/);
+      expect(htmlStr).toContain("テンプレートを適用");
+      expect(htmlStr).toContain('name="list-check-solid-full"');
+    });
+
+    it("7-2. テンプレート適用ボタンクリックでテンプレート適用ダイアログ（.issues-view__template-dialog）が開き、キャンセルで閉じること", () => {
+      expect((element as any).isTemplateDialogOpen).toBe(false);
+      (element as any).handleOpenTemplateDialog();
+      expect((element as any).isTemplateDialogOpen).toBe(true);
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('class="issues-view__template-dialog"');
+
+      (element as any).handleCloseTemplateDialog();
+      expect((element as any).isTemplateDialogOpen).toBe(false);
+    });
+
+    it("7-3. taskTemplateController.state のテンプレート一覧が wa-select（#issues-view-template-select）に option として表示されること", () => {
+      (element as any).handleOpenTemplateDialog();
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/id="issues-view-template-select"/);
+      expect(htmlStr).toMatch(/value=["']?1["']?/);
+      expect(htmlStr).toContain("標準開発フロー");
+    });
+
+    it("7-4. テンプレート選択時、含まれるIssue一覧のプレビュー（.issues-view__template-preview）が表示されること", () => {
+      (element as any).handleOpenTemplateDialog();
+      (element as any).selectedTemplateId = 1;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__template-preview");
+      expect(htmlStr).toContain("設計");
+      expect(htmlStr).toContain("実装");
+    });
+
+    it("7-5. 適用ボタン（#issues-view-btn-confirm-apply）押下で issuesController.applyTemplate が呼ばれ、ダイアログが閉じること", async () => {
+      (element as any).handleOpenTemplateDialog();
+      (element as any).selectedTemplateId = 1;
+      await (element as any).handleConfirmApplyTemplate();
+
+      expect(mockIssuesController.applyTemplate).toHaveBeenCalledWith(
+        mockTaskTemplateController.state[0],
+        element.taskController?.state?.dueDate,
+      );
+      expect((element as any).isTemplateDialogOpen).toBe(false);
+    });
+
+    it("7-6. テンプレート未選択時、適用ボタンが disabled であること", () => {
+      (element as any).handleOpenTemplateDialog();
+      (element as any).selectedTemplateId = null;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/id="issues-view-btn-confirm-apply"[^>]*disabled/);
+    });
+
+    it("7-7. テンプレートが1件も登録されていない場合、空メッセージ（.issues-view__template-empty-message）が表示されること", () => {
+      mockTaskTemplateController.state = [];
+      (element as any).handleOpenTemplateDialog();
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("issues-view__template-empty-message");
     });
   });
 });
