@@ -30,7 +30,7 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 3-10. Issue追加ボタン（.settings-pane__btn-add-issue）がアイコンのみ（plus-solid-full）で描画され、ツールチップが付属すること
  *    - 3-11. Issueエリアが左右（.settings-pane__issue-master と .settings-pane__issue-detail）に分割され、右側に Markdownエディタが配置されること
  *    - 3-12. Issueリストアイテム内にハンバーガーメニューがあり、上へ移動（angle-up-solid-full）、下へ移動（angle-down-solid-full）、削除（trash-solid-full）が存在すること
- *    - 3-13. 自然なラベル名「タスク期日からの日数」がレンダリングされ、旧表記「相対期限」が存在しないこと
+ *    - 3-13. 期日設定スイッチ（期日を設定）がレンダリングされ、旧表記「相対期限」および冗長なラベルが存在しないこと
  *    - 3-14. Issueアイテムの選択切り替えで右側の編集対象が切り替わること
  *    - 3-15. テンプレート保存ボタン（.settings-pane__btn-save）がテンプレート名入力欄の右隣（.settings-pane__name-row）に配置され、テンプレート名にlabel="テンプレート名"が設定され、旧ヘッダー（.settings-pane__detail-header）が存在しないこと
  *    - 3-16. Issueリストの各アイテムタイトルからMarkdown見出し記号（#）が除外されて表示されること
@@ -40,6 +40,10 @@ import type { TaskTemplateRecord } from "@/db/models/template.model.js";
  *    - 3-20. Issueリストのドロップダウンメニュー（wa-dropdown）に placement="bottom-end" およびクリック伝播防止が設定され、トリガーボタンからイベント伝播阻害（stopPropagation）が除去されていること
  *    - 3-21. Issueメニューで「削除」を選択した際（handleIssueMenuSelect / removeIssue）、該当Issueが即座にformIssuesから削除され、selectedIssueIndexが適正に追従すること
  *    - 3-22. 登録Issue一覧がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること
+ *    - 3-23. Issueディテール領域において、「期日を設定」スイッチ（.settings-pane__issue-offset-switch）が存在すること
+ *    - 3-24. 期日スイッチがOFFの場合、日数入力欄（.settings-pane__issue-offset-input）に disabled 属性が付与され、ONの場合は disabled が解除されること
+ *    - 3-25. スイッチのトグル（handleToggleOffsetEnabled）により、対象Issueの dayOffset が undefined ⇄ 数値へ更新されること
+ *    - 3-26. 新規Issue追加時（addIssue）のデフォルトで dayOffset が undefined となり、期日スイッチがOFFの状態で追加されること
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (settings-pane.scss) が存在し、ルートブロック .settings-pane および主要セレクタが定義されていること
@@ -300,10 +304,11 @@ describe("SettingsPane Component", () => {
       );
     });
 
-    it("3-13. 自然なラベル名「タスク期日からの日数」がレンダリングされ、旧表記「相対期限」が存在しないこと", () => {
+    it("3-13. 期日設定スイッチ（期日を設定）がレンダリングされ、旧表記「相対期限」および冗長なラベルが存在しないこと", () => {
       element.selectTemplate(sampleTemplates[0]);
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toContain("タスク期日からの日数");
+      expect(htmlStr).toContain("期日を設定");
+      expect(htmlStr).not.toContain("タスク期日からの日数:");
       expect(htmlStr).not.toContain("相対期限");
     });
 
@@ -458,6 +463,57 @@ describe("SettingsPane Component", () => {
       expect(tsContent).toMatch(
         /repeat\(\s*this\.formIssues,\s*\((?:issue|iss)\)\s*=>\s*(?:issue|iss)\.id/,
       );
+    });
+
+    it("3-23. Issueディテール領域において、「期日を設定」スイッチ（.settings-pane__issue-offset-switch）が存在すること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+      expect(htmlStr).toContain("settings-pane__issue-offset-switch");
+      expect(htmlStr).toContain("期日を設定");
+    });
+
+    it("3-24. 期日スイッチがOFFの場合、日数入力欄（.settings-pane__issue-offset-input）に disabled 属性が付与され、ONの場合は disabled が解除されること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+
+      // 選択中Issueの dayOffset が undefined の場合（期日スイッチOFF）
+      element.formIssues[0].dayOffset = undefined;
+      let htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/class="[^"]*settings-pane__issue-offset-input[^"]*"[^>]*disabled/);
+      expect(htmlStr).not.toMatch(/class="[^"]*settings-pane__issue-offset-switch[^"]*"[^>]*\bchecked\b/);
+
+      // dayOffset が数値の場合（期日スイッチON）
+      element.formIssues[0].dayOffset = 3;
+      htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toMatch(/class="[^"]*settings-pane__issue-offset-input[^"]*"[^>]*disabled/);
+      expect(htmlStr).toMatch(/class="[^"]*settings-pane__issue-offset-switch[^"]*"[^>]*\bchecked\b/);
+    });
+
+    it("3-25. スイッチのトグル（handleToggleOffsetEnabled）により、対象Issueの dayOffset が undefined ⇄ 数値へ更新されること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      element.formIssues = [
+        { id: "1", order: 1, value: "テスト", dayOffset: 5 },
+      ];
+      element.selectedIssueIndex = 0;
+
+      // 期日設定を無効化（false ➔ undefined）
+      (element as any).handleToggleOffsetEnabled(0, false);
+      expect(element.formIssues[0].dayOffset).toBeUndefined();
+
+      // 期日設定を有効化（true ➔ 0）
+      (element as any).handleToggleOffsetEnabled(0, true);
+      expect(element.formIssues[0].dayOffset).toBe(0);
+    });
+
+    it("3-26. 新規Issue追加時（addIssue）のデフォルトで dayOffset が undefined となり、期日スイッチがOFFの状態で追加されること", () => {
+      element.selectTemplate(sampleTemplates[0]);
+      element.addIssue();
+      const newIssue = element.formIssues[element.formIssues.length - 1];
+      expect(newIssue.dayOffset).toBeUndefined();
+
+      element.selectedIssueIndex = element.formIssues.length - 1;
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).not.toMatch(/class="[^"]*settings-pane__issue-offset-switch[^"]*"[^>]*\bchecked\b/);
     });
   });
 

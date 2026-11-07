@@ -461,9 +461,10 @@
   padding-inline: var(--wa-space-3xs, 2px);
 }
 
-.settings-pane__issue-offset-label {
+.settings-pane__issue-offset-switch {
   font-size: var(--wa-font-size-xs, 12px);
-  color: var(--wa-color-text-quiet);
+  color: var(--wa-color-text-normal);
+  margin-inline-end: var(--wa-space-2xs, 4px);
 }
 
 .settings-pane__issue-offset-input {

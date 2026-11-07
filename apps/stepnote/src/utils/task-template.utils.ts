@@ -125,7 +125,7 @@ export function cloneTaskTemplate(
       id: generateUniqueId(),
       order: idx + 1,
       value: issue.value,
-      dayOffset: issue.dayOffset ?? idx,
+      dayOffset: issue.dayOffset,
     })),
   };
 }
@@ -187,9 +187,11 @@ export function generateTemplateIssuePayloads(
     (a, b) => a.order - b.order,
   );
 
-  return sortedIssues.map((issue, index) => {
-    const dayOffset = typeof issue.dayOffset === "number" ? issue.dayOffset : index;
-    const dueDate = calculateTemplateIssueDueDate(baseDate, dayOffset, taskDueDate);
+  return sortedIssues.map((issue) => {
+    const dueDate =
+      typeof issue.dayOffset === "number"
+        ? calculateTemplateIssueDueDate(baseDate, issue.dayOffset, taskDueDate)
+        : undefined;
     const title = extractIssueTitle(issue.value);
 
     return {
