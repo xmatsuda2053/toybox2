@@ -85,13 +85,13 @@ export class TaskPane extends WithIssuesController(
   };
 
   /**
-   * IDとタスク名のクリップボードコピーハンドラー
+   * ジャンプ用タグ（#{id}{name}）のクリップボードコピーハンドラー
    */
-  public handleCopyId = async (): Promise<void> => {
+  public handleCopyJumpTag = async (): Promise<void> => {
     const task = this.taskController?.state;
     if (!task) return;
 
-    const copyText = `#${task.id} ${task.name}`;
+    const copyText = `#{${task.id}}{${task.name}}`;
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(copyText);
     }
@@ -229,21 +229,24 @@ export class TaskPane extends WithIssuesController(
     const task = this.taskController?.state;
     return html`
       <div class="task-pane__header-left">
-        <span
-          class="task-pane__title"
-          role="button"
-          tabindex="0"
-          title="クリックしてIDとタスク名をコピー"
-          @click=${this.handleCopyId}
-          @keydown=${(e: KeyboardEvent) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              this.handleCopyId();
-            }
-          }}
+        <span class="task-pane__title">TASK #${task?.id}</span>
+        <wa-tooltip for="task-pane-btn-copy-tag" trigger="hover">
+          ジャンプ用タグをコピー
+        </wa-tooltip>
+        <wa-button
+          id="task-pane-btn-copy-tag"
+          class="task-pane__btn-copy-tag"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          @click=${this.handleCopyJumpTag}
         >
-          TASK #${task?.id}
-        </span>
+          <wa-icon
+            library="my-icons"
+            name="copy-solid-full"
+            label="ジャンプ用タグをコピー"
+          ></wa-icon>
+        </wa-button>
       </div>
     `;
   }

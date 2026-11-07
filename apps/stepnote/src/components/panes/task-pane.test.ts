@@ -17,18 +17,19 @@ import { TaskPane } from "./task-pane.js";
  *
  * 2. タスク選択状態のヘッダー描画
  *    - 2-1. ヘッダー部にタスク識別子（TASK #101 等）がレンダリングされること
- *    - 2-2. コピー用ボタン（.task-pane__btn-copy）が存在せず、タスク識別子（.task-pane__title）自体がクリックコピー可能であること
- *    - 2-3. handleCopyId 実行時に「#101 タスク名」の形式でクリップボードへ書き込みが行われること
- *    - 2-4. ステータスUI（.task-pane__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library="my-icons"・slot="start" が設定されていること
- *    - 2-5. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること
- *    - 2-6. ステータス変更ボタン（.task-pane__status）に Caret 表示属性（with-caret）が設定されていること
- *    - 2-7. Summary タブ以外がアクティブな場合、ステータス変更ドロップダウンがレンダリングされないこと
- *    - 2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for="task-pane-status-done" かつ trigger="hover" のツールチップが紐づくこと
- *    - 2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと
- *    - 2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること
- *    - 2-11. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること
- *    - 2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
- *    - 2-13. ステータス変更ドロップダウン内の wa-dropdown-item に不要な @click ハンドラーが存在せず、親の wa-select イベントで一元処理されること
+ *    - 2-2. タスク識別子（.task-pane__title）からクリックコピー属性（role="button", title=クリックして...等）が削除され、単なるタイトル表示要素であること
+ *    - 2-3. タスク識別子の右隣にジャンプ用タグコピーボタン（.task-pane__btn-copy-tag）および trigger="hover" の wa-tooltip がレンダリングされること
+ *    - 2-4. handleCopyJumpTag 実行時に「#{101}{タスク名}」の形式でクリップボードへ書き込みが行われること
+ *    - 2-5. ステータスUI（.task-pane__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library="my-icons"・slot="start" が設定されていること
+ *    - 2-6. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること
+ *    - 2-7. ステータス変更ボタン（.task-pane__status）に Caret 表示属性（with-caret）が設定されていること
+ *    - 2-8. Summary タブ以外がアクティブな場合、ステータス変更ドロップダウンがレンダリングされないこと
+ *    - 2-9. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for="task-pane-status-done" かつ trigger="hover" のツールチップが紐づくこと
+ *    - 2-10. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと
+ *    - 2-11. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること
+ *    - 2-12. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること
+ *    - 2-13. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること
+ *    - 2-14. ステータス変更ドロップダウン内の wa-dropdown-item に不要な @click ハンドラーが存在せず、親の wa-select イベントで一元処理されること
  *
  * 3. タブ領域（wa-tab-group）の描画
  *    - 3-1. wa-tab-group 内に Summary, Issues, Notes, Property の順で4つのタブが存在すること
@@ -63,6 +64,7 @@ import { TaskPane } from "./task-pane.js";
  *    - 5-12. task-pane.scss において .task-pane__tab-panel[active] の ::part(base) に flex: 1 および min-height: 100% が定義され、スロットされた子要素への高さ伝播が保証されていること
  *    - 5-13. task-pane.scss において .task-pane__tab-panel[active] の padding-top が 0 であり、::part(base) に padding-top が指定されていることで、スクロール時のヘッダー上部余白とコンテンツ漏れが防止されていること
  *    - 5-14. テンプレートおよびSCSSから旧クラス名（pane-task*）が完全に排除されていること
+ *    - 5-15. task-pane.scss において .task-pane__btn-copy-tag が定義され、flex-center および theme-transition が適用されていること
  */
 describe("TaskPane Component", () => {
   let element: TaskPane;
@@ -134,13 +136,27 @@ describe("TaskPane Component", () => {
       expect(htmlStr).toContain("TASK #101");
     });
 
-    it("2-2. コピー用ボタン（.task-pane__btn-copy）が存在せず、タスク識別子テキスト（.task-pane__title）自体にクリックコピー属性またはイベントが設定されていること", () => {
+    it("2-2. タスク識別子（.task-pane__title）からクリックコピー属性（role=button, title=クリックして...等）が削除され、単なるタイトル表示要素であること", () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toContain("task-pane__btn-copy");
       expect(htmlStr).toContain("task-pane__title");
+      expect(htmlStr).not.toMatch(
+        /class="[^"]*task-pane__title[^"]*"[^>]*role="button"/,
+      );
+      expect(htmlStr).not.toContain("クリックしてIDとタスク名をコピー");
     });
 
-    it("2-3. handleCopyId 実行時に「#101 タスク名」の形式でクリップボードへ書き込みが行われること", async () => {
+    it("2-3. タスク識別子の右隣にジャンプ用タグコピーボタン（.task-pane__btn-copy-tag）および trigger='hover' の wa-tooltip がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("task-pane__btn-copy-tag");
+      expect(htmlStr).toMatch(
+        /<wa-button[^>]*class="[^"]*task-pane__btn-copy-tag[^"]*"[^>]*>[\s\S]*?<wa-icon[^>]*library="my-icons"[^>]*name="copy-solid-full"[^>]*><\/wa-icon>[\s\S]*?<\/wa-button>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*trigger="hover"[^>]*>[\s\S]*?ジャンプ用タグをコピー[\s\S]*?<\/wa-tooltip>/,
+      );
+    });
+
+    it("2-4. handleCopyJumpTag 実行時に「#{101}{タスク名}」の形式でクリップボードへ書き込みが行われること", async () => {
       const writeTextMock = vi.fn().mockResolvedValue(undefined);
       Object.assign(navigator, {
         clipboard: {
@@ -148,14 +164,16 @@ describe("TaskPane Component", () => {
         },
       });
 
-      await element.handleCopyId();
+      await (
+        element as unknown as { handleCopyJumpTag: () => Promise<void> }
+      ).handleCopyJumpTag();
 
       expect(writeTextMock).toHaveBeenCalledWith(
-        "#101 新機能の基本設計を策定する",
+        "#{101}{新機能の基本設計を策定する}",
       );
     });
 
-    it("2-4. ステータスUI（.task-pane__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library='my-icons'・slot='start' が設定されていること", () => {
+    it("2-5. ステータスUI（.task-pane__status）に現在のステータスに応じたアイコン・ラベルが表示され、QUICK ACCESS準拠のアイコン名・library='my-icons'・slot='start' が設定されていること", () => {
       // 0: 開始待ち
       mockTaskController.state = { ...baseTask, statusCode: 0 };
       let htmlStr = flattenTemplate(element.render());
@@ -185,19 +203,19 @@ describe("TaskPane Component", () => {
       );
     });
 
-    it("2-5. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること", () => {
+    it("2-6. handleSelectStatus 実行時に taskController.updateStatus(newStatusCode) が呼び出されること", () => {
       element.handleSelectStatus(5);
       expect(mockTaskController.updateStatus).toHaveBeenCalledWith(5);
     });
 
-    it("2-6. ステータス変更ボタン（.task-pane__status）に Caret 表示属性（with-caret）が設定されていること", () => {
+    it("2-7. ステータス変更ボタン（.task-pane__status）に Caret 表示属性（with-caret）が設定されていること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
         /<wa-button[^>]*class="[^"]*task-pane__status[^"]*"[^>]*\bwith-caret\b/,
       );
     });
 
-    it("2-7. Summaryタブ選択時のみステータス変更UI（.task-pane__status）が表示され、IssuesおよびPropertyタブ選択時は非表示になること", () => {
+    it("2-8. Summaryタブ選択時のみステータス変更UI（.task-pane__status）が表示され、IssuesおよびPropertyタブ選択時は非表示になること", () => {
       element.activeTab = "summary";
       let htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("task-pane__status");
@@ -211,29 +229,37 @@ describe("TaskPane Component", () => {
       expect(htmlStr).not.toContain("task-pane__status");
     });
 
-    it("2-8. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for='task-pane-status-done' かつ trigger='hover' のツールチップが紐づくこと", async () => {
+    it("2-9. canCompleteTask が false の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled となり、for='task-pane-status-done' かつ trigger='hover' のツールチップが紐づくこと", async () => {
       mockTaskController.canCompleteTask.mockResolvedValue(false);
       element.canComplete = false;
       const htmlStr = flattenTemplate(element.render());
       // 完了アイテム（value="9"）に id="task-pane-status-done" と disabled が付与されていること
-      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*id="task-pane-status-done"[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
+      expect(htmlStr).toMatch(
+        /<wa-dropdown-item[^>]*id="task-pane-status-done"[^>]*value=["']?9["']?[^>]*\bdisabled\b/,
+      );
       // wa-dropdown-item が wa-tooltip でラップされていないこと（直下に存在すること）
-      expect(htmlStr).not.toMatch(/<wa-tooltip[^>]*>[\s\S]*?<wa-dropdown-item/);
+      expect(htmlStr).not.toMatch(/<wa-tooltip[^>]*>(?:(?!<\/wa-tooltip>)[\s\S])*?<wa-dropdown-item/);
       // ツールチップが for="task-pane-status-done"、trigger="hover"、placement="left" でレンダリングされていること
-      expect(htmlStr).toMatch(/<wa-tooltip[^>]*for="task-pane-status-done"[^>]*placement="left"[^>]*trigger="hover"/);
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-pane-status-done"[^>]*placement="left"[^>]*trigger="hover"/,
+      );
       expect(htmlStr).toContain("未完了のIssueが存在するため完了にできません");
     });
 
-    it("2-9. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと", async () => {
+    it("2-10. canCompleteTask が true の場合、ステータス変更ドロップダウン内の「完了（9）」が disabled にならず、ツールチップが表示されないこと", async () => {
       mockTaskController.canCompleteTask.mockResolvedValue(true);
       element.canComplete = true;
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/);
-      expect(htmlStr).not.toContain("<wa-tooltip");
-      expect(htmlStr).not.toContain("未完了のIssueが存在するため完了にできません");
+      expect(htmlStr).not.toMatch(
+        /<wa-dropdown-item[^>]*value=["']?9["']?[^>]*\bdisabled\b/,
+      );
+      expect(htmlStr).not.toMatch(/<wa-tooltip[^>]*for="task-pane-status-done"/);
+      expect(htmlStr).not.toContain(
+        "未完了のIssueが存在するため完了にできません",
+      );
     });
 
-    it("2-10. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること", () => {
+    it("2-11. ステータス変更ドロップダウン内の完了（9）の後ろに wa-divider がレンダリングされること", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("wa-divider");
       const doneIdx = htmlStr.search(/value=["']?9["']?/);
@@ -242,14 +268,16 @@ describe("TaskPane Component", () => {
       expect(dividerIdx).toBeGreaterThan(doneIdx);
     });
 
-    it("2-11. wa-divider の後ろに削除項目（wa-dropdown-item value=\"delete\" variant=\"danger\"）がレンダリングされ、trash-solid-full アイコンが表示されること", () => {
+    it('2-12. wa-divider の後ろに削除項目（wa-dropdown-item value="delete" variant="danger"）がレンダリングされ、trash-solid-full アイコンが表示されること', () => {
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/<wa-dropdown-item[^>]*value=["']delete["'][^>]*variant=["']danger["']/);
+      expect(htmlStr).toMatch(
+        /<wa-dropdown-item[^>]*value=["']delete["'][^>]*variant=["']danger["']/,
+      );
       expect(htmlStr).toContain("trash-solid-full");
       expect(htmlStr).toContain("削除");
     });
 
-    it("2-12. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること", async () => {
+    it("2-13. 削除項目選択で確認ダイアログ（wa-dialog）が表示され、キャンセルでダイアログが閉じ、確定で taskController.deleteTask が呼び出されること", async () => {
       element.handleOpenDeleteDialog();
       expect(element.isDeleteDialogOpen).toBe(true);
       const htmlStr = flattenTemplate(element.render());
@@ -266,7 +294,7 @@ describe("TaskPane Component", () => {
       expect(element.isDeleteDialogOpen).toBe(false);
     });
 
-    it("2-13. ステータス変更ドロップダウン内の wa-dropdown-item に @click が付与されていないこと", () => {
+    it("2-14. ステータス変更ドロップダウン内の wa-dropdown-item に @click が付与されていないこと", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).not.toMatch(/<wa-dropdown-item[^>]*@click/);
     });
@@ -385,7 +413,9 @@ describe("TaskPane Component", () => {
       expect(element.activeTab).toBe("summary");
 
       element.handleTabShow(
-        new CustomEvent("wa-tab-show", { detail: { name: "random-invalid-tab" } }),
+        new CustomEvent("wa-tab-show", {
+          detail: { name: "random-invalid-tab" },
+        }),
       );
 
       expect(element.activeTab).toBe("summary");
@@ -594,9 +624,7 @@ describe("TaskPane Component", () => {
       expect(content).toMatch(
         /\.task-pane__tab-panel\s*\{[^}]*display:\s*none;/,
       );
-      expect(content).toMatch(
-        /&\[active\]\s*\{[^}]*display:\s*flex;/,
-      );
+      expect(content).toMatch(/&\[active\]\s*\{[^}]*display:\s*flex;/);
     });
 
     it("5-11. task-pane.scss において .task-pane__tab-group の ::part(tab-group) および ::part(body) に height: 100% と flex: 1 が定義され、タブパネルのスクロールと領域伸長が保護されていること", () => {
@@ -616,8 +644,12 @@ describe("TaskPane Component", () => {
 
     it("5-13. task-pane.scss において .task-pane__tab-panel[active] の padding-top が 0 であり、::part(base) に padding-top が指定されていることで、スクロール時のヘッダー上部余白とコンテンツ漏れが防止されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/padding:\s*0\s+var\(--wa-space-m[^)]*\)\s+var\(--wa-space-l[^)]*\);/);
-      expect(content).toMatch(/::part\(base\)[\s\S]*?padding-top:\s*var\(--wa-space-l[^)]*\);/);
+      expect(content).toMatch(
+        /padding:\s*0\s+var\(--wa-space-m[^)]*\)\s+var\(--wa-space-l[^)]*\);/,
+      );
+      expect(content).toMatch(
+        /::part\(base\)[\s\S]*?padding-top:\s*var\(--wa-space-l[^)]*\);/,
+      );
     });
 
     it("5-14. テンプレートおよびSCSSから旧クラス名（pane-task*）が完全に排除されていること", () => {
@@ -628,6 +660,13 @@ describe("TaskPane Component", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       expect(content).not.toMatch(/\.pane-task\b/);
     });
+
+    it("5-15. task-pane.scss において .task-pane__btn-copy-tag が定義され、テーマ切替トランジションが適用されていること", () => {
+      const content = fs.readFileSync(scssPath, "utf-8");
+      expect(content).toMatch(/\.task-pane__btn-copy-tag\s*\{/);
+      expect(content).toMatch(/\.task-pane__btn-copy-tag[\s\S]*?@include flex-center;/);
+      expect(content).toMatch(/\.task-pane__btn-copy-tag[\s\S]*?@include theme-transition;/);
+    });
   });
 
   describe("6. タブ切り替えおよびIDナビゲーション（navigateToIssue / navigateToNote）", () => {
@@ -637,12 +676,15 @@ describe("TaskPane Component", () => {
         expandIssue: vi.fn(),
         resetModesToPreview: vi.fn(),
       };
-      Object.defineProperty(element, "renderRoot", { configurable: true, value: {
-        querySelector: vi.fn().mockImplementation((sel: string) => {
-          if (sel === "issues-view") return mockIssuesView;
-          return null;
-        }),
-      }});
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "issues-view") return mockIssuesView;
+            return null;
+          }),
+        },
+      });
 
       await element.navigateToIssue(42);
       expect(element.activeTab).toBe("issues");
@@ -655,12 +697,15 @@ describe("TaskPane Component", () => {
         handleSelectNote: vi.fn(),
         resetModesToPreview: vi.fn(),
       };
-      Object.defineProperty(element, "renderRoot", { configurable: true, value: {
-        querySelector: vi.fn().mockImplementation((sel: string) => {
-          if (sel === "notes-view") return mockNotesView;
-          return null;
-        }),
-      }});
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "notes-view") return mockNotesView;
+            return null;
+          }),
+        },
+      });
 
       await element.navigateToNote(99);
       expect(element.activeTab).toBe("notes");
@@ -668,5 +713,3 @@ describe("TaskPane Component", () => {
     });
   });
 });
-
-
