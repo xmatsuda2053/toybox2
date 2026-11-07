@@ -13,8 +13,9 @@ export type TaskTemplateIssue = {
   /**
    * システム日付（本日）からの相対オフセット日数
    * （例: 0=当日, 1=翌日, 2=翌々日...）
+   * 未設定（期日なし）の場合は undefined
    */
-  dayOffset: number;
+  dayOffset?: number;
 };
 
 /**

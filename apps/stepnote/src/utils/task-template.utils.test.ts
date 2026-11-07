@@ -20,6 +20,7 @@ import type { TaskTemplateRecord, TaskTemplateIssue } from "@/db/models/template
  *    - 既存テンプレートの名称に「(コピー)」が付与された新しいテンプレートオブジェクトを生成すること
  *    - id が除外（undefined）されていること
  *    - issues 配列がディープコピーされ、各Issueに新しい一意IDが再割り当てされること
+ *    - dayOffset が undefined の場合、そのまま undefined が引き継がれること
  * 3. reorderTemplateIssues:
  *    - 指定インデックスの要素を上（インデックス-1）へ移動し、order 番号を1から連番で再採番すること
  *    - 指定インデックスの要素を下（インデックス+1）へ移動し、order 番号を1から連番で再採番すること
@@ -127,8 +128,24 @@ describe("task-template.utils", () => {
       expect(cloned.description).toBe("## 開発タスク概要");
       expect(cloned.issues).toHaveLength(2);
       expect(cloned.issues[0].value).toBe("# 要件確認\n詳細内容");
+      expect(cloned.issues[0].dayOffset).toBe(0);
       expect(cloned.issues[0].id).not.toBe("uuid-1"); // 新しい一意ID
       expect(cloned.issues[1].id).not.toBe("uuid-2");
+      expect(cloned.issues[1].dayOffset).toBe(1);
+    });
+
+    it("複製元のIssueの dayOffset が undefined の場合、undefined（期日スイッチOFF）のまま複製されること", () => {
+      const original: TaskTemplateRecord = {
+        id: 2,
+        name: "期日なしテンプレート",
+        description: "",
+        issues: [
+          { id: "uuid-1", order: 1, value: "タスク1", dayOffset: undefined },
+        ],
+      };
+
+      const cloned = cloneTaskTemplate(original);
+      expect(cloned.issues[0].dayOffset).toBeUndefined();
     });
   });
 
@@ -198,6 +215,25 @@ describe("task-template.utils", () => {
         dueDate: new Date(2026, 10, 2, 0, 0, 0),
       });
     });
+
+    it("dayOffset が undefined（未設定）のIssueは dueDate が undefined（空）として生成されること", () => {
+      const template: TaskTemplateRecord = {
+        name: "期日任意テンプレート",
+        description: "",
+        issues: [
+          { id: "1", order: 1, value: "期日あり", dayOffset: 2 },
+          { id: "2", order: 2, value: "期日未設定", dayOffset: undefined },
+        ],
+      };
+
+      const baseDate = new Date(2026, 10, 1, 0, 0, 0);
+      const taskDueDate = new Date(2026, 10, 10, 0, 0, 0);
+      const payloads = generateTemplateIssuePayloads(template, baseDate, taskDueDate, 100);
+
+      expect(payloads).toHaveLength(2);
+      expect(payloads[0].dueDate).toEqual(new Date(2026, 10, 3, 0, 0, 0));
+      expect(payloads[1].dueDate).toBeUndefined();
+    });
   });
 
   describe("isTemplateDirty", () => {
@@ -251,6 +287,16 @@ describe("task-template.utils", () => {
         ],
       };
       expect(isTemplateDirty(current, original)).toBe(true);
+
+      const offsetChanged = {
+        name: original.name,
+        description: original.description,
+        issues: [
+          { id: "1", order: 1, value: "# 準備", dayOffset: undefined },
+          { id: "2", order: 2, value: "# 実施", dayOffset: 1 },
+        ],
+      };
+      expect(isTemplateDirty(offsetChanged, original)).toBe(true);
     });
 
     it("新規作成時に未入力なら false、入力があれば true を返すこと", () => {

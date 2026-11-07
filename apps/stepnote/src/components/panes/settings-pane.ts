@@ -1,4 +1,4 @@
-﻿import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import "@shared/components";
@@ -231,7 +231,7 @@ export class SettingsPane extends WithAutoExportController(
         id,
         order: nextOrder,
         value: "### New Issue",
-        dayOffset: this.formIssues.length,
+        dayOffset: undefined,
       },
     ];
     this.selectedIssueIndex = this.formIssues.length - 1;
@@ -312,10 +312,26 @@ export class SettingsPane extends WithAutoExportController(
   /**
    * Issue相対オフセット日数変更ハンドラー
    */
-  public handleIssueOffsetChange = (index: number, dayOffset: number): void => {
+  public handleIssueOffsetChange = (
+    index: number,
+    dayOffset: number | undefined,
+  ): void => {
     this.formIssues = this.formIssues.map((iss, idx) =>
       idx === index ? { ...iss, dayOffset } : iss,
     );
+  };
+
+  /**
+   * Issue期日設定有効・無効トグルハンドラー
+   */
+  public handleToggleOffsetEnabled = (index: number, enabled: boolean): void => {
+    this.formIssues = this.formIssues.map((iss, idx) => {
+      if (idx !== index) return iss;
+      return {
+        ...iss,
+        dayOffset: enabled ? 0 : undefined,
+      };
+    });
   };
 
   /**
@@ -598,6 +614,47 @@ export class SettingsPane extends WithAutoExportController(
   }
 
   /**
+   * Issue期日オフセット設定行の描画
+   */
+  private renderIssueOffsetRow(
+    currentIssue: TaskTemplateIssue,
+  ): HTMLTemplateResult {
+    const hasDueDate = typeof currentIssue.dayOffset === "number";
+
+    return html`
+      <div class="settings-pane__issue-offset-row">
+        <wa-switch
+          class="settings-pane__issue-offset-switch"
+          size="s"
+          ?checked=${hasDueDate}
+          @change=${(e: Event) => {
+            const checked = (e.target as HTMLInputElement).checked;
+            this.handleToggleOffsetEnabled(this.selectedIssueIndex, checked);
+          }}
+        >
+          期日を設定
+        </wa-switch>
+        <wa-input
+          type="number"
+          size="s"
+          class="settings-pane__issue-offset-input"
+          ?disabled=${!hasDueDate}
+          .value=${hasDueDate ? String(currentIssue.dayOffset) : ""}
+          @input=${(e: Event) => {
+            const val = (e.target as HTMLInputElement).value;
+            const num = val === "" ? 0 : Number(val);
+            this.handleIssueOffsetChange(
+              this.selectedIssueIndex,
+              Number.isNaN(num) ? 0 : num,
+            );
+          }}
+        ></wa-input>
+        <span class="settings-pane__issue-offset-unit">日後</span>
+      </div>
+    `;
+  }
+
+  /**
    * Issueディテール領域（右側エディタ・日数設定）の描画
    */
   private renderIssueDetail(): HTMLTemplateResult {
@@ -634,21 +691,7 @@ export class SettingsPane extends WithAutoExportController(
           }}
         ></markdown-editor-preview>
 
-        <div class="settings-pane__issue-offset-row">
-          <span class="settings-pane__issue-offset-label">タスク期日からの日数:</span>
-          <wa-input
-            type="number"
-            size="s"
-            class="settings-pane__issue-offset-input"
-            .value=${String(currentIssue.dayOffset)}
-            @input=${(e: Event) =>
-              this.handleIssueOffsetChange(
-                this.selectedIssueIndex,
-                Number((e.target as HTMLInputElement).value),
-              )}
-          ></wa-input>
-          <span class="settings-pane__issue-offset-unit">日後</span>
-        </div>
+        ${this.renderIssueOffsetRow(currentIssue)}
       </div>
     `;
   }
