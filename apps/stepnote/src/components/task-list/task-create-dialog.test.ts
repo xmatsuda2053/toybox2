@@ -18,6 +18,7 @@ import { TaskCreateDialog } from "./task-create-dialog.js";
  *    - [x] 1-7. 作業年度選択欄（wa-select#task-create-fiscal-year）で change イベントが発火した際、handleSelectFiscalYear により inputFiscalYear が更新されること
  *    - [x] 1-8. ラベル選択欄（wa-select#task-create-label）で change イベントが発火した際、handleSelectLabel により inputLabelId が更新されること（空選択時は undefined）
  *    - [x] 1-9. 作業年度選択欄およびラベル選択欄（wa-select）が Web Awesome 3.x の標準 @change イベントでバインドされていること
+ *    - [x] 1-10. ラベル選択欄（wa-select#task-create-label）の選択肢がラベル名（文字列）の昇順（辞書順・自然順）でソートされてレンダリングされること
  *
  * 2. 入力バリデーションと登録制御
  *    - [x] 2-1. タスク名が空（未入力または空白のみ）の場合、登録処理が実行されないこと
@@ -35,6 +36,7 @@ import { TaskCreateDialog } from "./task-create-dialog.js";
  *    - [x] 4-2. ダイアログが閉じる際、dialog-close カスタムイベントが発行されること
  *    - [x] 4-3. 子要素（wa-select や popover 等）からバブリングした wa-after-hide イベントではダイアログが閉じないこと
  *    - [x] 4-4. 期日変更（handleDateChange）や年度変更（handleSelectFiscalYear）、ラベル変更（handleSelectLabel）操作時にダイアログの開状態（open = true）が維持されること
+ *    - [x] 4-5. 選択中ラベル未指定（selectedLabelIdなし、labelsController.selectedLabelIdなし）でのresetForm時、ソート後の先頭ラベルが初期選択ラベル（inputLabelId）として設定されること
  *
  * 5. BEM設計およびSCSSスタイルの検証
  *    - [x] 5-1. SCSSスタイルシート（task-create-dialog.scss）が存在し、ルートブロック .task-create-dialog およびBEMセレクタが定義されていること
@@ -183,6 +185,27 @@ describe("TaskCreateDialog Component", () => {
       const templateStr = JSON.stringify(template);
       expect(templateStr).toContain("@change");
       expect(templateStr).not.toContain("@wa-change");
+    });
+
+    it("1-10. ラベル選択欄（wa-select#task-create-label）の選択肢がラベル名（文字列）の昇順（辞書順・自然順）でソートされてレンダリングされること", () => {
+      mockLabelsController.state = [
+        { id: 1, name: "プロジェクトA", description: "", isSelected: false },
+        { id: 2, name: "プライベート", description: "", isSelected: false },
+        { id: 3, name: "あさひ", description: "", isSelected: false },
+      ];
+
+      const htmlStr = flattenTemplate(element.render());
+      const posAsahi = htmlStr.indexOf("あさひ");
+      const posPrivate = htmlStr.indexOf("プライベート");
+      const posProject = htmlStr.indexOf("プロジェクトA");
+
+      expect(posAsahi).toBeGreaterThan(-1);
+      expect(posPrivate).toBeGreaterThan(-1);
+      expect(posProject).toBeGreaterThan(-1);
+
+      // "あさひ" < "プライベート" < "プロジェクトA" の順序でレンダリングされていること
+      expect(posAsahi).toBeLessThan(posPrivate);
+      expect(posPrivate).toBeLessThan(posProject);
     });
   });
 
@@ -367,6 +390,21 @@ describe("TaskCreateDialog Component", () => {
         }) as any,
       );
       expect(element.open).toBe(true);
+    });
+
+    it("4-5. 選択中ラベル未指定（selectedLabelIdなし、labelsController.selectedLabelIdなし）でのresetForm時、ソート後の先頭ラベルが初期選択ラベル（inputLabelId）として設定されること", () => {
+      mockLabelsController.selectedLabelId = undefined;
+      mockLabelsController.state = [
+        { id: 1, name: "プロジェクトA", description: "", isSelected: false },
+        { id: 2, name: "プライベート", description: "", isSelected: false },
+        { id: 3, name: "あさひ", description: "", isSelected: false },
+      ];
+      element.selectedLabelId = undefined;
+
+      element.resetForm();
+
+      // ソート後の先頭ラベルである「あさひ（id: 3）」が選択されること
+      expect(element.inputLabelId).toBe(3);
     });
   });
 
