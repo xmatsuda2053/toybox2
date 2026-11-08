@@ -22,6 +22,8 @@ import {
 import { WithDialogBase } from "@/utils/dialog-element.mixin.js";
 import { generateTemplateIssuePayloads } from "@/utils/task-template.utils.js";
 import type { TaskTemplateRecord } from "@/db/models/template.model.js";
+import type { LabelRecord } from "@/db/models/navigation.model.js";
+import { sortLabelsByNameAsc } from "@/components/navigation/navigation-labels.utils.js";
 import styles from "./task-create-dialog.scss?inline";
 
 /**
@@ -101,6 +103,18 @@ export class TaskCreateDialog extends WithDialogBase(
   }
 
   /**
+   * ラベル名の昇順（辞書順・自然順）でソートされたラベル一覧を取得する
+   *
+   * @readonly
+   * @type {readonly LabelRecord[]}
+   * @memberof TaskCreateDialog
+   */
+  public get sortedLabels(): readonly LabelRecord[] {
+    const raw = this.labelsController?.state ?? [];
+    return sortLabelsByNameAsc(raw);
+  }
+
+  /**
    * フォーム入力値を初期状態へリセットする
    */
   public resetForm(): void {
@@ -112,7 +126,7 @@ export class TaskCreateDialog extends WithDialogBase(
     const fallbackLabelId =
       this.selectedLabelId ??
       this.labelsController?.selectedLabelId ??
-      (this.labelsController?.state[0]?.id as number | undefined);
+      (this.sortedLabels[0]?.id as number | undefined);
     this.inputLabelId = fallbackLabelId;
   }
 
@@ -203,7 +217,7 @@ export class TaskCreateDialog extends WithDialogBase(
     const fallbackLabelId =
       this.inputLabelId ??
       this.labelsController?.selectedLabelId ??
-      (this.labelsController?.state[0]?.id as number | undefined) ??
+      (this.sortedLabels[0]?.id as number | undefined) ??
       1;
 
     const selectedTemplate = this.inputTemplateId !== undefined
@@ -235,7 +249,7 @@ export class TaskCreateDialog extends WithDialogBase(
    */
   private renderSelectors(): HTMLTemplateResult {
     const fiscalYears = getFiscalYearRange();
-    const labels = this.labelsController?.state ?? [];
+    const labels = this.sortedLabels;
     const templates = this.taskTemplateController?.state ?? [];
 
     return html`
