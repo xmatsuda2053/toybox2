@@ -1,0 +1,10 @@
+職員番号,氏名,所属,役職,メールアドレス
+0010001,田中 太郎,総務部 総務課,課長,"tanaka.taro@example.com, t-tanaka@sub.example.com"
+0010002,佐藤 花子,総務部 人事課,主査,sato.hanako@example.com
+0020001,鈴木 一郎,営業推進部 第一営業課,課長補佐,suzuki.ichiro@example.com
+0020002,高橋 次郎,営業推進部 第二営業課,係長,takahashi.jiro@example.com
+0030001,伊藤 美咲,開発部 基盤システム課,主査,"ito.misaki@example.com, m-ito@dev.example.com"
+0030002,渡辺 健太,開発部 アプリケーション課,主任,watanabe.kenta@example.com
+0040001,小林 さくら,財務部 会計課,課長,kobayashi.sakura@example.com
+0040002,加藤 大輔,財務部 契約課,係長,kato.daisuke@example.com
+

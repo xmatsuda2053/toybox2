@@ -74,6 +74,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("house-solid-full")).toBe(true);
       expect(hasIcon("house-regular-full")).toBe(true);
       expect(hasIcon("clock-rotate-left-solid-full")).toBe(true);
+      expect(hasIcon("icon-hub-address")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }
@@ -96,6 +97,10 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const circleXmarkSvg = getIconSvg("circle-xmark-solid-full");
       expect(circleXmarkSvg).toBeDefined();
       expect(circleXmarkSvg).toContain("<svg");
+
+      const hubAddressSvg = getIconSvg("icon-hub-address");
+      expect(hubAddressSvg).toBeDefined();
+      expect(hubAddressSvg).toContain("<svg");
 
       const folderSvg = getIconSvg("folder-solid-full");
       expect(folderSvg).toBeDefined();
