@@ -58,6 +58,13 @@
 
   pre {
     background-color: var(--stepnote-markdown-pre-bg);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    code {
+      white-space: pre-wrap;
+    }
   }
 
   code {
