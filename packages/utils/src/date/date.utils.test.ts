@@ -90,6 +90,10 @@ describe("date.utils.format", () => {
     expect(format(target, "yyyy/MM/dd")).toBe("2026/01/05");
   });
 
+  it("yyyy-MM-dd HH:mm:ss を指定した場合、ハイフン区切りの日時文字列を返すこと", () => {
+    expect(format(target, "yyyy-MM-dd HH:mm:ss")).toBe("2026-01-05 09:07:03");
+  });
+
   it("HH:mm:ss を指定した場合、時刻部分のみ（時:分:秒）の文字列を返すこと", () => {
     expect(format(target, "HH:mm:ss")).toBe("09:07:03");
   });

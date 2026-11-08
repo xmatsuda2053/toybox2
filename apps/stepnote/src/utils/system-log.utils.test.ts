@@ -58,6 +58,12 @@ describe("system-log.utils (TDD)", () => {
       expect(formatDateString(date)).toBe("2026-10-31");
     });
 
+    it("1-1-b. 無効な日付または未定義の場合は '未設定' を返すこと", () => {
+      expect(formatDateString(undefined)).toBe("未設定");
+      expect(formatDateString(null)).toBe("未設定");
+      expect(formatDateString(new Date("invalid"))).toBe("未設定");
+    });
+
     it("1-2. TaskStatusCode を対応する日本語ラベルに変換すること", () => {
       expect(getStatusLabel(0)).toBe("開始待ち");
       expect(getStatusLabel(5)).toBe("対応中");

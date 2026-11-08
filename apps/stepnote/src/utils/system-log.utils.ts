@@ -1,21 +1,19 @@
 import type { TaskStatusCode } from "@/types/domain/task-status.type";
+import { format } from "@shared/utils";
 
 /**
  * Date オブジェクトを "YYYY-MM-DD" 形式の文字列に変換する。
- * 未指定または null の場合は "未設定" を返す。
+ * 未指定または null、無効な日付の場合は "未設定" を返す。
  *
  * @export
  * @param {Date | null | undefined} date
  * @return {string} "YYYY-MM-DD" または "未設定"
  */
 export function formatDateString(date?: Date | null): string {
-  if (!date) {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
     return "未設定";
   }
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return format(date, "yyyy-MM-dd");
 }
 
 /**

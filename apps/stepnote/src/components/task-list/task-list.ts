@@ -57,13 +57,10 @@ export class TaskList extends WithIssuesController(
 
   @consume({ context: taskListContext, subscribe: true })
   @property({ attribute: false })
-  public set taskListController(controller: TaskListController | undefined) {
-    if (this._taskListController === controller) return;
-    this._taskListController = this.subscriber.bind(
-      "taskList",
-      this._taskListController,
-      controller,
-    );
+  public set taskListController(value: TaskListController | undefined) {
+    const current = this._taskListController;
+    if (current === value) return;
+    this._taskListController = this.subscriber.bind("taskList", current, value);
     this.syncLabelFilter();
     this.syncQuickAccessFilter();
   }

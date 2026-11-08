@@ -114,13 +114,21 @@ export class IssuesView extends WithIssuesController(
   /** 親タスク切り替え時の状態初期化およびコントローラー同期 */
   private syncParentTaskState(): void {
     const parentTaskId = this.taskController?.state?.id;
-    if (this.lastTaskId !== parentTaskId) {
-      this.lastTaskId = parentTaskId;
-      this.accordion.reset();
-      this.expandedIssueIds = new Set();
-      this.collapsingIssueId = null;
-      this.issueModeMap.clear();
+    this.syncControllerTaskId(parentTaskId);
+
+    if (this.lastTaskId === parentTaskId) {
+      return;
     }
+
+    this.lastTaskId = parentTaskId;
+    this.accordion.reset();
+    this.expandedIssueIds = new Set();
+    this.collapsingIssueId = null;
+    this.issueModeMap.clear();
+  }
+
+  /** コントローラーの taskId を親タスクに同期する */
+  private syncControllerTaskId(parentTaskId?: number): void {
     if (
       this.issuesController &&
       parentTaskId !== undefined &&

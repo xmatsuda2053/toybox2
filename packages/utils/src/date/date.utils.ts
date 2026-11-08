@@ -1,7 +1,7 @@
 /**
  * 日時を指定されたフォーマットで文字列に変換する。
  * @param date - 変換対象の日時
- * @param format - フォーマット形式 (yyyy/MM/dd HH:mm:ss, yyyy/MM/dd, yyyyMMdd_HHmmss, HH:mm:ss)
+ * @param format - フォーマット形式 (yyyy/MM/dd HH:mm:ss, yyyy-MM-dd HH:mm:ss, yyyy/MM/dd, yyyyMMdd_HHmmss, HH:mm:ss)
  * @returns フォーマットされた日時文字列
  * @throws Error: formatがサポートされていない場合
  */
@@ -19,6 +19,9 @@ export function format(
 
   if (format === "yyyy/MM/dd HH:mm:ss") {
     return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+  }
+  if (format === "yyyy-MM-dd HH:mm:ss") {
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
   if (format === "yyyy/MM/dd") {
     return `${year}/${month}/${day}`;
