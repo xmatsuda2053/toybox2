@@ -45,6 +45,9 @@
  *   - darkTheme='soft' が指定された場合、ホスト要素に dark-theme='soft' 属性が設定されること
  *   - lightTheme='default' が指定された場合、ホスト要素に light-theme='default' 属性が設定されること
  *   - themeMode を 'dark' から 'light' に切り替えた際、ホスト要素から wa-dark クラスが除去されて wa-light および data-theme='light' に更新され、内部 body の data-theme も 'light' に同期されること
+ * 17. コードブロック（pre / code）の折り返しスタイル定義
+ *   - pre に対して white-space: pre-wrap, word-break: break-word, overflow-wrap: anywhere が設定されていること
+ *   - pre code に対して white-space: pre-wrap が設定され、github-markdown-css の white-space: pre を上書きしていること
  */
 
 import * as fs from "node:fs";
@@ -193,6 +196,21 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
     it("コードブロック（pre / code）の背景色がセマンティックトークンを参照していること", () => {
       expect(scssContent).toMatch(/pre[\s\S]*?background-color:\s*var\(--stepnote-markdown-pre-bg\)/);
       expect(scssContent).toMatch(/code[\s\S]*?background-color:\s*var\(--stepnote-markdown-code-bg\)/);
+    });
+
+    it("コードブロック（pre / code）に折り返し用プロパティ（white-space: pre-wrap, word-break: break-word, overflow-wrap: anywhere）が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /pre\s*\{[\s\S]*?white-space:\s*pre-wrap;/,
+      );
+      expect(scssContent).toMatch(
+        /pre\s*\{[\s\S]*?word-break:\s*break-word;/,
+      );
+      expect(scssContent).toMatch(
+        /pre\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/,
+      );
+      expect(scssContent).toMatch(
+        /pre[\s\S]*?code\s*\{[\s\S]*?white-space:\s*pre-wrap;/,
+      );
     });
 
     it("Table セル（th / td）および行のボーダーが明示的にセマンティックトークンを参照していること", () => {
