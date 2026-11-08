@@ -57,11 +57,13 @@ export class JournalPane extends WithScratchController(
 
   /** 親タスク切り替え時の状態初期化 */
   private syncParentTaskState(): void {
-    const parentTaskId = this.taskController?.state?.id;
-    if (this.lastTaskId !== parentTaskId) {
-      this.lastTaskId = parentTaskId;
-      this.activeTab = "logs";
+    const currentTaskId = this.taskController?.state?.id;
+    if (this.lastTaskId === currentTaskId) {
+      return;
     }
+
+    this.lastTaskId = currentTaskId;
+    this.activeTab = "logs";
   }
 
   /**

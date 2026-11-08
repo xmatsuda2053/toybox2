@@ -81,22 +81,7 @@ export class IssuesController extends BaseTaskSubItemController<
       updatedAt: now,
     }));
 
-    const ids = await this.repository.bulkAdd(items);
-    await this.loadState();
-
-    if (this.systemLogService && ids.length > 0) {
-      for (let i = 0; i < ids.length; i++) {
-        await this.systemLogService.logIssueCreated(
-          this._taskId,
-          ids[i],
-          dueDate,
-          0,
-          titles[i],
-        );
-      }
-    }
-
-    return ids;
+    return this.insertAndLogIssues(items);
   };
 
   /**
@@ -130,18 +115,27 @@ export class IssuesController extends BaseTaskSubItemController<
       updatedAt: now,
     }));
 
+    return this.insertAndLogIssues(items);
+  };
+
+  /**
+   * 複数Issueレコードを一括登録し、状態再読込およびシステムログ記録を行う。
+   */
+  private insertAndLogIssues = async (
+    items: Array<Omit<IssueRecord, "id">>,
+  ): Promise<number[]> => {
     const ids = await this.repository.bulkAdd(items);
     await this.loadState();
 
-    if (this.systemLogService && ids.length > 0) {
+    if (this.systemLogService && ids.length > 0 && this._taskId !== undefined) {
       for (let i = 0; i < ids.length; i++) {
-        const payload = payloads[i];
+        const item = items[i];
         await this.systemLogService.logIssueCreated(
           this._taskId,
           ids[i],
-          payload.dueDate,
-          payload.statusCode ?? 0,
-          payload.title,
+          item.dueDate,
+          item.statusCode ?? 0,
+          item.title,
         );
       }
     }
