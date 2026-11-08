@@ -11,10 +11,12 @@
     "dev:components": "npm run dev --workspace=packages/components",
     "build:stepnote": "npm run build --workspace=apps/stepnote",
     "build:migrator": "npm run build --workspace=apps/stepnote-migrator",
+    "build:ext-hubaccess": "npm run build --workspace=apps/extension-hubaccess",
     "build:all": "npm run build --workspaces",
     "type-check": "npm exec --workspaces -- tsc --noEmit",
     "lint": "eslint apps packages",
     "test": "vitest run",
+    "test:ext": "vitest run apps/extension-hubaccess",
     "test:watch": "vitest --ui"
   },
   "devDependencies": {
