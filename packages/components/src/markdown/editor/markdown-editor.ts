@@ -166,6 +166,7 @@ export class MarkdownEditor extends LitElement {
   private customExtensionsCompartment = new Compartment();
   private lastAppliedDarkMode = false;
   private lastInternalValue: string | null = null;
+  private isExternalSync = false;
   private resizeObserver?: ResizeObserver;
 
   override connectedCallback(): void {
@@ -238,9 +239,11 @@ export class MarkdownEditor extends LitElement {
         }
       : undefined;
 
-    this.editorView.dispatch({
-      changes: { from: 0, to: currentDoc.length, insert: this.value },
-      ...(selection ? { selection } : {}),
+    this.dispatchExternalChange(() => {
+      this.editorView?.dispatch({
+        changes: { from: 0, to: currentDoc.length, insert: this.value },
+        ...(selection ? { selection } : {}),
+      });
     });
   }
 
@@ -332,6 +335,9 @@ export class MarkdownEditor extends LitElement {
       markdown(),
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
+        if (this.isExternalSync) {
+          return;
+        }
         if (update.docChanged) {
           const newValue = update.state.doc.toString();
           this.handleInternalDocChange(newValue);
@@ -410,8 +416,17 @@ export class MarkdownEditor extends LitElement {
   }
 
   /**
-   * エディタのテキストを外部から更新する。
+   * 外部からのドキュメント更新 dispatch を実行し、同期中の意図しない変更イベント発火を抑止する。
    */
+  private dispatchExternalChange(dispatchFn: () => void): void {
+    this.isExternalSync = true;
+    try {
+      dispatchFn();
+    } finally {
+      this.isExternalSync = false;
+    }
+  }
+
   /**
    * エディタの Viewport および DOM 計測を強制的に再実行し、最新値との同期を保証する。
    * display: none や非表示タブから復帰した際に呼び出す。
@@ -421,8 +436,10 @@ export class MarkdownEditor extends LitElement {
 
     const currentDoc = this.editorView.state.doc.toString();
     if (this.value !== currentDoc) {
-      this.editorView.dispatch({
-        changes: { from: 0, to: currentDoc.length, insert: this.value },
+      this.dispatchExternalChange(() => {
+        this.editorView?.dispatch({
+          changes: { from: 0, to: currentDoc.length, insert: this.value },
+        });
       });
     }
 
@@ -435,8 +452,10 @@ export class MarkdownEditor extends LitElement {
     if (this.editorView) {
       const currentDoc = this.editorView.state.doc.toString();
       if (newValue !== currentDoc) {
-        this.editorView.dispatch({
-          changes: { from: 0, to: currentDoc.length, insert: newValue },
+        this.dispatchExternalChange(() => {
+          this.editorView?.dispatch({
+            changes: { from: 0, to: currentDoc.length, insert: newValue },
+          });
         });
       }
     }

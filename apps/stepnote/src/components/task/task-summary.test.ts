@@ -60,6 +60,10 @@ import { TaskSummary } from "./task-summary.js";
  *    - 7-2. handleHeightModeChange メソッドが定義されていない（undefined）こと
  *    - 7-3. レンダリング結果に task-summary--content-expand クラスが付与されないこと
  *    - 7-4. task-summary.scss に .task-summary--content-expand が存在しないこと
+ *
+ * 8. 不要なタスク更新・自動保存の抑止（Issue #447）
+ *    - 8-1. handleDescriptionChange に現在の description と同一内容が渡された場合、debounce 後も updateSummary が呼び出されないこと
+ *    - 8-2. handleNameInput に現在の name と同一内容が渡された場合、debounce 後も updateSummary が呼び出されないこと
  */
 describe("TaskSummary Component", () => {
   let element: TaskSummary;
@@ -426,6 +430,24 @@ describe("TaskSummary Component", () => {
       const scssPath = path.resolve(__dirname, "task-summary.scss");
       const content = fs.readFileSync(scssPath, "utf-8");
       expect(content).not.toContain("task-summary--content-expand");
+    });
+  });
+
+  describe("8. 不要なタスク更新・自動保存の抑止（Issue #447）", () => {
+    it("8-1. handleDescriptionChange に現在の description と同一内容が渡された場合、debounce 後も updateSummary が呼び出されないこと", () => {
+      // baseTask.description は "## 要件一覧\n- 要件1\n- 要件2"
+      element.handleDescriptionChange(baseTask.description!);
+      vi.advanceTimersByTime(350);
+
+      expect(mockTaskController.updateSummary).not.toHaveBeenCalled();
+    });
+
+    it("8-2. handleNameInput に現在の name と同一内容が渡された場合、debounce 後も updateSummary が呼び出されないこと", () => {
+      // baseTask.name は "新機能の基本設計を策定する"
+      element.handleNameInput(baseTask.name);
+      vi.advanceTimersByTime(350);
+
+      expect(mockTaskController.updateSummary).not.toHaveBeenCalled();
     });
   });
 });

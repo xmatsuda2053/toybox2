@@ -47,6 +47,10 @@
  *   - エディタがフォーカス中（hasFocus: true）の場合、親からの遅延した value 変更（updated）による全置換 dispatch がスキップされること
  *   - 非フォーカス時に外部から value が変更された場合、全置換 dispatch 時に現在のカーソル位置（selection）がクランプ保持されること
  *   - setValue() 実行時には、フォーカス状態に関わらずエディタドキュメントが新しい値へ更新されること
+ * 16. 外部値同期時（syncExternalValue / setValue / refresh）の変更イベント抑止（Issue #447）
+ *   - 16-1. syncExternalValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
+ *   - 16-2. setValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
+ *   - 16-3. refresh() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
  */
 
 import * as fs from "node:fs";
@@ -215,6 +219,7 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     reconfigureEditor: () => void;
     classList: DOMTokenList;
     handleInternalDocChange: (newValue: string) => void;
+    isExternalSync?: boolean;
   };
 
   describe("8. 拡張機能・プロパティ変更時の再構成制御とエディタ保護", () => {
@@ -562,6 +567,101 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
           },
         }),
       );
+    });
+  });
+
+  describe("16. 外部値同期時（syncExternalValue / setValue / refresh）の変更イベント抑止（Issue #447）", () => {
+    it("16-1. syncExternalValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      let eventFired = false;
+      editor.addEventListener("markdown-change", () => {
+        eventFired = true;
+      });
+
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: vi.fn(() => {
+          if (!testable.isExternalSync) {
+            testable.handleInternalDocChange("新テキスト");
+          }
+        }),
+        hasFocus: false,
+        state: {
+          doc: {
+            toString: () => "古いテキスト",
+            length: 6,
+          },
+          selection: {
+            main: { anchor: 0, head: 0 },
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.value = "新テキスト";
+      editor.updated(new Map([["value", "古いテキスト"]]));
+
+      expect(eventFired).toBe(false);
+      expect(testable.isExternalSync).toBe(false);
+    });
+
+    it("16-2. setValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      let eventFired = false;
+      editor.addEventListener("markdown-change", () => {
+        eventFired = true;
+      });
+
+      testable.editorView = {
+        destroy: vi.fn(),
+        dispatch: vi.fn(() => {
+          if (!testable.isExternalSync) {
+            testable.handleInternalDocChange("新しい設定値");
+          }
+        }),
+        hasFocus: false,
+        state: {
+          doc: {
+            toString: () => "初期値",
+            length: 3,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.setValue("新しい設定値");
+
+      expect(eventFired).toBe(false);
+      expect(testable.isExternalSync).toBe(false);
+    });
+
+    it("16-3. refresh() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと", () => {
+      const testable = editor as unknown as TestableMarkdownEditor;
+      let eventFired = false;
+      editor.addEventListener("markdown-change", () => {
+        eventFired = true;
+      });
+
+      testable.editorView = {
+        destroy: vi.fn(),
+        requestMeasure: vi.fn(),
+        dispatch: vi.fn(() => {
+          if (!testable.isExternalSync) {
+            testable.handleInternalDocChange("リフレッシュ値");
+          }
+        }),
+        hasFocus: false,
+        state: {
+          doc: {
+            toString: () => "古い値",
+            length: 3,
+          },
+        },
+      } as unknown as TestableMarkdownEditor["editorView"];
+
+      editor.value = "リフレッシュ値";
+      editor.refresh();
+
+      expect(eventFired).toBe(false);
+      expect(testable.isExternalSync).toBe(false);
     });
   });
 });

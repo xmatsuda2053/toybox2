@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ReactiveControllerHost } from "lit";
-import { TaskController } from "./task.controller.js";
+import { TaskController, hasTaskChanges } from "./task.controller.js";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TaskRepository } from "@/repositories/task.repository.js";
 import type { CreateTaskInput } from "@/types";
@@ -118,6 +118,7 @@ const createMockHost = () => {
  *    - [x] 4-4-2. updateStatus で現在と同じステータスコードが指定された場合、更新処理を行わず早期リターンすること
  *    - [x] 4-5. taskId が undefined の状態で更新メソッドを呼んでもエラーにならず何もしないこと
  *    - [x] 4-6. updateTask 実行時に updatedAt が自動的に設定されること
+ *    - [x] 4-7. updateTask で現在保持している state と同一の値が指定された場合、更新処理（repository.update）を行わず早期リターンすること
  *
  * 5. タスク削除 (Task Deletion)
  *    - [x] 5-1. deleteTask 実行時に Repository から対象タスクが削除され、state および taskId が undefined にクリアされて requestUpdate() が呼ばれること
@@ -131,6 +132,10 @@ const createMockHost = () => {
  *    - [ ] 7-2. 未完了の Issue（statusCode !== 9）が存在する場合、canCompleteTask は false を返し、updateStatus(9) はステータスを更新せず何もしないこと
  *    - [ ] 7-3. すべての Issue が完了（statusCode === 9）または Issue が 0 件の場合、canCompleteTask は true を返し、updateStatus(9) で正常にステータス 9 に更新できること
  *    - [ ] 7-4. 未完了の Issue が存在する場合でも、完了以外のステータス（0 や 5）への更新は許可されること
+ *
+ * 8. hasTaskChanges 純粋関数の検証
+ *    - [x] 8-1. 変更がない場合は false を返すこと
+ *    - [x] 8-2. プリミティブ値、Date、連絡先リストの変更を正しく検知して true を返すこと
  */
 describe("TaskController (Single Task TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -426,6 +431,20 @@ describe("TaskController (Single Task TDD)", () => {
         beforeTime.getTime(),
       );
     });
+
+    it("4-7. updateTask で現在保持している state と同一の値が指定された場合、更新処理（repository.update）を行わず早期リターンすること", async () => {
+      const updateSpy = vi.spyOn(fakeRepository, "update");
+      mockHost.requestUpdateMock.mockClear();
+
+      // 現在のタスク1の内容（name: "タスク1", description: "タスク1の説明"）と同一
+      await controller.updateTask({
+        name: testTasks[0].name,
+        description: testTasks[0].description,
+      });
+
+      expect(updateSpy).not.toHaveBeenCalled();
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("5. タスク削除 (Task Deletion)", () => {
@@ -705,6 +724,52 @@ describe("TaskController (Single Task TDD)", () => {
       await controller.updateSummary({ name: "タスク1" });
 
       expect(fakeSystemLogService.logTaskNameChanged).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("8. hasTaskChanges 純粋関数の検証", () => {
+    const base: TaskRecord = {
+      id: 1,
+      name: "ベースタスク",
+      statusCode: 0,
+      dueDate: new Date("2026-06-01T00:00:00.000Z"),
+      contacts: [{ div: "開発", name: "佐藤", tel: "01" }],
+      description: "説明文",
+      fiscalYear: 2026,
+      labelId: 10,
+      bookmark: false,
+      selected: true,
+    };
+
+    it("8-1. 変更がない場合は false を返すこと", () => {
+      expect(hasTaskChanges(base, {})).toBe(false);
+      expect(hasTaskChanges(base, { name: "ベースタスク" })).toBe(false);
+      expect(
+        hasTaskChanges(base, {
+          dueDate: new Date("2026-06-01T00:00:00.000Z"),
+          contacts: [{ div: "開発", name: "佐藤", tel: "01" }],
+        }),
+      ).toBe(false);
+    });
+
+    it("8-2. プリミティブ値、Date、連絡先リストの変更を正しく検知して true を返すこと", () => {
+      expect(hasTaskChanges(base, { name: "新名称" })).toBe(true);
+      expect(hasTaskChanges(base, { statusCode: 5 })).toBe(true);
+      expect(
+        hasTaskChanges(base, {
+          dueDate: new Date("2026-06-02T00:00:00.000Z"),
+        }),
+      ).toBe(true);
+      expect(
+        hasTaskChanges(base, {
+          contacts: [{ div: "開発", name: "鈴木", tel: "01" }],
+        }),
+      ).toBe(true);
+      expect(
+        hasTaskChanges(base, {
+          contacts: [],
+        }),
+      ).toBe(true);
     });
   });
 });
