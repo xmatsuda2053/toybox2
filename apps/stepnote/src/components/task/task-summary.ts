@@ -53,10 +53,16 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
   private _lastTaskId?: number;
 
   private debouncedUpdateName = debounce((name: string) => {
+    if (this.taskController?.state?.name === name) {
+      return;
+    }
     this.taskController?.updateSummary({ name });
   }, 300);
 
   private debouncedUpdateDescription = debounce((description: string) => {
+    if (this.taskController?.state?.description === description) {
+      return;
+    }
     this.taskController?.updateSummary({ description });
   }, 300);
 
@@ -104,6 +110,9 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
    * タスク名入力ハンドラー
    */
   public handleNameInput = (name: string): void => {
+    if (this.taskController?.state?.name === name) {
+      return;
+    }
     this.debouncedUpdateName(name);
   };
 
@@ -138,6 +147,9 @@ export class TaskSummary extends WithTaskController(SubscriberElement) {
    * 詳細説明変更ハンドラー
    */
   public handleDescriptionChange = (description: string): void => {
+    if (this.taskController?.state?.description === description) {
+      return;
+    }
     this.debouncedUpdateDescription(description);
   };
 

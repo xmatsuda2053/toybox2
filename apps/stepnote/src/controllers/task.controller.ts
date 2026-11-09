@@ -4,8 +4,61 @@ import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
-import type { CreateTaskInput, Summary, Property, TaskStatusCode } from "@/types";
+import type {
+  CreateTaskInput,
+  Summary,
+  Property,
+  TaskStatusCode,
+  Contact,
+} from "@/types";
 import { BaseTaskScopeController } from "./base-reactive.controller";
+
+/**
+ * 連絡先リストに差分があるか検証するヘルパー
+ */
+function areContactsDifferent(
+  curr: readonly Contact[],
+  next: readonly Contact[],
+): boolean {
+  if (curr.length !== next.length) return true;
+  return next.some((c, i) => {
+    const t = curr[i];
+    return !t || c.div !== t.div || c.name !== t.name || c.tel !== t.tel;
+  });
+}
+
+/**
+ * 各フィールド値に差分があるか検証するヘルパー
+ */
+function isFieldValueDifferent(
+  key: keyof Omit<TaskRecord, "id">,
+  currVal: unknown,
+  nextVal: unknown,
+): boolean {
+  if (nextVal instanceof Date && currVal instanceof Date) {
+    return nextVal.getTime() !== currVal.getTime();
+  }
+  if (key === "contacts" && Array.isArray(nextVal) && Array.isArray(currVal)) {
+    return areContactsDifferent(currVal as Contact[], nextVal as Contact[]);
+  }
+  return currVal !== nextVal;
+}
+
+/**
+ * タスク更新データ（partial）が現在のレコードと実質的に異なるか検証する純粋関数
+ */
+export function hasTaskChanges(
+  current: TaskRecord,
+  partial: Partial<Omit<TaskRecord, "id">>,
+): boolean {
+  for (const key of Object.keys(partial) as Array<keyof Omit<TaskRecord, "id">>) {
+    const nextVal = partial[key];
+    if (nextVal !== undefined && isFieldValueDifferent(key, current[key], nextVal)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * 単一タスク関連イベント・状態を管理する Reactive Controller
@@ -146,18 +199,19 @@ export class TaskController extends BaseTaskScopeController<
   public updateTask = async (
     partial: Partial<Omit<TaskRecord, "id">>,
   ): Promise<void> => {
-    if (this._taskId === undefined) {
+    if (this._taskId === undefined || !this._state) {
       return;
     }
-    const before = this._state ? { ...this._state } : undefined;
+    if (!hasTaskChanges(this._state, partial)) {
+      return;
+    }
+    const before = { ...this._state };
     await this.repository.update(this._taskId, {
       ...partial,
       updatedAt: partial.updatedAt ?? new Date(),
     });
     await this.loadState();
-    if (before) {
-      await this.recordTaskUpdateLogs(before, partial);
-    }
+    await this.recordTaskUpdateLogs(before, partial);
   };
 
   /** ラベルIDからラベル名を取得するヘルパー */
