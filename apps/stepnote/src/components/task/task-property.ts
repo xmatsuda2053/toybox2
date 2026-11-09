@@ -3,6 +3,8 @@ import { customElement, property } from "lit/decorators.js";
 import "@shared/components";
 import { format, getFiscalYearRange } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model.js";
+import type { LabelRecord } from "@/db/models/navigation.model.js";
+import { sortLabelsByNameAsc } from "@/components/navigation/navigation-labels.utils.js";
 import {
   SubscriberElement,
   WithLabelsController,
@@ -74,6 +76,18 @@ export class TaskProperty extends WithIssuesController(
       await this.handleSelectLabel(Number(target.value));
     }
   };
+
+  /**
+   * ラベル名の昇順（辞書順・自然順）でソートされたラベル一覧を取得する
+   *
+   * @readonly
+   * @type {readonly LabelRecord[]}
+   * @memberof TaskProperty
+   */
+  public get sortedLabels(): readonly LabelRecord[] {
+    const raw = this.labelsController?.state ?? [];
+    return sortLabelsByNameAsc(raw);
+  }
 
   /**
    * 空状態テンプレートの描画
@@ -182,7 +196,7 @@ export class TaskProperty extends WithIssuesController(
    * ラベルフィールドの描画
    */
   private renderLabelField(task: TaskRecord): HTMLTemplateResult {
-    const labels = this.labelsController?.state ?? [];
+    const labels = this.sortedLabels;
 
     return html`
       <div class="task-property__field">
