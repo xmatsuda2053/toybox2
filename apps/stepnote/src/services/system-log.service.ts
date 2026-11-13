@@ -4,7 +4,6 @@ import type { TaskStatusCode } from "@/types/domain/task-status.type";
 import { extractMarkdownTitle } from "@shared/utils";
 import {
   formatTaskCreatedLog,
-  formatTaskNameChangedLog,
   formatTaskStatusChangedLog,
   formatTaskDueDateChangedLog,
   formatTaskLabelChangedLog,
@@ -89,16 +88,6 @@ export class SystemLogService {
     },
   ): Promise<void> {
     const log = formatTaskCreatedLog(params);
-    await this.recordLog(taskId, log);
-  }
-
-  /** タスク名変更ログを記録する */
-  public async logTaskNameChanged(
-    taskId: number,
-    before: string,
-    after: string,
-  ): Promise<void> {
-    const log = formatTaskNameChangedLog(before, after);
     await this.recordLog(taskId, log);
   }
 

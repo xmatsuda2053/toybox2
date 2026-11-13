@@ -8,7 +8,7 @@
  *
  * 2. タスク関連システムログフォーマット仕様
  *   - 2-1. タスク新規追加時のシステムログ（タスク名、期日、ラベル、年度、初期ステータス）を正しくフォーマットすること
- *   - 2-2. タスク名変更時のシステムログ（変更前後のタスク名）を正しくフォーマットすること
+ *   - 2-2. タスク名変更ログフォーマッター（formatTaskNameChangedLog）が廃止されていること
  *   - 2-3. タスクステータス変更時のシステムログ（変更前後のステータス名・コード値）を正しくフォーマットすること
  *   - 2-4. タスク期日変更時のシステムログ（変更前後の日付）を正しくフォーマットすること
  *   - 2-5. タスクラベル変更時のシステムログ（変更前後のラベル名・ID）を正しくフォーマットすること
@@ -34,11 +34,11 @@
  */
 
 import { describe, it, expect } from "vitest";
+import * as systemLogUtils from "./system-log.utils";
 import {
   formatDateString,
   getStatusLabel,
   formatTaskCreatedLog,
-  formatTaskNameChangedLog,
   formatTaskStatusChangedLog,
   formatTaskDueDateChangedLog,
   formatTaskLabelChangedLog,
@@ -91,15 +91,8 @@ describe("system-log.utils (TDD)", () => {
       );
     });
 
-    it("2-2. タスク名変更時のシステムログを正しくフォーマットすること", () => {
-      const log = formatTaskNameChangedLog("旧タスク名", "新タスク名");
-
-      expect(log).toBe(
-        `### sys: タスク名変更: "旧タスク名" → "新タスク名"\n\n` +
-          `- **項目**: タスク名\n` +
-          `- **変更前**: 旧タスク名\n` +
-          `- **変更後**: 新タスク名`,
-      );
+    it("2-2. タスク名変更ログフォーマッター（formatTaskNameChangedLog）が廃止されていること", () => {
+      expect("formatTaskNameChangedLog" in systemLogUtils).toBe(false);
     });
 
     it("2-3. タスクステータス変更時のシステムログを正しくフォーマットすること", () => {
