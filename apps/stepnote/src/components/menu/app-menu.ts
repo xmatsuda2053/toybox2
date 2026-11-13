@@ -492,14 +492,21 @@ export class AppMenu extends WithLayoutUIController(
     return html`
       <!-- 上部エリア (メイン機能群) -->
       <div class="app-menu__primary">
-        ${this.renderHomeButton()}
-        ${this.renderSidebarToggleButton(
-          this.isNavigationListAreaOpen,
-          isPrimaryDisabled,
-        )}
-        ${this.renderTaskCreateButton(isPrimaryDisabled)}
-        ${this.renderScratchButton(this.isScratchMode)}
-        ${this.renderZenModeButton(this.isZenMode, isPrimaryDisabled)}
+        <!-- 画面操作系グループ -->
+        <div class="app-menu__group">
+          ${this.renderHomeButton()}
+          ${this.renderSidebarToggleButton(
+            this.isNavigationListAreaOpen,
+            isPrimaryDisabled,
+          )}
+          ${this.renderZenModeButton(this.isZenMode, isPrimaryDisabled)}
+        </div>
+
+        <!-- タスク・作業操作系グループ -->
+        <div class="app-menu__group">
+          ${this.renderTaskCreateButton(isPrimaryDisabled)}
+          ${this.renderScratchButton(this.isScratchMode)}
+        </div>
       </div>
 
       <!-- 下部エリア (システムボタン群) -->
