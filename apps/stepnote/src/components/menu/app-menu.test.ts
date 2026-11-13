@@ -33,7 +33,7 @@ import { AppMenu } from "./app-menu.js";
  *
  * 7. クイック新規タスク作成共通コンポーネント（task-create-button）のレンダリング
  *    - [ ] 7-1. app-menu__primary 内に task-create-button がレンダリングされ、属性（buttonId, size, placement）が指定されていること
- *    - [ ] 7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること
+ *    - [ ] 7-2. ボタンの配置順序が「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」の順であること
  *    - [ ] 7-3. スクラッチモードが無効（false）の際、task-create-button に disabled 属性が付与されないこと
  *    - [ ] 7-4. スクラッチモードが有効（true）の際、task-create-button に disabled 属性が付与されること
  *
@@ -43,7 +43,7 @@ import { AppMenu } from "./app-menu.js";
  *
  * 9. スクラッチモード切替ボタンのレンダリングとアクセシビリティ
  *    - [ ] 9-1. app-menu__primary 内にスクラッチ切替ボタン（wa-button#app-menu-scratch-btn）、ツールチップ（wa-tooltip）、アイコン（wa-icon[name='pen-to-square-solid-full']）がレンダリングされること
- *    - [ ] 9-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順であること
+ *    - [ ] 9-2. ボタンの配置順序が「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」→「スクラッチボタン」の順であること
  *    - [ ] 9-3. isScratchMode が false の際、ツールチップ文言が「スクラッチモード（アプリ共通メモ）を開く」であること
  *    - [ ] 9-4. isScratchMode が true の際、ツールチップ文言が「スクラッチモードを終了」であり、ボタンに is-active クラスが付与されること
  *
@@ -83,7 +83,7 @@ import { AppMenu } from "./app-menu.js";
  *
  * 18. ホーム画面に戻る（表示初期化）ボタンのレンダリングとアクセシビリティ
  *    - [ ] 18-1. app-menu__primary 内にホームボタン（wa-button#app-menu-home-btn）、trigger="hover" 指定のツールチップ（wa-tooltip[for='app-menu-home-btn']）、アイコン（wa-icon[name='house-regular-full']）がレンダリングされること
- *    - [ ] 18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順（最上部）であること
+ *    - [ ] 18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」→「スクラッチボタン」の順であること
  *    - [ ] 18-3. ツールチップ文言が「ホーム画面に戻る（表示を初期化）」であり、ボタンに is-active クラスが付与されないこと
  *    - [ ] 18-4. スクラッチモードや設定モードが有効（true）の際も、ホームボタン（#app-menu-home-btn）には disabled 属性が付与されず常時有効であること
  *    - [ ] 18-5. app-menu.scss でホームボタン（.app-menu__home-btn）およびホームアイコン（.app-menu__home-icon）に --wa-font-size-l が定義されていること
@@ -94,6 +94,10 @@ import { AppMenu } from "./app-menu.js";
  * 20. アクティブ状態（is-active）におけるスタイル設定
  *    - [ ] 20-1. app-menu.scss でスクラッチボタンおよび設定ボタンのアクティブ時（&.is-active）に border-radius: var(--wa-form-control-border-radius) が設定されていること
  *    - [ ] 20-2. app-menu.scss でアクティブ時（&.is-active）の背景色が hover 時と同一の var(--wa-color-neutral-fill-quiet) であり、文字色が var(--wa-color-brand) であること
+ *
+ * 21. メニュー上部エリアの機能グループ分割と余白区切り
+ *    - [ ] 21-1. app-menu__primary 内に画面操作系グループ（ホーム・開閉・集中モード）とタスク・作業操作系グループ（クイック作成・スクラッチ）の 2 つの .app-menu__group が存在し、区切り線（wa-divider）は含まれないこと
+ *    - [ ] 21-2. app-menu.scss において .app-menu__primary のグループ間余白（var(--wa-space-m)）および .app-menu__group のボタン間余白（var(--wa-space-2xs)）が定義されていること
  */
 
 describe("AppMenu Component", () => {
@@ -233,14 +237,14 @@ describe("AppMenu Component", () => {
       expect(htmlStr).toContain('placement="right"');
     });
 
-    it("7-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「集中モードボタン」の順であること", () => {
+    it("7-2. ボタンの配置順序が「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」の順であること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
       const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
-      const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
       const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
+      const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
       expect(toggleIndex).toBeGreaterThan(-1);
-      expect(createIndex).toBeGreaterThan(toggleIndex);
-      expect(zenIndex).toBeGreaterThan(createIndex);
+      expect(zenIndex).toBeGreaterThan(toggleIndex);
+      expect(createIndex).toBeGreaterThan(zenIndex);
     });
 
     it("7-3. スクラッチモードが無効（false）の際、task-create-button に disabled 属性が付与されないこと", () => {
@@ -294,17 +298,17 @@ describe("AppMenu Component", () => {
       );
     });
 
-    it("9-2. ボタンの配置順序が「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順であること", () => {
+    it("9-2. ボタンの配置順序が「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」→「スクラッチボタン」の順であること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
       const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
+      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
       const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
       const scratchIndex = htmlStr.indexOf("app-menu-scratch-btn");
-      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
 
       expect(toggleIndex).toBeGreaterThan(-1);
-      expect(createIndex).toBeGreaterThan(toggleIndex);
+      expect(zenIndex).toBeGreaterThan(toggleIndex);
+      expect(createIndex).toBeGreaterThan(zenIndex);
       expect(scratchIndex).toBeGreaterThan(createIndex);
-      expect(zenIndex).toBeGreaterThan(scratchIndex);
     });
 
     it("9-3. isScratchMode が false の際、ツールチップ文言が「スクラッチモード（アプリ共通メモ）を開く」であること", () => {
@@ -589,19 +593,19 @@ describe("AppMenu Component", () => {
       );
     });
 
-    it("18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「クイック作成ボタン」→「スクラッチボタン」→「集中モードボタン」の順（最上部）であること", () => {
+    it("18-2. app-menu__primary 内のボタン配置順序が「ホームボタン」→「開閉ボタン」→「集中モードボタン」→「クイック作成ボタン」→「スクラッチボタン」の順であること", () => {
       const htmlStr = flattenTemplate(appMenu.render());
       const homeIndex = htmlStr.indexOf("app-menu-home-btn");
       const toggleIndex = htmlStr.indexOf("app-menu-toggle-btn");
+      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
       const createIndex = htmlStr.indexOf("app-menu-task-create-btn");
       const scratchIndex = htmlStr.indexOf("app-menu-scratch-btn");
-      const zenIndex = htmlStr.indexOf("app-menu-zen-btn");
 
       expect(homeIndex).toBeGreaterThan(-1);
       expect(toggleIndex).toBeGreaterThan(homeIndex);
-      expect(createIndex).toBeGreaterThan(toggleIndex);
+      expect(zenIndex).toBeGreaterThan(toggleIndex);
+      expect(createIndex).toBeGreaterThan(zenIndex);
       expect(scratchIndex).toBeGreaterThan(createIndex);
-      expect(zenIndex).toBeGreaterThan(scratchIndex);
     });
 
     it("18-3. ツールチップ文言が「ホーム画面に戻る（表示を初期化）」であり、ボタンに is-active クラスが付与されないこと", () => {
@@ -678,6 +682,48 @@ describe("AppMenu Component", () => {
       );
       expect(scss).toMatch(
         /\.app-menu__scratch-btn,\s*\.app-menu__settings-btn\s*\{[\s\S]*?&?\.is-active\s*\{[\s\S]*?color:\s*var\(--wa-color-brand\)/,
+      );
+    });
+  });
+
+  describe("21. メニュー上部エリアの機能グループ分割と余白区切り", () => {
+    it("21-1. app-menu__primary 内に画面操作系グループ（ホーム・開閉・集中モード）とタスク・作業操作系グループ（クイック作成・スクラッチ）の 2 つの .app-menu__group が存在し、区切り線（wa-divider）は含まれないこと", () => {
+      const htmlStr = flattenTemplate(appMenu.render());
+      const primaryEnd = htmlStr.indexOf("app-menu__secondary");
+      const primaryHtml = primaryEnd !== -1 ? htmlStr.slice(0, primaryEnd) : htmlStr;
+
+      const groupMatches = primaryHtml.match(/class="[^"]*app-menu__group[^"]*"/g) ?? [];
+      expect(groupMatches.length).toBe(2);
+      expect(primaryHtml).not.toContain("wa-divider");
+
+      const firstGroupIdx = primaryHtml.indexOf("app-menu__group");
+      const secondGroupIdx = primaryHtml.indexOf("app-menu__group", firstGroupIdx + 1);
+      const firstGroupHtml = primaryHtml.slice(firstGroupIdx, secondGroupIdx);
+      const secondGroupHtml = primaryHtml.slice(secondGroupIdx);
+
+      expect(firstGroupHtml).toContain("app-menu-home-btn");
+      expect(firstGroupHtml).toContain("app-menu-toggle-btn");
+      expect(firstGroupHtml).toContain("app-menu-zen-btn");
+      expect(firstGroupHtml).not.toContain("app-menu-task-create-btn");
+      expect(firstGroupHtml).not.toContain("app-menu-scratch-btn");
+
+      expect(secondGroupHtml).toContain("app-menu-task-create-btn");
+      expect(secondGroupHtml).toContain("app-menu-scratch-btn");
+      expect(secondGroupHtml).not.toContain("app-menu-home-btn");
+      expect(secondGroupHtml).not.toContain("app-menu-toggle-btn");
+      expect(secondGroupHtml).not.toContain("app-menu-zen-btn");
+    });
+
+    it("21-2. app-menu.scss において .app-menu__primary のグループ間余白（var(--wa-space-m)）および .app-menu__group のボタン間余白（var(--wa-space-2xs)）が定義されていること", () => {
+      const scss = fs.readFileSync(
+        new URL("./app-menu.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scss).toMatch(
+        /\.app-menu__primary\s*\{[^}]*gap:\s*var\(--wa-space-m/,
+      );
+      expect(scss).toMatch(
+        /\.app-menu__group[\s\S]*?\{[^}]*gap:\s*var\(--wa-space-2xs/,
       );
     });
   });

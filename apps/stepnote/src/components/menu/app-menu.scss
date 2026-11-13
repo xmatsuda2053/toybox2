@@ -12,12 +12,17 @@
 }
 
 .app-menu__primary,
+.app-menu__group,
 .app-menu__secondary {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--wa-space-2xs, 4px);
   width: 100%;
+}
+
+.app-menu__primary {
+  gap: var(--wa-space-m, 16px);
 }
 
 .app-menu__home-btn,
