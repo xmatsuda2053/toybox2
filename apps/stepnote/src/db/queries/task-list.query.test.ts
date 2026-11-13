@@ -37,7 +37,7 @@ import {
  *    - 3-2. 抽出されたタスクが第1キー: dueDate 昇順、第2キー: name 昇順（五十音順）で正しくソートされること
  *
  * 4. QuickAccess タスク件数の集計機能（getQuickAccessTaskCounts）
- *    - 4-1. 対象年度に属するタスクのうち、bookmark が true の件数が正しく集計されること（全ステータス対象）
+ *    - 4-1. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、bookmark が true の件数が正しく集計され、完了タスクは除外されること
  *    - 4-2. 対象年度に属するタスクのうち、未分類（labelId が 0 または undefined）の件数が正しく集計されること（全ステータス対象）
  *    - 4-3. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限切れ（isOverdue）の件数が正しく集計され、完了タスクは除外されること
  *    - 4-4. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、期限当日（isAsap）の件数が正しく集計され、完了タスクは除外されること
@@ -50,7 +50,7 @@ import {
  *
  * 5. QuickAccess タスク件数の純粋関数集計（calculateQuickAccessTaskCounts）
  *    - 5-1. 未完了タスクの期限日判定が正しく反映されること
- *    - 5-2. bookmark および未分類がステータスに関わらず正確に集計されること
+ *    - 5-2. bookmark は未完了タスクのみ、未分類（labelId: undefined / 0）はステータスに関わらず正確に集計されること
  *    - 5-3. taskIssueDueStatusMap が渡された場合、未完了Issueの期限ステータスが overdue / asap / upcoming 件数に反映されること
  *
  * 6. Issues 件数の集計機能（getTaskIssueCounts）
@@ -764,7 +764,7 @@ describe("TaskListQuery Tests", () => {
   });
 
   describe("4. QuickAccess タスク件数の集計機能（getQuickAccessTaskCounts）", () => {
-    it("4-1. 対象年度に属するタスクのうち、bookmark が true の件数が正しく集計されること（全ステータス対象）", async () => {
+    it("4-1. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、bookmark が true の件数が正しく集計され、完了タスクは除外されること", async () => {
       await db.tasks.bulkAdd([
         {
           name: "未着手・ブックマークあり",
@@ -778,7 +778,18 @@ describe("TaskListQuery Tests", () => {
           selected: false,
         },
         {
-          name: "完了・ブックマークあり",
+          name: "対応中・ブックマークあり",
+          statusCode: 5,
+          dueDate: futureDate,
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: true,
+          selected: false,
+        },
+        {
+          name: "完了・ブックマークあり（除外対象）",
           statusCode: 9,
           dueDate: futureDate,
           contacts: [],
@@ -1172,7 +1183,7 @@ describe("TaskListQuery Tests", () => {
       expect(counts.upcoming).toBe(1);
     });
 
-    it("5-2. bookmark および未分類（labelId: undefined / 0）がステータスに関わらず正確に集計されること", () => {
+    it("5-2. bookmark は未完了タスクのみ、未分類（labelId: undefined / 0）はステータスに関わらず正確に集計されること", () => {
       const dummyTasks = [
         {
           name: "ブックマーク付き未分類",
@@ -1200,7 +1211,7 @@ describe("TaskListQuery Tests", () => {
       const counts = calculateQuickAccessTaskCounts(
         dummyTasks as unknown as TaskRecord[],
       );
-      expect(counts.bookmark).toBe(2);
+      expect(counts.bookmark).toBe(1);
       expect(counts.uncategorized).toBe(2);
     });
 
