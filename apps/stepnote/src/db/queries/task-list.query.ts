@@ -333,6 +333,24 @@ function updateCompositeDueAlertCounts(
 }
 
 /**
+ * 未完了タスク1件分の期限警告件数を集計オブジェクトに加算する。
+ */
+function updateTaskDueCounts(
+  task: TaskRecord,
+  counts: DueAlertCounts,
+  taskIssueDueStatusMap?: Map<number, TaskDueStatus | null>,
+): void {
+  if (!taskIssueDueStatusMap) {
+    updateDueAlertCounts(new Date(task.dueDate), counts);
+    return;
+  }
+  const issueStatus =
+    task.id !== undefined ? (taskIssueDueStatusMap.get(task.id) ?? null) : null;
+  const compositeStatus = getCompositeTaskDueStatus(task, issueStatus);
+  updateCompositeDueAlertCounts(compositeStatus, counts);
+}
+
+/**
  * タスク一覧から各 QuickAccess フィルターの該当件数を集計する純粋関数。
  *
  * @export
@@ -353,25 +371,17 @@ export function calculateQuickAccessTaskCounts(
   };
 
   for (const task of tasks) {
-    if (task.bookmark) {
-      bookmark += 1;
-    }
     if (!task.labelId || task.labelId === 0) {
       uncategorized += 1;
     }
-    // 期限警告系は未完了タスク（対応中・開始待ち、statusCode !== 9）のみをカウント
-    if (task.statusCode !== 9) {
-      if (taskIssueDueStatusMap) {
-        const issueStatus =
-          task.id !== undefined
-            ? (taskIssueDueStatusMap.get(task.id) ?? null)
-            : null;
-        const compositeStatus = getCompositeTaskDueStatus(task, issueStatus);
-        updateCompositeDueAlertCounts(compositeStatus, dueCounts);
-      } else {
-        updateDueAlertCounts(new Date(task.dueDate), dueCounts);
-      }
+    // ブックマークおよび期限警告系は未完了タスク（対応中・開始待ち、statusCode !== 9）のみをカウント
+    if (task.statusCode === 9) {
+      continue;
     }
+    if (task.bookmark) {
+      bookmark += 1;
+    }
+    updateTaskDueCounts(task, dueCounts, taskIssueDueStatusMap);
   }
 
   return {
