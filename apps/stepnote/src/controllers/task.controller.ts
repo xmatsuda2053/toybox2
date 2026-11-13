@@ -250,7 +250,7 @@ export class TaskController extends BaseTaskScopeController<
     await this.recordTaskPropertyChanges(this._taskId, before, partial);
   }
 
-  /** タスク基本情報（名前、ステータス、関係者）の変更ログ記録 */
+  /** タスク基本情報（ステータス）の変更ログ記録 */
   private async recordTaskBasicChanges(
     taskId: number,
     before: TaskRecord,
@@ -258,9 +258,6 @@ export class TaskController extends BaseTaskScopeController<
   ): Promise<void> {
     if (!this.systemLogService) return;
 
-    if (partial.name !== undefined && partial.name !== before.name) {
-      await this.systemLogService.logTaskNameChanged(taskId, before.name, partial.name);
-    }
     if (partial.statusCode !== undefined && partial.statusCode !== before.statusCode) {
       await this.systemLogService.logTaskStatusChanged(taskId, before.statusCode, partial.statusCode);
     }

@@ -72,26 +72,6 @@ export function formatTaskCreatedLog(params: {
 }
 
 /**
- * タスク名変更時のシステムログ文字列を生成する。
- *
- * @export
- * @param {string} before 変更前タスク名
- * @param {string} after 変更後タスク名
- * @return {string} Markdown文字列
- */
-export function formatTaskNameChangedLog(
-  before: string,
-  after: string,
-): string {
-  return (
-    `### sys: タスク名変更: "${before}" → "${after}"\n\n` +
-    `- **項目**: タスク名\n` +
-    `- **変更前**: ${before}\n` +
-    `- **変更後**: ${after}`
-  );
-}
-
-/**
  * タスクステータス変更時のシステムログ文字列を生成する。
  *
  * @export

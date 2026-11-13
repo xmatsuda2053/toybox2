@@ -3,6 +3,9 @@ import type { ReactiveControllerHost } from "lit";
 import { TaskController, hasTaskChanges } from "./task.controller.js";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TaskRepository } from "@/repositories/task.repository.js";
+import type { IssuesRepository } from "@/repositories/issues.repository.js";
+import type { LogsRepository } from "@/repositories/logs.repository.js";
+import { SystemLogService } from "@/services/system-log.service.js";
 import type { CreateTaskInput } from "@/types";
 
 /**
@@ -582,7 +585,6 @@ describe("TaskController (Single Task TDD)", () => {
     let fakeIssuesRepository: FakeIssuesRepository;
     let fakeSystemLogService: {
       logTaskCreated: ReturnType<typeof vi.fn>;
-      logTaskNameChanged: ReturnType<typeof vi.fn>;
       logTaskStatusChanged: ReturnType<typeof vi.fn>;
       logTaskDueDateChanged: ReturnType<typeof vi.fn>;
       logTaskLabelChanged: ReturnType<typeof vi.fn>;
@@ -595,7 +597,6 @@ describe("TaskController (Single Task TDD)", () => {
       fakeIssuesRepository = new FakeIssuesRepository();
       fakeSystemLogService = {
         logTaskCreated: vi.fn().mockResolvedValue(undefined),
-        logTaskNameChanged: vi.fn().mockResolvedValue(undefined),
         logTaskStatusChanged: vi.fn().mockResolvedValue(undefined),
         logTaskDueDateChanged: vi.fn().mockResolvedValue(undefined),
         logTaskLabelChanged: vi.fn().mockResolvedValue(undefined),
@@ -646,16 +647,26 @@ describe("TaskController (Single Task TDD)", () => {
       );
     });
 
-    it("8-2. updateSummary でタスク名が変更された場合、logTaskNameChanged が呼び出されること", async () => {
-      await controller.initialized;
-      await controller.updateSummary({ name: "変更後タスク名" });
-
-      expect(fakeSystemLogService.logTaskNameChanged).toHaveBeenCalledTimes(1);
-      expect(fakeSystemLogService.logTaskNameChanged).toHaveBeenCalledWith(
-        1,
-        "タスク1",
-        "変更後タスク名",
+    it("8-2. updateSummary でタスク名が変更された場合でも、システムログは記録されないこと", async () => {
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
+      };
+      const realSystemLogService = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
       );
+      const localController = new TaskController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        1,
+        fakeIssuesRepository as unknown as IssuesRepository,
+        realSystemLogService,
+      );
+      await localController.initialized;
+
+      await localController.updateSummary({ name: "変更後タスク名" });
+
+      expect(localController.state?.name).toBe("変更後タスク名");
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
     });
 
     it("8-3. updateStatus でステータスが変更された場合、logTaskStatusChanged が呼び出されること", async () => {
@@ -721,9 +732,12 @@ describe("TaskController (Single Task TDD)", () => {
 
     it("8-8. 値に変更がない場合は対応するログメソッドが呼ばれないこと", async () => {
       await controller.initialized;
-      await controller.updateSummary({ name: "タスク1" });
+      await controller.updateSummary({ dueDate: new Date("2026-04-01") });
+      await controller.updateProperty({ fiscalYear: 2026, labelId: 1 });
 
-      expect(fakeSystemLogService.logTaskNameChanged).not.toHaveBeenCalled();
+      expect(fakeSystemLogService.logTaskDueDateChanged).not.toHaveBeenCalled();
+      expect(fakeSystemLogService.logTaskFiscalYearChanged).not.toHaveBeenCalled();
+      expect(fakeSystemLogService.logTaskLabelChanged).not.toHaveBeenCalled();
     });
   });
 

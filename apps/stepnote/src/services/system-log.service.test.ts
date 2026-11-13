@@ -9,7 +9,7 @@
  *
  * 2. タスク関連システムログ記録仕様
  *   - 2-1. logTaskCreated 呼び出し時にタスク新規追加ログが LogsRepository に追加されること
- *   - 2-2. logTaskNameChanged 呼び出し時にタスク名変更ログが LogsRepository に追加されること
+ *   - 2-2. タスク名変更ログ記録メソッド（logTaskNameChanged）が廃止されていること
  *   - 2-3. logTaskStatusChanged 呼び出し時にタスクステータス変更ログが LogsRepository に追加されること
  *   - 2-4. logTaskDueDateChanged 呼び出し時にタスク期日変更ログが LogsRepository に追加されること
  *   - 2-5. logTaskLabelChanged 呼び出し時にタスクラベル変更ログが LogsRepository に追加されること
@@ -109,12 +109,8 @@ describe("SystemLogService (TDD)", () => {
       expect(fakeLogsController.refresh).toHaveBeenCalledTimes(1);
     });
 
-    it("2-2. logTaskNameChanged 呼び出し時にタスク名変更ログが追加されること", async () => {
-      await service.logTaskNameChanged(1, "旧名", "新名");
-
-      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
-      const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: タスク名変更: "旧名" → "新名"`);
+    it("2-2. タスク名変更ログ記録メソッド（logTaskNameChanged）が廃止されていること", () => {
+      expect("logTaskNameChanged" in service).toBe(false);
     });
 
     it("2-3. logTaskStatusChanged 呼び出し時にタスクステータス変更ログが追加されること", async () => {
