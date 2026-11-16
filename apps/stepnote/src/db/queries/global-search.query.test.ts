@@ -16,6 +16,7 @@
  *    - 2-5. log の value に合致する場合、親タスクが抽出され sourceType: "log" のスニペットが付与されること
  *    - 2-6. 1つのタスクに複数のマッチ要素がある場合、すべてのスニペットが収集されること
  *    - 2-7. log の value がシステムログ（### sys: で始まる文字列）の場合は全体検索の対象外となること
+ *    - 2-8. task.contacts（部署・氏名・連絡先）に合致する場合、該当タスクが抽出され sourceType: "task_contacts" のスニペットが付与されること
  * 3. 関連ラベル名の解決
  *    - 3-1. labelId に対応するラベル名が labelName として付与されること
  *    - 3-2. labelId が未設定の場合は labelName が undefined であること
@@ -24,6 +25,7 @@
  *    - 4-2. 全角スペース区切りの複数キーワードでも正しく AND 検索として抽出されること
  *    - 4-3. タスク本体とサブアイテム（issues/notes/logs）にまたがってキーワードが存在する場合も抽出されること
  *    - 4-4. 一部のキーワードしか含まないタスクは除外されること
+ *    - 4-5. task.contacts（部署・氏名など）と他フィールドを組み合わせたAND検索で正しく抽出されること
  * 5. 年度（fiscalYear）による検索
  *    - 5-1. 西暦4桁（例: 2024）で検索した場合、該当年度のタスクが抽出され、sourceType: "task_fiscal_year" のスニペットが付与されること
  *    - 5-2. 「〜年度」（例: 2024年度）で検索した場合も、該当年度のタスクが正しく抽出されること
@@ -239,6 +241,35 @@ describe("GlobalSearchQuery Tests", () => {
       const results = await query.search("旧名称");
       expect(results).toEqual([]);
     });
+
+    it("2-8. task.contacts（部署・氏名・連絡先）に合致する場合、該当タスクが抽出され sourceType: 'task_contacts' のスニペットが付与されること", async () => {
+      await db.tasks.add({
+        id: 4,
+        name: "インフラ保守",
+        description: "定例対応",
+        dueDate: new Date("2026-08-01"),
+        fiscalYear: 2026,
+        labelId: 2,
+        statusCode: 5,
+        bookmark: false,
+        selected: false,
+        contacts: [
+          { div: "Platform Ops", name: "渡辺健太", tel: "03-7777-8888" },
+        ],
+      });
+
+      for (const keyword of ["platform", "渡辺", "7777-8888"]) {
+        const results = await query.search(keyword);
+        expect(results).toHaveLength(1);
+        expect(results[0].task.id).toBe(4);
+        const contactSnippet = results[0].snippets.find(
+          (s) => s.sourceType === "task_contacts",
+        );
+        expect(contactSnippet).toBeDefined();
+        expect(contactSnippet?.sourceLabel).toBe("関係者");
+        expect(contactSnippet?.snippet).toContain("渡辺健太");
+      }
+    });
   });
 
   describe("3. 関連ラベル名の解決", () => {
@@ -285,6 +316,29 @@ describe("GlobalSearchQuery Tests", () => {
       // "Dexie" はタスク2、"Ctrl+K" はタスク3にあるが、単一タスク内に両方は揃っていない
       const results2 = await query.search("Dexie Ctrl+K");
       expect(results2).toEqual([]);
+    });
+
+    it("4-5. task.contacts（部署・氏名など）と他フィールドを組み合わせたAND検索で正しく抽出されること", async () => {
+      await db.tasks.add({
+        id: 5,
+        name: "外部連携テスト",
+        description: "決済ゲートウェイ疎通",
+        dueDate: new Date("2026-09-01"),
+        fiscalYear: 2026,
+        labelId: 2,
+        statusCode: 0,
+        bookmark: false,
+        selected: false,
+        contacts: [
+          { div: "パートナー推進室", name: "小林誠", tel: "03-2222-3333" },
+        ],
+      });
+
+      const results = await query.search("決済 小林");
+      expect(results).toHaveLength(1);
+      expect(results[0].task.id).toBe(5);
+      expect(results[0].snippets.some((s) => s.sourceType === "task_description")).toBe(true);
+      expect(results[0].snippets.some((s) => s.sourceType === "task_contacts")).toBe(true);
     });
   });
 

@@ -3,6 +3,7 @@ import type { ReactiveControllerHost } from "lit";
 import { getCurrentFiscalYear } from "@shared/utils";
 import { TaskListController } from "./task-list.controller.js";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TaskRepository } from "@/repositories/task.repository";
 
 /**
  * TaskRepository の Fake 実装
@@ -85,6 +86,7 @@ const createMockHost = () => {
  *    - 8-1. setSearchKeyword 実行時に searchKeyword が更新され、キーワードで絞り込まれた一覧が state に格納されること
  *    - 8-2. 空文字または空白のみを設定した場合、検索絞り込みが解除されて元の全件一覧が復帰すること
  *    - 8-3. 同一キーワードが渡された場合、不要な再取得・通知を行わないこと
+ *    - 8-4. インメモリ絞り込み時、タスクの contacts（部署・氏名・連絡先）にキーワードが含まれる場合も該当タスクが抽出されること
  *
  * 9. QuickAccess フィルタリング連動（QuickAccess Filtering）
  *    - 9-1. setQuickAccessFilter 実行時に QuickAccess の条件（ブックマーク・未分類・期限・ステータス等）が適用されて state が更新されること
@@ -478,6 +480,39 @@ describe("TaskListController (TDD)", () => {
 
       await controller.setSearchKeyword("タスク1");
       expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("8-4. インメモリ絞り込み時、タスクの contacts（部署・氏名・連絡先）にキーワードが含まれる場合も該当タスクが抽出されること", async () => {
+      const tasksWithContacts: TaskRecord[] = [
+        {
+          ...sampleTasks[0],
+          contacts: [
+            { div: "DevOps Team", name: "鈴木一郎", tel: "080-1111-2222" },
+          ],
+        },
+        {
+          ...sampleTasks[1],
+          contacts: [
+            { div: "経理部", name: "高橋美咲", tel: "03-5555-6666" },
+          ],
+        },
+      ];
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(tasksWithContacts);
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+      );
+      await controller.initialized;
+
+      await controller.setSearchKeyword("devops");
+      expect(controller.state.map((t) => t.id)).toEqual([1]);
+
+      await controller.setSearchKeyword("鈴木");
+      expect(controller.state.map((t) => t.id)).toEqual([1]);
+
+      await controller.setSearchKeyword("1111-2222");
+      expect(controller.state.map((t) => t.id)).toEqual([1]);
     });
   });
 

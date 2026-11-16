@@ -5,6 +5,7 @@ import type { QuickAccessRecord } from "../models/navigation.model";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 import {
   applyQuickAccessFilter,
+  matchesTaskKeyword,
   sortTasksByDueDateAndName,
 } from "@/utils/task-filter.utils";
 import {
@@ -76,11 +77,7 @@ export class TaskListQuery {
   ): Promise<void> {
     const tasks = await this.db.tasks.toArray();
     for (const task of tasks) {
-      if (
-        task.id !== undefined &&
-        (task.name.toLowerCase().includes(term) ||
-          task.description.toLowerCase().includes(term))
-      ) {
+      if (task.id !== undefined && matchesTaskKeyword(task, term)) {
         matchedIds.add(task.id);
       }
     }

@@ -1,3 +1,5 @@
+import type { Contact } from "@/types/domain/task-detail.type";
+
 /**
  * 全体検索スニペットの出所タイプ
  */
@@ -5,6 +7,7 @@ export type SearchSnippetSourceType =
   | "task_name"
   | "task_description"
   | "task_fiscal_year"
+  | "task_contacts"
   | "issue"
   | "note"
   | "log";
@@ -80,6 +83,8 @@ export function formatSourceLabel(
       return "詳細説明";
     case "task_fiscal_year":
       return "年度";
+    case "task_contacts":
+      return "関係者";
     case "issue":
       return subItemTitle ? `課題: ${subItemTitle}` : "課題";
     case "note":
@@ -101,4 +106,17 @@ export function tokenizeSearchQuery(query: string): string[] {
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t.length > 0);
   return Array.from(new Set(validTokens));
+}
+
+/**
+ * 関係者情報（部署・氏名・連絡先）をスニペット表示・検索向けの単一文字列に整形する純粋関数
+ *
+ * @param {Contact} contact 関係者情報
+ * @returns {string} 整形済み文字列（全項目が空の場合は空文字）
+ */
+export function formatContactText(contact: Contact): string {
+  return [contact.div, contact.name, contact.tel]
+    .map((v) => (v ?? "").trim())
+    .filter((v) => v.length > 0)
+    .join(" / ");
 }
