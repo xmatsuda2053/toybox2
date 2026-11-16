@@ -1,5 +1,6 @@
 import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
+import type { Contact } from "@/types/domain/task-detail.type";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
 import {
   getCompositeTaskDueStatus,
@@ -262,6 +263,49 @@ export function groupAndSortIssues(issues: readonly IssueRecord[]): {
     openIssues: sortIssuesById(openIssues),
     completedIssues: sortIssuesById(completedIssues),
   };
+}
+
+/**
+ * 単一の関係者情報が検索キーワード（小文字化済み）に部分一致するか判定する。
+ */
+function matchesContactKeyword(
+  contact: Contact | undefined,
+  normalizedTerm: string,
+): boolean {
+  if (!contact) return false;
+  return (
+    (contact.div ?? "").toLowerCase().includes(normalizedTerm) ||
+    (contact.name ?? "").toLowerCase().includes(normalizedTerm) ||
+    (contact.tel ?? "").toLowerCase().includes(normalizedTerm)
+  );
+}
+
+/**
+ * タスク本体（タスク名・詳細説明・関係者）が検索キーワードに部分一致するか判定する。
+ * キーワードが空文字または空白のみの場合は true を返す。
+ *
+ * @export
+ * @param {TaskRecord} task 判定対象タスク
+ * @param {string} keyword 検索キーワード
+ * @return {boolean} 一致する場合は true
+ */
+export function matchesTaskKeyword(task: TaskRecord, keyword: string): boolean {
+  const term = keyword.trim().toLowerCase();
+  if (term === "") {
+    return true;
+  }
+
+  if (
+    task.name.toLowerCase().includes(term) ||
+    (task.description ?? "").toLowerCase().includes(term)
+  ) {
+    return true;
+  }
+
+  return (
+    Array.isArray(task.contacts) &&
+    task.contacts.some((contact) => matchesContactKeyword(contact, term))
+  );
 }
 
 

@@ -14,6 +14,7 @@ import {
   extractIssueTitle,
   parseBulkIssuesInput,
   groupAndSortIssues,
+  matchesTaskKeyword,
 } from "./task-filter.utils";
 
 /**
@@ -61,6 +62,12 @@ import {
  *    - 未完了Issue（statusCode !== 9）と完了Issue（statusCode === 9）に分離されること
  *    - 未完了・完了のそれぞれの中で期日昇順・五十音順でソートされること
  *    - 該当するIssueが存在しないグループは空配列となること
+ * 10. matchesTaskKeyword
+ *    - キーワードが空または空白のみの場合は true を返すこと
+ *    - タスク名（name）および詳細説明（description）に部分一致する場合 true を返すこと（大文字小文字無視）
+ *    - 関係者（contacts）の部署（div）・氏名（name）・連絡先（tel）に部分一致する場合 true を返すこと（大文字小文字無視）
+ *    - 複数関係者の2件目以降に一致する場合も true を返すこと
+ *    - いずれにも一致しない場合、または contacts が空・未設定の場合は false を返すこと
  */
 
 describe("task-filter.utils", () => {
@@ -586,6 +593,48 @@ describe("task-filter.utils", () => {
       const result = groupAndSortIssues(allOpen);
       expect(result.openIssues).toHaveLength(2);
       expect(result.completedIssues).toEqual([]);
+    });
+  });
+
+  describe("matchesTaskKeyword", () => {
+    const taskWithContacts = createDummyTask({
+      name: "認証基盤の刷新",
+      description: "SSO 対応の検討",
+      contacts: [
+        { div: "情報システム部", name: "田中太郎", tel: "03-1111-2222" },
+        { div: "Security Team", name: "Alice Smith", tel: "090-9999-8888" },
+      ],
+    });
+
+    it("キーワードが空または空白のみの場合は true を返すこと", () => {
+      expect(matchesTaskKeyword(taskWithContacts, "")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "   ")).toBe(true);
+    });
+
+    it("タスク名（name）および詳細説明（description）に部分一致する場合 true を返すこと（大文字小文字無視）", () => {
+      expect(matchesTaskKeyword(taskWithContacts, "認証基盤")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "sso")).toBe(true);
+    });
+
+    it("関係者（contacts）の部署（div）・氏名（name）・連絡先（tel）に部分一致する場合 true を返すこと（大文字小文字無視）", () => {
+      expect(matchesTaskKeyword(taskWithContacts, "情報システム")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "田中")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "03-1111")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "security")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "alice")).toBe(true);
+      expect(matchesTaskKeyword(taskWithContacts, "9999-8888")).toBe(true);
+    });
+
+    it("いずれにも一致しない場合、または contacts が空・未設定の場合は false を返すこと", () => {
+      expect(matchesTaskKeyword(taskWithContacts, "存在しないキーワード")).toBe(false);
+
+      const emptyContactsTask = createDummyTask({ contacts: [] });
+      expect(matchesTaskKeyword(emptyContactsTask, "田中")).toBe(false);
+
+      const undefinedContactsTask = createDummyTask({
+        contacts: undefined as unknown as TaskRecord["contacts"],
+      });
+      expect(matchesTaskKeyword(undefinedContactsTask, "田中")).toBe(false);
     });
   });
 });

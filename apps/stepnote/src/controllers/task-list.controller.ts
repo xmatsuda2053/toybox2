@@ -11,6 +11,7 @@ import {
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 import {
   applyQuickAccessFilter,
+  matchesTaskKeyword,
   sortTasksByDueDateAndName,
 } from "@/utils/task-filter.utils";
 import { BaseDataController } from "./base-reactive.controller";
@@ -156,11 +157,7 @@ export class TaskListController extends BaseDataController<
     const term = this._searchKeyword.trim().toLowerCase();
 
     if (term !== "") {
-      filtered = filtered.filter(
-        (t) =>
-          t.name.toLowerCase().includes(term) ||
-          t.description.toLowerCase().includes(term),
-      );
+      filtered = filtered.filter((t) => matchesTaskKeyword(t, term));
     }
 
     if (this._labelId !== undefined) {

@@ -17,6 +17,7 @@
  *    - task_name の場合は「タスク名」を返すこと
  *    - task_description の場合は「詳細説明」を返すこと
  *    - task_fiscal_year の場合は「年度」を返すこと
+ *    - task_contacts の場合は「関係者」を返すこと
  *    - issue でタイトルがある場合は「課題: [タイトル]」を返すこと
  *    - issue でタイトルがない場合は「課題」を返すこと
  *    - note の場合は「ノート」を返すこと
@@ -27,6 +28,10 @@
  *    - 連続する空白や前後の空白を除去し、空文字列を含めないこと
  *    - 重複するキーワードをユニークに統合すること
  *    - 空文字列または空白のみの場合は空配列を返すこと
+ * 4. formatContactText
+ *    - 部署・氏名・連絡先が揃っている場合、「 / 」区切りで整形されること
+ *    - 一部項目が空文字または空白のみの場合、空項目を除いて整形されること
+ *    - すべて空の場合は空文字を返すこと
  */
 
 import { describe, it, expect } from "vitest";
@@ -34,6 +39,7 @@ import {
   extractSnippet,
   formatSourceLabel,
   tokenizeSearchQuery,
+  formatContactText,
 } from "./global-search.utils.js";
 
 describe("global-search.utils", () => {
@@ -104,6 +110,10 @@ describe("global-search.utils", () => {
       expect(formatSourceLabel("task_fiscal_year")).toBe("年度");
     });
 
+    it("task_contacts の場合は「関係者」を返すこと", () => {
+      expect(formatSourceLabel("task_contacts")).toBe("関係者");
+    });
+
     it("issue でタイトルがある場合は「課題: [タイトル]」を返すこと", () => {
       expect(formatSourceLabel("issue", "画面崩れ調査")).toBe(
         "課題: 画面崩れ調査",
@@ -148,6 +158,31 @@ describe("global-search.utils", () => {
       expect(tokenizeSearchQuery("")).toEqual([]);
       expect(tokenizeSearchQuery("   ")).toEqual([]);
       expect(tokenizeSearchQuery("　　")).toEqual([]);
+    });
+  });
+
+  describe("4. formatContactText", () => {
+    it("部署・氏名・連絡先が揃っている場合、「 / 」区切りで整形されること", () => {
+      expect(
+        formatContactText({
+          div: "開発部",
+          name: "田中太郎",
+          tel: "03-1111-2222",
+        }),
+      ).toBe("開発部 / 田中太郎 / 03-1111-2222");
+    });
+
+    it("一部項目が空文字または空白のみの場合、空項目を除いて整形されること", () => {
+      expect(
+        formatContactText({ div: "  ", name: "佐藤花子", tel: "" }),
+      ).toBe("佐藤花子");
+      expect(
+        formatContactText({ div: "営業部", name: "", tel: "090-1234-5678" }),
+      ).toBe("営業部 / 090-1234-5678");
+    });
+
+    it("すべて空の場合は空文字を返すこと", () => {
+      expect(formatContactText({ div: "", name: "   ", tel: "" })).toBe("");
     });
   });
 });

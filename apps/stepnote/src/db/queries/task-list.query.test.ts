@@ -18,6 +18,7 @@ import {
  *    - 1-5. 紐づく notes の content にキーワードが含まれる場合、親タスクが抽出されること
  *    - 1-6. 大文字小文字を区別せず部分一致すること
  *    - 1-7. キーワードが空または空白のみの場合、全件抽出されること
+ *    - 1-8. タスクの contacts（部署・氏名・連絡先）にキーワードが含まれる場合、大文字小文字を区別せず該当タスクが抽出されること
  *
  * 2. QuickAccess フィルタリング機能
  *    - 2-1. isBookmarkSelected が true の場合、bookmark が true のタスクのみ抽出されること
@@ -281,6 +282,53 @@ describe("TaskListQuery Tests", () => {
       });
 
       expect(results.length).toBe(2);
+    });
+
+    it("1-8. タスクの contacts（部署・氏名・連絡先）にキーワードが含まれる場合、大文字小文字を区別せず該当タスクが抽出されること", async () => {
+      const id1 = await db.tasks.add({
+        name: "タスクA",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [
+          { div: "Marketing Dept", name: "山田花子", tel: "03-1234-5678" },
+        ],
+        description: "特記事項なし",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      await db.tasks.add({
+        name: "タスクB",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [
+          { div: "総務部", name: "佐藤次郎", tel: "03-9999-0000" },
+        ],
+        description: "特記事項なし",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      const byDiv = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "marketing",
+      });
+      expect(byDiv.map((t) => t.id)).toEqual([id1]);
+
+      const byName = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "山田",
+      });
+      expect(byName.map((t) => t.id)).toEqual([id1]);
+
+      const byTel = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "1234-5678",
+      });
+      expect(byTel.map((t) => t.id)).toEqual([id1]);
     });
   });
 

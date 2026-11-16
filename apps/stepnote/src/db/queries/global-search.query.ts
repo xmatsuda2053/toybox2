@@ -3,6 +3,7 @@ import type { TaskRecord, IssueRecord } from "@/db/models/task.model.js";
 import type { NoteRecord, LogRecord } from "@/db/models/journal.model.js";
 import {
   extractSnippet,
+  formatContactText,
   formatSourceLabel,
   tokenizeSearchQuery,
   type SearchSnippetSourceType,
@@ -98,7 +99,31 @@ export class GlobalSearchQuery {
         this.checkAndAppendTaskField(task.id, task.name, "task_name", term, matchMap);
         this.checkAndAppendTaskField(task.id, task.description, "task_description", term, matchMap);
         this.checkAndAppendFiscalYear(task.id, task.fiscalYear, term, matchMap);
+        this.checkAndAppendContacts(task.id, task.contacts, term, matchMap);
       }
+    }
+  }
+
+  /**
+   * タスクの関係者情報（contacts）の一致確認とスニペット追加
+   */
+  private checkAndAppendContacts(
+    taskId: number,
+    contacts: TaskRecord["contacts"] | undefined,
+    term: string,
+    matchMap: Map<number, TaskMatchCollector>,
+  ): void {
+    if (!Array.isArray(contacts)) return;
+    for (const contact of contacts) {
+      const contactText = formatContactText(contact);
+      if (contactText === "") continue;
+      this.checkAndAppendTaskField(
+        taskId,
+        contactText,
+        "task_contacts",
+        term,
+        matchMap,
+      );
     }
   }
 
