@@ -613,6 +613,10 @@ h3.markdown-editor-preview__extension-menu-title {
   }
 }
 
+.markdown-editor-preview__help-col-desc {
+  white-space: pre-line;
+}
+
 :host([data-theme="dark"]) .markdown-editor-preview__help-table,
 :host(.wa-dark) .markdown-editor-preview__help-table {
   th,

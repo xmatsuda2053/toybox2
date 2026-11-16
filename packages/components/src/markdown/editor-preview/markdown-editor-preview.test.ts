@@ -876,6 +876,14 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain("拡張機能・独自タグ");
       expect(htmlStr).toContain(customBadgeExtension.label);
     });
+
+    it("構文ヘルプの説明セル（.markdown-editor-preview__help-col-desc）に改行保持用の white-space: pre-line が設定されていること", () => {
+      const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__help-col-desc\s*\{[\s\S]*?white-space:\s*pre-line;/,
+      );
+    });
   });
 
   describe("15. 拡張配列およびプロセッサオプションの参照安定性（メモ化・不要な再描画防止）", () => {
