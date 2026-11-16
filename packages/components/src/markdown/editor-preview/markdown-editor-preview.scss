@@ -481,8 +481,8 @@ h3.markdown-editor-preview__extension-menu-title {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 680px;
+  width: min(92vw, 1120px);
+  max-width: 100%;
   max-height: 85vh;
   background-color: var(--stepnote-bg-surface, #ffffff);
   border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
@@ -568,6 +568,7 @@ h3.markdown-editor-preview__extension-menu-title {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-x: auto;
 }
 
 .markdown-editor-preview__help-subtitle {
@@ -602,6 +603,7 @@ h3.markdown-editor-preview__extension-menu-title {
     background-color: var(--stepnote-bg-secondary, #f8fafc);
     font-weight: 600;
     color: var(--stepnote-text-secondary, #64748b);
+    white-space: nowrap;
   }
 
   code {
@@ -611,6 +613,17 @@ h3.markdown-editor-preview__extension-menu-title {
     border-radius: 3px;
     font-size: 11px;
   }
+}
+
+.markdown-editor-preview__help-col-label,
+.markdown-editor-preview__help-col-syntax,
+.markdown-editor-preview__help-col-example,
+.markdown-editor-preview__help-col-action {
+  white-space: nowrap;
+}
+
+.markdown-editor-preview__help-col-action {
+  text-align: center;
 }
 
 .markdown-editor-preview__help-col-desc {

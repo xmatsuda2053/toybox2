@@ -884,6 +884,20 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
         /\.markdown-editor-preview__help-col-desc\s*\{[\s\S]*?white-space:\s*pre-line;/,
       );
     });
+
+    it("構文ヘルプダイアログ（.markdown-editor-preview__help-dialog）の横幅が画面サイズに対して広く確保され、テーブル列の折り返し崩れ防止が設定されていること", () => {
+      const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__help-dialog\s*\{[\s\S]*?width:\s*min\(92vw,\s*1120px\);/,
+      );
+      expect(scssContent).not.toMatch(
+        /\.markdown-editor-preview__help-dialog\s*\{[\s\S]*?max-width:\s*680px;/,
+      );
+      expect(scssContent).toMatch(
+        /\.markdown-editor-preview__help-col-label,[\s\S]*?\.markdown-editor-preview__help-col-action\s*\{[\s\S]*?white-space:\s*nowrap;/,
+      );
+    });
   });
 
   describe("15. 拡張配列およびプロセッサオプションの参照安定性（メモ化・不要な再描画防止）", () => {
