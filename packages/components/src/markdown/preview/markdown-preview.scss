@@ -84,6 +84,11 @@
     margin: 0 0 var(--wa-space-m);
   }
 
+  wa-badge {
+    margin: 0 var(--wa-space-2xs);
+    vertical-align: middle;
+  }
+
   a[data-link-type] {
     display: inline-flex;
     align-items: center;

@@ -239,6 +239,12 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       );
     });
 
+    it("wa-badge に左右余白（var(--wa-space-2xs)）および vertical-align: middle が設定されていること", () => {
+      expect(scssContent).toMatch(
+        /wa-badge\s*\{[\s\S]*?margin:\s*0\s+var\(--wa-space-2xs\)[\s\S]*?vertical-align:\s*middle;/,
+      );
+    });
+
     it("リンク種別（url / path / text）の通常時は下線なし（text-decoration: none）で種別ごとの配色が設定され、ホバー時に実線下線と背景ハイライト（*-fill-quiet）が設定されていること", () => {
       expect(scssContent).toMatch(
         /a\[data-link-type\]\s*\{[\s\S]*?text-decoration:\s*none[\s\S]*?border-radius:\s*var\(--wa-border-radius-s\)/,
