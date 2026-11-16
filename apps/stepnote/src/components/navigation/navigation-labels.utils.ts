@@ -19,3 +19,35 @@ export function sortLabelsByNameAsc<T extends { name: string }>(
     }),
   );
 }
+
+/**
+ * ラベルテキスト要素が省略表示（...）されているかを判定する純粋関数。
+ *
+ * 非表示状態（clientWidth <= 0）の場合は常に false を返す。
+ *
+ * @param {number} scrollWidth 要素のコンテンツ全幅
+ * @param {number} clientWidth 要素の可視幅
+ * @return {boolean} 省略表示されている場合 true
+ */
+export function isLabelTextTruncated(
+  scrollWidth: number,
+  clientWidth: number,
+): boolean {
+  return clientWidth > 0 && scrollWidth > clientWidth;
+}
+
+/**
+ * ラベルテキスト要素および wa-tooltip の紐づけに使用する一意の要素 ID を生成する純粋関数。
+ *
+ * @param {number | undefined} labelId ラベルレコードの ID
+ * @param {number} index 一覧内の表示インデックス（ID 未採番時のフォールバック）
+ * @return {string} 要素 ID
+ */
+export function getLabelTextElementId(
+  labelId: number | undefined,
+  index: number,
+): string {
+  return labelId !== undefined
+    ? `label-text-${labelId}`
+    : `label-text-idx-${index}`;
+}

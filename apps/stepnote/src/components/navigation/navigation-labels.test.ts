@@ -67,6 +67,13 @@ import { NavigationLabels } from "./navigation-labels";
  *
  * 10. ラベルアイテム文字サイズの Quick Access 統一 (#457)
  *    - 10-1. .labels__btn の font-size が Quick Access (.quick-access__btn) と同じ var(--wa-font-size-s) に設定されていること
+ *
+ * 11. ラベル名省略時のツールチップ表示 (#459)
+ *    - 11-1. 各ラベルアイテムのテキスト要素（.labels__text）に一意の id が付与され、対応する wa-tooltip（for、placement="right"、trigger="hover"）がラベル名テキスト付きでレンダリングされること
+ *    - 11-2. 省略表示されているラベル（scrollWidth > clientWidth）の wa-show イベント発火時、handleLabelTooltipShow が e.preventDefault() を呼び出さず表示を許可すること
+ *    - 11-3. 省略されていないラベル（scrollWidth <= clientWidth）の wa-show イベント発火時、handleLabelTooltipShow が e.preventDefault() を呼び出して表示を抑止すること
+ *    - 11-4. 対象ラベル要素が見つからない場合、handleLabelTooltipShow が e.preventDefault() を呼び出して表示を抑止すること
+ *    - 11-5. navigation-labels.scss にツールチップの折り返し用スタイル（.labels__tooltip::part(body) の overflow-wrap: anywhere）が定義されていること
  */
 
 describe("NavigationLabels Component", () => {
@@ -614,6 +621,103 @@ describe("NavigationLabels Component", () => {
 
       expect(labelsFontSize).toBe("var(--wa-font-size-s)");
       expect(labelsFontSize).toBe(quickAccessFontSize);
+    });
+  });
+
+  describe("11. ラベル名省略時のツールチップ表示 (#459)", () => {
+    it('11-1. 各ラベルアイテムのテキスト要素（.labels__text）に一意の id が付与され、対応する wa-tooltip（for、placement="right"、trigger="hover"）がラベル名テキスト付きでレンダリングされること', () => {
+      mockLabelsController.state = [
+        {
+          id: 1,
+          name: "とても長いラベル名で表示領域に収まらず省略される予定の項目",
+          description: "",
+          isSelected: false,
+        },
+        {
+          id: 2,
+          name: "短い",
+          description: "",
+          isSelected: true,
+        },
+      ];
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(
+        /<span[^>]*id="label-text-1"[^>]*class="labels__text"[^>]*>とても長いラベル名で表示領域に収まらず省略される予定の項目<\/span>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="label-text-1"[^>]*placement="right"[^>]*trigger="hover"[^>]*>[\s\S]*とても長いラベル名で表示領域に収まらず省略される予定の項目[\s\S]*<\/wa-tooltip>/,
+      );
+      expect(htmlStr).toMatch(
+        /<span[^>]*id="label-text-2"[^>]*class="labels__text"[^>]*>短い<\/span>/,
+      );
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="label-text-2"[^>]*placement="right"[^>]*trigger="hover"[^>]*>[\s\S]*短い[\s\S]*<\/wa-tooltip>/,
+      );
+    });
+
+    it("11-2. 省略表示されているラベル（scrollWidth > clientWidth）の wa-show イベント発火時、handleLabelTooltipShow が e.preventDefault() を呼び出さず表示を許可すること", () => {
+      const querySelectorMock = vi.fn().mockReturnValue({
+        scrollWidth: 240,
+        clientWidth: 140,
+      });
+      Object.defineProperty(element, "renderRoot", {
+        value: { querySelector: querySelectorMock },
+        configurable: true,
+      });
+
+      const preventDefault = vi.fn();
+      const event = { preventDefault } as unknown as Event;
+
+      expect(typeof element.handleLabelTooltipShow).toBe("function");
+      element.handleLabelTooltipShow(event, "label-text-1");
+
+      expect(querySelectorMock).toHaveBeenCalledWith('[id="label-text-1"]');
+      expect(preventDefault).not.toHaveBeenCalled();
+    });
+
+    it("11-3. 省略されていないラベル（scrollWidth <= clientWidth）の wa-show イベント発火時、handleLabelTooltipShow が e.preventDefault() を呼び出して表示を抑止すること", () => {
+      const querySelectorMock = vi.fn().mockReturnValue({
+        scrollWidth: 100,
+        clientWidth: 140,
+      });
+      Object.defineProperty(element, "renderRoot", {
+        value: { querySelector: querySelectorMock },
+        configurable: true,
+      });
+
+      const preventDefault = vi.fn();
+      const event = { preventDefault } as unknown as Event;
+
+      element.handleLabelTooltipShow(event, "label-text-2");
+
+      expect(querySelectorMock).toHaveBeenCalledWith('[id="label-text-2"]');
+      expect(preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it("11-4. 対象ラベル要素が見つからない場合、handleLabelTooltipShow が e.preventDefault() を呼び出して表示を抑止すること", () => {
+      const querySelectorMock = vi.fn().mockReturnValue(null);
+      Object.defineProperty(element, "renderRoot", {
+        value: { querySelector: querySelectorMock },
+        configurable: true,
+      });
+
+      const preventDefault = vi.fn();
+      const event = { preventDefault } as unknown as Event;
+
+      element.handleLabelTooltipShow(event, "label-text-999");
+
+      expect(preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it("11-5. navigation-labels.scss にツールチップの折り返し用スタイル（.labels__tooltip::part(body) の overflow-wrap: anywhere）が定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toMatch(
+        /\.labels__tooltip\s*\{[\s\S]*?&::part\(body\)\s*\{[^}]*overflow-wrap:\s*anywhere;/,
+      );
     });
   });
 });
