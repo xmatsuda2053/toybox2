@@ -64,6 +64,9 @@ import { NavigationLabels } from "./navigation-labels";
  *    - [x] 9-3. SCSSスタイルシートにおいて!important宣言が一切存在しないこと（0箇所であること）
  *    - [x] 9-4. SCSSスタイルシートにおいて深すぎるネスト（3階層以上）が存在せず、最大2階層に平坦化されていること
  *    - [x] 9-5. 廃止された旧クラス名（label-btn、labels-content等）がHTMLテンプレートおよびSCSSに一切残存していないこと
+ *
+ * 10. ラベルアイテム文字サイズの Quick Access 統一 (#457)
+ *    - 10-1. .labels__btn の font-size が Quick Access (.quick-access__btn) と同じ var(--wa-font-size-s) に設定されていること
  */
 
 describe("NavigationLabels Component", () => {
@@ -580,6 +583,37 @@ describe("NavigationLabels Component", () => {
       for (const cls of obsoleteClasses) {
         expect(scssContent).not.toContain(`.${cls}`);
       }
+    });
+  });
+
+  describe("10. ラベルアイテム文字サイズの Quick Access 統一 (#457)", () => {
+    it("10-1. .labels__btn の font-size が Quick Access (.quick-access__btn) と同じ var(--wa-font-size-s) に設定されていること", () => {
+      const labelsScss = fs.readFileSync(
+        new URL("./navigation-labels.scss", import.meta.url),
+        "utf-8",
+      );
+      const quickAccessScss = fs.readFileSync(
+        new URL("./navigation-quick-access.scss", import.meta.url),
+        "utf-8",
+      );
+
+      const labelsBtnMatch = labelsScss.match(/\.labels__btn\s*\{([^}]*)\}/);
+      const quickAccessBtnMatch = quickAccessScss.match(
+        /\.quick-access__btn\s*\{([^}]*)\}/,
+      );
+
+      expect(labelsBtnMatch).not.toBeNull();
+      expect(quickAccessBtnMatch).not.toBeNull();
+
+      const labelsFontSize = labelsBtnMatch?.[1].match(
+        /font-size:\s*([^;]+);/,
+      )?.[1];
+      const quickAccessFontSize = quickAccessBtnMatch?.[1].match(
+        /font-size:\s*([^;]+);/,
+      )?.[1];
+
+      expect(labelsFontSize).toBe("var(--wa-font-size-s)");
+      expect(labelsFontSize).toBe(quickAccessFontSize);
     });
   });
 });
