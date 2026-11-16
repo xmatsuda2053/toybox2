@@ -10,7 +10,11 @@ import {
   SubscriberElement,
   WithLabelsController,
 } from "@/utils/controller-consumers.mixin.js";
-import { sortLabelsByNameAsc } from "./navigation-labels.utils.js";
+import {
+  sortLabelsByNameAsc,
+  isLabelTextTruncated,
+  getLabelTextElementId,
+} from "./navigation-labels.utils.js";
 import labelsStyles from "./navigation-labels.scss?inline";
 
 /**
@@ -233,17 +237,36 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
   };
 
   /**
+   * ラベルツールチップの表示直前（wa-show）にテキストが省略されているか判定し、
+   * 省略されていない場合または対象要素が見つからない場合は表示を抑止する。
+   *
+   * @param {Event} e wa-show イベント
+   * @param {string} textId 対象ラベルテキスト要素の ID
+   */
+  public handleLabelTooltipShow = (e: Event, textId: string): void => {
+    const textEl = this.renderRoot.querySelector(`[id="${textId}"]`);
+    if (
+      !textEl ||
+      !isLabelTextTruncated(textEl.scrollWidth, textEl.clientWidth)
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  /**
    * ラベルアイテムのメイン表示領域（アイコン・ラベル名）を描画する。
    *
    * @private
    * @param {LabelRecord} label ラベルレコード
    * @param {boolean} isActive 選択中かどうか
+   * @param {string} textId ツールチップ紐づけ用要素 ID
    * @return {HTMLTemplateResult}
    * @memberof NavigationLabels
    */
   private renderLabelItemMain(
     label: LabelRecord,
     isActive: boolean,
+    textId: string,
   ): HTMLTemplateResult {
     return html`
       <div class="labels__btn-main">
@@ -263,7 +286,7 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
               `
             : nothing}
         </div>
-        <span class="labels__text">${label.name}</span>
+        <span id="${textId}" class="labels__text">${label.name}</span>
       </div>
     `;
   }
@@ -325,11 +348,16 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
    *
    * @private
    * @param {LabelRecord} label
+   * @param {number} index
    * @return {HTMLTemplateResult}
    * @memberof NavigationLabels
    */
-  private renderLabelItem(label: LabelRecord): HTMLTemplateResult {
+  private renderLabelItem(
+    label: LabelRecord,
+    index: number,
+  ): HTMLTemplateResult {
     const isActive = label.isSelected;
+    const textId = getLabelTextElementId(label.id, index);
 
     return html`
       <div
@@ -339,9 +367,18 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
         @click=${() => this.handleToggleLabel(label.id)}
         @keydown=${(e: KeyboardEvent) => this.handleLabelKeyDown(e, label.id)}
       >
-        ${this.renderLabelItemMain(label, isActive)}
+        ${this.renderLabelItemMain(label, isActive, textId)}
         ${this.renderLabelItemDropdown(label)}
       </div>
+      <wa-tooltip
+        class="labels__tooltip"
+        for="${textId}"
+        placement="right"
+        trigger="hover"
+        @wa-show=${(e: Event) => this.handleLabelTooltipShow(e, textId)}
+      >
+        ${label.name}
+      </wa-tooltip>
     `;
   }
 
@@ -410,7 +447,7 @@ export class NavigationLabels extends WithLabelsController(SubscriberElement) {
       <div class="labels__content">
         ${labels.length === 0
           ? html`<div class="labels__empty-message">ラベルがありません</div>`
-          : labels.map((label) => this.renderLabelItem(label))}
+          : labels.map((label, index) => this.renderLabelItem(label, index))}
       </div>
     `;
   }

@@ -141,6 +141,12 @@
   text-align: left;
 }
 
+.labels__tooltip {
+  &::part(body) {
+    overflow-wrap: anywhere;
+  }
+}
+
 .labels__menu-dropdown {
   display: inline-flex;
   align-items: center;
