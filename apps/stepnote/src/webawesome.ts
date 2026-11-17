@@ -10,6 +10,7 @@ import "@awesome.me/webawesome/dist/components/badge/badge.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/button-group/button-group.js";
 import "@awesome.me/webawesome/dist/components/callout/callout.js";
+import "@awesome.me/webawesome/dist/components/checkbox/checkbox.js";
 import "@awesome.me/webawesome/dist/components/dialog/dialog.js";
 import "@awesome.me/webawesome/dist/components/divider/divider.js";
 import "@awesome.me/webawesome/dist/components/drawer/drawer.js";
@@ -26,6 +27,7 @@ import "@awesome.me/webawesome/dist/components/switch/switch.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
+import "@awesome.me/webawesome/dist/components/tag/tag.js";
 import "@awesome.me/webawesome/dist/components/textarea/textarea.js";
 import "@awesome.me/webawesome/dist/components/time-input/time-input.js";
 import "@awesome.me/webawesome/dist/components/toast/toast.js";
@@ -39,6 +41,7 @@ export const WEB_AWESOME_COMPONENTS = [
   "button",
   "button-group",
   "callout",
+  "checkbox",
   "dialog",
   "divider",
   "drawer",
@@ -55,6 +58,7 @@ export const WEB_AWESOME_COMPONENTS = [
   "tab",
   "tab-group",
   "tab-panel",
+  "tag",
   "textarea",
   "time-input",
   "toast",

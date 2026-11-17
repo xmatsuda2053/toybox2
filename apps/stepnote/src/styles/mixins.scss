@@ -63,4 +63,45 @@
   }
 }
 
+/* タグカラー選択セレクトおよび選択肢へ各タグカラーに一致した文字色を適用する */
+@mixin tag-variant-select-styles($block) {
+  $variant-colors: (
+    "neutral": var(--wa-color-neutral-on-quiet),
+    "brand": var(--wa-color-brand-on-quiet),
+    "success": var(--wa-color-success-on-quiet),
+    "warning": var(--wa-color-warning-on-quiet),
+    "danger": var(--wa-color-danger-on-quiet),
+  );
+
+  @each $variant, $color in $variant-colors {
+    .#{$block}__variant-select--#{$variant} {
+      --wa-form-control-value-color: #{$color};
+
+      &::part(display-input) {
+        color: #{$color};
+      }
+    }
+
+    .#{$block}__variant-option--#{$variant}:not(:state(current)) {
+      color: #{$color};
+    }
+  }
+}
+
+/* wa-checkbox のチェックボックスとラベル（wa-tag 等）を縦方向中央揃えにする */
+@mixin checkbox-center-alignment {
+  width: 100%;
+  align-items: center;
+
+  &::part(base) {
+    align-items: center;
+    width: 100%;
+  }
+
+  &::part(label) {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 

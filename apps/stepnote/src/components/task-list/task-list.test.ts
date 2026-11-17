@@ -481,5 +481,29 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
       expect(htmlStr).toContain(".issuesDone=3");
       expect(htmlStr).toContain(".issuesTotal=5");
     });
+
+    it("13-2. renderTaskItem 呼び出し時に tagsController からタスクの tagIds に対応するタグ一覧が取得されバインドされること", () => {
+      const fakeTaskListController = {
+        state: [{ id: 10, name: "テストタスク", fiscalYear: 2026, tagIds: [1, 2] }],
+        getTaskIssueCount: vi.fn().mockReturnValue({ done: 0, total: 0 }),
+        subscribe: vi.fn(() => vi.fn()),
+      };
+      const fakeTagsController = {
+        state: [
+          { id: 1, name: "API", description: "", variant: "brand" },
+          { id: 2, name: "緊急", description: "", variant: "danger" },
+        ],
+        getTagsByIds: vi.fn().mockReturnValue([
+          { id: 1, name: "API", description: "", variant: "brand" },
+          { id: 2, name: "緊急", description: "", variant: "danger" },
+        ]),
+        subscribe: vi.fn(() => vi.fn()),
+      };
+      element.taskListController = fakeTaskListController as any;
+      element.tagsController = fakeTagsController as any;
+
+      element.renderTaskItem(fakeTaskListController.state[0] as any);
+      expect(fakeTagsController.getTagsByIds).toHaveBeenCalledWith([1, 2]);
+    });
   });
 });

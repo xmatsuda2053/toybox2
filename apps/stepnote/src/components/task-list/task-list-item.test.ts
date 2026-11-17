@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TagRecord } from "@/db/models/tag.model";
 import { TaskListItem } from "./task-list-item.js";
 
 /**
@@ -429,6 +430,61 @@ describe("TaskListItem Component", () => {
       expect(htmlStr).toContain("task-list-item__row--meta");
       expect(htmlStr).toContain("task-list-item__btn-bookmark");
       expect(htmlStr).toContain("task-list-item__due-date");
+    });
+  });
+
+  describe("7. 3行目（タグ表示領域）の検証", () => {
+    const sampleTags: TagRecord[] = [
+      { id: 1, name: "API", description: "", variant: "brand" },
+      { id: 2, name: "緊急", description: "", variant: "danger" },
+    ];
+
+    it("7-1. タグ未設定時はタグ領域（.task-list-item__row--tags）自体が描画されず、空白行が生まれないこと", () => {
+      element.tags = [];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("task-list-item__row--tags");
+      expect(htmlStr).not.toContain("<wa-tag");
+    });
+
+    it("7-2. tags が設定されている場合、meta 行の下に表示専用の wa-tag（size='xs', pill, variant指定, with-removeなし）が描画されること", () => {
+      element.tags = sampleTags;
+      const htmlStr = flattenTemplate(element.render());
+      const metaIdx = htmlStr.indexOf("task-list-item__row--meta");
+      const tagsIdx = htmlStr.indexOf("task-list-item__row--tags");
+
+      expect(tagsIdx).toBeGreaterThan(metaIdx);
+      expect(htmlStr).toContain("<wa-tag");
+      expect(htmlStr).toContain("API");
+      expect(htmlStr).toContain("緊急");
+      expect(htmlStr).toMatch(/variant=["']?brand["']?/);
+      expect(htmlStr).toMatch(/variant=["']?danger["']?/);
+      expect(htmlStr).not.toContain("with-remove");
+    });
+
+    it("7-3. タグが多く1行に収まらない場合、+N 省略表示（.task-list-item__tags-overflow）が描画されること", () => {
+      element.tags = [
+        { id: 1, name: "非常に長いタグ名その一", description: "", variant: "brand" },
+        { id: 2, name: "非常に長いタグ名その二", description: "", variant: "danger" },
+        { id: 3, name: "非常に長いタグ名その三", description: "", variant: "success" },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("task-list-item__tags-overflow");
+      expect(htmlStr).toMatch(/\+\d+/);
+    });
+
+    it("7-4. task-list-item.scss において .task-list-item__row--tags に固定高さが定義され、カラー直値と!importantが0件であること", () => {
+      const scssPath = new URL("./task-list-item.scss", import.meta.url).pathname;
+      const normalizedPath =
+        process.platform === "win32" && scssPath.startsWith("/")
+          ? scssPath.slice(1)
+          : scssPath;
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+
+      expect(content).toMatch(/\.task-list-item__row--tags\s*\{[^}]*height:\s*\d+px;/);
+      expect(content).not.toContain("!important");
+      expect(content.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g)).toBeNull();
     });
   });
 });

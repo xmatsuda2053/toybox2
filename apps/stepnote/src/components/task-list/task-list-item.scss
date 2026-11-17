@@ -72,6 +72,20 @@
   line-height: 1.25;
 }
 
+.task-list-item__row--tags {
+  height: 20px;
+  min-height: 20px;
+  gap: 4px;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.task-list-item__tag,
+.task-list-item__tags-overflow {
+  flex-shrink: 0;
+  max-width: 140px;
+}
+
 .task-list-item__status-icon {
   flex-shrink: 0;
   width: 15px;

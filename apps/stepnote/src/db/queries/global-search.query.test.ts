@@ -47,6 +47,7 @@ describe("GlobalSearchQuery Tests", () => {
     await db.logs.clear();
     await db.notes.clear();
     await db.labels.clear();
+    await db.tags.clear();
 
     query = new GlobalSearchQuery(db);
 
@@ -368,6 +369,55 @@ describe("GlobalSearchQuery Tests", () => {
       // 該当年度でない組み合わせはヒットしない
       const mismatchResults = await query.search("2025 要件定義");
       expect(mismatchResults).toEqual([]);
+    });
+  });
+
+  describe("6. タグによる検索および '#タグ名' タグ専用検索", () => {
+    it("6-1. 通常キーワードでタグ名に合致した場合、該当タスクが抽出され sourceType: 'task_tags' のスニペットが付与されること", async () => {
+      const tagId = await db.tags.add({
+        name: "最重要",
+        description: "",
+        variant: "danger",
+      });
+      await db.tasks.update(2, { tagIds: [tagId] });
+
+      const results = await query.search("最重要");
+      expect(results).toHaveLength(1);
+      expect(results[0].task.id).toBe(2);
+      const tagSnippet = results[0].snippets.find(
+        (s) => s.sourceType === "task_tags",
+      );
+      expect(tagSnippet).toBeDefined();
+      expect(tagSnippet?.snippet).toContain("最重要");
+    });
+
+    it("6-2. '#タグ名' 形式で検索した場合、タグ名のみを対象として検索され、タスク名や説明文のみの該当は除外されること", async () => {
+      const tagId = await db.tags.add({
+        name: "Dexieタグ",
+        description: "",
+        variant: "brand",
+      });
+      // タスク1には「Dexie」を含まない別タスクとしてタグのみ付与
+      await db.tasks.update(1, { tagIds: [tagId] });
+      // タスク2は description に "Dexie" を含むがタグは付いていない
+
+      const results = await query.search("#dexie");
+      expect(results).toHaveLength(1);
+      expect(results[0].task.id).toBe(1);
+    });
+
+    it("6-3. '#タグ名' と通常キーワードを組み合わせたAND検索が正しく機能すること", async () => {
+      const tagId = await db.tags.add({
+        name: "フロント",
+        description: "",
+        variant: "success",
+      });
+      await db.tasks.update(1, { tagIds: [tagId] });
+      await db.tasks.update(3, { tagIds: [tagId] });
+
+      const results = await query.search("#フロント Omnisearch");
+      expect(results).toHaveLength(1);
+      expect(results[0].task.id).toBe(1);
     });
   });
 });

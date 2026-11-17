@@ -261,5 +261,78 @@ describe("StepNote Database Schema Tests", () => {
     dbV3.close();
     await Dexie.delete(testDbName);
   });
+
+  it("Tagsテーブルにデータを追加・取得が可能であること", async () => {
+    const tagRecord = {
+      name: "優先",
+      description: "優先対応が必要なタスク",
+      variant: "danger" as const,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const id = await db.table("tags").add(tagRecord);
+    const saved = await db.table("tags").get(id);
+    expect(saved).toBeDefined();
+    expect(saved?.name).toBe("優先");
+    expect(saved?.description).toBe("優先対応が必要なタスク");
+    expect(saved?.variant).toBe("danger");
+  });
+
+  it("TasksテーブルのtagIdsマルチエントリーインデックスで特定タグを持つタスクを検索できること", async () => {
+    const t1Id = await db.tasks.add({
+      statusCode: 0,
+      name: "タグ付きタスク1",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 1,
+      bookmark: false,
+      selected: false,
+      tagIds: [10, 20],
+    } as TaskRecord);
+
+    await db.tasks.add({
+      statusCode: 0,
+      name: "タグ付きタスク2",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 1,
+      bookmark: false,
+      selected: false,
+      tagIds: [30],
+    } as TaskRecord);
+
+    const matched = await db.tasks.where("tagIds").equals(20).toArray();
+    expect(matched).toHaveLength(1);
+    expect(matched[0]?.id).toBe(t1Id);
+  });
+
+  it("TagSetsテーブルにデータを追加・取得でき、tagIdsマルチエントリーインデックスで検索できること", async () => {
+    const setId1 = await db.table("tagSets").add({
+      name: "障害対応セット",
+      description: "緊急対応用",
+      tagIds: [10, 20],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await db.table("tagSets").add({
+      name: "通常セット",
+      description: "",
+      tagIds: [30],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const saved = await db.table("tagSets").get(setId1);
+    expect(saved?.name).toBe("障害対応セット");
+
+    const matched = await db.table("tagSets").where("tagIds").equals(20).toArray();
+    expect(matched).toHaveLength(1);
+    expect(matched[0]?.id).toBe(setId1);
+  });
 });
 

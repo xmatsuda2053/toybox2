@@ -4,7 +4,12 @@ import type { TaskRecord } from "../models/task.model";
 import type { QuickAccessRecord } from "../models/navigation.model";
 import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 import {
+  parseSearchTerms,
+  type ParsedSearchTerm,
+} from "@/utils/global-search.utils";
+import {
   applyQuickAccessFilter,
+  matchesTagNames,
   matchesTaskKeyword,
   sortTasksByDueDateAndName,
 } from "@/utils/task-filter.utils";
@@ -55,41 +60,95 @@ export class TaskListQuery {
    * @memberof TaskListQuery
    */
   public async searchTaskIds(keyword: string): Promise<Set<number>> {
-    const term = keyword.trim().toLowerCase();
+    const terms = parseSearchTerms(keyword);
     const matchedIds = new Set<number>();
-
-    if (term === "") {
+    if (terms.length === 0) {
       return matchedIds;
     }
 
-    await this.collectTaskIdsFromTasks(term, matchedIds);
-    await this.collectTaskIdsFromSubItems(term, matchedIds);
+    const termHitsByTask = new Map<number, Set<string>>();
+    await this.collectTaskTermHits(terms, termHitsByTask);
+    await this.collectSubItemTermHits(terms, termHitsByTask);
 
+    for (const [taskId, matchedKeys] of termHitsByTask.entries()) {
+      if (matchedKeys.size === terms.length) {
+        matchedIds.add(taskId);
+      }
+    }
     return matchedIds;
   }
 
-  /**
-   * tasks テーブルからキーワードに一致するタスクIDを収集する。
-   */
-  private async collectTaskIdsFromTasks(
-    term: string,
-    matchedIds: Set<number>,
+  /** タスクIDごとのヒットトークンを記録するヘルパー */
+  private recordTermHit(
+    termHitsByTask: Map<number, Set<string>>,
+    taskId: number,
+    termKey: string,
+  ): void {
+    let hitSet = termHitsByTask.get(taskId);
+    if (!hitSet) {
+      hitSet = new Set<string>();
+      termHitsByTask.set(taskId, hitSet);
+    }
+    hitSet.add(termKey);
+  }
+
+  /** タグIDマップを構築し、タスク本体およびタグ名からトークン一致を収集する */
+  private async collectTaskTermHits(
+    terms: readonly ParsedSearchTerm[],
+    termHitsByTask: Map<number, Set<string>>,
   ): Promise<void> {
-    const tasks = await this.db.tasks.toArray();
+    const [tasks, tags] = await Promise.all([
+      this.db.tasks.toArray(),
+      this.db.tags.toArray(),
+    ]);
+    const tagMap = new Map<number, string>();
+    for (const tag of tags) {
+      if (tag.id !== undefined) {
+        tagMap.set(tag.id, tag.name);
+      }
+    }
+
     for (const task of tasks) {
-      if (task.id !== undefined && matchesTaskKeyword(task, term)) {
-        matchedIds.add(task.id);
+      if (task.id === undefined) continue;
+      const tagNames = (task.tagIds ?? [])
+        .map((id) => tagMap.get(id))
+        .filter((name): name is string => Boolean(name));
+
+      for (const term of terms) {
+        const isHit = term.isTagOnly
+          ? matchesTagNames(tagNames, term.value)
+          : matchesTaskKeyword(task, term.value, tagNames);
+        if (isHit) {
+          this.recordTermHit(termHitsByTask, task.id, term.raw);
+        }
       }
     }
   }
 
-  /**
-   * issues, logs, notes テーブルからキーワードに一致する親タスクIDを収集する。
-   */
-  private async collectTaskIdsFromSubItems(
-    term: string,
-    matchedIds: Set<number>,
+  /** 指定テキスト配列に対して通常トークン一致を収集する共通ヘルパー */
+  private collectTextTermHits(
+    taskId: number | undefined,
+    texts: readonly string[],
+    terms: readonly ParsedSearchTerm[],
+    termHitsByTask: Map<number, Set<string>>,
+  ): void {
+    if (taskId === undefined) return;
+    const lowerTexts = texts.map((text) => text.toLowerCase());
+    for (const term of terms) {
+      if (lowerTexts.some((text) => text.includes(term.value))) {
+        this.recordTermHit(termHitsByTask, taskId, term.raw);
+      }
+    }
+  }
+
+  /** issues, logs, notes テーブルから通常トークン一致を収集する */
+  private async collectSubItemTermHits(
+    terms: readonly ParsedSearchTerm[],
+    termHitsByTask: Map<number, Set<string>>,
   ): Promise<void> {
+    const generalTerms = terms.filter((t) => !t.isTagOnly);
+    if (generalTerms.length === 0) return;
+
     const [issues, logs, notes] = await Promise.all([
       this.db.issues.toArray(),
       this.db.logs.toArray(),
@@ -97,19 +156,21 @@ export class TaskListQuery {
     ]);
 
     for (const issue of issues) {
-      if (
-        issue.taskId !== undefined &&
-        (issue.title.toLowerCase().includes(term) ||
-          issue.value.toLowerCase().includes(term))
-      ) {
-        matchedIds.add(issue.taskId);
-      }
+      this.collectTextTermHits(
+        issue.taskId,
+        [issue.title, issue.value],
+        generalTerms,
+        termHitsByTask,
+      );
     }
 
     for (const item of [...logs, ...notes]) {
-      if (item.taskId !== undefined && item.value.toLowerCase().includes(term)) {
-        matchedIds.add(item.taskId);
-      }
+      this.collectTextTermHits(
+        item.taskId,
+        [item.value],
+        generalTerms,
+        termHitsByTask,
+      );
     }
   }
 

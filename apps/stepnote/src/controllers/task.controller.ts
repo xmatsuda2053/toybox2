@@ -4,6 +4,7 @@ import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
+import { mergeTagIds, normalizeTagIds } from "@/utils/tag.utils";
 import type {
   CreateTaskInput,
   Summary,
@@ -28,6 +29,16 @@ function areContactsDifferent(
 }
 
 /**
+ * タグID配列に差分があるか検証するヘルパー
+ */
+function areTagIdsDifferent(currVal: unknown, nextVal: unknown): boolean {
+  const curr = normalizeTagIds(Array.isArray(currVal) ? currVal : []);
+  const next = normalizeTagIds(Array.isArray(nextVal) ? nextVal : []);
+  if (curr.length !== next.length) return true;
+  return next.some((id, index) => curr[index] !== id);
+}
+
+/**
  * 各フィールド値に差分があるか検証するヘルパー
  */
 function isFieldValueDifferent(
@@ -40,6 +51,9 @@ function isFieldValueDifferent(
   }
   if (key === "contacts" && Array.isArray(nextVal) && Array.isArray(currVal)) {
     return areContactsDifferent(currVal as Contact[], nextVal as Contact[]);
+  }
+  if (key === "tagIds") {
+    return areTagIdsDifferent(currVal, nextVal);
   }
   return currVal !== nextVal;
 }
@@ -169,6 +183,7 @@ export class TaskController extends BaseTaskScopeController<
       contacts: input.contacts ? [...input.contacts] : [],
       description: input.description ?? "",
       selected: input.selected ?? true,
+      tagIds: normalizeTagIds(input.tagIds),
       createdAt: input.createdAt ?? new Date(),
       updatedAt: input.updatedAt ?? new Date(),
     };
@@ -308,6 +323,45 @@ export class TaskController extends BaseTaskScopeController<
     property: Partial<Property>,
   ): Promise<void> => {
     await this.updateTask(property);
+  };
+
+  /**
+   * 対象タスクへタグを追加する。既に付与済みの場合はスキップする。
+   */
+  public addTag = async (tagId: number): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    if (currentIds.includes(tagId)) {
+      return;
+    }
+    await this.updateTask({ tagIds: [...currentIds, tagId] });
+  };
+
+  /**
+   * 対象タスクへ複数タグを一括追加する（既存タグは保持し、未付与タグのみ末尾へマージ）。
+   */
+  public addTags = async (tagIds: readonly number[]): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    const mergedIds = mergeTagIds(currentIds, tagIds);
+    if (mergedIds.length === currentIds.length) {
+      return;
+    }
+    await this.updateTask({ tagIds: mergedIds });
+  };
+
+  /**
+   * 対象タスクから指定タグを削除する。未付与の場合はスキップする。
+   */
+  public removeTag = async (tagId: number): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    if (!currentIds.includes(tagId)) {
+      return;
+    }
+    await this.updateTask({
+      tagIds: currentIds.filter((id) => id !== tagId),
+    });
   };
 
   /**

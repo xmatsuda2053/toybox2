@@ -784,6 +784,143 @@ describe("TaskController (Single Task TDD)", () => {
           contacts: [],
         }),
       ).toBe(true);
+      expect(
+        hasTaskChanges({ ...base, tagIds: [1, 2] }, { tagIds: [1, 2] }),
+      ).toBe(false);
+      expect(
+        hasTaskChanges({ ...base, tagIds: [1, 2] }, { tagIds: [1, 3] }),
+      ).toBe(true);
+      expect(
+        hasTaskChanges({ ...base, tagIds: undefined }, { tagIds: [] }),
+      ).toBe(false);
+    });
+  });
+
+  describe("9. タグ操作およびシステムログ非記録の検証", () => {
+    it("9-1. addTag でタスクへタグが付与され、重複追加は無視され、システムログは記録されないこと", async () => {
+      const fakeRepo = new FakeTaskRepository([
+        {
+          id: 1,
+          name: "タグテストタスク",
+          statusCode: 0,
+          dueDate: new Date("2026-04-01"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: true,
+          tagIds: [10],
+        },
+      ]);
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
+      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
+      const host = createMockHost();
+      const ctrl = new TaskController(
+        host.host,
+        fakeRepo as unknown as TaskRepository,
+        1,
+        undefined,
+        realLogSvc,
+      );
+      await ctrl.initialized;
+
+      await ctrl.addTag(20);
+      expect(ctrl.state?.tagIds).toEqual([10, 20]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+
+      // 重複追加はスキップされること
+      await ctrl.addTag(20);
+      expect(ctrl.state?.tagIds).toEqual([10, 20]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+    });
+
+    it("9-2. removeTag でタスクからタグが除去され、システムログは記録されないこと", async () => {
+      const fakeRepo = new FakeTaskRepository([
+        {
+          id: 1,
+          name: "タグ削除テストタスク",
+          statusCode: 0,
+          dueDate: new Date("2026-04-01"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: true,
+          tagIds: [10, 20],
+        },
+      ]);
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
+      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
+      const host = createMockHost();
+      const ctrl = new TaskController(
+        host.host,
+        fakeRepo as unknown as TaskRepository,
+        1,
+        undefined,
+        realLogSvc,
+      );
+      await ctrl.initialized;
+
+      await ctrl.removeTag(10);
+      expect(ctrl.state?.tagIds).toEqual([20]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+
+      // 存在しないIDの削除はスキップされること
+      await ctrl.removeTag(999);
+      expect(ctrl.state?.tagIds).toEqual([20]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+    });
+
+    it("9-3. addTags で既存タグを保持しつつ未付与タグのみマージ追加され、システムログは記録されないこと", async () => {
+      const fakeRepo = new FakeTaskRepository([
+        {
+          id: 1,
+          name: "タグセット適用タスク",
+          statusCode: 0,
+          dueDate: new Date("2026-04-01"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: true,
+          tagIds: [10, 20],
+        },
+      ]);
+      const updateSpy = vi.spyOn(fakeRepo, "update");
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
+      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
+      const host = createMockHost();
+      const ctrl = new TaskController(
+        host.host,
+        fakeRepo as unknown as TaskRepository,
+        1,
+        undefined,
+        realLogSvc,
+      );
+      await ctrl.initialized;
+
+      await ctrl.addTags([20, 30, 40, 30]);
+      expect(ctrl.state?.tagIds).toEqual([10, 20, 30, 40]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+
+      updateSpy.mockClear();
+      await ctrl.addTags([10, 20]);
+      expect(updateSpy).not.toHaveBeenCalled();
     });
   });
 });

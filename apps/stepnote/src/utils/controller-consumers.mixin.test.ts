@@ -12,8 +12,12 @@ import {
   WithTaskTemplateController,
   WithAutoExportController,
   WithTaskHistoryController,
+  WithTagsController,
+  WithTagSetsController,
 } from "./controller-consumers.mixin";
 import type { LabelsController } from "@/controllers/labels.controller";
+import type { TagsController } from "@/controllers/tags.controller";
+import type { TagSetsController } from "@/controllers/tag-sets.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
@@ -258,6 +262,44 @@ describe("controller-consumers.mixin", () => {
 
       el.taskHistoryController = undefined;
       expect(el.taskHistoryController).toBeUndefined();
+      expect(unsubMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("10-5. WithTagsController で tagsController の設定と解除が行えること", () => {
+      class TagsConsumerElement extends WithTagsController(
+        SubscriberElement,
+      ) {}
+      const el = new TagsConsumerElement();
+      const unsubMock = vi.fn();
+      const mockTagsCtrl = {
+        subscribe: vi.fn().mockReturnValue(unsubMock),
+      } as unknown as TagsController;
+
+      el.tagsController = mockTagsCtrl;
+      expect(el.tagsController).toBe(mockTagsCtrl);
+      expect(mockTagsCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      el.tagsController = undefined;
+      expect(el.tagsController).toBeUndefined();
+      expect(unsubMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("10-6. WithTagSetsController で tagSetsController の設定と解除が行えること", () => {
+      class TagSetsConsumerElement extends WithTagSetsController(
+        SubscriberElement,
+      ) {}
+      const el = new TagSetsConsumerElement();
+      const unsubMock = vi.fn();
+      const mockTagSetsCtrl = {
+        subscribe: vi.fn().mockReturnValue(unsubMock),
+      } as unknown as TagSetsController;
+
+      el.tagSetsController = mockTagSetsCtrl;
+      expect(el.tagSetsController).toBe(mockTagSetsCtrl);
+      expect(mockTagSetsCtrl.subscribe).toHaveBeenCalledTimes(1);
+
+      el.tagSetsController = undefined;
+      expect(el.tagSetsController).toBeUndefined();
       expect(unsubMock).toHaveBeenCalledTimes(1);
     });
   });

@@ -1,4 +1,10 @@
-import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  nothing,
+  unsafeCSS,
+  type HTMLTemplateResult,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "@shared/components";
 import {
@@ -6,6 +12,8 @@ import {
   dispatchCustomEvent,
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TagRecord } from "@/db/models/tag.model";
+import { splitVisibleAndOverflowTags } from "@/utils/tag.utils";
 import {
   getTaskDueIconInfo,
   type TaskDueIconInfo,
@@ -71,6 +79,15 @@ export class TaskListItem extends LitElement {
    */
   @property({ type: Object })
   public issuesDueInfo?: TaskDueIconInfo | null;
+
+  /**
+   * タスクに付与されたタグ一覧
+   *
+   * @type {TagRecord[]}
+   * @memberof TaskListItem
+   */
+  @property({ type: Array })
+  public tags: TagRecord[] = [];
 
   /**
    * カード本体クリックハンドラー（タスク選択）
@@ -248,6 +265,46 @@ export class TaskListItem extends LitElement {
     `;
   }
 
+  /**
+   * 3行目: タグ一覧（タグ設定時のみ描画・1行固定・溢れ時は +N 省略表示）を描画する
+   */
+  private renderTagsRow(): HTMLTemplateResult | typeof nothing {
+    const { visibleTags, hiddenCount } = splitVisibleAndOverflowTags(this.tags);
+    if (visibleTags.length === 0 && hiddenCount === 0) {
+      return nothing;
+    }
+
+    return html`
+      <div class="task-list-item__row task-list-item__row--tags">
+        ${visibleTags.map(
+          (tag) => html`
+            <wa-tag
+              class="task-list-item__tag"
+              size="xs"
+              pill
+              variant=${tag.variant}
+              title=${tag.description || tag.name}
+            >
+              ${tag.name}
+            </wa-tag>
+          `,
+        )}
+        ${hiddenCount > 0
+          ? html`
+              <wa-tag
+                class="task-list-item__tags-overflow"
+                size="xs"
+                pill
+                variant="neutral"
+              >
+                +${hiddenCount}
+              </wa-tag>
+            `
+          : null}
+      </div>
+    `;
+  }
+
   override render(): HTMLTemplateResult {
     const isSelected = Boolean(this.task?.selected);
 
@@ -260,6 +317,7 @@ export class TaskListItem extends LitElement {
       >
         ${this.renderHeaderRow()}
         ${this.renderMetaRow()}
+        ${this.renderTagsRow()}
       </div>
     `;
   }

@@ -156,6 +156,16 @@ describe("TaskPane Component", () => {
       );
     });
 
+    it("2-3b. ヘッダー左部のコピーボタン右側にタグ管理バー（task-tag-bar）が配置されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const copyBtnIndex = htmlStr.indexOf("task-pane-btn-copy-tag");
+      const tagBarIndex = htmlStr.indexOf("<task-tag-bar");
+      const headerRightIndex = htmlStr.indexOf("task-pane__header-right");
+
+      expect(tagBarIndex).toBeGreaterThan(copyBtnIndex);
+      expect(tagBarIndex).toBeLessThan(headerRightIndex);
+    });
+
     it("2-4. handleCopyJumpTag 実行時に「#{101}{タスク名}」の形式でクリップボードへ書き込みが行われること", async () => {
       const writeTextMock = vi.fn().mockResolvedValue(undefined);
       Object.assign(navigator, {

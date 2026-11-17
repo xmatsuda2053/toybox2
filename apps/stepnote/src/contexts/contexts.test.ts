@@ -3,6 +3,7 @@ import { layoutUIContext } from "./layout-ui.context";
 import { taskContext, taskListContext, issuesContext } from "./task.context";
 import { logsContext, notesContext, scratchContext } from "./journal.context";
 import { labelsContext } from "./labels.context";
+import { tagsContext, tagSetsContext } from "./tags.context";
 import { quickAccessContext } from "./quick-access.context";
 import { themeContext } from "./theme.context";
 import { taskTemplateContext } from "./task-template.context";
@@ -91,6 +92,18 @@ describe("contexts の定義とエクスポート", () => {
       expect(typeof scratchContext).toBe("symbol");
       expect(asSymbol(scratchContext).description).toBe("scratch-context");
     });
+
+    it("tagsContext が正しく定義され、固有の Symbol キーを持つこと", () => {
+      expect(tagsContext).toBeDefined();
+      expect(typeof tagsContext).toBe("symbol");
+      expect(asSymbol(tagsContext).description).toBe("tags-context");
+    });
+
+    it("tagSetsContext が正しく定義され、固有の Symbol キーを持つこと", () => {
+      expect(tagSetsContext).toBeDefined();
+      expect(typeof tagSetsContext).toBe("symbol");
+      expect(asSymbol(tagSetsContext).description).toBe("tag-sets-context");
+    });
   });
 
   describe("ContextKey の一意性検証", () => {
@@ -103,6 +116,8 @@ describe("contexts の定義とエクスポート", () => {
         logsContext,
         notesContext,
         labelsContext,
+        tagsContext,
+        tagSetsContext,
         quickAccessContext,
         themeContext,
         scratchContext,
@@ -128,6 +143,8 @@ describe("contexts の定義とエクスポート", () => {
       expect(allContexts.logsContext).toBe(logsContext);
       expect(allContexts.notesContext).toBe(notesContext);
       expect(allContexts.labelsContext).toBe(labelsContext);
+      expect(allContexts.tagsContext).toBe(tagsContext);
+      expect(allContexts.tagSetsContext).toBe(tagSetsContext);
       expect(allContexts.quickAccessContext).toBe(quickAccessContext);
       expect(allContexts.themeContext).toBe(themeContext);
       expect(allContexts.scratchContext).toBe(scratchContext);

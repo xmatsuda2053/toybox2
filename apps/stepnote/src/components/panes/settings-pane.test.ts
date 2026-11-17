@@ -887,4 +887,13 @@ describe("SettingsPane Component", () => {
       );
     });
   });
+
+  describe("7. タグ管理（Tags）設定タブ機能", () => {
+    it("7-1. wa-tab-group 内に panel='tags' の wa-tab および wa-tab-panel がレンダリングされ、settings-tags-view が含まれること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<wa-tab[^>]*panel="tags"/);
+      expect(htmlStr).toMatch(/<wa-tab-panel[^>]*name="tags"/);
+      expect(htmlStr).toContain("<settings-tags-view");
+    });
+  });
 });
