@@ -37,11 +37,14 @@
 .task-pane__header-left {
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
   gap: var(--wa-space-2xs, 4px);
 }
 
 .task-pane__title {
   @include pane-section-title;
+  flex-shrink: 0;
   padding: var(--wa-space-3xs, 2px) var(--wa-space-xs, 8px);
   border-radius: var(--wa-border-radius-s);
   @include theme-transition;
@@ -49,6 +52,7 @@
 
 .task-pane__btn-copy-tag {
   @include flex-center;
+  flex-shrink: 0;
   color: var(--wa-color-text-quiet);
 
   &::part(button) {
@@ -61,6 +65,11 @@
   &:hover {
     color: var(--wa-color-brand-60, var(--wa-color-text-normal));
   }
+}
+
+.task-pane__tag-bar {
+  flex: 1;
+  min-width: 0;
 }
 
 .task-pane__header-right {

@@ -21,6 +21,7 @@ import {
 import { getIssuesDueStatus } from "@/utils/task-due.utils.js";
 import "@/components/task/task-summary.js";
 import "@/components/task/task-property.js";
+import "@/components/task/task-tag-bar.js";
 import "@/components/issues/issues-view.js";
 import "@/components/notes/notes-view.js";
 import styles from "./task-pane.scss?inline";
@@ -247,6 +248,7 @@ export class TaskPane extends WithIssuesController(
             label="ジャンプ用タグをコピー"
           ></wa-icon>
         </wa-button>
+        <task-tag-bar class="task-pane__tag-bar"></task-tag-bar>
       </div>
     `;
   }
