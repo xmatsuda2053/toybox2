@@ -12,7 +12,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  * 【TaskTagBar 仕様 (タスクペインヘッダーのタグ管理バー)】
  *
  * 1. タグ一覧表示および省略表示 (+N)
- *    - 1-1. タスク未設定またはタグ未付与時でも、追加トリガーボタン（.task-tag-bar__btn-add）および trigger="hover" の wa-tooltip が描画されること
+ *    - 1-1. タスク未設定またはタグ未付与時でも、追加トリガーボタン（.task-tag-bar__btn-add / tags-solid-fullアイコン）および trigger="hover" の wa-tooltip が描画されること
  *    - 1-2. タスクに付与されたタグが wa-tag（size="s", pill, with-remove, variant指定）として描画されること
  *    - 1-3. visibleTagCount により表示件数が制限された場合、収まらない分が +N 省略ボタン（.task-tag-bar__overflow-btn）として描画されること
  *    - 1-4. +N 省略ボタンに紐づく wa-popover（.task-tag-bar__overflow-popover）が描画され、付与中の全タグ（削除可能）が確認できること
@@ -106,6 +106,8 @@ describe("TaskTagBar Component", () => {
       mockTaskController.state = { ...baseTask, tagIds: [] };
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("task-tag-bar__btn-add");
+      expect(htmlStr).toContain('name="tags-solid-full"');
+      expect(htmlStr).not.toContain('name="tag-solid-full"');
       expect(htmlStr).toContain('trigger="hover"');
       expect(htmlStr).not.toContain("task-tag-bar__overflow-btn");
     });

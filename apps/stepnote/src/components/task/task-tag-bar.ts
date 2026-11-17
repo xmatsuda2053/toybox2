@@ -394,7 +394,7 @@ export class TaskTagBar extends WithTagsController(
       >
         <wa-icon
           library="my-icons"
-          name="tag-solid-full"
+          name="tags-solid-full"
           label="タグを追加・編集"
         ></wa-icon>
       </wa-button>
