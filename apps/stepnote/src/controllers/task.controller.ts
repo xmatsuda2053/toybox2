@@ -2,7 +2,6 @@ import type { ReactiveControllerHost } from "lit";
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
-import type { TagsRepository } from "@/repositories/tags.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import { normalizeTagIds } from "@/utils/tag.utils";
@@ -89,7 +88,6 @@ export class TaskController extends BaseTaskScopeController<
   private issuesRepository?: IssuesRepository;
   private systemLogService?: SystemLogService;
   private labelsRepository?: LabelsRepository;
-  private tagsRepository?: TagsRepository;
 
   constructor(
     host: ReactiveControllerHost,
@@ -98,13 +96,11 @@ export class TaskController extends BaseTaskScopeController<
     issuesRepository?: IssuesRepository,
     systemLogService?: SystemLogService,
     labelsRepository?: LabelsRepository,
-    tagsRepository?: TagsRepository,
   ) {
     super(host, repository, undefined, taskId);
     this.issuesRepository = issuesRepository;
     this.systemLogService = systemLogService;
     this.labelsRepository = labelsRepository;
-    this.tagsRepository = tagsRepository;
   }
 
   /**
@@ -242,15 +238,6 @@ export class TaskController extends BaseTaskScopeController<
     return `ラベル ${labelId}`;
   }
 
-  /** タグIDからタグ名を取得するヘルパー */
-  private async resolveTagName(tagId: number): Promise<string> {
-    if (this.tagsRepository) {
-      const tag = await this.tagsRepository.getById(tagId);
-      if (tag?.name) return tag.name;
-    }
-    return `タグ ${tagId}`;
-  }
-
   /** タスク作成ログの記録 */
   private async recordTaskCreateLog(
     newId: number,
@@ -276,35 +263,6 @@ export class TaskController extends BaseTaskScopeController<
     if (!this.systemLogService || this._taskId === undefined) return;
     await this.recordTaskBasicChanges(this._taskId, before, partial);
     await this.recordTaskPropertyChanges(this._taskId, before, partial);
-    await this.recordTaskTagChanges(this._taskId, before, partial);
-  }
-
-  /** タスクのタグ追加・削除変更ログ記録 */
-  private async recordTaskTagChanges(
-    taskId: number,
-    before: TaskRecord,
-    partial: Partial<Omit<TaskRecord, "id">>,
-  ): Promise<void> {
-    if (!this.systemLogService || partial.tagIds === undefined) return;
-
-    const beforeIds = normalizeTagIds(before.tagIds);
-    const afterIds = normalizeTagIds(partial.tagIds);
-    const beforeSet = new Set(beforeIds);
-    const afterSet = new Set(afterIds);
-
-    for (const addedId of afterIds) {
-      if (!beforeSet.has(addedId)) {
-        const tagName = await this.resolveTagName(addedId);
-        await this.systemLogService.logTaskTagAdded(taskId, tagName, addedId);
-      }
-    }
-
-    for (const removedId of beforeIds) {
-      if (!afterSet.has(removedId)) {
-        const tagName = await this.resolveTagName(removedId);
-        await this.systemLogService.logTaskTagRemoved(taskId, tagName, removedId);
-      }
-    }
   }
 
   /** タスク基本情報（ステータス）の変更ログ記録 */

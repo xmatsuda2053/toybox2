@@ -8,8 +8,6 @@ import {
   formatTaskDueDateChangedLog,
   formatTaskLabelChangedLog,
   formatTaskFiscalYearChangedLog,
-  formatTaskTagAddedLog,
-  formatTaskTagRemovedLog,
   formatIssueCreatedLog,
   formatIssueStatusChangedLog,
   formatIssueDeletedLog,
@@ -137,26 +135,6 @@ export class SystemLogService {
     afterYear: number,
   ): Promise<void> {
     const log = formatTaskFiscalYearChangedLog(beforeYear, afterYear);
-    await this.recordLog(taskId, log);
-  }
-
-  /** タスクへのタグ追加ログを記録する */
-  public async logTaskTagAdded(
-    taskId: number,
-    tagName: string,
-    tagId?: number,
-  ): Promise<void> {
-    const log = formatTaskTagAddedLog(tagName, tagId);
-    await this.recordLog(taskId, log);
-  }
-
-  /** タスクからのタグ削除ログを記録する */
-  public async logTaskTagRemoved(
-    taskId: number,
-    tagName: string,
-    tagId?: number,
-  ): Promise<void> {
-    const log = formatTaskTagRemovedLog(tagName, tagId);
     await this.recordLog(taskId, log);
   }
 

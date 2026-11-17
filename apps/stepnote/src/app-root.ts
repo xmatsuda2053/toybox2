@@ -223,7 +223,6 @@ export class AppRoot extends LitElement {
       this.issuesRepository,
       this.systemLogService,
       repos.labelsRepository,
-      repos.tagsRepository,
     );
     this.taskListController = new TaskListController(
       this,

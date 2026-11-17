@@ -148,24 +148,6 @@ describe("SystemLogService (TDD)", () => {
       const content = fakeLogsRepository.add.mock.calls[0][0].value;
       expect(content).toContain(`sys: タスク年度変更: 2025年度 → 2026年度`);
     });
-
-    it("2-8. logTaskTagAdded 呼び出し時にタグ追加ログが追加されること", async () => {
-      await service.logTaskTagAdded(1, "優先", 5);
-
-      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
-      const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: タグ追加: "#優先"`);
-      expect(fakeLogsController.refresh).toHaveBeenCalledTimes(1);
-    });
-
-    it("2-9. logTaskTagRemoved 呼び出し時にタグ削除ログが追加されること", async () => {
-      await service.logTaskTagRemoved(1, "優先", 5);
-
-      expect(fakeLogsRepository.add).toHaveBeenCalledTimes(1);
-      const content = fakeLogsRepository.add.mock.calls[0][0].value;
-      expect(content).toContain(`sys: タグ削除: "#優先"`);
-      expect(fakeLogsController.refresh).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe("3. Issue関連システムログ記録仕様", () => {

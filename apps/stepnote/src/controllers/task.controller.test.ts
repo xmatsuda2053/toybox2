@@ -796,8 +796,8 @@ describe("TaskController (Single Task TDD)", () => {
     });
   });
 
-  describe("9. タグ操作およびタグ追加・削除ログ記録の検証", () => {
-    it("9-1. addTag でタスクへタグが付与され、重複追加は無視され、logTaskTagAdded が呼ばれること", async () => {
+  describe("9. タグ操作およびシステムログ非記録の検証", () => {
+    it("9-1. addTag でタスクへタグが付与され、重複追加は無視され、システムログは記録されないこと", async () => {
       const fakeRepo = new FakeTaskRepository([
         {
           id: 1,
@@ -813,47 +813,33 @@ describe("TaskController (Single Task TDD)", () => {
           tagIds: [10],
         },
       ]);
-      const fakeLogSvc = {
-        logTaskCreated: vi.fn(),
-        logTaskStatusChanged: vi.fn(),
-        logTaskDueDateChanged: vi.fn(),
-        logTaskLabelChanged: vi.fn(),
-        logTaskFiscalYearChanged: vi.fn(),
-        logTaskTagAdded: vi.fn().mockResolvedValue(undefined),
-        logTaskTagRemoved: vi.fn().mockResolvedValue(undefined),
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
       };
-      const fakeTagsRepo = {
-        getById: vi.fn().mockImplementation(async (id: number) => ({
-          id,
-          name: id === 20 ? "緊急" : "既存",
-          description: "",
-          variant: "neutral",
-        })),
-      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
       const host = createMockHost();
       const ctrl = new TaskController(
         host.host,
         fakeRepo as unknown as TaskRepository,
         1,
         undefined,
-        fakeLogSvc as unknown as SystemLogService,
-        undefined,
-        fakeTagsRepo as unknown as import("@/repositories/tags.repository").TagsRepository,
+        realLogSvc,
       );
       await ctrl.initialized;
 
       await ctrl.addTag(20);
       expect(ctrl.state?.tagIds).toEqual([10, 20]);
-      expect(fakeLogSvc.logTaskTagAdded).toHaveBeenCalledTimes(1);
-      expect(fakeLogSvc.logTaskTagAdded).toHaveBeenCalledWith(1, "緊急", 20);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
 
       // 重複追加はスキップされること
       await ctrl.addTag(20);
       expect(ctrl.state?.tagIds).toEqual([10, 20]);
-      expect(fakeLogSvc.logTaskTagAdded).toHaveBeenCalledTimes(1);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
     });
 
-    it("9-2. removeTag でタスクからタグが除去され、logTaskTagRemoved が呼ばれること", async () => {
+    it("9-2. removeTag でタスクからタグが除去され、システムログは記録されないこと", async () => {
       const fakeRepo = new FakeTaskRepository([
         {
           id: 1,
@@ -869,44 +855,30 @@ describe("TaskController (Single Task TDD)", () => {
           tagIds: [10, 20],
         },
       ]);
-      const fakeLogSvc = {
-        logTaskCreated: vi.fn(),
-        logTaskStatusChanged: vi.fn(),
-        logTaskDueDateChanged: vi.fn(),
-        logTaskLabelChanged: vi.fn(),
-        logTaskFiscalYearChanged: vi.fn(),
-        logTaskTagAdded: vi.fn().mockResolvedValue(undefined),
-        logTaskTagRemoved: vi.fn().mockResolvedValue(undefined),
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
       };
-      const fakeTagsRepo = {
-        getById: vi.fn().mockImplementation(async (id: number) => ({
-          id,
-          name: id === 10 ? "API" : "緊急",
-          description: "",
-          variant: "neutral",
-        })),
-      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
       const host = createMockHost();
       const ctrl = new TaskController(
         host.host,
         fakeRepo as unknown as TaskRepository,
         1,
         undefined,
-        fakeLogSvc as unknown as SystemLogService,
-        undefined,
-        fakeTagsRepo as unknown as import("@/repositories/tags.repository").TagsRepository,
+        realLogSvc,
       );
       await ctrl.initialized;
 
       await ctrl.removeTag(10);
       expect(ctrl.state?.tagIds).toEqual([20]);
-      expect(fakeLogSvc.logTaskTagRemoved).toHaveBeenCalledTimes(1);
-      expect(fakeLogSvc.logTaskTagRemoved).toHaveBeenCalledWith(1, "API", 10);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
 
       // 存在しないIDの削除はスキップされること
       await ctrl.removeTag(999);
       expect(ctrl.state?.tagIds).toEqual([20]);
-      expect(fakeLogSvc.logTaskTagRemoved).toHaveBeenCalledTimes(1);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
     });
   });
 });
