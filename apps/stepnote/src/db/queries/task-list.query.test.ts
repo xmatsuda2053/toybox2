@@ -77,6 +77,7 @@ describe("TaskListQuery Tests", () => {
     await db.issues.clear();
     await db.logs.clear();
     await db.notes.clear();
+    await db.tags.clear();
 
     query = new TaskListQuery(db);
   });
@@ -329,6 +330,126 @@ describe("TaskListQuery Tests", () => {
         searchKeyword: "1234-5678",
       });
       expect(byTel.map((t) => t.id)).toEqual([id1]);
+    });
+
+    it("1-9. 通常キーワード検索でタスクに付与されたタグ名にも合致すること", async () => {
+      const tagId = await db.tags.add({
+        name: "最優先",
+        description: "",
+        variant: "danger",
+      });
+      const id1 = await db.tasks.add({
+        name: "定例会議の準備",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "特記事項なし",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [tagId],
+      });
+      await db.tasks.add({
+        name: "通常タスク",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "特記事項なし",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [],
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "最優先",
+      });
+      expect(results.map((t) => t.id)).toEqual([id1]);
+    });
+
+    it("1-10. '#タグ名' 形式で検索した場合、タグのみを対象として部分一致検索を行うこと", async () => {
+      const tagUrgentId = await db.tags.add({
+        name: "緊急対応",
+        description: "",
+        variant: "danger",
+      });
+      const tagUiId = await db.tags.add({
+        name: "UI改善",
+        description: "",
+        variant: "brand",
+      });
+      const idWithTag = await db.tasks.add({
+        name: "サーバー設定",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "通常の説明",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [tagUrgentId],
+      });
+      // タスク名や説明に「緊急」を含むが、タグには「緊急」を持たないタスク
+      await db.tasks.add({
+        name: "緊急連絡網の更新",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "緊急対応手順の確認",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [tagUiId],
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "#緊急",
+      });
+      expect(results.map((t) => t.id)).toEqual([idWithTag]);
+    });
+
+    it("1-11. '#タグ名' と通常キーワードを組み合わせたAND検索ができること", async () => {
+      const tagApiId = await db.tags.add({
+        name: "API",
+        description: "",
+        variant: "brand",
+      });
+      const idMatch = await db.tasks.add({
+        name: "認証エンドポイント修正",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [tagApiId],
+      });
+      await db.tasks.add({
+        name: "画面デザイン修正",
+        statusCode: 0,
+        dueDate: futureDate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+        tagIds: [tagApiId],
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        searchKeyword: "#api 認証",
+      });
+      expect(results.map((t) => t.id)).toEqual([idMatch]);
     });
   });
 

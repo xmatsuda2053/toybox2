@@ -2,6 +2,7 @@ import { isOverdue, isAsap, isWithinAnyDaysBefore } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { Contact } from "@/types/domain/task-detail.type";
 import type { QuickAccessRecord } from "@/db/models/navigation.model";
+import { parseSearchTerms, type ParsedSearchTerm } from "./global-search.utils";
 import {
   getCompositeTaskDueStatus,
   type TaskDueStatus,
@@ -281,31 +282,63 @@ function matchesContactKeyword(
 }
 
 /**
- * タスク本体（タスク名・詳細説明・関係者）が検索キーワードに部分一致するか判定する。
+ * タグ名一覧のいずれかに検索文字列（小文字化済み）が部分一致するか判定する。
+ */
+export function matchesTagNames(
+  tagNames: readonly string[],
+  normalizedTerm: string,
+): boolean {
+  return tagNames.some((name) => name.toLowerCase().includes(normalizedTerm));
+}
+
+/**
+ * 単一の ParsedSearchTerm がタスク本体またはタグ名に一致するか判定する。
+ */
+function matchesSingleTaskTerm(
+  task: TaskRecord,
+  term: ParsedSearchTerm,
+  tagNames: readonly string[],
+): boolean {
+  if (matchesTagNames(tagNames, term.value)) {
+    return true;
+  }
+  if (term.isTagOnly) {
+    return false;
+  }
+  if (
+    task.name.toLowerCase().includes(term.value) ||
+    (task.description ?? "").toLowerCase().includes(term.value)
+  ) {
+    return true;
+  }
+  return (
+    Array.isArray(task.contacts) &&
+    task.contacts.some((contact) => matchesContactKeyword(contact, term.value))
+  );
+}
+
+/**
+ * タスク本体（タスク名・詳細説明・関係者・タグ名）が検索キーワードに部分一致するか判定する。
+ * '#タグ名' トークンはタグ名のみを対象とし、複数トークンは AND 条件で判定する。
  * キーワードが空文字または空白のみの場合は true を返す。
  *
  * @export
  * @param {TaskRecord} task 判定対象タスク
  * @param {string} keyword 検索キーワード
+ * @param {readonly string[]} [tagNames=[]] タスクに付与されたタグ名配列
  * @return {boolean} 一致する場合は true
  */
-export function matchesTaskKeyword(task: TaskRecord, keyword: string): boolean {
-  const term = keyword.trim().toLowerCase();
-  if (term === "") {
+export function matchesTaskKeyword(
+  task: TaskRecord,
+  keyword: string,
+  tagNames: readonly string[] = [],
+): boolean {
+  const terms = parseSearchTerms(keyword);
+  if (terms.length === 0) {
     return true;
   }
 
-  if (
-    task.name.toLowerCase().includes(term) ||
-    (task.description ?? "").toLowerCase().includes(term)
-  ) {
-    return true;
-  }
-
-  return (
-    Array.isArray(task.contacts) &&
-    task.contacts.some((contact) => matchesContactKeyword(contact, term))
-  );
+  return terms.every((term) => matchesSingleTaskTerm(task, term, tagNames));
 }
 
 

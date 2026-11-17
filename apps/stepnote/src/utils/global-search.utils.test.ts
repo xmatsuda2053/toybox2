@@ -39,6 +39,7 @@ import {
   extractSnippet,
   formatSourceLabel,
   tokenizeSearchQuery,
+  parseSearchTerms,
   formatContactText,
 } from "./global-search.utils.js";
 
@@ -131,6 +132,10 @@ describe("global-search.utils", () => {
     it("log の場合は「ログ」を返すこと", () => {
       expect(formatSourceLabel("log")).toBe("ログ");
     });
+
+    it("task_tags の場合は「タグ」を返すこと", () => {
+      expect(formatSourceLabel("task_tags" as never)).toBe("タグ");
+    });
   });
 
   describe("3. tokenizeSearchQuery", () => {
@@ -183,6 +188,26 @@ describe("global-search.utils", () => {
 
     it("すべて空の場合は空文字を返すこと", () => {
       expect(formatContactText({ div: "", name: "   ", tel: "" })).toBe("");
+    });
+  });
+
+  describe("5. parseSearchTerms", () => {
+    it("通常キーワードと #タグ名 を区別してパースすること", () => {
+      const terms = parseSearchTerms("API #緊急　設計 #BackEnd");
+      expect(terms).toEqual([
+        { raw: "api", isTagOnly: false, value: "api" },
+        { raw: "#緊急", isTagOnly: true, value: "緊急" },
+        { raw: "設計", isTagOnly: false, value: "設計" },
+        { raw: "#backend", isTagOnly: true, value: "backend" },
+      ]);
+    });
+
+    it("単独の # や重複トークンを正規化・除外すること", () => {
+      const terms = parseSearchTerms("# ## #api #API api");
+      expect(terms).toEqual([
+        { raw: "#api", isTagOnly: true, value: "api" },
+        { raw: "api", isTagOnly: false, value: "api" },
+      ]);
     });
   });
 });

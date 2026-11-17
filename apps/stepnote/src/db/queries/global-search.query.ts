@@ -1,11 +1,13 @@
 import type { Database } from "@/db/schema/database.schema";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model.js";
 import type { NoteRecord, LogRecord } from "@/db/models/journal.model.js";
+import type { TagRecord } from "@/db/models/tag.model.js";
 import {
   extractSnippet,
   formatContactText,
   formatSourceLabel,
-  tokenizeSearchQuery,
+  parseSearchTerms,
+  type ParsedSearchTerm,
   type SearchSnippetSourceType,
 } from "@/utils/global-search.utils.js";
 import { isSystemLog } from "@/utils/system-log.utils.js";
@@ -26,6 +28,7 @@ export interface GlobalSearchSnippet {
 export interface GlobalSearchResultItem {
   task: TaskRecord;
   labelName?: string;
+  tags?: TagRecord[];
   snippets: GlobalSearchSnippet[];
 }
 
@@ -56,17 +59,18 @@ export class GlobalSearchQuery {
    * @memberof GlobalSearchQuery
    */
   public async search(keyword: string): Promise<GlobalSearchResultItem[]> {
-    const terms = tokenizeSearchQuery(keyword);
+    const terms = parseSearchTerms(keyword);
     if (terms.length === 0) {
       return [];
     }
 
-    const [tasks, issues, notes, logs, labels] = await Promise.all([
+    const [tasks, issues, notes, logs, labels, tags] = await Promise.all([
       this.db.tasks.toArray(),
       this.db.issues.toArray(),
       this.db.notes.toArray(),
       this.db.logs.toArray(),
       this.db.labels.toArray(),
+      this.db.tags.toArray(),
     ]);
 
     const labelsMap = new Map<number, string>();
@@ -75,14 +79,68 @@ export class GlobalSearchQuery {
         labelsMap.set(l.id, l.name);
       }
     }
+    const tagsMap = new Map<number, TagRecord>();
+    for (const tag of tags) {
+      if (tag.id !== undefined) {
+        tagsMap.set(tag.id, tag);
+      }
+    }
+
     const matchMap = new Map<number, TaskMatchCollector>();
+    const generalValues = terms.filter((t) => !t.isTagOnly).map((t) => t.value);
 
-    this.collectTaskMatches(terms, tasks, matchMap);
-    this.collectIssueMatches(terms, issues, matchMap);
-    this.collectNoteMatches(terms, notes, matchMap);
-    this.collectLogMatches(terms, logs, matchMap);
+    this.collectTaskTagMatches(terms, tasks, tagsMap, matchMap);
+    if (generalValues.length > 0) {
+      this.collectTaskMatches(generalValues, tasks, matchMap);
+      this.collectIssueMatches(generalValues, issues, matchMap);
+      this.collectNoteMatches(generalValues, notes, matchMap);
+      this.collectLogMatches(generalValues, logs, matchMap);
+    }
 
-    return this.buildResultItems(tasks, terms.length, matchMap, labelsMap);
+    return this.buildResultItems(tasks, terms.length, matchMap, labelsMap, tagsMap);
+  }
+
+  /**
+   * タスクに付与されたタグからキーワード一致箇所（通常・#タグ名専用）を収集する
+   */
+  private collectTaskTagMatches(
+    terms: readonly ParsedSearchTerm[],
+    tasks: readonly TaskRecord[],
+    tagsMap: Map<number, TagRecord>,
+    matchMap: Map<number, TaskMatchCollector>,
+  ): void {
+    for (const task of tasks) {
+      if (task.id === undefined || !Array.isArray(task.tagIds)) continue;
+      for (const tagId of task.tagIds) {
+        const tag = tagsMap.get(tagId);
+        if (!tag) continue;
+        this.matchTagWithTerms(task.id, tag, terms, matchMap);
+      }
+    }
+  }
+
+  /** 単一タグに対して全検索トークンを照合しスニペットを追加する */
+  private matchTagWithTerms(
+    taskId: number,
+    tag: TagRecord,
+    terms: readonly ParsedSearchTerm[],
+    matchMap: Map<number, TaskMatchCollector>,
+  ): void {
+    const lowerName = tag.name.toLowerCase();
+    for (const term of terms) {
+      if (!lowerName.includes(term.value)) continue;
+      this.addMatchSnippet(
+        taskId,
+        term.raw,
+        {
+          sourceType: "task_tags",
+          sourceLabel: formatSourceLabel("task_tags"),
+          snippet: `#${tag.name}`,
+          subItemId: tag.id,
+        },
+        matchMap,
+      );
+    }
   }
 
   /**
@@ -306,6 +364,7 @@ export class GlobalSearchQuery {
     termsCount: number,
     matchMap: Map<number, TaskMatchCollector>,
     labelsMap: Map<number, string>,
+    tagsMap: Map<number, TagRecord>,
   ): GlobalSearchResultItem[] {
     const results: GlobalSearchResultItem[] = [];
 
@@ -315,12 +374,17 @@ export class GlobalSearchQuery {
       if (!collector || collector.matchedTerms.size !== termsCount) continue;
       if (collector.snippets.length === 0) continue;
 
+      const resolvedTags = (task.tagIds ?? [])
+        .map((id) => tagsMap.get(id))
+        .filter((t): t is TagRecord => Boolean(t));
+
       results.push({
         task,
         labelName:
           task.labelId !== undefined && task.labelId > 0
             ? labelsMap.get(task.labelId)
             : undefined,
+        tags: resolvedTags,
         snippets: collector.snippets,
       });
     }

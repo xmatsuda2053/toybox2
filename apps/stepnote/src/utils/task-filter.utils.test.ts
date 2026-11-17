@@ -636,6 +636,20 @@ describe("task-filter.utils", () => {
       });
       expect(matchesTaskKeyword(undefinedContactsTask, "田中")).toBe(false);
     });
+
+    it("タグ名一覧を渡した場合、通常検索でも #タグ名 検索でもタグ名に一致すること（#タグ名はタグのみ対象）", () => {
+      const task = createDummyTask({
+        name: "API設計タスク",
+        description: "詳細説明",
+      });
+      expect(matchesTaskKeyword(task, "緊急", ["緊急対応", "バックエンド"])).toBe(true);
+      expect(matchesTaskKeyword(task, "#緊急", ["緊急対応", "バックエンド"])).toBe(true);
+      // タスク名に API が含まれていても、#api はタグのみを対象とするため一致しない
+      expect(matchesTaskKeyword(task, "#api", ["緊急対応", "バックエンド"])).toBe(false);
+      // 複数トークンの AND 条件
+      expect(matchesTaskKeyword(task, "#緊急 設計", ["緊急対応"])).toBe(true);
+      expect(matchesTaskKeyword(task, "#緊急 UI", ["緊急対応"])).toBe(false);
+    });
   });
 });
 
