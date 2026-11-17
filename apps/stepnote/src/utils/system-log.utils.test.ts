@@ -43,6 +43,8 @@ import {
   formatTaskDueDateChangedLog,
   formatTaskLabelChangedLog,
   formatTaskFiscalYearChangedLog,
+  formatTaskTagAddedLog,
+  formatTaskTagRemovedLog,
   formatIssueCreatedLog,
   formatIssueStatusChangedLog,
   formatIssueDeletedLog,
@@ -140,6 +142,30 @@ describe("system-log.utils (TDD)", () => {
           `- **変更前**: 2025年度\n` +
           `- **変更後**: 2026年度`,
       );
+    });
+
+    it("2-8. タグ追加時のシステムログを正しくフォーマットすること", () => {
+      const log = formatTaskTagAddedLog("緊急", 3);
+
+      expect(log).toBe(
+        `### sys: タグ追加: "#緊急"\n\n` +
+          `- **項目**: タグ\n` +
+          `- **操作**: 追加\n` +
+          `- **タグ名**: 緊急 (ID: 3)`,
+      );
+      expect(isSystemLog(log)).toBe(true);
+    });
+
+    it("2-9. タグ削除時のシステムログを正しくフォーマットすること", () => {
+      const log = formatTaskTagRemovedLog("緊急", 3);
+
+      expect(log).toBe(
+        `### sys: タグ削除: "#緊急"\n\n` +
+          `- **項目**: タグ\n` +
+          `- **操作**: 削除\n` +
+          `- **タグ名**: 緊急 (ID: 3)`,
+      );
+      expect(isSystemLog(log)).toBe(true);
     });
 
     it("2-7. タスク新規追加時にテンプレート名が指定された場合、テンプレート名の項目が含まれてフォーマットされること", () => {

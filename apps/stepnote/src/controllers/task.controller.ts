@@ -2,8 +2,10 @@ import type { ReactiveControllerHost } from "lit";
 import type { TaskRepository } from "@/repositories/task.repository";
 import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
+import type { TagsRepository } from "@/repositories/tags.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
+import { normalizeTagIds } from "@/utils/tag.utils";
 import type {
   CreateTaskInput,
   Summary,
@@ -28,6 +30,16 @@ function areContactsDifferent(
 }
 
 /**
+ * タグID配列に差分があるか検証するヘルパー
+ */
+function areTagIdsDifferent(currVal: unknown, nextVal: unknown): boolean {
+  const curr = normalizeTagIds(Array.isArray(currVal) ? currVal : []);
+  const next = normalizeTagIds(Array.isArray(nextVal) ? nextVal : []);
+  if (curr.length !== next.length) return true;
+  return next.some((id, index) => curr[index] !== id);
+}
+
+/**
  * 各フィールド値に差分があるか検証するヘルパー
  */
 function isFieldValueDifferent(
@@ -40,6 +52,9 @@ function isFieldValueDifferent(
   }
   if (key === "contacts" && Array.isArray(nextVal) && Array.isArray(currVal)) {
     return areContactsDifferent(currVal as Contact[], nextVal as Contact[]);
+  }
+  if (key === "tagIds") {
+    return areTagIdsDifferent(currVal, nextVal);
   }
   return currVal !== nextVal;
 }
@@ -74,6 +89,7 @@ export class TaskController extends BaseTaskScopeController<
   private issuesRepository?: IssuesRepository;
   private systemLogService?: SystemLogService;
   private labelsRepository?: LabelsRepository;
+  private tagsRepository?: TagsRepository;
 
   constructor(
     host: ReactiveControllerHost,
@@ -82,11 +98,13 @@ export class TaskController extends BaseTaskScopeController<
     issuesRepository?: IssuesRepository,
     systemLogService?: SystemLogService,
     labelsRepository?: LabelsRepository,
+    tagsRepository?: TagsRepository,
   ) {
     super(host, repository, undefined, taskId);
     this.issuesRepository = issuesRepository;
     this.systemLogService = systemLogService;
     this.labelsRepository = labelsRepository;
+    this.tagsRepository = tagsRepository;
   }
 
   /**
@@ -169,6 +187,7 @@ export class TaskController extends BaseTaskScopeController<
       contacts: input.contacts ? [...input.contacts] : [],
       description: input.description ?? "",
       selected: input.selected ?? true,
+      tagIds: normalizeTagIds(input.tagIds),
       createdAt: input.createdAt ?? new Date(),
       updatedAt: input.updatedAt ?? new Date(),
     };
@@ -223,6 +242,15 @@ export class TaskController extends BaseTaskScopeController<
     return `ラベル ${labelId}`;
   }
 
+  /** タグIDからタグ名を取得するヘルパー */
+  private async resolveTagName(tagId: number): Promise<string> {
+    if (this.tagsRepository) {
+      const tag = await this.tagsRepository.getById(tagId);
+      if (tag?.name) return tag.name;
+    }
+    return `タグ ${tagId}`;
+  }
+
   /** タスク作成ログの記録 */
   private async recordTaskCreateLog(
     newId: number,
@@ -248,6 +276,35 @@ export class TaskController extends BaseTaskScopeController<
     if (!this.systemLogService || this._taskId === undefined) return;
     await this.recordTaskBasicChanges(this._taskId, before, partial);
     await this.recordTaskPropertyChanges(this._taskId, before, partial);
+    await this.recordTaskTagChanges(this._taskId, before, partial);
+  }
+
+  /** タスクのタグ追加・削除変更ログ記録 */
+  private async recordTaskTagChanges(
+    taskId: number,
+    before: TaskRecord,
+    partial: Partial<Omit<TaskRecord, "id">>,
+  ): Promise<void> {
+    if (!this.systemLogService || partial.tagIds === undefined) return;
+
+    const beforeIds = normalizeTagIds(before.tagIds);
+    const afterIds = normalizeTagIds(partial.tagIds);
+    const beforeSet = new Set(beforeIds);
+    const afterSet = new Set(afterIds);
+
+    for (const addedId of afterIds) {
+      if (!beforeSet.has(addedId)) {
+        const tagName = await this.resolveTagName(addedId);
+        await this.systemLogService.logTaskTagAdded(taskId, tagName, addedId);
+      }
+    }
+
+    for (const removedId of beforeIds) {
+      if (!afterSet.has(removedId)) {
+        const tagName = await this.resolveTagName(removedId);
+        await this.systemLogService.logTaskTagRemoved(taskId, tagName, removedId);
+      }
+    }
   }
 
   /** タスク基本情報（ステータス）の変更ログ記録 */
@@ -308,6 +365,32 @@ export class TaskController extends BaseTaskScopeController<
     property: Partial<Property>,
   ): Promise<void> => {
     await this.updateTask(property);
+  };
+
+  /**
+   * 対象タスクへタグを追加する。既に付与済みの場合はスキップする。
+   */
+  public addTag = async (tagId: number): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    if (currentIds.includes(tagId)) {
+      return;
+    }
+    await this.updateTask({ tagIds: [...currentIds, tagId] });
+  };
+
+  /**
+   * 対象タスクから指定タグを削除する。未付与の場合はスキップする。
+   */
+  public removeTag = async (tagId: number): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    if (!currentIds.includes(tagId)) {
+      return;
+    }
+    await this.updateTask({
+      tagIds: currentIds.filter((id) => id !== tagId),
+    });
   };
 
   /**

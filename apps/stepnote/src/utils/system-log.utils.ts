@@ -165,6 +165,43 @@ export function formatTaskFiscalYearChangedLog(
 }
 
 /**
+ * タグ追加・削除時の共通システムログフォーマッター
+ */
+function formatTaskTagChangeLog(
+  action: "追加" | "削除",
+  tagName: string,
+  tagId?: number,
+): string {
+  const idSuffix = tagId !== undefined ? ` (ID: ${tagId})` : "";
+  return (
+    `### sys: タグ${action}: "#${tagName}"\n\n` +
+    `- **項目**: タグ\n` +
+    `- **操作**: ${action}\n` +
+    `- **タグ名**: ${tagName}${idSuffix}`
+  );
+}
+
+/**
+ * タスクへタグ追加時のシステムログ文字列を生成する。
+ */
+export function formatTaskTagAddedLog(
+  tagName: string,
+  tagId?: number,
+): string {
+  return formatTaskTagChangeLog("追加", tagName, tagId);
+}
+
+/**
+ * タスクからタグ削除時のシステムログ文字列を生成する。
+ */
+export function formatTaskTagRemovedLog(
+  tagName: string,
+  tagId?: number,
+): string {
+  return formatTaskTagChangeLog("削除", tagName, tagId);
+}
+
+/**
  * Issue新規追加時のシステムログ文字列を生成する。
  *
  * @export

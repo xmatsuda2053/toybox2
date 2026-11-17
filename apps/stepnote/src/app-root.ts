@@ -161,6 +161,7 @@ export class AppRoot extends LitElement {
     labelsRepository: LabelsRepository;
     logsRepository: LogsRepository;
     scratchRepository: ScratchRepository;
+    tagsRepository: TagsRepository;
   } {
     this.taskRepository = new TaskRepository();
     this.issuesRepository = new IssuesRepository();
@@ -169,47 +170,66 @@ export class AppRoot extends LitElement {
       labelsRepository: new LabelsRepository(),
       logsRepository: new LogsRepository(),
       scratchRepository: new ScratchRepository(),
+      tagsRepository: new TagsRepository(),
     };
   }
 
   private setupControllers(): void {
-    const { labelsRepository, logsRepository, scratchRepository } =
-      this.setupRepositories();
+    const repos = this.setupRepositories();
+    this.setupNavigationAndJournalControllers(repos);
+    this.setupTaskAndFeatureControllers(repos);
+  }
+
+  private setupNavigationAndJournalControllers(repos: {
+    labelsRepository: LabelsRepository;
+    logsRepository: LogsRepository;
+    scratchRepository: ScratchRepository;
+  }): void {
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
       this,
       new QuickAccessRepository(),
     );
-    this.labelsController = new LabelsController(this, labelsRepository);
-    this.logsController = new LogsController(this, logsRepository);
-    this.scratchController = new ScratchController(this, scratchRepository);
-    this.taskTemplateController = new TaskTemplateController(this, new TaskTemplateRepository());
-
-    // 共通システムログサービスの初期化
+    this.labelsController = new LabelsController(this, repos.labelsRepository);
+    this.logsController = new LogsController(this, repos.logsRepository);
+    this.scratchController = new ScratchController(
+      this,
+      repos.scratchRepository,
+    );
     this.systemLogService = new SystemLogService(
-      logsRepository,
+      repos.logsRepository,
       this.logsController,
-    );
-
-    this.taskController = new TaskController(
-      this,
-      this.taskRepository,
-      undefined,
-      this.issuesRepository,
-      this.systemLogService,
-      labelsRepository,
-    );
-    this.taskListController = new TaskListController(
-      this,
-      this.taskRepository,
-      getCurrentFiscalYear(),
-      new TaskListQuery(db),
     );
     this.notesController = new NotesController(
       this,
       this.notesRepository,
       undefined,
       this.systemLogService,
+    );
+  }
+
+  private setupTaskAndFeatureControllers(repos: {
+    labelsRepository: LabelsRepository;
+    tagsRepository: TagsRepository;
+  }): void {
+    this.taskTemplateController = new TaskTemplateController(
+      this,
+      new TaskTemplateRepository(),
+    );
+    this.taskController = new TaskController(
+      this,
+      this.taskRepository,
+      undefined,
+      this.issuesRepository,
+      this.systemLogService,
+      repos.labelsRepository,
+      repos.tagsRepository,
+    );
+    this.taskListController = new TaskListController(
+      this,
+      this.taskRepository,
+      getCurrentFiscalYear(),
+      new TaskListQuery(db),
     );
     this.issuesController = new IssuesController(
       this,
@@ -220,7 +240,7 @@ export class AppRoot extends LitElement {
     this.themeController = new ThemeController(this);
     this.autoExportController = this.setupAutoExportController();
     this.taskHistoryController = new TaskHistoryController(this);
-    this.tagsController = new TagsController(this, new TagsRepository());
+    this.tagsController = new TagsController(this, repos.tagsRepository);
   }
 
   /**
