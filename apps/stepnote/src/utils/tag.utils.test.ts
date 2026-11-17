@@ -4,6 +4,7 @@ import {
   normalizeTagVariant,
   sortTagsByNameAsc,
   normalizeTagIds,
+  splitVisibleAndOverflowTags,
 } from "./tag.utils";
 import type { TagRecord } from "@/db/models/tag.model";
 
@@ -13,6 +14,7 @@ import type { TagRecord } from "@/db/models/tag.model";
  * 2. normalizeTagVariant が有効な variant をそのまま返し、無効値時に "neutral" を返すこと
  * 3. sortTagsByNameAsc が元の配列を変更せずタグ名昇順でソートすること
  * 4. normalizeTagIds が undefined や重複IDを除去して正規化すること
+ * 5. splitVisibleAndOverflowTags が固定幅内に収まるタグと省略件数(+N)を分割すること
  */
 describe("tag.utils", () => {
   it("normalizeTagName が前後空白と先頭 '#' を除去して正規化すること", () => {
@@ -44,5 +46,26 @@ describe("tag.utils", () => {
   it("normalizeTagIds が undefined や重複IDを除去して正規化すること", () => {
     expect(normalizeTagIds(undefined)).toEqual([]);
     expect(normalizeTagIds([2, 1, 2, 3, 1])).toEqual([2, 1, 3]);
+  });
+
+  it("splitVisibleAndOverflowTags が固定幅内に収まるタグと省略件数を分割すること", () => {
+    const tags: TagRecord[] = [
+      { id: 1, name: "API", description: "", variant: "brand" },
+      { id: 2, name: "緊急対応タスク", description: "", variant: "danger" },
+      { id: 3, name: "フロントエンド設計", description: "", variant: "success" },
+      { id: 4, name: "レビュー待ち", description: "", variant: "warning" },
+    ];
+
+    const empty = splitVisibleAndOverflowTags([], 240);
+    expect(empty).toEqual({ visibleTags: [], hiddenCount: 0 });
+
+    const fitAll = splitVisibleAndOverflowTags(tags.slice(0, 2), 300);
+    expect(fitAll.visibleTags).toHaveLength(2);
+    expect(fitAll.hiddenCount).toBe(0);
+
+    const overflow = splitVisibleAndOverflowTags(tags, 220);
+    expect(overflow.visibleTags.length).toBeGreaterThan(0);
+    expect(overflow.visibleTags.length).toBeLessThan(4);
+    expect(overflow.visibleTags.length + overflow.hiddenCount).toBe(4);
   });
 });

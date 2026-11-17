@@ -10,6 +10,7 @@ import {
   dispatchCustomEvent,
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
+import type { TagRecord } from "@/db/models/tag.model";
 import {
   taskListContext,
   labelsContext,
@@ -22,6 +23,7 @@ import {
   SubscriberElement,
   WithTaskController,
   WithIssuesController,
+  WithTagsController,
 } from "@/utils/controller-consumers.mixin.js";
 import "./task-create-button.js";
 import "./task-list-item.js";
@@ -39,8 +41,8 @@ import taskListStyles from "./task-list.scss?inline";
  * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
  */
 @customElement("task-list")
-export class TaskList extends WithIssuesController(
-  WithTaskController(SubscriberElement),
+export class TaskList extends WithTagsController(
+  WithIssuesController(WithTaskController(SubscriberElement)),
 ) {
   public static styles = unsafeCSS(taskListStyles);
 
@@ -407,6 +409,16 @@ export class TaskList extends WithIssuesController(
   };
 
   /**
+   * 指定したタグID配列に対応するタグレコード一覧を取得する
+   */
+  public getTaskTags(tagIds?: readonly number[]): TagRecord[] {
+    if (!this.tagsController || !Array.isArray(tagIds) || tagIds.length === 0) {
+      return [];
+    }
+    return this.tagsController.getTagsByIds(tagIds);
+  }
+
+  /**
    * 単一タスクアイテムの描画
    */
   public renderTaskItem = (task: TaskRecord): HTMLTemplateResult => {
@@ -423,6 +435,7 @@ export class TaskList extends WithIssuesController(
         .issuesDone=${counts.done}
         .issuesTotal=${counts.total}
         .issuesDueInfo=${counts.dueIconInfo}
+        .tags=${this.getTaskTags(task.tagIds)}
         @task-select=${this.handleTaskSelect}
         @bookmark-toggle=${this.handleBookmarkToggle}
       ></task-list-item>
