@@ -71,8 +71,8 @@
 .task-tag-bar__popover-body {
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-xs, 8px);
-  width: 260px;
+  gap: var(--wa-space-s, 12px);
+  width: 280px;
   max-height: 360px;
   color: var(--wa-color-text-normal);
   @include theme-transition;
@@ -118,6 +118,21 @@
   }
 }
 
+.task-tag-bar__checkbox {
+  width: 100%;
+  align-items: center;
+
+  &::part(base) {
+    align-items: center;
+    width: 100%;
+  }
+
+  &::part(label) {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 .task-tag-bar__empty {
   font-size: var(--wa-font-size-xs);
   color: var(--wa-color-text-quiet);
@@ -128,8 +143,8 @@
 .task-tag-bar__create-section {
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-2xs, 6px);
-  padding-top: var(--wa-space-xs, 8px);
+  gap: var(--wa-space-s, 12px);
+  padding-top: var(--wa-space-s, 12px);
   border-top: 1px solid var(--wa-color-surface-border);
 }
 
@@ -142,10 +157,12 @@
 .task-tag-bar__create-row {
   display: flex;
   align-items: center;
-  gap: var(--wa-space-2xs, 6px);
+  gap: var(--wa-space-s, 12px);
 }
 
 .task-tag-bar__variant-select {
   flex: 1;
   min-width: 0;
 }
+
+@include tag-variant-select-styles("task-tag-bar");

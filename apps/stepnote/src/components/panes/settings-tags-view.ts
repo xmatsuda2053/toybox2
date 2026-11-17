@@ -265,6 +265,7 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
       <wa-select
         label="カラー"
         size="s"
+        class="settings-tags-view__variant-select settings-tags-view__variant-select--${this.formVariant}"
         .value=${this.formVariant}
         @change=${(e: Event) => {
           const target = e.target as HTMLElement & { value?: string };
@@ -272,7 +273,13 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
         }}
       >
         ${TAG_VARIANT_LIST.map(
-          (opt) => html`<wa-option value=${opt.value}>${opt.labelJa}</wa-option>`,
+          (opt) => html`
+            <wa-option
+              class="settings-tags-view__variant-option settings-tags-view__variant-option--${opt.value}"
+              value=${opt.value}
+              >${opt.label}</wa-option
+            >
+          `,
         )}
       </wa-select>
       <wa-textarea

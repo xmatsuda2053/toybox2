@@ -7,6 +7,7 @@ import {
   splitVisibleAndOverflowTags,
 } from "./tag.utils";
 import type { TagRecord } from "@/db/models/tag.model";
+import { TAG_VARIANT_LIST } from "@/constants/tag.constants";
 
 /**
  * 【tag.utils 仕様】
@@ -15,6 +16,7 @@ import type { TagRecord } from "@/db/models/tag.model";
  * 3. sortTagsByNameAsc が元の配列を変更せずタグ名昇順でソートすること
  * 4. normalizeTagIds が undefined や重複IDを除去して正規化すること
  * 5. splitVisibleAndOverflowTags が固定幅内に収まるタグと省略件数(+N)を分割すること
+ * 6. TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（Gray / Blue / Green / Yellow / Red）で定義されていること
  */
 describe("tag.utils", () => {
   it("normalizeTagName が前後空白と先頭 '#' を除去して正規化すること", () => {
@@ -67,5 +69,15 @@ describe("tag.utils", () => {
     expect(overflow.visibleTags.length).toBeGreaterThan(0);
     expect(overflow.visibleTags.length).toBeLessThan(4);
     expect(overflow.visibleTags.length + overflow.hiddenCount).toBe(4);
+  });
+
+  it("TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（Gray / Blue / Green / Yellow / Red）で定義されていること", () => {
+    expect(TAG_VARIANT_LIST).toEqual([
+      { value: "neutral", label: "Gray" },
+      { value: "brand", label: "Blue" },
+      { value: "success", label: "Green" },
+      { value: "warning", label: "Yellow" },
+      { value: "danger", label: "Red" },
+    ]);
   });
 });

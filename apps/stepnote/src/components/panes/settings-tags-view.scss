@@ -182,3 +182,5 @@
   justify-content: flex-end;
   gap: var(--wa-space-s, 12px);
 }
+
+@include tag-variant-select-styles("settings-tags-view");

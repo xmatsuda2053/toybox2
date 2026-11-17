@@ -20,6 +20,7 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 2-2. 新規作成状態で handleSave 実行時、tagsController.createTag がタグ名・variant・説明付きで呼び出されること
  *    - 2-3. selectTag で既存タグを選択するとフォームへ値が反映され、handleSave 実行時に tagsController.updateTag が呼び出されること
  *    - 2-4. createTag / updateTag がエラーをスローした場合、errorMessage にエラー内容がセットされ画面へ表示されること
+ *    - 2-5. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
  *
  * 3. タグ削除確認と関連タスク影響件数表示
  *    - 3-1. requestDeleteTag 実行時、getTagUsageCount で使用中タスク件数を取得し、削除確認ダイアログ（wa-dialog）が開くこと
@@ -30,6 +31,7 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 4-1. settings-tags-view.scss が存在し、主要BEMセレクタが定義されていること
  *    - 4-2. !important および @extend が一切含まれていないこと
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
+ *    - 4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
  */
 describe("SettingsTagsView Component", () => {
   let element: SettingsTagsView;
@@ -151,6 +153,28 @@ describe("SettingsTagsView Component", () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("settings-tags-view__error");
     });
+
+    it("2-5. カラー選択セレクトが英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと", () => {
+      element.selectTag(sampleTags[0]);
+      element.formVariant = "success";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("settings-tags-view__variant-select");
+      expect(htmlStr).toContain("settings-tags-view__variant-select--success");
+      for (const [variant, label] of [
+        ["neutral", "Gray"],
+        ["brand", "Blue"],
+        ["success", "Green"],
+        ["warning", "Yellow"],
+        ["danger", "Red"],
+      ] as const) {
+        expect(htmlStr).toContain(`settings-tags-view__variant-option--${variant}`);
+        expect(htmlStr).toContain(label);
+      }
+      expect(htmlStr).not.toContain("成功");
+      expect(htmlStr).not.toContain("警告");
+      expect(htmlStr).not.toContain("危険");
+    });
   });
 
   describe("3. タグ削除確認と関連タスク影響件数表示", () => {
@@ -209,6 +233,11 @@ describe("SettingsTagsView Component", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       const matches = content.match(/(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
       expect(matches).toBeNull();
+    });
+
+    it("4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること", () => {
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toContain('@include tag-variant-select-styles("settings-tags-view")');
     });
   });
 });

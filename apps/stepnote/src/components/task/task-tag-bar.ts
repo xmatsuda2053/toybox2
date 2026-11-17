@@ -287,6 +287,7 @@ export class TaskTagBar extends WithTagsController(
             <div class="task-tag-bar__check-item">
               <wa-checkbox
                 size="s"
+                class="task-tag-bar__checkbox"
                 ?checked=${checked}
                 @change=${() => this.handleToggleTag(tag.id)}
               >
@@ -308,7 +309,7 @@ export class TaskTagBar extends WithTagsController(
     return html`
       <wa-select
         size="s"
-        class="task-tag-bar__variant-select"
+        class="task-tag-bar__variant-select task-tag-bar__variant-select--${this.newTagVariant}"
         .value=${this.newTagVariant}
         @wa-show=${this.stopChildPopupEvent}
         @wa-after-show=${this.stopChildPopupEvent}
@@ -320,7 +321,13 @@ export class TaskTagBar extends WithTagsController(
         }}
       >
         ${TAG_VARIANT_LIST.map(
-          (opt) => html`<wa-option value=${opt.value}>${opt.labelJa}</wa-option>`,
+          (opt) => html`
+            <wa-option
+              class="task-tag-bar__variant-option task-tag-bar__variant-option--${opt.value}"
+              value=${opt.value}
+              >${opt.label}</wa-option
+            >
+          `,
         )}
       </wa-select>
     `;

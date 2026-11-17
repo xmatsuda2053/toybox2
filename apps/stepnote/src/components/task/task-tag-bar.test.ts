@@ -24,12 +24,16 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 2-4. 新規タグ作成入力（#付き等）が空または既存重複の場合、作成処理が抑止されること
  *    - 2-5. 追加ポップオーバー（.task-tag-bar__add-popover）内に検索入力、既存タグチェックリスト、新規タグ作成UI（色variant選択・説明入力含む）が描画されること
  *    - 2-6. 子要素（wa-select等）からバブリングした wa-after-hide イベントでは入力フォームがリセットされず、popover 自身の wa-after-hide でのみリセットされること
+ *    - 2-7. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート（task-tag-bar.scss）が存在し、.task-tag-bar および主要BEMセレクタが定義されていること
  *    - 3-2. テーマ切替トランジション（theme-transition または --stepnote-transition-theme）が定義されていること
  *    - 3-3. !important および @extend が一切含まれていないこと
  *    - 3-4. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
+ *    - 3-5. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
+ *    - 3-6. タグ追加ポップオーバーおよび新規作成欄（.task-tag-bar__popover-body / __create-section / __create-row）に十分な余白（--wa-space-s 等）が確保されていること
+ *    - 3-7. ポップオーバー内チェックリストの wa-checkbox（.task-tag-bar__checkbox）でチェックボックスとタグが縦方向中央揃えになっていること
  */
 describe("TaskTagBar Component", () => {
   let element: TaskTagBar;
@@ -227,6 +231,27 @@ describe("TaskTagBar Component", () => {
       expect(element.newTagVariant).toBe("neutral");
       expect(element.newTagDescription).toBe("");
     });
+
+    it("2-7. カラー選択セレクトが英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと", () => {
+      element.searchKeyword = "新規候補";
+      element.newTagVariant = "brand";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("task-tag-bar__variant-select--brand");
+      for (const [variant, label] of [
+        ["neutral", "Gray"],
+        ["brand", "Blue"],
+        ["success", "Green"],
+        ["warning", "Yellow"],
+        ["danger", "Red"],
+      ] as const) {
+        expect(htmlStr).toContain(`task-tag-bar__variant-option--${variant}`);
+        expect(htmlStr).toContain(label);
+      }
+      expect(htmlStr).not.toContain("成功");
+      expect(htmlStr).not.toContain("警告");
+      expect(htmlStr).not.toContain("危険");
+    });
   });
 
   describe("3. BEM設計およびSCSSスタイルの検証", () => {
@@ -258,6 +283,39 @@ describe("TaskTagBar Component", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       const matches = content.match(/(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
       expect(matches).toBeNull();
+    });
+
+    it("3-5. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること", () => {
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toContain('@include tag-variant-select-styles("task-tag-bar")');
+
+      const mixinsPath = path.resolve(path.dirname(scssPath), "../../styles/mixins.scss");
+      const mixinsContent = fs.readFileSync(mixinsPath, "utf-8");
+      expect(mixinsContent).toContain("@mixin tag-variant-select-styles");
+      expect(mixinsContent).toContain("--wa-color-brand-on-quiet");
+      expect(mixinsContent).toContain("--wa-color-success-on-quiet");
+      expect(mixinsContent).toContain("--wa-color-warning-on-quiet");
+      expect(mixinsContent).toContain("--wa-color-danger-on-quiet");
+      expect(mixinsContent).toContain("--wa-color-neutral-on-quiet");
+    });
+
+    it("3-6. タグ追加ポップオーバーおよび新規作成欄（__popover-body / __create-section / __create-row）に十分な余白が確保されていること", () => {
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(/\.task-tag-bar__popover-body\s*\{[^}]*gap:\s*var\(--wa-space-s/);
+      expect(scssContent).toMatch(/\.task-tag-bar__create-section\s*\{[^}]*gap:\s*var\(--wa-space-s/);
+      expect(scssContent).toMatch(/\.task-tag-bar__create-section\s*\{[^}]*padding-top:\s*var\(--wa-space-s/);
+      expect(scssContent).toMatch(/\.task-tag-bar__create-row\s*\{[^}]*gap:\s*var\(--wa-space-s/);
+    });
+
+    it("3-7. チェックリストの wa-checkbox（.task-tag-bar__checkbox）でチェックボックスとタグが縦方向中央揃えになっていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("task-tag-bar__checkbox");
+
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toContain(".task-tag-bar__checkbox");
+      expect(scssContent).toMatch(/&::part\(base\)\s*\{[^}]*align-items:\s*center/);
+      expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*display:\s*inline-flex/);
+      expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*align-items:\s*center/);
     });
   });
 });
