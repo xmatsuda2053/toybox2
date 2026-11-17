@@ -7,11 +7,15 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "@shared/components";
-import { TAG_VARIANT_LIST, DEFAULT_TAG_VARIANT } from "@/constants/tag.constants.js";
+import {
+  TAG_VARIANT_LIST,
+  DEFAULT_TAG_VARIANT,
+} from "@/constants/tag.constants.js";
 import type { TagRecord, TagVariant } from "@/db/models/tag.model.js";
 import {
   SubscriberElement,
   WithTagsController,
+  WithTagSetsController,
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
 import { normalizeTagName, normalizeTagVariant } from "@/utils/tag.utils.js";
@@ -33,8 +37,8 @@ const TAG_LIST_GAP = 4;
  * タグの付け外しおよび新規タグの作成＋即時付与を提供する。
  */
 @customElement("task-tag-bar")
-export class TaskTagBar extends WithTagsController(
-  WithTaskController(SubscriberElement),
+export class TaskTagBar extends WithTagSetsController(
+  WithTagsController(WithTaskController(SubscriberElement)),
 ) {
   public static override styles = unsafeCSS(styles);
 
@@ -53,6 +57,10 @@ export class TaskTagBar extends WithTagsController(
   /** 新規作成タグの説明文 */
   @state()
   public newTagDescription: string = "";
+
+  /** 選択中のタグセットID（文字列、未選択時は空文字） */
+  @state()
+  public selectedTagSetId: string = "";
 
   @state()
   private measuredVisibleCount?: number;
@@ -100,7 +108,8 @@ export class TaskTagBar extends WithTagsController(
     if (this.visibleTagCount !== undefined || !this.renderRoot) {
       return;
     }
-    const container = this.renderRoot.querySelector<HTMLElement>(".task-tag-bar");
+    const container =
+      this.renderRoot.querySelector<HTMLElement>(".task-tag-bar");
     const measureItems = this.renderRoot.querySelectorAll<HTMLElement>(
       ".task-tag-bar__measure-item",
     );
@@ -108,7 +117,10 @@ export class TaskTagBar extends WithTagsController(
       return;
     }
     const widths = Array.from(measureItems).map((el) => el.offsetWidth);
-    const maxListWidth = Math.max(0, container.clientWidth - ADD_BTN_RESERVED_WIDTH);
+    const maxListWidth = Math.max(
+      0,
+      container.clientWidth - ADD_BTN_RESERVED_WIDTH,
+    );
     const nextCount = computeVisibleTagCount(
       widths,
       maxListWidth,
@@ -165,12 +177,53 @@ export class TaskTagBar extends WithTagsController(
   };
 
   /**
+   * タグ追加ポップオーバーを閉じる
+   */
+  private closeAddPopover(): void {
+    const popover = this.renderRoot?.querySelector<
+      HTMLElement & { open?: boolean; hide?: () => Promise<void> | void }
+    >(".task-tag-bar__add-popover");
+    if (!popover) {
+      return;
+    }
+    if (typeof popover.hide === "function") {
+      void popover.hide();
+    } else {
+      popover.open = false;
+    }
+  }
+
+  /**
+   * 選択されたタグセット内の全タグを現在のタスクへマージ付与する
+   */
+  public handleApplyTagSet = async (): Promise<void> => {
+    const setId = Number(this.selectedTagSetId);
+    if (
+      !this.selectedTagSetId ||
+      !Number.isFinite(setId) ||
+      !this.tagSetsController ||
+      !this.taskController
+    ) {
+      return;
+    }
+    const tagSet = this.tagSetsController.getTagSetById(setId);
+    if (!tagSet) {
+      return;
+    }
+    const tagIdsToApply = [...tagSet.tagIds];
+    this.selectedTagSetId = "";
+    this.closeAddPopover();
+    await this.taskController.addTags(tagIdsToApply);
+  };
+
+  /**
    * ポップオーバー内の入力状態をリセットする
    */
   public resetCreateForm = (): void => {
     this.searchKeyword = "";
     this.newTagVariant = DEFAULT_TAG_VARIANT;
     this.newTagDescription = "";
+    this.selectedTagSetId = "";
   };
 
   /**
@@ -276,7 +329,9 @@ export class TaskTagBar extends WithTagsController(
     assignedIdSet: ReadonlySet<number>,
   ): HTMLTemplateResult {
     if (filteredTags.length === 0) {
-      return html`<div class="task-tag-bar__empty">一致するタグがありません</div>`;
+      return html`<div class="task-tag-bar__empty">
+        一致するタグがありません
+      </div>`;
     }
 
     return html`
@@ -291,7 +346,12 @@ export class TaskTagBar extends WithTagsController(
                 ?checked=${checked}
                 @change=${() => this.handleToggleTag(tag.id)}
               >
-                <wa-tag size="xs" pill variant=${tag.variant} title=${tag.description}>
+                <wa-tag
+                  size="xs"
+                  pill
+                  variant=${tag.variant}
+                  title=${tag.description}
+                >
                   ${tag.name}
                 </wa-tag>
               </wa-checkbox>
@@ -309,7 +369,8 @@ export class TaskTagBar extends WithTagsController(
     return html`
       <wa-select
         size="s"
-        class="task-tag-bar__variant-select task-tag-bar__variant-select--${this.newTagVariant}"
+        class="task-tag-bar__variant-select task-tag-bar__variant-select--${this
+          .newTagVariant}"
         .value=${this.newTagVariant}
         @wa-show=${this.stopChildPopupEvent}
         @wa-after-show=${this.stopChildPopupEvent}
@@ -373,6 +434,76 @@ export class TaskTagBar extends WithTagsController(
   }
 
   /**
+   * ポップオーバー内のタグセット一括追加セクションの描画
+   */
+  private renderTagSetSection(): HTMLTemplateResult | typeof nothing {
+    const tagSets = this.tagSetsController?.state ?? [];
+    if (tagSets.length === 0) {
+      return nothing;
+    }
+
+    return html`
+      <div class="task-tag-bar__tagset-section">
+        <span class="task-tag-bar__create-title">タグセットから一括追加</span>
+        <div class="task-tag-bar__tagset-row">
+          <wa-select
+            size="s"
+            class="task-tag-bar__tagset-select"
+            placeholder="セットを選択..."
+            .value=${this.selectedTagSetId}
+            @wa-show=${this.stopChildPopupEvent}
+            @wa-after-show=${this.stopChildPopupEvent}
+            @wa-hide=${this.stopChildPopupEvent}
+            @wa-after-hide=${this.stopChildPopupEvent}
+            @change=${(e: Event) => {
+              const target = e.target as HTMLElement & { value?: string };
+              this.selectedTagSetId = target.value ?? "";
+            }}
+          >
+            ${tagSets.map(
+              (set) => html`
+                <wa-option value=${String(set.id ?? "")}>${set.name}</wa-option>
+              `,
+            )}
+          </wa-select>
+          <wa-button
+            size="s"
+            variant="brand"
+            class="task-tag-bar__tagset-apply-btn"
+            ?disabled=${!this.selectedTagSetId}
+            @click=${this.handleApplyTagSet}
+          >
+            適用
+          </wa-button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * タグ検索／新規作成入力欄の描画
+   */
+  private renderAddSearchInput(): HTMLTemplateResult {
+    return html`
+      <wa-input
+        size="s"
+        class="task-tag-bar__search-input"
+        placeholder="タグを検索または新規作成..."
+        .value=${this.searchKeyword}
+        @input=${(e: Event) => {
+          this.searchKeyword = (e.target as HTMLInputElement).value;
+        }}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void this.handleCreateAndAttachTag();
+          }
+        }}
+      ></wa-input>
+    `;
+  }
+
+  /**
    * タグ追加・編集トリガーボタンおよびポップオーバーの描画
    */
   private renderAddControl(): HTMLTemplateResult {
@@ -405,21 +536,7 @@ export class TaskTagBar extends WithTagsController(
         @wa-after-hide=${this.handleAddPopoverAfterHide}
       >
         <div class="task-tag-bar__popover-body">
-          <wa-input
-            size="s"
-            class="task-tag-bar__search-input"
-            placeholder="タグを検索または新規作成..."
-            .value=${this.searchKeyword}
-            @input=${(e: Event) => {
-              this.searchKeyword = (e.target as HTMLInputElement).value;
-            }}
-            @keydown=${(e: KeyboardEvent) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void this.handleCreateAndAttachTag();
-              }
-            }}
-          ></wa-input>
+          ${this.renderTagSetSection()} ${this.renderAddSearchInput()}
           ${this.renderTagChecklist(filteredTags, assignedIdSet)}
           ${this.renderCreateTagSection(allTags)}
         </div>

@@ -14,9 +14,11 @@ import {
   autoExportContext,
   taskHistoryContext,
   tagsContext,
+  tagSetsContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
 import type { TagsController } from "@/controllers/tags.controller";
+import type { TagSetsController } from "@/controllers/tag-sets.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { TaskListController } from "@/controllers/task-list.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
@@ -432,4 +434,31 @@ export function WithTagsController<T extends LitElementConstructor>(Base: T) {
     }
   }
   return TagsConsumerClass;
+}
+
+/**
+ * TagSetsController を Lit Context 経由で受信・購読する Mixin。
+ */
+export function WithTagSetsController<T extends LitElementConstructor>(
+  Base: T,
+) {
+  class TagSetsConsumerClass extends Base {
+    private _tagSetsController?: TagSetsController;
+
+    /** タグセット管理コントローラー */
+    public get tagSetsController(): TagSetsController | undefined {
+      return this._tagSetsController;
+    }
+
+    @consume({ context: tagSetsContext, subscribe: true })
+    @property({ attribute: false })
+    public set tagSetsController(controller: TagSetsController | undefined) {
+      this._tagSetsController = this.subscriber.bind(
+        "tagSets",
+        this._tagSetsController,
+        controller,
+      );
+    }
+  }
+  return TagSetsConsumerClass;
 }

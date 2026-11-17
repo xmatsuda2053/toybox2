@@ -1,4 +1,4 @@
-import type { TagRecord, TagVariant } from "@/db/models/tag.model";
+import type { TagRecord, TagSetRecord, TagVariant } from "@/db/models/tag.model";
 import {
   DEFAULT_TAG_VARIANT,
   VALID_TAG_VARIANTS,
@@ -28,6 +28,15 @@ export function normalizeTagVariant(variant?: string): TagVariant {
 }
 
 /**
+ * 名前プロパティを持つエンティティ一覧を日本語ロケールの自然順・昇順でソートする共通ヘルパー
+ */
+function sortByNameAsc<T extends { name: string }>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) =>
+    a.name.localeCompare(b.name, "ja", { numeric: true }),
+  );
+}
+
+/**
  * タグ一覧をタグ名の自然順・昇順でソートした新しい配列を返す。
  *
  * @param tags 対象タグ一覧
@@ -36,9 +45,45 @@ export function normalizeTagVariant(variant?: string): TagVariant {
 export function sortTagsByNameAsc(
   tags: readonly TagRecord[],
 ): TagRecord[] {
-  return [...tags].sort((a, b) =>
-    a.name.localeCompare(b.name, "ja", { numeric: true }),
-  );
+  return sortByNameAsc(tags);
+}
+
+/**
+ * タグセット名を正規化する（前後空白の除去）。
+ *
+ * @param rawName 入力されたタグセット名
+ * @returns 正規化済みタグセット名
+ */
+export function normalizeTagSetName(rawName: string): string {
+  return rawName.trim();
+}
+
+/**
+ * タグセット一覧をセット名の自然順・昇順でソートした新しい配列を返す。
+ *
+ * @param tagSets 対象タグセット一覧
+ * @returns ソート済みタグセット配列
+ */
+export function sortTagSetsByNameAsc(
+  tagSets: readonly TagSetRecord[],
+): TagSetRecord[] {
+  return sortByNameAsc(tagSets);
+}
+
+/**
+ * 既存のタグID配列を保持したまま、追加対象のタグIDを重複なく末尾へマージする。
+ *
+ * @param currentIds 既存タグID配列
+ * @param additionalIds 追加するタグID配列
+ * @returns マージ後の重複なしタグID配列
+ */
+export function mergeTagIds(
+  currentIds: readonly number[] | undefined,
+  additionalIds: readonly number[],
+): number[] {
+  const base = normalizeTagIds(currentIds);
+  const extras = normalizeTagIds(additionalIds);
+  return normalizeTagIds([...base, ...extras]);
 }
 
 /**

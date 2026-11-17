@@ -4,7 +4,7 @@ import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
-import { normalizeTagIds } from "@/utils/tag.utils";
+import { mergeTagIds, normalizeTagIds } from "@/utils/tag.utils";
 import type {
   CreateTaskInput,
   Summary,
@@ -335,6 +335,19 @@ export class TaskController extends BaseTaskScopeController<
       return;
     }
     await this.updateTask({ tagIds: [...currentIds, tagId] });
+  };
+
+  /**
+   * 対象タスクへ複数タグを一括追加する（既存タグは保持し、未付与タグのみ末尾へマージ）。
+   */
+  public addTags = async (tagIds: readonly number[]): Promise<void> => {
+    if (!this._state) return;
+    const currentIds = normalizeTagIds(this._state.tagIds);
+    const mergedIds = mergeTagIds(currentIds, tagIds);
+    if (mergedIds.length === currentIds.length) {
+      return;
+    }
+    await this.updateTask({ tagIds: mergedIds });
   };
 
   /**

@@ -17,11 +17,13 @@ import {
   autoExportContext,
   taskHistoryContext,
   tagsContext,
+  tagSetsContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import { LabelsController } from "@/controllers/labels.controller.js";
 import { TagsController } from "@/controllers/tags.controller.js";
+import { TagSetsController } from "@/controllers/tag-sets.controller.js";
 import { TaskController } from "@/controllers/task.controller.js";
 import { TaskListController } from "@/controllers/task-list.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
@@ -62,6 +64,7 @@ import {
   ScratchRepository,
   TaskTemplateRepository,
   TagsRepository,
+  TagSetsRepository,
 } from "@/repositories/index.js";
 
 /**
@@ -91,6 +94,7 @@ export class AppRoot extends LitElement {
   public autoExportController!: AutoExportController;
   public taskHistoryController!: TaskHistoryController;
   public tagsController!: TagsController;
+  public tagSetsController!: TagSetsController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
   public taskRepository!: TaskRepository;
@@ -162,6 +166,7 @@ export class AppRoot extends LitElement {
     logsRepository: LogsRepository;
     scratchRepository: ScratchRepository;
     tagsRepository: TagsRepository;
+    tagSetsRepository: TagSetsRepository;
   } {
     this.taskRepository = new TaskRepository();
     this.issuesRepository = new IssuesRepository();
@@ -171,6 +176,7 @@ export class AppRoot extends LitElement {
       logsRepository: new LogsRepository(),
       scratchRepository: new ScratchRepository(),
       tagsRepository: new TagsRepository(),
+      tagSetsRepository: new TagSetsRepository(),
     };
   }
 
@@ -211,6 +217,7 @@ export class AppRoot extends LitElement {
   private setupTaskAndFeatureControllers(repos: {
     labelsRepository: LabelsRepository;
     tagsRepository: TagsRepository;
+    tagSetsRepository: TagSetsRepository;
   }): void {
     this.taskTemplateController = new TaskTemplateController(
       this,
@@ -240,6 +247,7 @@ export class AppRoot extends LitElement {
     this.autoExportController = this.setupAutoExportController();
     this.taskHistoryController = new TaskHistoryController(this);
     this.tagsController = new TagsController(this, repos.tagsRepository);
+    this.tagSetsController = new TagSetsController(this, repos.tagSetsRepository);
   }
 
   /**
@@ -330,6 +338,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: tagsContext,
       initialValue: this.tagsController,
+    });
+    new ContextProvider(this, {
+      context: tagSetsContext,
+      initialValue: this.tagSetsController,
     });
   }
 
@@ -647,6 +659,7 @@ export class AppRoot extends LitElement {
       await Promise.all([
         this.taskListController.refresh(),
         this.taskController.refresh(),
+        this.tagSetsController.refresh(),
       ]);
       this.requestUpdate();
     });

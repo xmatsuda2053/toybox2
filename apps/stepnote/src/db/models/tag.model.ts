@@ -37,3 +37,33 @@ export interface CreateTagInput {
   description?: string;
   variant?: TagVariant;
 }
+
+/**
+ * タグセットレコードの永続化エンティティ型定義
+ *
+ * @export
+ * @interface TagSetRecord
+ */
+export interface TagSetRecord {
+  /** レコードID（自動採番） */
+  id?: number;
+  /** タグセット名（ユニーク） */
+  name: string;
+  /** タグセットの説明文 */
+  description: string;
+  /** セットに含まれるタグID配列 */
+  tagIds: number[];
+  /** 作成日時 */
+  createdAt?: Date;
+  /** 更新日時 */
+  updatedAt?: Date;
+}
+
+/**
+ * タグセット新規作成時の入力型
+ */
+export interface CreateTagSetInput {
+  name: string;
+  description?: string;
+  tagIds: readonly number[];
+}

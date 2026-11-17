@@ -73,7 +73,7 @@
   flex-direction: column;
   gap: var(--wa-space-s, 12px);
   width: 280px;
-  max-height: 360px;
+  max-height: 440px;
   color: var(--wa-color-text-normal);
   @include theme-transition;
 }
@@ -158,6 +158,25 @@
   display: flex;
   align-items: center;
   gap: var(--wa-space-s, 12px);
+}
+
+.task-tag-bar__tagset-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s, 12px);
+  padding-bottom: var(--wa-space-s, 12px);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+}
+
+.task-tag-bar__tagset-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-s, 12px);
+}
+
+.task-tag-bar__tagset-select {
+  flex: 1;
+  min-width: 0;
 }
 
 .task-tag-bar__variant-select {

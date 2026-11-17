@@ -206,5 +206,28 @@ describe("TagsRepository Tests", () => {
       expect(task1?.tagIds).toEqual([tagId2]);
       expect(task2?.tagIds).toEqual([]);
     });
+
+    it("3-3. deleteTagWithCleanup でタグ削除時、全タグセットの tagIds からも対象IDが除去されること", async () => {
+      const tagId1 = await repository.addTag({ name: "削除タグ" });
+      const tagId2 = await repository.addTag({ name: "維持タグ" });
+
+      const setId1 = await db.table("tagSets").add({
+        name: "セットA",
+        description: "",
+        tagIds: [tagId1, tagId2],
+      });
+      const setId2 = await db.table("tagSets").add({
+        name: "セットB",
+        description: "",
+        tagIds: [tagId1],
+      });
+
+      await repository.deleteTagWithCleanup(tagId1);
+
+      const set1 = await db.table("tagSets").get(setId1);
+      const set2 = await db.table("tagSets").get(setId2);
+      expect(set1?.tagIds).toEqual([tagId2]);
+      expect(set2?.tagIds).toEqual([]);
+    });
   });
 });

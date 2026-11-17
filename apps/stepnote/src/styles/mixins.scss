@@ -88,4 +88,20 @@
   }
 }
 
+/* wa-checkbox のチェックボックスとラベル（wa-tag 等）を縦方向中央揃えにする */
+@mixin checkbox-center-alignment {
+  width: 100%;
+  align-items: center;
+
+  &::part(base) {
+    align-items: center;
+    width: 100%;
+  }
+
+  &::part(label) {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 

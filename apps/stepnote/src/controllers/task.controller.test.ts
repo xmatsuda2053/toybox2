@@ -880,5 +880,47 @@ describe("TaskController (Single Task TDD)", () => {
       expect(ctrl.state?.tagIds).toEqual([20]);
       expect(fakeLogsRepository.add).not.toHaveBeenCalled();
     });
+
+    it("9-3. addTags で既存タグを保持しつつ未付与タグのみマージ追加され、システムログは記録されないこと", async () => {
+      const fakeRepo = new FakeTaskRepository([
+        {
+          id: 1,
+          name: "タグセット適用タスク",
+          statusCode: 0,
+          dueDate: new Date("2026-04-01"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: true,
+          tagIds: [10, 20],
+        },
+      ]);
+      const updateSpy = vi.spyOn(fakeRepo, "update");
+      const fakeLogsRepository = {
+        add: vi.fn().mockResolvedValue(1),
+      };
+      const realLogSvc = new SystemLogService(
+        fakeLogsRepository as unknown as LogsRepository,
+      );
+      const host = createMockHost();
+      const ctrl = new TaskController(
+        host.host,
+        fakeRepo as unknown as TaskRepository,
+        1,
+        undefined,
+        realLogSvc,
+      );
+      await ctrl.initialized;
+
+      await ctrl.addTags([20, 30, 40, 30]);
+      expect(ctrl.state?.tagIds).toEqual([10, 20, 30, 40]);
+      expect(fakeLogsRepository.add).not.toHaveBeenCalled();
+
+      updateSpy.mockClear();
+      await ctrl.addTags([10, 20]);
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
   });
 });

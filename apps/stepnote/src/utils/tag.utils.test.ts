@@ -5,6 +5,9 @@ import {
   sortTagsByNameAsc,
   normalizeTagIds,
   splitVisibleAndOverflowTags,
+  normalizeTagSetName,
+  sortTagSetsByNameAsc,
+  mergeTagIds,
 } from "./tag.utils";
 import type { TagRecord } from "@/db/models/tag.model";
 import { TAG_VARIANT_LIST } from "@/constants/tag.constants";
@@ -79,5 +82,23 @@ describe("tag.utils", () => {
       { value: "warning", label: "Yellow" },
       { value: "danger", label: "Red" },
     ]);
+  });
+
+  it("normalizeTagSetName・sortTagSetsByNameAsc・mergeTagIds が正しく動作すること", () => {
+    expect(normalizeTagSetName("  #緊急セット  ")).toBe("#緊急セット");
+
+    const sets = [
+      { id: 1, name: "セット10", description: "", tagIds: [1] },
+      { id: 2, name: "セット2", description: "", tagIds: [2] },
+      { id: 3, name: "Alpha", description: "", tagIds: [3] },
+    ];
+    expect(sortTagSetsByNameAsc(sets).map((s) => s.name)).toEqual([
+      "Alpha",
+      "セット2",
+      "セット10",
+    ]);
+
+    expect(mergeTagIds([10, 20], [20, 30, 40, 30])).toEqual([10, 20, 30, 40]);
+    expect(mergeTagIds(undefined, [5, 6])).toEqual([5, 6]);
   });
 });

@@ -13,6 +13,27 @@
 
 @include box-sizing-reset;
 
+.settings-tags-view__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-m, 16px);
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  flex: 1;
+}
+
+.settings-tags-view__mode-switch {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.settings-tags-view__subview {
+  flex: 1;
+  min-height: 0;
+}
+
 .settings-tags-view {
   display: flex;
   flex-direction: row;

@@ -3,9 +3,10 @@ import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
-import type { TagRecord } from "@/db/models/tag.model";
+import type { TagRecord, TagSetRecord } from "@/db/models/tag.model";
 import type { TaskController } from "@/controllers/task.controller";
 import type { TagsController } from "@/controllers/tags.controller";
+import type { TagSetsController } from "@/controllers/tag-sets.controller";
 import { TaskTagBar } from "./task-tag-bar.js";
 
 /**
@@ -25,6 +26,8 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 2-5. 追加ポップオーバー（.task-tag-bar__add-popover）内に検索入力、既存タグチェックリスト、新規タグ作成UI（色variant選択・説明入力含む）が描画されること
  *    - 2-6. 子要素（wa-select等）からバブリングした wa-after-hide イベントでは入力フォームがリセットされず、popover 自身の wa-after-hide でのみリセットされること
  *    - 2-7. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
+ *    - 2-8. tagSetsController にタグセットがある場合、ポップオーバー内に「タグセットから一括追加」（.task-tag-bar__tagset-section / __tagset-select / __tagset-apply-btn）が描画されること
+ *    - 2-9. handleApplyTagSet 実行時に選択されたタグセットの tagIds で taskController.addTags が呼び出され、選択状態がリセットされるとともにタグ追加ポップオーバーが自動で閉じられること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート（task-tag-bar.scss）が存在し、.task-tag-bar および主要BEMセレクタが定義されていること
@@ -40,6 +43,7 @@ describe("TaskTagBar Component", () => {
   let mockTaskController: {
     state: TaskRecord | undefined;
     addTag: ReturnType<typeof vi.fn>;
+    addTags: ReturnType<typeof vi.fn>;
     removeTag: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
@@ -50,11 +54,20 @@ describe("TaskTagBar Component", () => {
     findByName: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
+  let mockTagSetsController: {
+    state: TagSetRecord[];
+    getTagSetById: ReturnType<typeof vi.fn>;
+    subscribe: ReturnType<typeof vi.fn>;
+  };
 
   const sampleTags: TagRecord[] = [
     { id: 1, name: "API", description: "バックエンド", variant: "brand" },
     { id: 2, name: "緊急", description: "最優先対応", variant: "danger" },
     { id: 3, name: "設計", description: "仕様検討", variant: "success" },
+  ];
+
+  const sampleTagSets: TagSetRecord[] = [
+    { id: 100, name: "初期セット", description: "基本構成", tagIds: [1, 3] },
   ];
 
   const baseTask: TaskRecord = {
@@ -75,6 +88,7 @@ describe("TaskTagBar Component", () => {
     mockTaskController = {
       state: { ...baseTask },
       addTag: vi.fn().mockResolvedValue(undefined),
+      addTags: vi.fn().mockResolvedValue(undefined),
       removeTag: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(vi.fn()),
     };
@@ -96,9 +110,17 @@ describe("TaskTagBar Component", () => {
       subscribe: vi.fn().mockReturnValue(vi.fn()),
     };
 
+    mockTagSetsController = {
+      state: [...sampleTagSets],
+      getTagSetById: vi.fn((id: number) => sampleTagSets.find((s) => s.id === id)),
+      subscribe: vi.fn().mockReturnValue(vi.fn()),
+    };
+
     element = new TaskTagBar();
     element.taskController = mockTaskController as unknown as TaskController;
     element.tagsController = mockTagsController as unknown as TagsController;
+    element.tagSetsController =
+      mockTagSetsController as unknown as TagSetsController;
   });
 
   describe("1. タグ一覧表示および省略表示 (+N)", () => {
@@ -253,6 +275,38 @@ describe("TaskTagBar Component", () => {
       expect(htmlStr).not.toContain("成功");
       expect(htmlStr).not.toContain("警告");
       expect(htmlStr).not.toContain("危険");
+    });
+
+    it("2-8. tagSetsController にタグセットがある場合、ポップオーバー内にタグセット選択・適用UIが描画されること", () => {
+      const htmlWithSets = flattenTemplate(element.render());
+      expect(htmlWithSets).toContain("task-tag-bar__tagset-section");
+      expect(htmlWithSets).toContain("task-tag-bar__tagset-select");
+      expect(htmlWithSets).toContain("task-tag-bar__tagset-apply-btn");
+      expect(htmlWithSets).toContain("初期セット");
+
+      mockTagSetsController.state = [];
+      const htmlWithoutSets = flattenTemplate(element.render());
+      expect(htmlWithoutSets).not.toContain("task-tag-bar__tagset-section");
+    });
+
+    it("2-9. handleApplyTagSet 実行時に選択タグセットの tagIds で addTags が呼ばれ、選択状態がリセットされポップオーバーが自動で閉じられること", async () => {
+      const mockHide = vi.fn();
+      const mockPopover = { open: true, hide: mockHide };
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn((selector: string) =>
+            selector === ".task-tag-bar__add-popover" ? mockPopover : null,
+          ),
+        },
+      });
+
+      element.selectedTagSetId = "100";
+      await element.handleApplyTagSet();
+
+      expect(mockTaskController.addTags).toHaveBeenCalledWith([1, 3]);
+      expect(element.selectedTagSetId).toBe("");
+      expect(mockHide).toHaveBeenCalledTimes(1);
     });
   });
 

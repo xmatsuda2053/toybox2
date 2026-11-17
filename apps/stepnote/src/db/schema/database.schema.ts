@@ -8,6 +8,7 @@ import {
   ScratchRecord,
   TaskTemplateRecord,
   TagRecord,
+  TagSetRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
 import { extractMarkdownTitle } from "@shared/utils";
@@ -93,13 +94,21 @@ export class Database extends Dexie {
   tags!: Table<TagRecord, number>;
 
   /**
+   * タグセットテーブル
+   *
+   * @type {Table<TagSetRecord, number>}
+   * @memberof Database
+   */
+  tagSets!: Table<TagSetRecord, number>;
+
+  /**
    * Creates an instance of Database.
    * @memberof Database
    */
   constructor() {
     super("StepNote");
     this.defineV1ToV3();
-    this.defineV4ToV5();
+    this.defineV4ToV6();
   }
 
   /** バージョン 1〜3 のスキーマ定義 */
@@ -148,8 +157,8 @@ export class Database extends Dexie {
     }
   }
 
-  /** バージョン 4〜5 のスキーマ定義 */
-  private defineV4ToV5(): void {
+  /** バージョン 4〜6 のスキーマ定義 */
+  private defineV4ToV6(): void {
     this.version(4).stores({
       taskTemplates: "++id, name, createdAt",
     });
@@ -168,6 +177,9 @@ export class Database extends Dexie {
             }
           });
       });
+    this.version(6).stores({
+      tagSets: "++id, &name, *tagIds",
+    });
   }
 }
 

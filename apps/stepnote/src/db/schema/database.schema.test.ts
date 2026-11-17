@@ -310,5 +310,29 @@ describe("StepNote Database Schema Tests", () => {
     expect(matched).toHaveLength(1);
     expect(matched[0]?.id).toBe(t1Id);
   });
+
+  it("TagSetsテーブルにデータを追加・取得でき、tagIdsマルチエントリーインデックスで検索できること", async () => {
+    const setId1 = await db.table("tagSets").add({
+      name: "障害対応セット",
+      description: "緊急対応用",
+      tagIds: [10, 20],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await db.table("tagSets").add({
+      name: "通常セット",
+      description: "",
+      tagIds: [30],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const saved = await db.table("tagSets").get(setId1);
+    expect(saved?.name).toBe("障害対応セット");
+
+    const matched = await db.table("tagSets").where("tagIds").equals(20).toArray();
+    expect(matched).toHaveLength(1);
+    expect(matched[0]?.id).toBe(setId1);
+  });
 });
 

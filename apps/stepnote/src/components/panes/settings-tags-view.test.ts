@@ -32,6 +32,10 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 4-2. !important および @extend が一切含まれていないこと
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
  *    - 4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
+ *
+ * 5. タグ管理／タグセット管理の切り替え
+ *    - 5-1. ヘッダ部切り替えUI（.settings-tags-view__mode-switch）で「タグ管理」と「タグセット管理」を切り替えられること
+ *    - 5-2. activeSubView が "tagSets" の場合、<settings-tag-sets-view> が描画されること
  */
 describe("SettingsTagsView Component", () => {
   let element: SettingsTagsView;
@@ -238,6 +242,27 @@ describe("SettingsTagsView Component", () => {
     it("4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toContain('@include tag-variant-select-styles("settings-tags-view")');
+    });
+  });
+
+  describe("5. タグ管理／タグセット管理の切り替え", () => {
+    it("5-1. 切り替えUI（.settings-tags-view__mode-switch）で タグ管理 / タグセット管理 が描画され切り替えできること", () => {
+      const defaultHtml = flattenTemplate(element.render());
+      expect(defaultHtml).toContain("settings-tags-view__mode-switch");
+      expect(defaultHtml).toContain("タグ管理");
+      expect(defaultHtml).toContain("タグセット管理");
+      expect(element.activeSubView).toBe("tags");
+
+      element.setSubView("tagSets");
+      expect(element.activeSubView).toBe("tagSets");
+    });
+
+    it("5-2. activeSubView が 'tagSets' の場合、<settings-tag-sets-view> が描画されること", () => {
+      element.setSubView("tagSets");
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("<settings-tag-sets-view");
+      expect(htmlStr).not.toContain("settings-tags-view__master");
     });
   });
 });

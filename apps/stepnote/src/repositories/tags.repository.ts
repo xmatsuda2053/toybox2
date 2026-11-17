@@ -108,17 +108,28 @@ export class TagsRepository extends BaseRepository<TagRecord> {
   };
 
   /**
-   * 指定したタグを削除し、該当タグを保持する全タスクの tagIds からも対象IDを一括除去する。
+   * 指定テーブル内の対象タグID保持レコードから tagId を除去する共通ヘルパー
+   */
+  private async removeTagIdFromRecords(
+    table: typeof db.tasks | typeof db.tagSets,
+    tagId: number,
+  ): Promise<void> {
+    const records = await table.where("tagIds").equals(tagId).toArray();
+    for (const record of records) {
+      if (record.id === undefined) continue;
+      const nextTagIds = (record.tagIds ?? []).filter((id) => id !== tagId);
+      await table.update(record.id, { tagIds: nextTagIds });
+    }
+  }
+
+  /**
+   * 指定したタグを削除し、該当タグを保持する全タスクおよび全タグセットの tagIds からも対象IDを一括除去する。
    */
   public deleteTagWithCleanup = async (tagId: number): Promise<void> => {
-    await db.transaction("rw", db.tags, db.tasks, async () => {
+    await db.transaction("rw", db.tags, db.tasks, db.tagSets, async () => {
       await db.tags.delete(tagId);
-      const tasksWithTag = await db.tasks.where("tagIds").equals(tagId).toArray();
-      for (const task of tasksWithTag) {
-        if (task.id === undefined) continue;
-        const nextTagIds = (task.tagIds ?? []).filter((id) => id !== tagId);
-        await db.tasks.update(task.id, { tagIds: nextTagIds });
-      }
+      await this.removeTagIdFromRecords(db.tasks, tagId);
+      await this.removeTagIdFromRecords(db.tagSets, tagId);
     });
   };
 }

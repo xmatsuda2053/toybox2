@@ -11,7 +11,10 @@ import {
   WithTagsController,
 } from "@/utils/controller-consumers.mixin.js";
 import { normalizeTagName, normalizeTagVariant } from "@/utils/tag.utils.js";
+import "./settings-tag-sets-view.js";
 import styles from "./settings-tags-view.scss?inline";
+
+export type TagsSubViewMode = "tags" | "tagSets";
 
 /**
  * 設定画面用タグ管理コンポーネント (SettingsTagsView)
@@ -52,6 +55,16 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
 
   @state()
   public deletingUsageCount: number = 0;
+
+  @state()
+  public activeSubView: TagsSubViewMode = "tags";
+
+  /**
+   * タグ管理／タグセット管理の表示モードを切り替える
+   */
+  public setSubView = (mode: TagsSubViewMode): void => {
+    this.activeSubView = mode;
+  };
 
   /**
    * 既存タグを選択して編集フォームを開く
@@ -384,12 +397,52 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
     `;
   }
 
+  /**
+   * サブビュー切り替えバーの描画
+   */
+  private renderModeSwitch(): HTMLTemplateResult {
+    return html`
+      <div class="settings-tags-view__mode-switch">
+        <wa-button-group label="タグ管理モード切り替え">
+          <wa-button
+            size="s"
+            variant=${this.activeSubView === "tags" ? "brand" : "neutral"}
+            appearance=${this.activeSubView === "tags" ? "accent" : "outlined"}
+            @click=${() => this.setSubView("tags")}
+          >
+            タグ管理
+          </wa-button>
+          <wa-button
+            size="s"
+            variant=${this.activeSubView === "tagSets" ? "brand" : "neutral"}
+            appearance=${this.activeSubView === "tagSets" ? "accent" : "outlined"}
+            @click=${() => this.setSubView("tagSets")}
+          >
+            タグセット管理
+          </wa-button>
+        </wa-button-group>
+      </div>
+    `;
+  }
+
   override render(): HTMLTemplateResult {
     return html`
-      <div class="settings-tags-view">
-        ${this.renderMasterPane()}
-        ${this.renderDetailPane()}
-        ${this.renderDeleteDialog()}
+      <div class="settings-tags-view__container">
+        ${this.renderModeSwitch()}
+        ${this.activeSubView === "tagSets"
+          ? html`
+              <settings-tag-sets-view
+                class="settings-tags-view__subview"
+                .theme=${this.theme}
+              ></settings-tag-sets-view>
+            `
+          : html`
+              <div class="settings-tags-view">
+                ${this.renderMasterPane()}
+                ${this.renderDetailPane()}
+                ${this.renderDeleteDialog()}
+              </div>
+            `}
       </div>
     `;
   }
