@@ -27,6 +27,8 @@ export type TaskRecord = {
   bookmark: boolean;
   /** 選択状態フラグ */
   selected: boolean;
+  /** 付与されたタグID一覧 */
+  tagIds?: number[];
   /** 作成日時 */
   createdAt?: Date;
   /** 更新日時 */

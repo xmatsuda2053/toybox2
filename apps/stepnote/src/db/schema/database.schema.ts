@@ -7,6 +7,7 @@ import {
   LabelRecord,
   ScratchRecord,
   TaskTemplateRecord,
+  TagRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
 import { extractMarkdownTitle } from "@shared/utils";
@@ -84,11 +85,25 @@ export class Database extends Dexie {
   taskTemplates!: Table<TaskTemplateRecord, number>;
 
   /**
+   * タグテーブル
+   *
+   * @type {Table<TagRecord, number>}
+   * @memberof Database
+   */
+  tags!: Table<TagRecord, number>;
+
+  /**
    * Creates an instance of Database.
    * @memberof Database
    */
   constructor() {
     super("StepNote");
+    this.defineV1ToV3();
+    this.defineV4ToV5();
+  }
+
+  /** バージョン 1〜3 のスキーマ定義 */
+  private defineV1ToV3(): void {
     this.version(1).stores({
       tasks: "++id, statusCode, name, dueDate, fiscalYear, selected",
       issues: "++id, taskId, [taskId+id]",
@@ -107,34 +122,52 @@ export class Database extends Dexie {
         scratches: "++id, createdAt, title",
       })
       .upgrade(async (tx) => {
-        await tx
-          .table<LogRecord>("logs")
-          .toCollection()
-          .modify((log) => {
-            if (!log.title) {
-              log.title = extractMarkdownTitle(log.value, "(無題のログ)");
-            }
-          });
-        await tx
-          .table<NoteRecord>("notes")
-          .toCollection()
-          .modify((note) => {
-            if (!note.title) {
-              note.title = extractMarkdownTitle(note.value, "(無題のメモ)");
-            }
-          });
-        await tx
-          .table<ScratchRecord>("scratches")
-          .toCollection()
-          .modify((scratch) => {
-            if (!scratch.title) {
-              scratch.title = extractMarkdownTitle(scratch.value, "(無題のメモ)");
-            }
-          });
+        await this.migrateV3Titles(tx);
       });
+  }
+
+  /** V3 アップグレード時のタイトル補完 */
+  private async migrateV3Titles(tx: {
+    table: <T>(name: string) => Table<T, number>;
+  }): Promise<void> {
+    const targets = [
+      { tableName: "logs", fallback: "(無題のログ)" },
+      { tableName: "notes", fallback: "(無題のメモ)" },
+      { tableName: "scratches", fallback: "(無題のメモ)" },
+    ] as const;
+
+    for (const target of targets) {
+      await tx
+        .table<{ title?: string; value: string }>(target.tableName)
+        .toCollection()
+        .modify((record) => {
+          if (!record.title) {
+            record.title = extractMarkdownTitle(record.value, target.fallback);
+          }
+        });
+    }
+  }
+
+  /** バージョン 4〜5 のスキーマ定義 */
+  private defineV4ToV5(): void {
     this.version(4).stores({
       taskTemplates: "++id, name, createdAt",
     });
+    this.version(5)
+      .stores({
+        tags: "++id, &name",
+        tasks: "++id, statusCode, name, dueDate, fiscalYear, selected, *tagIds",
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table<TaskRecord>("tasks")
+          .toCollection()
+          .modify((task) => {
+            if (!Array.isArray(task.tagIds)) {
+              task.tagIds = [];
+            }
+          });
+      });
   }
 }
 

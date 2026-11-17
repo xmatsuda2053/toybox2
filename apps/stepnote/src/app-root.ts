@@ -16,10 +16,12 @@ import {
   taskTemplateContext,
   autoExportContext,
   taskHistoryContext,
+  tagsContext,
 } from "@/contexts/index.js";
 import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
 import { QuickAccessController } from "@/controllers/quick-access.controller.js";
 import { LabelsController } from "@/controllers/labels.controller.js";
+import { TagsController } from "@/controllers/tags.controller.js";
 import { TaskController } from "@/controllers/task.controller.js";
 import { TaskListController } from "@/controllers/task-list.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
@@ -59,6 +61,7 @@ import {
   IssuesRepository,
   ScratchRepository,
   TaskTemplateRepository,
+  TagsRepository,
 } from "@/repositories/index.js";
 
 /**
@@ -87,6 +90,7 @@ export class AppRoot extends LitElement {
   public taskTemplateController!: TaskTemplateController;
   public autoExportController!: AutoExportController;
   public taskHistoryController!: TaskHistoryController;
+  public tagsController!: TagsController;
   public systemLogService!: SystemLogService;
   public databaseBackupService: DatabaseBackupService;
   public taskRepository!: TaskRepository;
@@ -216,6 +220,7 @@ export class AppRoot extends LitElement {
     this.themeController = new ThemeController(this);
     this.autoExportController = this.setupAutoExportController();
     this.taskHistoryController = new TaskHistoryController(this);
+    this.tagsController = new TagsController(this, new TagsRepository());
   }
 
   /**
@@ -243,6 +248,11 @@ export class AppRoot extends LitElement {
   }
 
   private registerContextProviders(): void {
+    this.registerCoreContextProviders();
+    this.registerFeatureContextProviders();
+  }
+
+  private registerCoreContextProviders(): void {
     new ContextProvider(this, {
       context: layoutUIContext,
       initialValue: this.layoutUIController,
@@ -275,6 +285,9 @@ export class AppRoot extends LitElement {
       context: issuesContext,
       initialValue: this.issuesController,
     });
+  }
+
+  private registerFeatureContextProviders(): void {
     new ContextProvider(this, {
       context: themeContext,
       initialValue: this.themeController,
@@ -294,6 +307,10 @@ export class AppRoot extends LitElement {
     new ContextProvider(this, {
       context: taskHistoryContext,
       initialValue: this.taskHistoryController,
+    });
+    new ContextProvider(this, {
+      context: tagsContext,
+      initialValue: this.tagsController,
     });
   }
 
@@ -604,6 +621,14 @@ export class AppRoot extends LitElement {
     });
 
     this.labelsController.subscribe(() => {
+      this.requestUpdate();
+    });
+
+    this.tagsController.subscribe(async () => {
+      await Promise.all([
+        this.taskListController.refresh(),
+        this.taskController.refresh(),
+      ]);
       this.requestUpdate();
     });
   }

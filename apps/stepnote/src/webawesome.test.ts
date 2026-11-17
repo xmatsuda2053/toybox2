@@ -2,10 +2,10 @@
  * 【Web Awesome コンポーネント登録基盤 仕様 (StepNote)】
  *
  * 1. 定数・コンポーネント一覧仕様 (Constants & Component List)
- *    - 1-1. WEB_AWESOME_COMPONENTS に 24 種類の Web Awesome コンポーネント名が定義されていること
+ *    - 1-1. WEB_AWESOME_COMPONENTS に 26 種類の Web Awesome コンポーネント名が定義されていること
  *    - 1-2. 定義されたすべてのコンポーネント名が小文字の英数字およびハイフンで構成されていること
  *    - 1-3. 主要 UI で使用されるコンポーネントが漏れなく網羅されていること
- *    - 1-4. WEB_AWESOME_TAG_NAMES に対応する 'wa-' プレフィックス付きカスタムタグ名一覧（24個）が定義されていること
+ *    - 1-4. WEB_AWESOME_TAG_NAMES に対応する 'wa-' プレフィックス付きカスタムタグ名一覧（26個）が定義されていること
  *
  * 2. ユーティリティ関数仕様 (Utility Functions)
  *    - 2-1. getWebAwesomeTagName がコンポーネント名から 'wa-${name}' 形式のタグ名を返すこと
@@ -27,9 +27,9 @@ import {
 
 describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
   describe("1. 定数・コンポーネント一覧仕様", () => {
-    it("WEB_AWESOME_COMPONENTS に 24 種類の Web Awesome コンポーネント名が定義されていること", () => {
+    it("WEB_AWESOME_COMPONENTS に 26 種類の Web Awesome コンポーネント名が定義されていること", () => {
       expect(WEB_AWESOME_COMPONENTS).toBeDefined();
-      expect(WEB_AWESOME_COMPONENTS.length).toBe(24);
+      expect(WEB_AWESOME_COMPONENTS.length).toBe(26);
     });
 
     it("定義されたすべてのコンポーネント名が小文字の英数字およびハイフンで構成されていること", () => {
@@ -44,6 +44,7 @@ describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
         "button",
         "button-group",
         "callout",
+        "checkbox",
         "dialog",
         "divider",
         "drawer",
@@ -60,6 +61,7 @@ describe("Web Awesome コンポーネント登録基盤 (webawesome)", () => {
         "tab",
         "tab-group",
         "tab-panel",
+        "tag",
         "textarea",
         "time-input",
         "toast",

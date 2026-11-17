@@ -13,8 +13,10 @@ import {
   taskTemplateContext,
   autoExportContext,
   taskHistoryContext,
+  tagsContext,
 } from "@/contexts/index.js";
 import type { LabelsController } from "@/controllers/labels.controller";
+import type { TagsController } from "@/controllers/tags.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { TaskListController } from "@/controllers/task-list.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
@@ -399,4 +401,35 @@ export function WithTaskHistoryController<T extends LitElementConstructor>(
     }
   }
   return TaskHistoryConsumerClass;
+}
+
+/**
+ * TagsController を Lit Context 経由で受信・購読する Mixin。
+ * コンポーネントにおける tagsController のプロパティ定義と購読ボイラープレートを集約する。
+ *
+ * @export
+ * @template T
+ * @param {T} Base 適用対象の SubscriberElement 派生クラス
+ * @return {*}
+ */
+export function WithTagsController<T extends LitElementConstructor>(Base: T) {
+  class TagsConsumerClass extends Base {
+    private _tagsController?: TagsController;
+
+    /** タグ管理コントローラー */
+    public get tagsController(): TagsController | undefined {
+      return this._tagsController;
+    }
+
+    @consume({ context: tagsContext, subscribe: true })
+    @property({ attribute: false })
+    public set tagsController(controller: TagsController | undefined) {
+      this._tagsController = this.subscriber.bind(
+        "tags",
+        this._tagsController,
+        controller,
+      );
+    }
+  }
+  return TagsConsumerClass;
 }
