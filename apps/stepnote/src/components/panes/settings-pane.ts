@@ -22,6 +22,7 @@ import type {
   TaskTemplateRecord,
   TaskTemplateIssue,
 } from "@/db/models/template.model.js";
+import "./settings-tags-view.js";
 import styles from "./settings-pane.scss?inline";
 
 /**
@@ -1077,6 +1078,17 @@ export class SettingsPane extends WithTaskHistoryController(
   }
 
   /**
+   * タグ管理タブパネルの描画
+   */
+  private renderTagsPanel(): HTMLTemplateResult {
+    return html`
+      <wa-tab-panel name="tags" class="settings-pane__tab-panel">
+        <settings-tags-view .theme=${this.theme}></settings-tags-view>
+      </wa-tab-panel>
+    `;
+  }
+
+  /**
    * タブグループの描画
    */
   private renderTabGroup(): HTMLTemplateResult {
@@ -1087,9 +1099,11 @@ export class SettingsPane extends WithTaskHistoryController(
         active=${this.activeTab}
       >
         <wa-tab slot="nav" panel="templates">Templates</wa-tab>
+        <wa-tab slot="nav" panel="tags">Tags</wa-tab>
         <wa-tab slot="nav" panel="auto-export">Auto Export</wa-tab>
         <wa-tab slot="nav" panel="history">History</wa-tab>
         ${this.renderTemplatePanel()}
+        ${this.renderTagsPanel()}
         ${this.renderAutoExportPanel()}
         ${this.renderHistoryPanel()}
       </wa-tab-group>
