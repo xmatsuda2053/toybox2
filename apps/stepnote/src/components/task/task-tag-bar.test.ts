@@ -23,6 +23,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 2-3. 新規タグ作成（handleCreateAndAttachTag）実行時、tagsController.createTag でタグ（名前・色variant・説明）を作成し、続けて taskController.addTag でタスクへ付与されること
  *    - 2-4. 新規タグ作成入力（#付き等）が空または既存重複の場合、作成処理が抑止されること
  *    - 2-5. 追加ポップオーバー（.task-tag-bar__add-popover）内に検索入力、既存タグチェックリスト、新規タグ作成UI（色variant選択・説明入力含む）が描画されること
+ *    - 2-6. 子要素（wa-select等）からバブリングした wa-after-hide イベントでは入力フォームがリセットされず、popover 自身の wa-after-hide でのみリセットされること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート（task-tag-bar.scss）が存在し、.task-tag-bar および主要BEMセレクタが定義されていること
@@ -190,6 +191,41 @@ describe("TaskTagBar Component", () => {
       const createHtml = flattenTemplate(element.render());
       expect(createHtml).toContain("task-tag-bar__create-section");
       expect(createHtml).toContain("task-tag-bar__variant-select");
+    });
+
+    it("2-6. 子要素（wa-select等）からバブリングした wa-after-hide イベントでは入力フォームがリセットされず、popover 自身の wa-after-hide でのみリセットされること", () => {
+      element.searchKeyword = "新規候補";
+      element.newTagVariant = "brand";
+      element.newTagDescription = "テスト説明";
+
+      const handler = (
+        element as unknown as {
+          handleAddPopoverAfterHide?: (e: Event) => void;
+        }
+      ).handleAddPopoverAfterHide;
+      expect(typeof handler).toBe("function");
+
+      // 子要素（target !== currentTarget）からのバブリングは無視されること
+      const popoverTarget = {} as EventTarget;
+      const selectTarget = {} as EventTarget;
+      handler?.({
+        target: selectTarget,
+        currentTarget: popoverTarget,
+      } as unknown as Event);
+
+      expect(element.searchKeyword).toBe("新規候補");
+      expect(element.newTagVariant).toBe("brand");
+      expect(element.newTagDescription).toBe("テスト説明");
+
+      // popover 自身（target === currentTarget）の wa-after-hide ではリセットされること
+      handler?.({
+        target: popoverTarget,
+        currentTarget: popoverTarget,
+      } as unknown as Event);
+
+      expect(element.searchKeyword).toBe("");
+      expect(element.newTagVariant).toBe("neutral");
+      expect(element.newTagDescription).toBe("");
     });
   });
 

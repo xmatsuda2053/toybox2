@@ -174,6 +174,24 @@ export class TaskTagBar extends WithTagsController(
   };
 
   /**
+   * タグ追加ポップオーバー自身の閉鎖完了時のみ入力状態をリセットする
+   * （子要素 wa-select 等からバブリングした wa-after-hide は無視する）
+   */
+  public handleAddPopoverAfterHide = (e: Event): void => {
+    if (e.target !== e.currentTarget) {
+      return;
+    }
+    this.resetCreateForm();
+  };
+
+  /**
+   * 子要素の開閉系カスタムイベントが親ポップオーバーへ伝播するのを抑止する
+   */
+  private stopChildPopupEvent = (e: Event): void => {
+    e.stopPropagation();
+  };
+
+  /**
    * 表示対象と省略対象のタグ数を算出する
    */
   private resolveDisplaySlice(tags: readonly TagRecord[]): {
@@ -284,6 +302,31 @@ export class TaskTagBar extends WithTagsController(
   }
 
   /**
+   * 新規タグのカラー選択セレクトを描画する
+   */
+  private renderVariantSelect(): HTMLTemplateResult {
+    return html`
+      <wa-select
+        size="s"
+        class="task-tag-bar__variant-select"
+        .value=${this.newTagVariant}
+        @wa-show=${this.stopChildPopupEvent}
+        @wa-after-show=${this.stopChildPopupEvent}
+        @wa-hide=${this.stopChildPopupEvent}
+        @wa-after-hide=${this.stopChildPopupEvent}
+        @change=${(e: Event) => {
+          const target = e.target as HTMLElement & { value?: string };
+          this.newTagVariant = normalizeTagVariant(target.value);
+        }}
+      >
+        ${TAG_VARIANT_LIST.map(
+          (opt) => html`<wa-option value=${opt.value}>${opt.labelJa}</wa-option>`,
+        )}
+      </wa-select>
+    `;
+  }
+
+  /**
    * ポップオーバー内の新規タグ作成セクションの描画
    */
   private renderCreateTagSection(
@@ -309,19 +352,7 @@ export class TaskTagBar extends WithTagsController(
           }}
         ></wa-input>
         <div class="task-tag-bar__create-row">
-          <wa-select
-            size="s"
-            class="task-tag-bar__variant-select"
-            .value=${this.newTagVariant}
-            @change=${(e: Event) => {
-              const target = e.target as HTMLElement & { value?: string };
-              this.newTagVariant = normalizeTagVariant(target.value);
-            }}
-          >
-            ${TAG_VARIANT_LIST.map(
-              (opt) => html`<wa-option value=${opt.value}>${opt.labelJa}</wa-option>`,
-            )}
-          </wa-select>
+          ${this.renderVariantSelect()}
           <wa-button
             size="s"
             variant="brand"
@@ -364,7 +395,7 @@ export class TaskTagBar extends WithTagsController(
         for="task-tag-bar-add-btn"
         class="task-tag-bar__add-popover"
         placement="bottom-start"
-        @wa-after-hide=${this.resetCreateForm}
+        @wa-after-hide=${this.handleAddPopoverAfterHide}
       >
         <div class="task-tag-bar__popover-body">
           <wa-input
