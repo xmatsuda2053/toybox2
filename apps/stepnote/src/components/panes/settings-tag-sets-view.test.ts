@@ -30,6 +30,7 @@ import { SettingsTagSetsView } from "./settings-tag-sets-view.js";
  *    - 4-1. settings-tag-sets-view.scss が存在し、主要BEMセレクタが定義されていること
  *    - 4-2. !important および @extend が一切含まれていないこと
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
+ *    - 4-4. 詳細ペイン（.settings-tag-sets-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること
  */
 describe("SettingsTagSetsView Component", () => {
   let element: SettingsTagSetsView;
@@ -226,6 +227,11 @@ describe("SettingsTagSetsView Component", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       const matches = content.match(/(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
       expect(matches).toBeNull();
+    });
+
+    it("4-4. 詳細ペイン（.settings-tag-sets-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
+      const content = fs.readFileSync(scssPath, "utf-8");
+      expect(content).toMatch(/\.settings-tag-sets-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
     });
   });
 });

@@ -32,6 +32,7 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 4-2. !important および @extend が一切含まれていないこと
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
  *    - 4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
+ *    - 4-5. 詳細ペイン（.settings-tags-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること
  *
  * 5. タグ管理／タグセット管理の切り替え
  *    - 5-1. ヘッダ部切り替えUI（.settings-tags-view__mode-switch）で「タグ管理」と「タグセット管理」を切り替えられること
@@ -242,6 +243,11 @@ describe("SettingsTagsView Component", () => {
     it("4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toContain('@include tag-variant-select-styles("settings-tags-view")');
+    });
+
+    it("4-5. 詳細ペイン（.settings-tags-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(/\.settings-tags-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
     });
   });
 
