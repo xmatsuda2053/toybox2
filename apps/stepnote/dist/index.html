@@ -7403,7 +7403,7 @@ Char: `+e.c,t=Error(t),e.error=t,m(e,`onerror`,t),e}function b(e){return(e.state
           ${t}
         </span>
       </div>
-    `}renderTagsRow(){let{visibleTags:e,hiddenCount:t}=jc(this.tags);return A`
+    `}renderTagsRow(){let{visibleTags:e,hiddenCount:t}=jc(this.tags);return e.length===0&&t===0?j:A`
       <div class="task-list-item__row task-list-item__row--tags">
         ${e.map(e=>A`
             <wa-tag

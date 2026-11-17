@@ -1,4 +1,10 @@
-import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import {
+  LitElement,
+  html,
+  nothing,
+  unsafeCSS,
+  type HTMLTemplateResult,
+} from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "@shared/components";
 import {
@@ -260,10 +266,13 @@ export class TaskListItem extends LitElement {
   }
 
   /**
-   * 3行目: タグ一覧（1行固定・未設定時は空領域・溢れ時は +N 省略表示）を描画する
+   * 3行目: タグ一覧（タグ設定時のみ描画・1行固定・溢れ時は +N 省略表示）を描画する
    */
-  private renderTagsRow(): HTMLTemplateResult {
+  private renderTagsRow(): HTMLTemplateResult | typeof nothing {
     const { visibleTags, hiddenCount } = splitVisibleAndOverflowTags(this.tags);
+    if (visibleTags.length === 0 && hiddenCount === 0) {
+      return nothing;
+    }
 
     return html`
       <div class="task-list-item__row task-list-item__row--tags">

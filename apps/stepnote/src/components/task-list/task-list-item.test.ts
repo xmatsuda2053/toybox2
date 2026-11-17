@@ -439,20 +439,21 @@ describe("TaskListItem Component", () => {
       { id: 2, name: "緊急", description: "", variant: "danger" },
     ];
 
-    it("7-1. タグ未設定時でも meta 行の下に空のタグ領域（.task-list-item__row--tags）がレンダリングされること", () => {
+    it("7-1. タグ未設定時はタグ領域（.task-list-item__row--tags）自体が描画されず、空白行が生まれないこと", () => {
       element.tags = [];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("task-list-item__row--tags");
+      expect(htmlStr).not.toContain("<wa-tag");
+    });
+
+    it("7-2. tags が設定されている場合、meta 行の下に表示専用の wa-tag（size='xs', pill, variant指定, with-removeなし）が描画されること", () => {
+      element.tags = sampleTags;
       const htmlStr = flattenTemplate(element.render());
       const metaIdx = htmlStr.indexOf("task-list-item__row--meta");
       const tagsIdx = htmlStr.indexOf("task-list-item__row--tags");
 
       expect(tagsIdx).toBeGreaterThan(metaIdx);
-      expect(htmlStr).not.toContain("<wa-tag");
-    });
-
-    it("7-2. tags が設定されている場合、表示専用の wa-tag（size='xs', pill, variant指定, with-removeなし）が描画されること", () => {
-      element.tags = sampleTags;
-      const htmlStr = flattenTemplate(element.render());
-
       expect(htmlStr).toContain("<wa-tag");
       expect(htmlStr).toContain("API");
       expect(htmlStr).toContain("緊急");
