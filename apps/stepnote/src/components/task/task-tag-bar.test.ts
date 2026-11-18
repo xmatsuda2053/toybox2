@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { live } from "lit/directives/live.js";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { TagRecord, TagSetRecord } from "@/db/models/tag.model";
@@ -28,6 +29,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 2-7. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
  *    - 2-8. tagSetsController にタグセットがある場合、ポップオーバー内に「タグセットから一括追加」（.task-tag-bar__tagset-section / __tagset-select / __tagset-apply-btn）が描画されること
  *    - 2-9. handleApplyTagSet 実行時に選択されたタグセットの tagIds で taskController.addTags が呼び出され、選択状態がリセットされるとともにタグ追加ポップオーバーが自動で閉じられること
+ *    - 2-10. チェックリストの wa-checkbox が ?checked 属性ではなく live() 付き .checked プロパティでバインドされ、タスク切替時に現在タスクの tagIds と一致する状態になること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート（task-tag-bar.scss）が存在し、.task-tag-bar および主要BEMセレクタが定義されていること
@@ -307,6 +309,52 @@ describe("TaskTagBar Component", () => {
       expect(mockTaskController.addTags).toHaveBeenCalledWith([1, 3]);
       expect(element.selectedTagSetId).toBe("");
       expect(mockHide).toHaveBeenCalledTimes(1);
+    });
+
+    it("2-10. チェックリストの wa-checkbox が ?checked 属性ではなく live() 付き .checked プロパティでバインドされ、タスク切替時に現在タスクの tagIds と一致する状態になること", () => {
+      const collectCheckboxCheckedBindings = (
+        node: unknown,
+      ): Array<{ bindingPrefix: string; value: unknown }> => {
+        if (Array.isArray(node)) {
+          return node.flatMap(collectCheckboxCheckedBindings);
+        }
+        if (
+          typeof node !== "object" ||
+          node === null ||
+          !("strings" in node) ||
+          !Array.isArray((node as { strings: unknown }).strings)
+        ) {
+          return [];
+        }
+        const tpl = node as { strings: readonly string[]; values?: readonly unknown[] };
+        const results: Array<{ bindingPrefix: string; value: unknown }> = [];
+        tpl.strings.forEach((str, idx) => {
+          const val = tpl.values?.[idx];
+          if (str.includes("<wa-checkbox") && /([.?])checked=$/.test(str)) {
+            const match = str.match(/([.?]checked=)$/);
+            results.push({ bindingPrefix: match?.[1] ?? "", value: val });
+          }
+          if (val !== undefined) {
+            results.push(...collectCheckboxCheckedBindings(val));
+          }
+        });
+        return results;
+      };
+
+      const taskABindings = collectCheckboxCheckedBindings(element.render());
+      expect(taskABindings).toEqual([
+        { bindingPrefix: ".checked=", value: live(true) },
+        { bindingPrefix: ".checked=", value: live(true) },
+        { bindingPrefix: ".checked=", value: live(false) },
+      ]);
+
+      mockTaskController.state = { ...baseTask, id: 102, tagIds: [] };
+      const taskBBindings = collectCheckboxCheckedBindings(element.render());
+      expect(taskBBindings).toEqual([
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(false) },
+      ]);
     });
   });
 

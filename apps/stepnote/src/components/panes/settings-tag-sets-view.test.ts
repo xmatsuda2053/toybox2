@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { live } from "lit/directives/live.js";
 import { flattenTemplate } from "@shared/utils";
 import type { TagRecord, TagSetRecord } from "@/db/models/tag.model";
 import type { TagsController } from "@/controllers/tags.controller";
@@ -21,6 +22,7 @@ import { SettingsTagSetsView } from "./settings-tag-sets-view.js";
  *    - 2-3. 新規作成状態で handleSave 実行時、tagSetsController.createTagSet が呼び出されること
  *    - 2-4. selectTagSet で既存セットを選択し handleSave 実行時、tagSetsController.updateTagSet が呼び出されること
  *    - 2-5. createTagSet / updateTagSet がエラーをスローした場合、errorMessage がセットされ画面へ表示されること
+ *    - 2-6. タグ選択の wa-checkbox が ?checked 属性ではなく live() 付き .checked プロパティでバインドされ、連続作成時に全チェックが解除されること
  *
  * 3. タグセット削除確認ダイアログ
  *    - 3-1. requestDeleteTagSet 実行時、削除確認ダイアログ（wa-dialog）が開き対象セット名が表示されること
@@ -176,6 +178,59 @@ describe("SettingsTagSetsView Component", () => {
       );
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("settings-tag-sets-view__error");
+    });
+
+    it("2-6. タグ選択の wa-checkbox が ?checked 属性ではなく live() 付き .checked プロパティでバインドされ、連続作成時に全チェックが解除されること", async () => {
+      const collectCheckboxCheckedBindings = (
+        node: unknown,
+      ): Array<{ bindingPrefix: string; value: unknown }> => {
+        if (Array.isArray(node)) {
+          return node.flatMap(collectCheckboxCheckedBindings);
+        }
+        if (
+          typeof node !== "object" ||
+          node === null ||
+          !("strings" in node) ||
+          !Array.isArray((node as { strings: unknown }).strings)
+        ) {
+          return [];
+        }
+        const tpl = node as { strings: readonly string[]; values?: readonly unknown[] };
+        const results: Array<{ bindingPrefix: string; value: unknown }> = [];
+        tpl.strings.forEach((str, idx) => {
+          const val = tpl.values?.[idx];
+          if (str.includes("<wa-checkbox") && /([.?])checked=$/.test(str)) {
+            const match = str.match(/([.?]checked=)$/);
+            results.push({ bindingPrefix: match?.[1] ?? "", value: val });
+          }
+          if (val !== undefined) {
+            results.push(...collectCheckboxCheckedBindings(val));
+          }
+        });
+        return results;
+      };
+
+      element.startNewTagSet();
+      element.formName = "セット1";
+      element.toggleFormTag(1);
+      element.toggleFormTag(2);
+
+      const firstCreateBindings = collectCheckboxCheckedBindings(element.render());
+      expect(firstCreateBindings).toEqual([
+        { bindingPrefix: ".checked=", value: live(true) },
+        { bindingPrefix: ".checked=", value: live(true) },
+        { bindingPrefix: ".checked=", value: live(false) },
+      ]);
+
+      await element.handleSave();
+      element.startNewTagSet();
+
+      const secondCreateBindings = collectCheckboxCheckedBindings(element.render());
+      expect(secondCreateBindings).toEqual([
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(false) },
+      ]);
     });
   });
 
