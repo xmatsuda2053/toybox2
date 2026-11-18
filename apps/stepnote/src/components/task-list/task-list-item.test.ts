@@ -483,8 +483,24 @@ describe("TaskListItem Component", () => {
       const content = fs.readFileSync(normalizedPath, "utf-8");
 
       expect(content).toMatch(/\.task-list-item__row--tags\s*\{[^}]*height:\s*\d+px;/);
+      expect(content).toContain("@include stepnote-tag-styles;");
+      expect(content).toMatch(/\.task-list-item__tag,\s*\.task-list-item__tags-overflow\s*\{[^}]*height:\s*20px;/);
+      expect(content).toMatch(/\.task-list-item__tag,\s*\.task-list-item__tags-overflow\s*\{[^}]*border-width:\s*0;/);
       expect(content).not.toContain("!important");
       expect(content.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))/g)).toBeNull();
+    });
+
+    it("7-5. タグおよびオーバーフローバッジが appearance='filled' と stepnote-tag クラスを持ち、拡張色(purple)にも対応すること", () => {
+      element.tags = [
+        { id: 1, name: "非常に長いタグ名その一", description: "", variant: "purple" as never },
+        { id: 2, name: "非常に長いタグ名その二", description: "", variant: "brand" },
+        { id: 3, name: "非常に長いタグ名その三", description: "", variant: "danger" },
+      ];
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain('appearance="filled"');
+      expect(htmlStr).toContain("stepnote-tag--purple");
+      expect(htmlStr).toContain("stepnote-tag--neutral");
     });
   });
 });

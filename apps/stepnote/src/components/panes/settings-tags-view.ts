@@ -10,7 +10,11 @@ import {
   SubscriberElement,
   WithTagsController,
 } from "@/utils/controller-consumers.mixin.js";
-import { normalizeTagName, normalizeTagVariant } from "@/utils/tag.utils.js";
+import {
+  normalizeTagName,
+  normalizeTagVariant,
+  resolveWaTagVariant,
+} from "@/utils/tag.utils.js";
 import "./settings-tag-sets-view.js";
 import styles from "./settings-tags-view.scss?inline";
 
@@ -190,7 +194,14 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
       >
         <div class="settings-tags-view__item-main">
           <div>
-            <wa-tag size="s" pill variant=${tag.variant}>${tag.name}</wa-tag>
+            <wa-tag
+              size="s"
+              pill
+              appearance="filled"
+              class="stepnote-tag stepnote-tag--${tag.variant}"
+              variant=${resolveWaTagVariant(tag.variant)}
+              >${tag.name}</wa-tag
+            >
           </div>
           ${tag.description
             ? html`<span class="settings-tags-view__item-desc">${tag.description}</span>`
@@ -254,31 +265,15 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
   }
 
   /**
-   * フォーム入力フィールド群の描画
+   * タグカラー選択セレクトを描画する
    */
-  private renderFormFields(): HTMLTemplateResult {
-    const previewName = normalizeTagName(this.formName) || "プレビュー";
-
+  private renderVariantSelect(): HTMLTemplateResult {
     return html`
-      <div class="settings-tags-view__preview-row">
-        <span class="settings-tags-view__preview-label">表示プレビュー:</span>
-        <wa-tag size="s" pill variant=${this.formVariant}>${previewName}</wa-tag>
-      </div>
-      <wa-input
-        label="タグ名"
-        size="s"
-        placeholder="例: 緊急、API、レビュー待ち"
-        .value=${this.formName}
-        required
-        @input=${(e: Event) => {
-          this.formName = (e.target as HTMLInputElement).value;
-          this.errorMessage = "";
-        }}
-      ></wa-input>
       <wa-select
         label="カラー"
         size="s"
-        class="settings-tags-view__variant-select settings-tags-view__variant-select--${this.formVariant}"
+        class="settings-tags-view__variant-select settings-tags-view__variant-select--${this
+          .formVariant}"
         .value=${this.formVariant}
         @change=${(e: Event) => {
           const target = e.target as HTMLElement & { value?: string };
@@ -295,6 +290,39 @@ export class SettingsTagsView extends WithTagsController(SubscriberElement) {
           `,
         )}
       </wa-select>
+    `;
+  }
+
+  /**
+   * フォーム入力フィールド群の描画
+   */
+  private renderFormFields(): HTMLTemplateResult {
+    const previewName = normalizeTagName(this.formName) || "プレビュー";
+
+    return html`
+      <div class="settings-tags-view__preview-row">
+        <span class="settings-tags-view__preview-label">表示プレビュー:</span>
+        <wa-tag
+          size="s"
+          pill
+          appearance="filled"
+          class="stepnote-tag stepnote-tag--${this.formVariant}"
+          variant=${resolveWaTagVariant(this.formVariant)}
+          >${previewName}</wa-tag
+        >
+      </div>
+      <wa-input
+        label="タグ名"
+        size="s"
+        placeholder="例: 緊急、API、レビュー待ち"
+        .value=${this.formName}
+        required
+        @input=${(e: Event) => {
+          this.formName = (e.target as HTMLInputElement).value;
+          this.errorMessage = "";
+        }}
+      ></wa-input>
+      ${this.renderVariantSelect()}
       <wa-textarea
         label="説明（任意）"
         size="s"

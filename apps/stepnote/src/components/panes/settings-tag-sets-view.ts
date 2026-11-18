@@ -8,7 +8,11 @@ import {
   WithTagsController,
   WithTagSetsController,
 } from "@/utils/controller-consumers.mixin.js";
-import { normalizeTagIds, normalizeTagSetName } from "@/utils/tag.utils.js";
+import {
+  normalizeTagIds,
+  normalizeTagSetName,
+  resolveWaTagVariant,
+} from "@/utils/tag.utils.js";
 import styles from "./settings-tag-sets-view.scss?inline";
 
 /**
@@ -172,7 +176,14 @@ export class SettingsTagSetsView extends WithTagsController(
       <div class="settings-tag-sets-view__item-tags">
         ${tags.map(
           (tag) =>
-            html`<wa-tag size="xs" pill variant=${tag.variant}>${tag.name}</wa-tag>`,
+            html`<wa-tag
+              size="xs"
+              pill
+              appearance="filled"
+              class="stepnote-tag stepnote-tag--${tag.variant}"
+              variant=${resolveWaTagVariant(tag.variant)}
+              >${tag.name}</wa-tag
+            >`,
         )}
       </div>
     `;
@@ -294,7 +305,14 @@ export class SettingsTagSetsView extends WithTagsController(
                         if (tagId !== undefined) this.toggleFormTag(tagId);
                       }}
                     >
-                      <wa-tag size="xs" pill variant=${tag.variant}>${tag.name}</wa-tag>
+                      <wa-tag
+                        size="xs"
+                        pill
+                        appearance="filled"
+                        class="stepnote-tag stepnote-tag--${tag.variant}"
+                        variant=${resolveWaTagVariant(tag.variant)}
+                        >${tag.name}</wa-tag
+                      >
                     </wa-checkbox>
                   </div>
                 `;

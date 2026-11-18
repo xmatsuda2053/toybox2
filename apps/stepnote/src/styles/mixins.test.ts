@@ -9,6 +9,8 @@ import * as fs from "node:fs";
  * 仕様 3: @mixin custom-scrollbar に WebKit 系スタイリング（幅 6px、トラック、角丸 2px のサム、ホバー色）が定義されていること
  * 仕様 4: 既存レイアウト Mixin（flex-center, flex-between, text-ellipsis, theme-transition）が維持されていること
  * 仕様 5: @mixin box-sizing-reset が定義され、*, *::before, *::after の box-sizing: border-box が設定されていること
+ * 仕様 6: @mixin stepnote-tag-styles が定義され、border 非表示および全10色のタグ専用トークン参照が含まれていること
+ * 仕様 7: @mixin tag-variant-select-styles が全10色に対応し、--stepnote-tag-*-color を参照していること
  */
 describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
   const mixinsScss = fs.readFileSync(
@@ -65,6 +67,40 @@ describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
       expect(block![0]).toContain("box-sizing: border-box;");
       expect(block![0]).toContain("*::before");
       expect(block![0]).toContain("*::after");
+    });
+  });
+
+  describe("4. タグ共通スタイル・カラー選択 Mixin", () => {
+    const allVariants = [
+      "neutral",
+      "brand",
+      "success",
+      "warning",
+      "danger",
+      "purple",
+      "pink",
+      "cyan",
+      "orange",
+      "indigo",
+    ] as const;
+
+    it("仕様 6: @mixin stepnote-tag-styles が定義され、border 非表示および全10色マッピングが含まれていること", () => {
+      expect(mixinsScss).toMatch(/@mixin\s+stepnote-tag-styles\s*\{/);
+      expect(mixinsScss).toContain(".stepnote-tag");
+      expect(mixinsScss).toContain("border-width: 0;");
+      expect(mixinsScss).toContain("--stepnote-tag-#{$variant}-bg");
+      expect(mixinsScss).toContain("--stepnote-tag-#{$variant}-color");
+      for (const variant of allVariants) {
+        expect(mixinsScss).toContain(`"${variant}"`);
+      }
+    });
+
+    it("仕様 7: @mixin tag-variant-select-styles が全10色に対応し、--stepnote-tag-*-color を参照していること", () => {
+      for (const variant of allVariants) {
+        expect(mixinsScss).toMatch(
+          new RegExp(`"${variant}":\\s*var\\(--stepnote-tag-${variant}-color\\)`),
+        );
+      }
     });
   });
 });

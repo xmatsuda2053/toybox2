@@ -20,7 +20,7 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 2-2. 新規作成状態で handleSave 実行時、tagsController.createTag がタグ名・variant・説明付きで呼び出されること
  *    - 2-3. selectTag で既存タグを選択するとフォームへ値が反映され、handleSave 実行時に tagsController.updateTag が呼び出されること
  *    - 2-4. createTag / updateTag がエラーをスローした場合、errorMessage にエラー内容がセットされ画面へ表示されること
- *    - 2-5. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
+ *    - 2-5. カラー選択セレクト（wa-select / wa-option）が英語色名（10色: Gray / Blue / Green / Yellow / Red / Purple / Pink / Cyan / Orange / Indigo）と各カラーに対応する修飾クラスを持つこと
  *
  * 3. タグ削除確認と関連タスク影響件数表示
  *    - 3-1. requestDeleteTag 実行時、getTagUsageCount で使用中タスク件数を取得し、削除確認ダイアログ（wa-dialog）が開くこと
@@ -33,6 +33,7 @@ import { SettingsTagsView } from "./settings-tags-view.js";
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
  *    - 4-4. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
  *    - 4-5. 詳細ペイン（.settings-tags-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること
+ *    - 4-6. 描画される wa-tag が appearance="filled" と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること
  *
  * 5. タグ管理／タグセット管理の切り替え
  *    - 5-1. ヘッダ部切り替えUI（.settings-tags-view__mode-switch）で「タグ管理」と「タグセット管理」を切り替えられること
@@ -159,7 +160,7 @@ describe("SettingsTagsView Component", () => {
       expect(htmlStr).toContain("settings-tags-view__error");
     });
 
-    it("2-5. カラー選択セレクトが英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと", () => {
+    it("2-5. カラー選択セレクトが英語色名（10色）と各カラーに対応する修飾クラスを持つこと", () => {
       element.selectTag(sampleTags[0]);
       element.formVariant = "success";
       const htmlStr = flattenTemplate(element.render());
@@ -172,6 +173,11 @@ describe("SettingsTagsView Component", () => {
         ["success", "Green"],
         ["warning", "Yellow"],
         ["danger", "Red"],
+        ["purple", "Purple"],
+        ["pink", "Pink"],
+        ["cyan", "Cyan"],
+        ["orange", "Orange"],
+        ["indigo", "Indigo"],
       ] as const) {
         expect(htmlStr).toContain(`settings-tags-view__variant-option--${variant}`);
         expect(htmlStr).toContain(label);
@@ -248,6 +254,16 @@ describe("SettingsTagsView Component", () => {
     it("4-5. 詳細ペイン（.settings-tags-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toMatch(/\.settings-tags-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
+    });
+
+    it("4-6. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {
+      element.selectTag(sampleTags[0]);
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('appearance="filled"');
+      expect(htmlStr).toContain("stepnote-tag--brand");
+
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toContain("@include stepnote-tag-styles;");
     });
   });
 

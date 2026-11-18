@@ -113,6 +113,28 @@
   --stepnote-header-search-bg: var(--wa-color-surface-default);
   --stepnote-header-search-border: var(--wa-color-surface-border);
   --stepnote-header-search-border-hover: #8c959f;
+
+  /* タグ用高コントラストセマンティックトークン（Light モード: 全10色） */
+  --stepnote-tag-neutral-bg: var(--wa-color-gray-80);
+  --stepnote-tag-neutral-color: var(--wa-color-gray-10);
+  --stepnote-tag-brand-bg: var(--wa-color-blue-90);
+  --stepnote-tag-brand-color: var(--wa-color-blue-30);
+  --stepnote-tag-success-bg: var(--wa-color-green-90);
+  --stepnote-tag-success-color: var(--wa-color-green-30);
+  --stepnote-tag-warning-bg: var(--wa-color-yellow-90);
+  --stepnote-tag-warning-color: var(--wa-color-yellow-30);
+  --stepnote-tag-danger-bg: var(--wa-color-red-90);
+  --stepnote-tag-danger-color: var(--wa-color-red-30);
+  --stepnote-tag-purple-bg: var(--wa-color-purple-90);
+  --stepnote-tag-purple-color: var(--wa-color-purple-30);
+  --stepnote-tag-pink-bg: var(--wa-color-pink-90);
+  --stepnote-tag-pink-color: var(--wa-color-pink-30);
+  --stepnote-tag-cyan-bg: var(--wa-color-cyan-90);
+  --stepnote-tag-cyan-color: var(--wa-color-cyan-30);
+  --stepnote-tag-orange-bg: var(--wa-color-orange-90);
+  --stepnote-tag-orange-color: var(--wa-color-orange-30);
+  --stepnote-tag-indigo-bg: var(--wa-color-indigo-90);
+  --stepnote-tag-indigo-color: var(--wa-color-indigo-30);
 }
 
 /* --------------------------------------------------------------------------
@@ -207,6 +229,28 @@
   --stepnote-header-search-bg: var(--wa-color-surface-default);
   --stepnote-header-search-border: var(--wa-color-surface-border);
   --stepnote-header-search-border-hover: #60677a;
+
+  /* タグ用高コントラストセマンティックトークン（Dark モード: 全10色） */
+  --stepnote-tag-neutral-bg: var(--wa-color-gray-30);
+  --stepnote-tag-neutral-color: var(--wa-color-gray-95);
+  --stepnote-tag-brand-bg: var(--wa-color-blue-20);
+  --stepnote-tag-brand-color: var(--wa-color-blue-80);
+  --stepnote-tag-success-bg: var(--wa-color-green-20);
+  --stepnote-tag-success-color: var(--wa-color-green-80);
+  --stepnote-tag-warning-bg: var(--wa-color-yellow-20);
+  --stepnote-tag-warning-color: var(--wa-color-yellow-80);
+  --stepnote-tag-danger-bg: var(--wa-color-red-20);
+  --stepnote-tag-danger-color: var(--wa-color-red-80);
+  --stepnote-tag-purple-bg: var(--wa-color-purple-20);
+  --stepnote-tag-purple-color: var(--wa-color-purple-80);
+  --stepnote-tag-pink-bg: var(--wa-color-pink-20);
+  --stepnote-tag-pink-color: var(--wa-color-pink-80);
+  --stepnote-tag-cyan-bg: var(--wa-color-cyan-20);
+  --stepnote-tag-cyan-color: var(--wa-color-cyan-80);
+  --stepnote-tag-orange-bg: var(--wa-color-orange-20);
+  --stepnote-tag-orange-color: var(--wa-color-orange-80);
+  --stepnote-tag-indigo-bg: var(--wa-color-indigo-20);
+  --stepnote-tag-indigo-color: var(--wa-color-indigo-80);
 }
 
 /* --------------------------------------------------------------------------

@@ -29,13 +29,23 @@
   overflow: hidden;
 }
 
-.task-tag-bar__tag {
+.task-tag-bar__tag,
+.task-tag-bar__measure-item {
   flex-shrink: 0;
   max-width: 160px;
+  height: 22px;
+  line-height: 1;
+  padding: 0 var(--wa-space-xs, 8px);
 }
 
 .task-tag-bar__overflow-btn {
   flex-shrink: 0;
+
+  &::part(button) {
+    height: 22px;
+    min-height: 22px;
+    padding-inline: var(--wa-space-xs, 8px);
+  }
 }
 
 .task-tag-bar__btn-add {
@@ -184,4 +194,5 @@
   min-width: 0;
 }
 
+@include stepnote-tag-styles;
 @include tag-variant-select-styles("task-tag-bar");

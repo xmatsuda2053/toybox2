@@ -26,7 +26,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 2-4. 新規タグ作成入力（#付き等）が空または既存重複の場合、作成処理が抑止されること
  *    - 2-5. 追加ポップオーバー（.task-tag-bar__add-popover）内に検索入力、既存タグチェックリスト、新規タグ作成UI（色variant選択・説明入力含む）が描画されること
  *    - 2-6. 子要素（wa-select等）からバブリングした wa-after-hide イベントでは入力フォームがリセットされず、popover 自身の wa-after-hide でのみリセットされること
- *    - 2-7. カラー選択セレクト（wa-select / wa-option）が英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと
+ *    - 2-7. カラー選択セレクト（wa-select / wa-option）が英語色名（10色: Gray / Blue / Green / Yellow / Red / Purple / Pink / Cyan / Orange / Indigo）と各カラーに対応する修飾クラスを持つこと
  *    - 2-8. tagSetsController にタグセットがある場合、ポップオーバー内に「タグセットから一括追加」（.task-tag-bar__tagset-section / __tagset-select / __tagset-apply-btn）が描画されること
  *    - 2-9. handleApplyTagSet 実行時に選択されたタグセットの tagIds で taskController.addTags が呼び出され、選択状態がリセットされるとともにタグ追加ポップオーバーが自動で閉じられること
  *    - 2-10. チェックリストの wa-checkbox が ?checked 属性ではなく live() 付き .checked プロパティでバインドされ、タスク切替時に現在タスクの tagIds と一致する状態になること
@@ -39,6 +39,8 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 3-5. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること
  *    - 3-6. タグ追加ポップオーバーおよび新規作成欄（.task-tag-bar__popover-body / __create-section / __create-row）に十分な余白（--wa-space-s 等）が確保されていること
  *    - 3-7. ポップオーバー内チェックリストの wa-checkbox（.task-tag-bar__checkbox）でチェックボックスとタグが縦方向中央揃えになっていること
+ *    - 3-8. 描画される wa-tag が appearance="filled" と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること
+ *    - 3-9. タスクパネルのタグチップ（.task-tag-bar__tag / .task-tag-bar__measure-item）および +N ボタンがヘッダー内ボタン（28px）に収まるコンパクトな高さ（22px）で定義されていること
  */
 describe("TaskTagBar Component", () => {
   let element: TaskTagBar;
@@ -258,7 +260,7 @@ describe("TaskTagBar Component", () => {
       expect(element.newTagDescription).toBe("");
     });
 
-    it("2-7. カラー選択セレクトが英語色名（Gray / Blue / Green / Yellow / Red）と各カラーに対応する修飾クラスを持つこと", () => {
+    it("2-7. カラー選択セレクトが英語色名（10色）と各カラーに対応する修飾クラスを持つこと", () => {
       element.searchKeyword = "新規候補";
       element.newTagVariant = "brand";
       const htmlStr = flattenTemplate(element.render());
@@ -270,6 +272,11 @@ describe("TaskTagBar Component", () => {
         ["success", "Green"],
         ["warning", "Yellow"],
         ["danger", "Red"],
+        ["purple", "Purple"],
+        ["pink", "Pink"],
+        ["cyan", "Cyan"],
+        ["orange", "Orange"],
+        ["indigo", "Indigo"],
       ] as const) {
         expect(htmlStr).toContain(`task-tag-bar__variant-option--${variant}`);
         expect(htmlStr).toContain(label);
@@ -396,11 +403,20 @@ describe("TaskTagBar Component", () => {
       const mixinsPath = path.resolve(path.dirname(scssPath), "../../styles/mixins.scss");
       const mixinsContent = fs.readFileSync(mixinsPath, "utf-8");
       expect(mixinsContent).toContain("@mixin tag-variant-select-styles");
-      expect(mixinsContent).toContain("--wa-color-brand-on-quiet");
-      expect(mixinsContent).toContain("--wa-color-success-on-quiet");
-      expect(mixinsContent).toContain("--wa-color-warning-on-quiet");
-      expect(mixinsContent).toContain("--wa-color-danger-on-quiet");
-      expect(mixinsContent).toContain("--wa-color-neutral-on-quiet");
+      for (const variant of [
+        "neutral",
+        "brand",
+        "success",
+        "warning",
+        "danger",
+        "purple",
+        "pink",
+        "cyan",
+        "orange",
+        "indigo",
+      ]) {
+        expect(mixinsContent).toContain(`--stepnote-tag-${variant}-color`);
+      }
     });
 
     it("3-6. タグ追加ポップオーバーおよび新規作成欄（__popover-body / __create-section / __create-row）に十分な余白が確保されていること", () => {
@@ -420,6 +436,28 @@ describe("TaskTagBar Component", () => {
       expect(scssContent).toMatch(/&::part\(base\)\s*\{[^}]*align-items:\s*center/);
       expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*display:\s*inline-flex/);
       expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*align-items:\s*center/);
+    });
+
+    it("3-8. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('appearance="filled"');
+      expect(htmlStr).toContain("stepnote-tag--brand");
+
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toContain("@include stepnote-tag-styles;");
+    });
+
+    it("3-9. タグチップ（.task-tag-bar__tag / __measure-item）および +N ボタンがコンパクトな高さ（22px）で定義されていること", () => {
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__tag,\s*\.task-tag-bar__measure-item\s*\{[^}]*height:\s*22px;/,
+      );
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__tag,\s*\.task-tag-bar__measure-item\s*\{[^}]*line-height:\s*1;/,
+      );
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__overflow-btn[\s\S]*?&::part\(button\)\s*\{[^}]*height:\s*22px;/,
+      );
     });
   });
 });

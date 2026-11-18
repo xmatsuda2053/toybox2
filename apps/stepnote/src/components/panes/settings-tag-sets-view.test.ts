@@ -33,6 +33,7 @@ import { SettingsTagSetsView } from "./settings-tag-sets-view.js";
  *    - 4-2. !important および @extend が一切含まれていないこと
  *    - 4-3. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること
  *    - 4-4. 詳細ペイン（.settings-tag-sets-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること
+ *    - 4-5. wa-tag が appearance="filled" と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること
  */
 describe("SettingsTagSetsView Component", () => {
   let element: SettingsTagSetsView;
@@ -287,6 +288,16 @@ describe("SettingsTagSetsView Component", () => {
     it("4-4. 詳細ペイン（.settings-tag-sets-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
       expect(content).toMatch(/\.settings-tag-sets-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
+    });
+
+    it("4-5. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {
+      element.startNewTagSet();
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('appearance="filled"');
+      expect(htmlStr).toContain("stepnote-tag--brand");
+
+      const content = fs.readFileSync(scssPath, "utf-8");
+      expect(content).toContain("@include stepnote-tag-styles;");
     });
   });
 });

@@ -232,3 +232,5 @@
   justify-content: flex-end;
   gap: var(--wa-space-s, 12px);
 }
+
+@include stepnote-tag-styles;

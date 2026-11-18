@@ -19,7 +19,11 @@ import {
   WithTagSetsController,
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
-import { normalizeTagName, normalizeTagVariant } from "@/utils/tag.utils.js";
+import {
+  normalizeTagName,
+  normalizeTagVariant,
+  resolveWaTagVariant,
+} from "@/utils/tag.utils.js";
 import {
   canCreateNewTag,
   computeVisibleTagCount,
@@ -269,10 +273,11 @@ export class TaskTagBar extends WithTagSetsController(
   private renderTagChip(tag: TagRecord): HTMLTemplateResult {
     return html`
       <wa-tag
-        class="task-tag-bar__tag"
+        class="task-tag-bar__tag stepnote-tag stepnote-tag--${tag.variant}"
         size="s"
         pill
-        variant=${tag.variant}
+        appearance="filled"
+        variant=${resolveWaTagVariant(tag.variant)}
         with-remove
         title=${tag.description || tag.name}
         @wa-remove=${() => this.handleRemoveTag(tag.id)}
@@ -350,7 +355,9 @@ export class TaskTagBar extends WithTagSetsController(
                 <wa-tag
                   size="xs"
                   pill
-                  variant=${tag.variant}
+                  appearance="filled"
+                  class="stepnote-tag stepnote-tag--${tag.variant}"
+                  variant=${resolveWaTagVariant(tag.variant)}
                   title=${tag.description}
                 >
                   ${tag.name}
@@ -559,9 +566,10 @@ export class TaskTagBar extends WithTagSetsController(
         ${assigned.map(
           (tag) => html`
             <wa-tag
-              class="task-tag-bar__measure-item"
+              class="task-tag-bar__measure-item stepnote-tag"
               size="s"
               pill
+              appearance="filled"
               with-remove
             >
               ${tag.name}

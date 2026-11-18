@@ -46,6 +46,8 @@ import * as fs from "node:fs";
  * 仕様 40: Dark モード（@mixin dark-theme-tokens）に blockquote および checkbox 用セマンティックトークンが定義されていること
  * 仕様 41: ペイン幅トークン（--stepnote-pane-menu-width: 45px / --stepnote-pane-navigation-width: 220px / --stepnote-pane-task-list-width: 290px）が定義されていること
  * 仕様 42: ヘッダー・フッター高さトークン（--stepnote-header-height: 48px / --stepnote-footer-height: 32px）が定義されていること
+ * 仕様 43: Light モードに全10色のタグ専用高コントラストトークン（--stepnote-tag-*-bg / --stepnote-tag-*-color）が定義されていること
+ * 仕様 44: Dark モード（@mixin dark-theme-tokens）に全10色のタグ専用高コントラストトークンが定義されていること
  */
 describe("tokens.scss デザイントークン & テーマ基調色", () => {
   const tokensScss = fs.readFileSync(
@@ -508,6 +510,54 @@ describe("tokens.scss デザイントークン & テーマ基調色", () => {
     it("仕様 42: ヘッダー・フッター高さトークン（--stepnote-header-height: 48px / --stepnote-footer-height: 32px）が定義されていること", () => {
       expect(tokensScss).toMatch(/--stepnote-header-height:\s*48px;/);
       expect(tokensScss).toMatch(/--stepnote-footer-height:\s*32px;/);
+    });
+
+    it("仕様 43: Light モードに全10色のタグ専用高コントラストトークンが定義されていること", () => {
+      const lightBlock = extractBlock(
+        tokensScss,
+        /:root[\s\S]*?\[data-theme="light"\]/,
+      );
+      for (const variant of [
+        "neutral",
+        "brand",
+        "success",
+        "warning",
+        "danger",
+        "purple",
+        "pink",
+        "cyan",
+        "orange",
+        "indigo",
+      ]) {
+        expect(lightBlock).toMatch(new RegExp(`--stepnote-tag-${variant}-bg:\\s*var\\(--wa-color-`));
+        expect(lightBlock).toMatch(new RegExp(`--stepnote-tag-${variant}-color:\\s*var\\(--wa-color-`));
+      }
+      expect(lightBlock).toMatch(/--stepnote-tag-neutral-bg:\s*var\(--wa-color-gray-80\);/);
+      expect(lightBlock).toMatch(/--stepnote-tag-neutral-color:\s*var\(--wa-color-gray-10\);/);
+    });
+
+    it("仕様 44: Dark モード（@mixin dark-theme-tokens）に全10色のタグ専用高コントラストトークンが定義されていること", () => {
+      const mixinBlock = extractBlock(
+        tokensScss,
+        /@mixin\s+dark-theme-tokens/,
+      );
+      for (const variant of [
+        "neutral",
+        "brand",
+        "success",
+        "warning",
+        "danger",
+        "purple",
+        "pink",
+        "cyan",
+        "orange",
+        "indigo",
+      ]) {
+        expect(mixinBlock).toMatch(new RegExp(`--stepnote-tag-${variant}-bg:\\s*var\\(--wa-color-`));
+        expect(mixinBlock).toMatch(new RegExp(`--stepnote-tag-${variant}-color:\\s*var\\(--wa-color-`));
+      }
+      expect(mixinBlock).toMatch(/--stepnote-tag-neutral-bg:\s*var\(--wa-color-gray-30\);/);
+      expect(mixinBlock).toMatch(/--stepnote-tag-neutral-color:\s*var\(--wa-color-gray-95\);/);
     });
   });
 });

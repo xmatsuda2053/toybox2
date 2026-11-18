@@ -1,12 +1,17 @@
 /**
- * Web Awesome `<wa-tag>` のカラーバリアント定義
+ * タグのカラーバリアント定義（Web Awesome 基本5色 + パレット拡張5色）
  */
 export type TagVariant =
   | "neutral"
   | "brand"
   | "success"
   | "warning"
-  | "danger";
+  | "danger"
+  | "purple"
+  | "pink"
+  | "cyan"
+  | "orange"
+  | "indigo";
 
 /**
  * タグレコードの永続化エンティティ型定義

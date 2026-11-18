@@ -28,6 +28,36 @@ export function normalizeTagVariant(variant?: string): TagVariant {
 }
 
 /**
+ * Web Awesome `<wa-tag>` が標準で受け付けるバリアント型
+ */
+export type WaTagSemanticVariant =
+  | "neutral"
+  | "brand"
+  | "success"
+  | "warning"
+  | "danger";
+
+const WA_SEMANTIC_VARIANTS: ReadonlySet<string> = new Set<WaTagSemanticVariant>([
+  "neutral",
+  "brand",
+  "success",
+  "warning",
+  "danger",
+]);
+
+/**
+ * 10色の TagVariant を `<wa-tag variant="...">` 用の標準5バリアントへ変換する。
+ * 拡張5色（purple / pink / cyan / orange / indigo）は `"neutral"` を返し、
+ * 実際の配色は `.stepnote-tag--<variant>` クラスで適用する。
+ */
+export function resolveWaTagVariant(variant: TagVariant): WaTagSemanticVariant {
+  if (WA_SEMANTIC_VARIANTS.has(variant)) {
+    return variant as WaTagSemanticVariant;
+  }
+  return "neutral";
+}
+
+/**
  * 名前プロパティを持つエンティティ一覧を日本語ロケールの自然順・昇順でソートする共通ヘルパー
  */
 function sortByNameAsc<T extends { name: string }>(items: readonly T[]): T[] {
