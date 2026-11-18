@@ -8,6 +8,7 @@ import {
   normalizeTagSetName,
   sortTagSetsByNameAsc,
   mergeTagIds,
+  resolveWaTagVariant,
 } from "./tag.utils";
 import type { TagRecord } from "@/db/models/tag.model";
 import { TAG_VARIANT_LIST } from "@/constants/tag.constants";
@@ -19,7 +20,8 @@ import { TAG_VARIANT_LIST } from "@/constants/tag.constants";
  * 3. sortTagsByNameAsc が元の配列を変更せずタグ名昇順でソートすること
  * 4. normalizeTagIds が undefined や重複IDを除去して正規化すること
  * 5. splitVisibleAndOverflowTags が固定幅内に収まるタグと省略件数(+N)を分割すること
- * 6. TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（Gray / Blue / Green / Yellow / Red）で定義されていること
+ * 6. TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（10色: Gray / Blue / Green / Yellow / Red / Purple / Pink / Cyan / Orange / Indigo）で定義されていること
+ * 7. resolveWaTagVariant が Web Awesome 標準5バリアントをそのまま返し、拡張5色を "neutral" へフォールバックすること
  */
 describe("tag.utils", () => {
   it("normalizeTagName が前後空白と先頭 '#' を除去して正規化すること", () => {
@@ -32,6 +34,11 @@ describe("tag.utils", () => {
   it("normalizeTagVariant が有効な variant を返し、無効値時に 'neutral' を返すこと", () => {
     expect(normalizeTagVariant("brand")).toBe("brand");
     expect(normalizeTagVariant("danger")).toBe("danger");
+    expect(normalizeTagVariant("purple")).toBe("purple");
+    expect(normalizeTagVariant("pink")).toBe("pink");
+    expect(normalizeTagVariant("cyan")).toBe("cyan");
+    expect(normalizeTagVariant("orange")).toBe("orange");
+    expect(normalizeTagVariant("indigo")).toBe("indigo");
     expect(normalizeTagVariant("invalid")).toBe("neutral");
     expect(normalizeTagVariant(undefined)).toBe("neutral");
   });
@@ -74,14 +81,32 @@ describe("tag.utils", () => {
     expect(overflow.visibleTags.length + overflow.hiddenCount).toBe(4);
   });
 
-  it("TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（Gray / Blue / Green / Yellow / Red）で定義されていること", () => {
+  it("TAG_VARIANT_LIST の各選択肢がシンプルな英語の色名（10色）で定義されていること", () => {
     expect(TAG_VARIANT_LIST).toEqual([
       { value: "neutral", label: "Gray" },
       { value: "brand", label: "Blue" },
       { value: "success", label: "Green" },
       { value: "warning", label: "Yellow" },
       { value: "danger", label: "Red" },
+      { value: "purple", label: "Purple" },
+      { value: "pink", label: "Pink" },
+      { value: "cyan", label: "Cyan" },
+      { value: "orange", label: "Orange" },
+      { value: "indigo", label: "Indigo" },
     ]);
+  });
+
+  it("resolveWaTagVariant が標準5色をそのまま返し、拡張5色を 'neutral' へ変換すること", () => {
+    expect(resolveWaTagVariant("neutral")).toBe("neutral");
+    expect(resolveWaTagVariant("brand")).toBe("brand");
+    expect(resolveWaTagVariant("success")).toBe("success");
+    expect(resolveWaTagVariant("warning")).toBe("warning");
+    expect(resolveWaTagVariant("danger")).toBe("danger");
+    expect(resolveWaTagVariant("purple" as never)).toBe("neutral");
+    expect(resolveWaTagVariant("pink" as never)).toBe("neutral");
+    expect(resolveWaTagVariant("cyan" as never)).toBe("neutral");
+    expect(resolveWaTagVariant("orange" as never)).toBe("neutral");
+    expect(resolveWaTagVariant("indigo" as never)).toBe("neutral");
   });
 
   it("normalizeTagSetName・sortTagSetsByNameAsc・mergeTagIds が正しく動作すること", () => {

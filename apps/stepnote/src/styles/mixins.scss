@@ -63,14 +63,50 @@
   }
 }
 
+$stepnote-tag-variants: (
+  "neutral",
+  "brand",
+  "success",
+  "warning",
+  "danger",
+  "purple",
+  "pink",
+  "cyan",
+  "orange",
+  "indigo"
+);
+
+/* StepNote 共通タグスタイル（border 非表示 + 10色高コントラスト配色） */
+@mixin stepnote-tag-styles {
+  .stepnote-tag {
+    border-width: 0;
+    border-color: transparent;
+    @include theme-transition;
+  }
+
+  @each $variant in $stepnote-tag-variants {
+    .stepnote-tag--#{$variant} {
+      --wa-color-fill-quiet: var(--stepnote-tag-#{$variant}-bg);
+      --wa-color-on-quiet: var(--stepnote-tag-#{$variant}-color);
+      background-color: var(--stepnote-tag-#{$variant}-bg);
+      color: var(--stepnote-tag-#{$variant}-color);
+    }
+  }
+}
+
 /* タグカラー選択セレクトおよび選択肢へ各タグカラーに一致した文字色を適用する */
 @mixin tag-variant-select-styles($block) {
   $variant-colors: (
-    "neutral": var(--wa-color-neutral-on-quiet),
-    "brand": var(--wa-color-brand-on-quiet),
-    "success": var(--wa-color-success-on-quiet),
-    "warning": var(--wa-color-warning-on-quiet),
-    "danger": var(--wa-color-danger-on-quiet),
+    "neutral": var(--stepnote-tag-neutral-color),
+    "brand": var(--stepnote-tag-brand-color),
+    "success": var(--stepnote-tag-success-color),
+    "warning": var(--stepnote-tag-warning-color),
+    "danger": var(--stepnote-tag-danger-color),
+    "purple": var(--stepnote-tag-purple-color),
+    "pink": var(--stepnote-tag-pink-color),
+    "cyan": var(--stepnote-tag-cyan-color),
+    "orange": var(--stepnote-tag-orange-color),
+    "indigo": var(--stepnote-tag-indigo-color),
   );
 
   @each $variant, $color in $variant-colors {

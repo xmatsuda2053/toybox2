@@ -13,7 +13,10 @@ import {
 } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { TagRecord } from "@/db/models/tag.model";
-import { splitVisibleAndOverflowTags } from "@/utils/tag.utils";
+import {
+  resolveWaTagVariant,
+  splitVisibleAndOverflowTags,
+} from "@/utils/tag.utils";
 import {
   getTaskDueIconInfo,
   type TaskDueIconInfo,
@@ -279,10 +282,11 @@ export class TaskListItem extends LitElement {
         ${visibleTags.map(
           (tag) => html`
             <wa-tag
-              class="task-list-item__tag"
+              class="task-list-item__tag stepnote-tag stepnote-tag--${tag.variant}"
               size="xs"
               pill
-              variant=${tag.variant}
+              appearance="filled"
+              variant=${resolveWaTagVariant(tag.variant)}
               title=${tag.description || tag.name}
             >
               ${tag.name}
@@ -292,9 +296,10 @@ export class TaskListItem extends LitElement {
         ${hiddenCount > 0
           ? html`
               <wa-tag
-                class="task-list-item__tags-overflow"
+                class="task-list-item__tags-overflow stepnote-tag stepnote-tag--neutral"
                 size="xs"
                 pill
+                appearance="filled"
                 variant="neutral"
               >
                 +${hiddenCount}

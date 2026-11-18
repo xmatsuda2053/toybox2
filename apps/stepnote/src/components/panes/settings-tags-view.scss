@@ -206,4 +206,5 @@
   gap: var(--wa-space-s, 12px);
 }
 
+@include stepnote-tag-styles;
 @include tag-variant-select-styles("settings-tags-view");

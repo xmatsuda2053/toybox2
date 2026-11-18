@@ -78,13 +78,20 @@
   gap: 4px;
   overflow: hidden;
   flex-wrap: nowrap;
+  align-items: center;
 }
 
 .task-list-item__tag,
 .task-list-item__tags-overflow {
   flex-shrink: 0;
   max-width: 140px;
+  height: 20px;
+  line-height: 1;
+  padding: 0 var(--wa-space-xs, 8px);
+  border-width: 0;
 }
+
+@include stepnote-tag-styles;
 
 .task-list-item__status-icon {
   flex-shrink: 0;

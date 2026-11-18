@@ -22,6 +22,11 @@ export const TAG_VARIANT_LIST: readonly TagVariantOption[] = [
   { value: "success", label: "Green" },
   { value: "warning", label: "Yellow" },
   { value: "danger", label: "Red" },
+  { value: "purple", label: "Purple" },
+  { value: "pink", label: "Pink" },
+  { value: "cyan", label: "Cyan" },
+  { value: "orange", label: "Orange" },
+  { value: "indigo", label: "Indigo" },
 ] as const;
 
 /**
