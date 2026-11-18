@@ -1,5 +1,6 @@
 import { html, nothing, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { live } from "lit/directives/live.js";
 import "@shared/components";
 import type { TagRecord, TagSetRecord } from "@/db/models/tag.model.js";
 import {
@@ -288,7 +289,7 @@ export class SettingsTagSetsView extends WithTagsController(
                     <wa-checkbox
                       size="s"
                       class="settings-tag-sets-view__tag-checkbox"
-                      ?checked=${checked}
+                      .checked=${live(checked)}
                       @change=${() => {
                         if (tagId !== undefined) this.toggleFormTag(tagId);
                       }}

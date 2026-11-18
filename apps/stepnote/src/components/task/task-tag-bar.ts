@@ -6,6 +6,7 @@ import {
   type PropertyValues,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { live } from "lit/directives/live.js";
 import "@shared/components";
 import {
   TAG_VARIANT_LIST,
@@ -343,7 +344,7 @@ export class TaskTagBar extends WithTagSetsController(
               <wa-checkbox
                 size="s"
                 class="task-tag-bar__checkbox"
-                ?checked=${checked}
+                .checked=${live(checked)}
                 @change=${() => this.handleToggleTag(tag.id)}
               >
                 <wa-tag
