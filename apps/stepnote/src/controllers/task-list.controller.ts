@@ -32,8 +32,37 @@ export class TaskListController extends BaseDataController<
   private _searchKeyword: string = "";
   private _quickAccess?: Partial<QuickAccessRecord>;
   private _query?: TaskListQuery;
+  private _tasks: readonly TaskRecord[] = [];
   private _quickAccessTaskCounts: QuickAccessTaskCounts = {};
   private _taskIssueCounts: Map<number, TaskIssueCount> = new Map();
+
+  /**
+   * フィルター適用前の選択中会計年度における全タスク一覧
+   *
+   * @readonly
+   * @type {readonly TaskRecord[]}
+   * @memberof TaskListController
+   */
+  public get tasks(): readonly TaskRecord[] {
+    return this._tasks;
+  }
+
+  /**
+   * 選択中会計年度の全タスクに紐づく Issue 集計件数合計（完了数・総数）
+   *
+   * @readonly
+   * @type {{ done: number; total: number }}
+   * @memberof TaskListController
+   */
+  public get fiscalYearIssueCounts(): { done: number; total: number } {
+    let done = 0;
+    let total = 0;
+    for (const counts of this._taskIssueCounts.values()) {
+      done += counts.done;
+      total += counts.total;
+    }
+    return { done, total };
+  }
 
   /**
    * 現在選択中の会計年度
@@ -117,6 +146,9 @@ export class TaskListController extends BaseDataController<
    * @memberof TaskListController
    */
   protected async loadState(): Promise<void> {
+    const allTasks = await this.repository.getByFiscalYear(this._fiscalYear);
+    this._tasks = allTasks;
+
     if (this._query) {
       this._state = await this._query.getFilteredTasks({
         fiscalYear: this._fiscalYear,
@@ -132,9 +164,9 @@ export class TaskListController extends BaseDataController<
       return;
     }
 
-    const tasks = await this.repository.getByFiscalYear(this._fiscalYear);
-    this._state = this.filterTasksInMemory(tasks);
-    this._quickAccessTaskCounts = calculateQuickAccessTaskCounts(tasks);
+    this._state = this.filterTasksInMemory(allTasks);
+    this._quickAccessTaskCounts = calculateQuickAccessTaskCounts(allTasks);
+    this._taskIssueCounts = new Map();
     this.notify();
   }
 

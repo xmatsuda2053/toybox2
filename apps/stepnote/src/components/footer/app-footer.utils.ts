@@ -46,29 +46,76 @@ export async function getStorageEstimate(): Promise<number | undefined> {
 }
 
 /**
- * タスク配列から総件数、完了件数、完了率を算出する。
+ * タスクおよび Issue の集計メトリクス型
+ */
+export interface TaskProgressMetrics {
+  total: number;
+  completed: number;
+  issueTotal: number;
+  issueCompleted: number;
+  rate: number;
+}
+
+/**
+ * タスク数と Issue 数から単純合算で進捗率（0〜100）を算出する。
+ * 未完了のタスクまたは Issue が 1 件以上存在する場合は上限を 99% に抑える。
+ *
+ * @param completedTasks 完了タスク件数
+ * @param totalTasks 総タスク件数
+ * @param completedIssues 完了 Issue 件数
+ * @param totalIssues 総 Issue 件数
+ * @returns 進捗率（0〜100）
+ */
+export function calculateProgressRate(
+  completedTasks: number,
+  totalTasks: number,
+  completedIssues: number = 0,
+  totalIssues: number = 0,
+): number {
+  const totalItems = totalTasks + totalIssues;
+  if (totalItems <= 0) {
+    return 0;
+  }
+
+  const completedItems = completedTasks + completedIssues;
+  const rawRate = Math.round((completedItems / totalItems) * 100);
+  const hasIncomplete =
+    completedTasks < totalTasks || completedIssues < totalIssues;
+
+  return hasIncomplete ? Math.min(99, rawRate) : rawRate;
+}
+
+/**
+ * タスク配列および Issue 集計から総件数、完了件数、進捗率を算出する。
  *
  * @param tasks タスク配列
- * @returns 集計メトリクス（total: 総件数, completed: 完了件数, rate: 完了率 0〜100）
+ * @param issueCounts Issue の完了数・総数（未指定時は 0）
+ * @returns 集計メトリクス
  */
 export function calculateTaskMetrics(
   tasks?: ReadonlyArray<{ statusCode?: TaskStatusCode | number }>,
-): {
-  total: number;
-  completed: number;
-  rate: number;
-} {
+  issueCounts?: { done: number; total: number },
+): TaskProgressMetrics {
+  const issueTotal = issueCounts?.total ?? 0;
+  const issueCompleted = issueCounts?.done ?? 0;
+
   if (!tasks || tasks.length === 0) {
-    return { total: 0, completed: 0, rate: 0 };
+    const rate = calculateProgressRate(0, 0, issueCompleted, issueTotal);
+    return { total: 0, completed: 0, issueTotal, issueCompleted, rate };
   }
 
   const total = tasks.length;
   const completed = tasks.filter(
     (task) => task.statusCode === TASK_STATUS_CODE.DONE,
   ).length;
-  const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const rate = calculateProgressRate(
+    completed,
+    total,
+    issueCompleted,
+    issueTotal,
+  );
 
-  return { total, completed, rate };
+  return { total, completed, issueTotal, issueCompleted, rate };
 }
 
 /**
@@ -99,21 +146,26 @@ export function formatTaskProgress(
 /**
  * タスク進捗ツールチップ用の日本語詳細テキストを生成する。
  *
- * @param filteredCount 表示中の件数
- * @param totalCount 総件数
- * @param completedCount 完了件数
- * @param rate 完了率（%）
+ * @param filteredCount 表示中のタスク件数
+ * @param totalCount 総タスク件数
+ * @param completedCount 完了タスク件数
+ * @param issueTotalCount 総 Issue 件数
+ * @param issueCompletedCount 完了 Issue 件数
+ * @param rate 進捗率（%）
  * @returns 日本語詳細テキスト
  */
 export function formatTaskProgressTooltip(
   filteredCount: number,
   totalCount: number,
   completedCount: number,
+  issueTotalCount: number,
+  issueCompletedCount: number,
   rate: number,
 ): string {
+  const detail = `総タスク: ${totalCount}件 (完了: ${completedCount}件) / Issue: ${issueTotalCount}件 (完了: ${issueCompletedCount}件) / 進捗率: ${rate}%`;
   if (filteredCount === totalCount) {
-    return `総タスク: ${totalCount}件 (完了: ${completedCount}件, 完了率: ${rate}%)`;
+    return detail;
   }
 
-  return `表示中: ${filteredCount}件 / 総タスク: ${totalCount}件 (完了: ${completedCount}件, 完了率: ${rate}%)`;
+  return `表示中: ${filteredCount}件 / ${detail}`;
 }

@@ -4,6 +4,7 @@ import { getCurrentFiscalYear } from "@shared/utils";
 import { TaskListController } from "./task-list.controller.js";
 import type { TaskRecord } from "@/db/models/task.model";
 import type { TaskRepository } from "@/repositories/task.repository";
+import type { TaskListQuery } from "@/db/queries/task-list.query";
 
 /**
  * TaskRepository の Fake 実装
@@ -102,6 +103,11 @@ const createMockHost = () => {
  * 11. 各タスクの Issue 集計件数（Task Issue Counts）
  *    - 11-1. query 指定時、getTaskIssueCount(taskId) で該当タスクの Issue 進捗（done, total）が返ること
  *    - 11-2. 集計情報が存在しないタスクIDの場合、{ done: 0, total: 0 } が返ること
+ *
+ * 12. 年度内全タスクおよび Issue 全体の集計（Footer 連携向け）
+ *    - 12-1. フィルター（ラベル・キーワード・QuickAccess）適用中でも tasks で年度内の全タスク一覧が取得できること
+ *    - 12-2. query 指定時、tasks で年度内の全タスク一覧が取得でき、fiscalYearIssueCounts で Issue 合計（done, total）が取得できること
+ *    - 12-3. setFiscalYear で年度を切り替えた際、tasks および fiscalYearIssueCounts が切り替え先年度の内容に更新されること
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -650,6 +656,84 @@ describe("TaskListController (TDD)", () => {
       await controller.initialized;
 
       expect(controller.getTaskIssueCount(999)).toEqual({ done: 0, total: 0 });
+    });
+  });
+
+  describe("12. 年度内全タスクおよび Issue 全体の集計（Footer 連携向け）", () => {
+    it("12-1. フィルター（ラベル・キーワード・QuickAccess）適用中でも tasks で年度内の全タスク一覧が取得できること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+      );
+      await controller.initialized;
+
+      await controller.setLabelFilter(1);
+
+      // state はラベルID 1 で絞り込まれる（1件）が、tasks は当年度全体の 2件を保持すること
+      expect(controller.state).toHaveLength(1);
+      expect(controller.tasks).toHaveLength(2);
+    });
+
+    it("12-2. query 指定時、tasks で年度内の全タスク一覧が取得でき、fiscalYearIssueCounts で Issue 合計（done, total）が取得できること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      const currentYearTasks = sampleTasks.filter((t) => t.fiscalYear === currentYear);
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockResolvedValue([currentYearTasks[0]]),
+        getQuickAccessTaskCounts: vi.fn().mockResolvedValue({}),
+        getTaskIssueCounts: vi.fn().mockResolvedValue(
+          new Map([
+            [1, { done: 2, total: 3 }],
+            [2, { done: 1, total: 4 }],
+          ]),
+        ),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        fakeQuery as unknown as TaskListQuery,
+      );
+      await controller.initialized;
+
+      expect(controller.state).toHaveLength(1);
+      expect(controller.tasks).toHaveLength(2);
+      expect(controller.fiscalYearIssueCounts).toEqual({ done: 3, total: 7 });
+    });
+
+    it("12-3. setFiscalYear で年度を切り替えた際、tasks および fiscalYearIssueCounts が切り替え先年度の内容に更新されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockImplementation(async ({ fiscalYear }: { fiscalYear: number }) =>
+          sampleTasks.filter((t) => t.fiscalYear === fiscalYear),
+        ),
+        getQuickAccessTaskCounts: vi.fn().mockResolvedValue({}),
+        getTaskIssueCounts: vi.fn().mockImplementation(async (fiscalYear: number) => {
+          if (fiscalYear === currentYear) {
+            return new Map([[1, { done: 1, total: 2 }]]);
+          }
+          return new Map([[3, { done: 3, total: 5 }]]);
+        }),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        fakeQuery as unknown as TaskListQuery,
+      );
+      await controller.initialized;
+
+      await controller.setFiscalYear(currentYear - 1);
+
+      expect(controller.tasks).toHaveLength(1);
+      expect(controller.tasks[0].id).toBe(3);
+      expect(controller.fiscalYearIssueCounts).toEqual({ done: 3, total: 5 });
     });
   });
 });

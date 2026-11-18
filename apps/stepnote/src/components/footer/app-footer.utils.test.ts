@@ -24,10 +24,13 @@ import { TASK_STATUS_CODE } from "../../constants/task-status.constants.js";
  *    - 2-2. navigator または navigator.storage が存在しない場合は undefined を返すこと
  *    - 2-3. estimate() が例外を送出した場合は安全に undefined を返すこと
  *
- * 3. calculateTaskMetrics (タスク集計と完了率算出)
- *    - 3-1. 未定義または空配列の場合は total: 0, completed: 0, rate: 0 を返すこと
- *    - 3-2. 完了タスクが含まれる場合、正しく件数と四捨五入の完了率を算出すること
- *    - 3-3. 全件完了の場合は rate: 100 を返すこと
+ * 3. calculateTaskMetrics (タスクおよび Issue 集計と進捗率算出)
+ *    - 3-1. 未定義または空配列の場合は total: 0, completed: 0, issueTotal: 0, issueCompleted: 0, rate: 0 を返すこと
+ *    - 3-2. 完了タスクが含まれる場合、正しく件数と四捨五入の進捗率を算出すること
+ *    - 3-3. 全件完了（Issue なし）の場合は rate: 100 を返すこと
+ *    - 3-4. Issue 件数（{ done, total }）を渡した場合、(完了タスク + 完了Issue) / (総タスク + 総Issue) の四捨五入で進捗率が算出されること
+ *    - 3-5. 未完了タスクまたは未完了 Issue が残っている場合、四捨五入で 100% になる割合であっても進捗率の上限が 99% に抑えられること
+ *    - 3-6. 全タスクおよび全 Issue が完了している場合のみ rate: 100 を返すこと
  *
  * 4. formatTaskProgress (タスク進捗テキストのフォーマット)
  *    - 4-1. totalCount が 0 の場合は "0 Tasks" を返すこと
@@ -36,8 +39,8 @@ import { TASK_STATUS_CODE } from "../../constants/task-status.constants.js";
  *    - 4-4. フィルター適用中（filteredCount !== totalCount）の場合、"X/Y Tasks (Z%)" とフォーマットされること
  *
  * 5. formatTaskProgressTooltip (ツールチップ詳細テキストの生成)
- *    - 5-1. フィルター未適用の場合は "総タスク: X件 (完了: Y件, 完了率: Z%)" を返すこと
- *    - 5-2. フィルター適用中の場合は "表示中: X件 / 総タスク: Y件 (完了: Z件, 完了率: W%)" を返すこと
+ *    - 5-1. フィルター未適用の場合は "総タスク: X件 (完了: Y件) / Issue: A件 (完了: B件) / 進捗率: Z%" を返すこと
+ *    - 5-2. フィルター適用中の場合は "表示中: W件 / 総タスク: X件 (完了: Y件) / Issue: A件 (完了: B件) / 進捗率: Z%" を返すこと
  */
 
 describe("AppFooter Utilities", () => {
@@ -141,20 +144,24 @@ describe("AppFooter Utilities", () => {
   });
 
   describe("3. calculateTaskMetrics", () => {
-    it("3-1. 未定義または空配列の場合は total: 0, completed: 0, rate: 0 を返すこと", () => {
+    it("3-1. 未定義または空配列の場合は total: 0, completed: 0, issueTotal: 0, issueCompleted: 0, rate: 0 を返すこと", () => {
       expect(calculateTaskMetrics(undefined)).toEqual({
         total: 0,
         completed: 0,
+        issueTotal: 0,
+        issueCompleted: 0,
         rate: 0,
       });
       expect(calculateTaskMetrics([])).toEqual({
         total: 0,
         completed: 0,
+        issueTotal: 0,
+        issueCompleted: 0,
         rate: 0,
       });
     });
 
-    it("3-2. 完了タスクが含まれる場合、正しく件数と四捨五入の完了率を算出すること", () => {
+    it("3-2. 完了タスクが含まれる場合、正しく件数と四捨五入の進捗率を算出すること", () => {
       const tasks = [
         { statusCode: TASK_STATUS_CODE.DONE },
         { statusCode: TASK_STATUS_CODE.PROGRESS },
@@ -170,11 +177,13 @@ describe("AppFooter Utilities", () => {
       expect(calculateTaskMetrics(tasks)).toEqual({
         total: 8,
         completed: 3,
+        issueTotal: 0,
+        issueCompleted: 0,
         rate: 38,
       });
     });
 
-    it("3-3. 全件完了の場合は rate: 100 を返すこと", () => {
+    it("3-3. 全件完了（Issue なし）の場合は rate: 100 を返すこと", () => {
       const tasks = [
         { statusCode: TASK_STATUS_CODE.DONE },
         { statusCode: TASK_STATUS_CODE.DONE },
@@ -183,6 +192,81 @@ describe("AppFooter Utilities", () => {
       expect(calculateTaskMetrics(tasks)).toEqual({
         total: 2,
         completed: 2,
+        issueTotal: 0,
+        issueCompleted: 0,
+        rate: 100,
+      });
+    });
+
+    it("3-4. Issue 件数を渡した場合、(完了タスク + 完了Issue) / (総タスク + 総Issue) の四捨五入で進捗率が算出されること", () => {
+      const tasks = [
+        { statusCode: TASK_STATUS_CODE.DONE },
+        { statusCode: TASK_STATUS_CODE.PROGRESS },
+      ];
+      // タスク: 1/2, Issue: 1/2 -> (1 + 1) / (2 + 2) = 50%
+      expect(calculateTaskMetrics(tasks, { done: 1, total: 2 })).toEqual({
+        total: 2,
+        completed: 1,
+        issueTotal: 2,
+        issueCompleted: 1,
+        rate: 50,
+      });
+
+      // タスク: 0/1, Issue: 2/3 -> (0 + 2) / (1 + 3) = 50%
+      expect(
+        calculateTaskMetrics([{ statusCode: TASK_STATUS_CODE.PROGRESS }], {
+          done: 2,
+          total: 3,
+        }),
+      ).toEqual({
+        total: 1,
+        completed: 0,
+        issueTotal: 3,
+        issueCompleted: 2,
+        rate: 50,
+      });
+    });
+
+    it("3-5. 未完了タスクまたは未完了 Issue が残っている場合、四捨五入で 100% になる割合であっても進捗率の上限が 99% に抑えられること", () => {
+      // タスク 0/1（未完了）, Issue 200/200（全完了） -> 200/201 = 99.502% -> 四捨五入だと100だが上限99%
+      expect(
+        calculateTaskMetrics([{ statusCode: TASK_STATUS_CODE.PROGRESS }], {
+          done: 200,
+          total: 200,
+        }),
+      ).toEqual({
+        total: 1,
+        completed: 0,
+        issueTotal: 200,
+        issueCompleted: 200,
+        rate: 99,
+      });
+
+      // タスク 1/1（完了）, Issue 199/200（未完了あり） -> 200/201 = 99.502% -> 上限99%
+      expect(
+        calculateTaskMetrics([{ statusCode: TASK_STATUS_CODE.DONE }], {
+          done: 199,
+          total: 200,
+        }),
+      ).toEqual({
+        total: 1,
+        completed: 1,
+        issueTotal: 200,
+        issueCompleted: 199,
+        rate: 99,
+      });
+    });
+
+    it("3-6. 全タスクおよび全 Issue が完了している場合のみ rate: 100 を返すこと", () => {
+      const tasks = [
+        { statusCode: TASK_STATUS_CODE.DONE },
+        { statusCode: TASK_STATUS_CODE.DONE },
+      ];
+      expect(calculateTaskMetrics(tasks, { done: 5, total: 5 })).toEqual({
+        total: 2,
+        completed: 2,
+        issueTotal: 5,
+        issueCompleted: 5,
         rate: 100,
       });
     });
@@ -207,15 +291,15 @@ describe("AppFooter Utilities", () => {
   });
 
   describe("5. formatTaskProgressTooltip", () => {
-    it("5-1. フィルター未適用の場合は '総タスク: X件 (完了: Y件, 完了率: Z%)' を返すこと", () => {
-      expect(formatTaskProgressTooltip(12, 12, 8, 67)).toBe(
-        "総タスク: 12件 (完了: 8件, 完了率: 67%)",
+    it("5-1. フィルター未適用の場合は '総タスク: X件 (完了: Y件) / Issue: A件 (完了: B件) / 進捗率: Z%' を返すこと", () => {
+      expect(formatTaskProgressTooltip(12, 12, 8, 10, 5, 59)).toBe(
+        "総タスク: 12件 (完了: 8件) / Issue: 10件 (完了: 5件) / 進捗率: 59%",
       );
     });
 
-    it("5-2. フィルター適用中の場合は '表示中: X件 / 総タスク: Y件 (完了: Z件, 完了率: W%)' を返すこと", () => {
-      expect(formatTaskProgressTooltip(8, 12, 8, 67)).toBe(
-        "表示中: 8件 / 総タスク: 12件 (完了: 8件, 完了率: 67%)",
+    it("5-2. フィルター適用中の場合は '表示中: W件 / 総タスク: X件 (完了: Y件) / Issue: A件 (完了: B件) / 進捗率: Z%' を返すこと", () => {
+      expect(formatTaskProgressTooltip(8, 12, 8, 10, 5, 59)).toBe(
+        "表示中: 8件 / 総タスク: 12件 (完了: 8件) / Issue: 10件 (完了: 5件) / 進捗率: 59%",
       );
     });
   });
