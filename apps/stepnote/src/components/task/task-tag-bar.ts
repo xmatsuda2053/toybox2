@@ -532,6 +532,7 @@ export class TaskTagBar extends WithTagSetsController(
         aria-label="タグを追加・編集"
       >
         <wa-icon
+          class="task-tag-bar__btn-add-icon"
           library="my-icons"
           name="tags-solid-full"
           label="タグを追加・編集"
