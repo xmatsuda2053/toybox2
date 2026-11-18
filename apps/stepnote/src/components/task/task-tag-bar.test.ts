@@ -41,6 +41,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 3-7. ポップオーバー内チェックリストの wa-checkbox（.task-tag-bar__checkbox）でチェックボックスとタグが縦方向中央揃えになっていること
  *    - 3-8. 描画される wa-tag が appearance="filled" と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること
  *    - 3-9. タスクパネルのタグチップ（.task-tag-bar__tag / .task-tag-bar__measure-item）および +N ボタンがヘッダー内ボタン（28px）に収まるコンパクトな高さ（22px）で定義されていること
+ *    - 3-10. タグ追加ボタンアイコン（.task-tag-bar__btn-add-icon）が視覚サイズ調整用の font-size（1.35em）で定義されていること
  */
 describe("TaskTagBar Component", () => {
   let element: TaskTagBar;
@@ -457,6 +458,16 @@ describe("TaskTagBar Component", () => {
       );
       expect(scssContent).toMatch(
         /\.task-tag-bar__overflow-btn[\s\S]*?&::part\(button\)\s*\{[^}]*height:\s*22px;/,
+      );
+    });
+
+    it("3-10. タグ追加ボタンアイコン（.task-tag-bar__btn-add-icon）が視覚サイズ調整用の font-size で定義されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain("task-tag-bar__btn-add-icon");
+
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__btn-add-icon\s*\{[^}]*font-size:\s*1\.35em;/,
       );
     });
   });
