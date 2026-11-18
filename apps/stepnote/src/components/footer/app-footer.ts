@@ -5,9 +5,11 @@ import appFooterStyles from "./app-footer.scss?inline";
 import {
   formatStorageSize,
   getStorageEstimate,
+  calculateProgressRate,
   calculateTaskMetrics,
   formatTaskProgress,
   formatTaskProgressTooltip,
+  type TaskProgressMetrics,
 } from "./app-footer.utils.js";
 import {
   SubscriberElement,
@@ -84,6 +86,18 @@ export class AppFooter extends WithLabelsController(
    */
   @property({ type: Number })
   public completedTaskCount?: number;
+
+  /**
+   * 総 Issue 件数
+   */
+  @property({ type: Number })
+  public totalIssueCount?: number;
+
+  /**
+   * 完了 Issue 件数
+   */
+  @property({ type: Number })
+  public completedIssueCount?: number;
 
   /**
    * デバウンスされたストレージ使用量更新リクエスト
@@ -223,32 +237,39 @@ export class AppFooter extends WithLabelsController(
    * タスク進捗の集計メトリクスを取得する。
    */
   protected get effectiveTaskMetrics():
-    | { filtered: number; total: number; completed: number; rate: number }
+    | ({ filtered: number } & TaskProgressMetrics)
     | undefined {
     if (this.totalTaskCount !== undefined) {
       const total = this.totalTaskCount;
       const filtered = this.filteredTaskCount ?? total;
       const completed = this.completedTaskCount ?? 0;
-      const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-      return { filtered, total, completed, rate };
+      const issueTotal = this.totalIssueCount ?? 0;
+      const issueCompleted = this.completedIssueCount ?? 0;
+      const rate = calculateProgressRate(
+        completed,
+        total,
+        issueCompleted,
+        issueTotal,
+      );
+      return { filtered, total, completed, issueTotal, issueCompleted, rate };
     }
 
     if (!this.taskListController) {
       return undefined;
     }
 
-    const ctrl = this.taskListController as unknown as {
-      tasks?: readonly TaskRecord[];
-    };
-    const allTasks = ctrl.tasks ?? this.taskListController.state;
+    const allTasks =
+      this.taskListController.tasks ?? this.taskListController.state;
     const filteredTasks = this.taskListController.state ?? [];
-    const metrics = calculateTaskMetrics(allTasks as TaskRecord[]);
+    const issueCounts = this.taskListController.fiscalYearIssueCounts;
+    const metrics = calculateTaskMetrics(
+      allTasks as readonly TaskRecord[],
+      issueCounts,
+    );
 
     return {
       filtered: filteredTasks.length,
-      total: metrics.total,
-      completed: metrics.completed,
-      rate: metrics.rate,
+      ...metrics,
     };
   }
 
@@ -322,12 +343,9 @@ export class AppFooter extends WithLabelsController(
   /**
    * タスク進捗カウンターのレンダリング。
    */
-  private renderTaskProgressStatus(metrics: {
-    filtered: number;
-    total: number;
-    completed: number;
-    rate: number;
-  }) {
+  private renderTaskProgressStatus(
+    metrics: { filtered: number } & TaskProgressMetrics,
+  ) {
     const text = formatTaskProgress(
       metrics.filtered,
       metrics.total,
@@ -337,6 +355,8 @@ export class AppFooter extends WithLabelsController(
       metrics.filtered,
       metrics.total,
       metrics.completed,
+      metrics.issueTotal,
+      metrics.issueCompleted,
       metrics.rate,
     );
 

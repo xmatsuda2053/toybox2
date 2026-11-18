@@ -32,7 +32,8 @@ import type { TaskController } from "../../controllers/task.controller.js";
  *
  * 4. タスク進捗・年度の表示
  *    - 4-1. fiscalYear が設定されている場合、年度アイコンと数値が表示されること
- *    - 4-2. taskListController が注入されている場合、タスク進捗（X/Y Tasks (Z%)）が表示されること
+ *    - 4-2. taskListController が注入されている場合、年度全体タスクと Issue を考慮した進捗（X/Y Tasks (Z%)）およびツールチップが表示されること
+ *    - 4-3. 未完了タスクが存在する場合、Issue がすべて完了していても進捗率が 100% にならず上限 99% に抑えられること
  *
  * 5. イベント発火
  *    - 5-1. handleShortcutHelpClick 実行時に request-shortcut-help カスタムイベントが発火されること
@@ -115,11 +116,13 @@ describe("AppFooter Component", () => {
       expect(htmlStr).toContain("8/12 Tasks (67%)");
     });
 
-    it("1-8. 年度およびタスク進捗に wa-tooltip（trigger='hover', placement='top'）が設定されること", () => {
+    it("1-8. 年度およびタスク進捗に wa-tooltip（trigger='hover', placement='top'）が設定され、Issue件数と進捗率が表示されること", () => {
       footer.fiscalYear = 2025;
       footer.totalTaskCount = 12;
       footer.filteredTaskCount = 8;
       footer.completedTaskCount = 8;
+      footer.totalIssueCount = 10;
+      footer.completedIssueCount = 5;
       const htmlStr = flattenTemplate(footer.render());
 
       expect(htmlStr).toMatch(
@@ -130,7 +133,10 @@ describe("AppFooter Component", () => {
       expect(htmlStr).toMatch(
         /<wa-tooltip[^>]*for="footer-status-tasks"[^>]*placement="top"[^>]*trigger="hover"/,
       );
-      expect(htmlStr).toContain("表示中: 8件 / 総タスク: 12件");
+      expect(htmlStr).toContain(
+        "表示中: 8件 / 総タスク: 12件 (完了: 8件) / Issue: 10件 (完了: 5件) / 進捗率: 59%",
+      );
+      expect(htmlStr).toContain("8/12 Tasks (59%)");
     });
 
     it("1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタンおよび wa-tooltip がレンダリングされること", () => {
@@ -181,22 +187,40 @@ describe("AppFooter Component", () => {
       expect(htmlStr).toContain("2026");
     });
 
-    it("4-2. taskListController が注入されている場合、タスク進捗が表示されること", () => {
+    it("4-2. taskListController が注入されている場合、年度全体タスクと Issue を考慮した進捗およびツールチップが表示されること", () => {
       const mockController = {
         fiscalYear: 2025,
+        // 完了タスクがフィルターで非表示の状態（表示中は未完了2件のみ）
         state: [
-          { id: 1, statusCode: TASK_STATUS_CODE.DONE },
           { id: 2, statusCode: TASK_STATUS_CODE.PROGRESS },
+          { id: 3, statusCode: TASK_STATUS_CODE.PENDING },
         ],
         tasks: [
           { id: 1, statusCode: TASK_STATUS_CODE.DONE },
           { id: 2, statusCode: TASK_STATUS_CODE.PROGRESS },
           { id: 3, statusCode: TASK_STATUS_CODE.PENDING },
         ],
+        fiscalYearIssueCounts: { done: 2, total: 4 },
       };
       footer.taskListController = mockController as unknown as TaskListController;
       const htmlStr = flattenTemplate(footer.render());
-      expect(htmlStr).toContain("2/3 Tasks (33%)");
+      // タスク: 1/3, Issue: 2/4 -> (1 + 2) / (3 + 4) = 3 / 7 = 42.85% -> 43%
+      expect(htmlStr).toContain("2/3 Tasks (43%)");
+      expect(htmlStr).toContain(
+        "表示中: 2件 / 総タスク: 3件 (完了: 1件) / Issue: 4件 (完了: 2件) / 進捗率: 43%",
+      );
+    });
+
+    it("4-3. 未完了タスクが存在する場合、Issue がすべて完了していても進捗率が 100% にならず上限 99% に抑えられること", () => {
+      const mockController = {
+        fiscalYear: 2025,
+        state: [{ id: 1, statusCode: TASK_STATUS_CODE.PROGRESS }],
+        tasks: [{ id: 1, statusCode: TASK_STATUS_CODE.PROGRESS }],
+        fiscalYearIssueCounts: { done: 200, total: 200 },
+      };
+      footer.taskListController = mockController as unknown as TaskListController;
+      const htmlStr = flattenTemplate(footer.render());
+      expect(htmlStr).toContain("1 Task (99%)");
     });
   });
 
