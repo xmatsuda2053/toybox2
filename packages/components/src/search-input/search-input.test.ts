@@ -39,6 +39,12 @@ import { SearchInput } from "./search-input";
  *    - 5-7. 日本語（IME）変換中はスピナーが表示されず、変換確定時に入力値でスピナー表示およびデバウンスが開始されること
  *    - 5-8. 外部から明示的に loading プロパティが true に指定されている場合、内部タイマー終了後もスピナー表示が維持されること
  *    - 5-9. disconnectedCallback 呼び出し時、待機中のローディングタイマーが安全にクリアされること
+ *
+ * 6. クリア操作および IME 確定時のタイミング保護仕様
+ *    - 6-1. IME 変換終了（handleCompositionEnd）時に値が空文字（""）になった場合、待機中のデバウンスをキャンセルして即座に空文字の search-input イベントが発火すること
+ *    - 6-2. handleCompositionEnd 実行時、target.value が未同期でも composedPath()[0]（内部 input）が最新の値を持っていれば最新値が採用されること
+ *    - 6-3. クリアイベント（handleClear / wa-clear）発生時、待機中のデバウンスを即座にキャンセルして空文字の search-input イベントが発火し、直後の空 input イベントで重複発火しないこと
+ *    - 6-4. デバウンス待機中に value が空文字へ変化していた場合、デバウンスコールバック発火時に古いキーワードで search-input イベントが発火しないこと
  */
 
 describe("SearchInput Component", () => {
@@ -381,6 +387,96 @@ describe("SearchInput Component", () => {
       expect(() => {
         vi.advanceTimersByTime(500);
       }).not.toThrow();
+    });
+  });
+
+  describe("6. クリア操作および IME 確定時のタイミング保護仕様", () => {
+    it("6-1. IME 変換終了（handleCompositionEnd）時に値が空文字（\"\"）になった場合、待機中のデバウンスをキャンセルして即座に空文字の search-input イベントが発火すること", () => {
+      element.debounceWait = 250;
+      const eventSpy = vi.fn();
+      element.addEventListener("search-input", eventSpy);
+
+      // 直前に通常の入力がありデバウンス待機中だったケースを想定
+      element.handleInput({ target: { value: "a" } } as unknown as Event);
+      element.handleCompositionStart();
+
+      // 変換中に全消去され、空文字のまま変換終了
+      element.handleCompositionEnd({
+        target: { value: "" },
+      } as unknown as CompositionEvent);
+
+      // デバウンスを待たず即座に空文字が発火すること
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy.mock.calls[0][0].detail).toEqual({
+        value: "",
+        keyword: "",
+      });
+
+      // 時間経過しても重複・古い値での発火がないこと
+      vi.advanceTimersByTime(300);
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("6-2. handleCompositionEnd 実行時、target.value が未同期でも composedPath()[0]（内部 input）が最新の値を持っていれば最新値が採用されること", () => {
+      element.debounceWait = 250;
+      const eventSpy = vi.fn();
+      element.addEventListener("search-input", eventSpy);
+
+      element.handleCompositionStart();
+      // wa-input（target）は古い値 "かんじ" のままだが、内部 input（composedPath()[0]）は "" に更新されているケース
+      element.handleCompositionEnd({
+        target: { value: "かんじ" },
+        composedPath: () => [{ value: "" }],
+      } as unknown as CompositionEvent);
+
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy.mock.calls[0][0].detail).toEqual({
+        value: "",
+        keyword: "",
+      });
+    });
+
+    it("6-3. クリアイベント（handleClear / wa-clear）発生時、待機中のデバウンスを即座にキャンセルして空文字の search-input イベントが発火し、直後の空 input イベントで重複発火しないこと", () => {
+      element.debounceWait = 250;
+      const eventSpy = vi.fn();
+      element.addEventListener("search-input", eventSpy);
+
+      // render 出力に @wa-clear バインディングが含まれることも検証
+      const rendered = flattenTemplate(element.render());
+      expect(rendered).toContain("@wa-clear=");
+
+      element.handleInput({ target: { value: "abc" } } as unknown as Event);
+      vi.advanceTimersByTime(100);
+
+      // wa-clear が発火し、その後 wa-input の updateComplete.then で input("") が追従する挙動を再現
+      (element as unknown as { handleClear: () => void }).handleClear();
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+      expect(eventSpy.mock.calls[0][0].detail).toEqual({
+        value: "",
+        keyword: "",
+      });
+
+      element.handleInput({ target: { value: "" } } as unknown as Event);
+      vi.advanceTimersByTime(300);
+      expect(eventSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("6-4. デバウンス待機中に value が空文字へ変化していた場合、デバウンスコールバック発火時に古いキーワードで search-input イベントが発火しないこと", () => {
+      element.debounceWait = 250;
+      const eventSpy = vi.fn();
+      element.addEventListener("search-input", eventSpy);
+
+      element.handleInput({ target: { value: "abc" } } as unknown as Event);
+      // まだ input イベントが届いていない状態で value が空文字へ変化した状況（wa-clear 前の同期更新など）
+      element.value = "";
+
+      vi.advanceTimersByTime(250);
+
+      expect(eventSpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: expect.objectContaining({ keyword: "abc" }),
+        }),
+      );
     });
   });
 });

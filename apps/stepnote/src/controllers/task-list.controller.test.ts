@@ -108,6 +108,10 @@ const createMockHost = () => {
  *    - 12-1. フィルター（ラベル・キーワード・QuickAccess）適用中でも tasks で年度内の全タスク一覧が取得できること
  *    - 12-2. query 指定時、tasks で年度内の全タスク一覧が取得でき、fiscalYearIssueCounts で Issue 合計（done, total）が取得できること
  *    - 12-3. setFiscalYear で年度を切り替えた際、tasks および fiscalYearIssueCounts が切り替え先年度の内容に更新されること
+ *
+ * 13. 非同期ロードの競合制御（レースコンディション防止）
+ *    - 13-1. setSearchKeyword で重い検索クエリ実行中に空文字で検索解除した際、後の空文字ロードが先に完了しても、遅れて完了した古い検索結果で state が上書きされないこと
+ *    - 13-2. 古いロード処理が遅れて完了した際、state・tasks・集計件数および subscribe 通知が古い結果で上書き・発火されないこと
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -734,6 +738,122 @@ describe("TaskListController (TDD)", () => {
       expect(controller.tasks).toHaveLength(1);
       expect(controller.tasks[0].id).toBe(3);
       expect(controller.fiscalYearIssueCounts).toEqual({ done: 3, total: 5 });
+    });
+  });
+
+  describe("13. 非同期ロードの競合制御（レースコンディション防止）", () => {
+    it("13-1. setSearchKeyword で重い検索クエリ実行中に空文字で検索解除した際、遅れて完了した古い検索結果で state が上書きされないこと", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      const currentYearTasks = sampleTasks.filter(
+        (t) => t.fiscalYear === currentYear,
+      );
+
+      let resolveSlowSearch!: (value: TaskRecord[]) => void;
+      const slowSearchPromise = new Promise<TaskRecord[]>((resolve) => {
+        resolveSlowSearch = resolve;
+      });
+
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockImplementation(
+          ({ searchKeyword }: { searchKeyword?: string }) => {
+            if (searchKeyword === "当年度タスク1") {
+              return slowSearchPromise;
+            }
+            return Promise.resolve(currentYearTasks);
+          },
+        ),
+        getQuickAccessTaskCounts: vi.fn().mockResolvedValue({ bookmark: 1 }),
+        getTaskIssueCounts: vi.fn().mockResolvedValue(new Map()),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        fakeQuery as unknown as TaskListQuery,
+      );
+      await controller.initialized;
+
+      // 1. 重い検索クエリを開始（まだ完了させない）
+      const searchPromise = controller.setSearchKeyword("当年度タスク1");
+      // マイクロタスクを進めて getFilteredTasks("当年度タスク1") の await まで到達させる
+      await Promise.resolve();
+
+      // 2. 検索クエリ完了前に検索文字列を削除して空文字で解除する（こちらは即座に完了する）
+      await controller.setSearchKeyword("");
+      expect(controller.searchKeyword).toBe("");
+      expect(controller.state).toHaveLength(2);
+
+      // 3. 先に開始していた重い検索クエリを後から完了させる
+      resolveSlowSearch([currentYearTasks[0]]);
+      await searchPromise;
+
+      // 古い絞り込み結果（1件）で上書きされず、全件（2件）が維持されること
+      expect(controller.searchKeyword).toBe("");
+      expect(controller.state).toHaveLength(2);
+    });
+
+    it("13-2. 古いロード処理が遅れて完了した際、state・tasks・集計件数および subscribe 通知が古い結果で上書き・発火されないこと", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sampleTasks);
+      const currentYearTasks = sampleTasks.filter(
+        (t) => t.fiscalYear === currentYear,
+      );
+
+      let resolveSlowFilter!: (value: TaskRecord[]) => void;
+      const slowFilterPromise = new Promise<TaskRecord[]>((resolve) => {
+        resolveSlowFilter = resolve;
+      });
+
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockImplementation(
+          ({ searchKeyword }: { searchKeyword?: string }) => {
+            if (searchKeyword === "遅延") {
+              return slowFilterPromise;
+            }
+            return Promise.resolve(currentYearTasks);
+          },
+        ),
+        getQuickAccessTaskCounts: vi.fn().mockImplementation(async () => {
+          // 遅延リクエスト後に呼ばれた最新集計は bookmark: 5 を返す想定
+          return fakeQuery.getFilteredTasks.mock.calls.length > 2
+            ? { bookmark: 5 }
+            : { bookmark: 99 };
+        }),
+        getTaskIssueCounts: vi.fn().mockImplementation(async () => {
+          return fakeQuery.getFilteredTasks.mock.calls.length > 2
+            ? new Map([[1, { done: 2, total: 4 }]])
+            : new Map([[1, { done: 99, total: 99 }]]);
+        }),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        fakeQuery as unknown as TaskListQuery,
+      );
+      await controller.initialized;
+
+      const slowPromise = controller.setSearchKeyword("遅延");
+      await Promise.resolve();
+
+      await controller.setSearchKeyword("");
+
+      const listenerAfterClear = vi.fn();
+      controller.subscribe(listenerAfterClear);
+      mockHost.requestUpdateMock.mockClear();
+
+      // 古い遅延リクエストを後から完了させる
+      resolveSlowFilter([currentYearTasks[0]]);
+      await slowPromise;
+
+      expect(controller.state).toHaveLength(2);
+      expect(controller.quickAccessTaskCounts).toEqual({ bookmark: 5 });
+      expect(controller.fiscalYearIssueCounts).toEqual({ done: 2, total: 4 });
+      expect(listenerAfterClear).not.toHaveBeenCalled();
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
     });
   });
 });
