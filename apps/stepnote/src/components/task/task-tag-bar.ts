@@ -588,11 +588,11 @@ export class TaskTagBar extends WithTagSetsController(
     return html`
       <div class="task-tag-bar">
         ${this.renderMeasureLayer(assigned)}
+        ${this.renderAddControl()}
         <div class="task-tag-bar__list">
           ${visibleTags.map((tag) => this.renderTagChip(tag))}
         </div>
         ${this.renderOverflowControl(assigned, hiddenCount)}
-        ${this.renderAddControl()}
       </div>
     `;
   }
