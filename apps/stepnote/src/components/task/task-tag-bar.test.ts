@@ -18,6 +18,7 @@ import { TaskTagBar } from "./task-tag-bar.js";
  *    - 1-2. タスクに付与されたタグが wa-tag（size="s", pill, with-remove, variant指定）として描画されること
  *    - 1-3. visibleTagCount により表示件数が制限された場合、収まらない分が +N 省略ボタン（.task-tag-bar__overflow-btn）として描画されること
  *    - 1-4. +N 省略ボタンに紐づく wa-popover（.task-tag-bar__overflow-popover）が描画され、付与中の全タグ（削除可能）が確認できること
+ *    - 1-5. タグ追加トリガーボタン（.task-tag-bar__btn-add）および追加ポップオーバー（.task-tag-bar__add-popover）が、タグ一覧（.task-tag-bar__list）および +N 省略ボタンより左側（先頭）に描画されること
  *
  * 2. タグの付与・解除・新規作成インタラクション
  *    - 2-1. handleRemoveTag 実行時に taskController.removeTag(tagId) が呼び出されること
@@ -168,6 +169,25 @@ describe("TaskTagBar Component", () => {
       expect(htmlStr).toContain("API");
       expect(htmlStr).toContain("緊急");
       expect(htmlStr).toContain("設計");
+    });
+
+    it("1-5. タグ追加トリガーボタンと追加ポップオーバーが、タグ一覧（.task-tag-bar__list）および +N 省略ボタンより左側（先頭）に描画されること", () => {
+      mockTaskController.state = { ...baseTask, tagIds: [1, 2, 3] };
+      element.visibleTagCount = 1;
+
+      const htmlStr = flattenTemplate(element.render());
+      const addBtnIndex = htmlStr.indexOf("task-tag-bar__btn-add");
+      const addPopoverIndex = htmlStr.indexOf("task-tag-bar__add-popover");
+      const listIndex = htmlStr.indexOf("task-tag-bar__list");
+      const overflowBtnIndex = htmlStr.indexOf("task-tag-bar__overflow-btn");
+
+      expect(addBtnIndex).toBeGreaterThan(-1);
+      expect(addPopoverIndex).toBeGreaterThan(-1);
+      expect(listIndex).toBeGreaterThan(-1);
+      expect(overflowBtnIndex).toBeGreaterThan(-1);
+      expect(addBtnIndex).toBeLessThan(listIndex);
+      expect(addPopoverIndex).toBeLessThan(listIndex);
+      expect(listIndex).toBeLessThan(overflowBtnIndex);
     });
   });
 
