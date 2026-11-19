@@ -35,6 +35,7 @@ export class TaskListController extends BaseDataController<
   private _tasks: readonly TaskRecord[] = [];
   private _quickAccessTaskCounts: QuickAccessTaskCounts = {};
   private _taskIssueCounts: Map<number, TaskIssueCount> = new Map();
+  private _loadRequestId = 0;
 
   /**
    * フィルター適用前の選択中会計年度における全タスク一覧
@@ -146,28 +147,74 @@ export class TaskListController extends BaseDataController<
    * @memberof TaskListController
    */
   protected async loadState(): Promise<void> {
-    const allTasks = await this.repository.getByFiscalYear(this._fiscalYear);
-    this._tasks = allTasks;
+    const requestId = ++this._loadRequestId;
+    const fiscalYear = this._fiscalYear;
+    const labelId = this._labelId;
+    const quickAccess = this._quickAccess ? { ...this._quickAccess } : undefined;
+    const searchKeyword = this._searchKeyword;
 
-    if (this._query) {
-      this._state = await this._query.getFilteredTasks({
-        fiscalYear: this._fiscalYear,
-        labelId: this._labelId,
-        quickAccess: this._quickAccess,
-        searchKeyword: this._searchKeyword,
-      });
-      this._quickAccessTaskCounts =
-        await this._query.getQuickAccessTaskCounts(this._fiscalYear);
-      this._taskIssueCounts =
-        await this._query.getTaskIssueCounts(this._fiscalYear);
-      this.notify();
+    const allTasks = await this.repository.getByFiscalYear(fiscalYear);
+    if (requestId !== this._loadRequestId) {
       return;
     }
 
-    this._state = this.filterTasksInMemory(allTasks);
-    this._quickAccessTaskCounts = calculateQuickAccessTaskCounts(allTasks);
-    this._taskIssueCounts = new Map();
+    const nextResult = await this.fetchStateAndCounts(
+      allTasks,
+      fiscalYear,
+      labelId,
+      quickAccess,
+      searchKeyword,
+    );
+    if (requestId !== this._loadRequestId) {
+      return;
+    }
+
+    this._tasks = allTasks;
+    this._state = nextResult.state;
+    this._quickAccessTaskCounts = nextResult.quickAccessTaskCounts;
+    this._taskIssueCounts = nextResult.taskIssueCounts;
     this.notify();
+  }
+
+  /**
+   * フィルタ済みタスク一覧および各種集計件数を取得する
+   */
+  private async fetchStateAndCounts(
+    allTasks: readonly TaskRecord[],
+    fiscalYear: number,
+    labelId: number | undefined,
+    quickAccess: Partial<QuickAccessRecord> | undefined,
+    searchKeyword: string,
+  ): Promise<{
+    state: readonly TaskRecord[];
+    quickAccessTaskCounts: QuickAccessTaskCounts;
+    taskIssueCounts: Map<number, TaskIssueCount>;
+  }> {
+    if (!this._query) {
+      return {
+        state: this.filterTasksInMemory(
+          allTasks,
+          labelId,
+          quickAccess,
+          searchKeyword,
+        ),
+        quickAccessTaskCounts: calculateQuickAccessTaskCounts(allTasks),
+        taskIssueCounts: new Map(),
+      };
+    }
+
+    const [state, quickAccessTaskCounts, taskIssueCounts] = await Promise.all([
+      this._query.getFilteredTasks({
+        fiscalYear,
+        labelId,
+        quickAccess,
+        searchKeyword,
+      }),
+      this._query.getQuickAccessTaskCounts(fiscalYear),
+      this._query.getTaskIssueCounts(fiscalYear),
+    ]);
+
+    return { state, quickAccessTaskCounts, taskIssueCounts };
   }
 
   /**
@@ -184,20 +231,25 @@ export class TaskListController extends BaseDataController<
   /**
    * インメモリでタスク一覧をフィルタリングおよびソートする（Query 未指定時のフォールバック）
    */
-  private filterTasksInMemory(tasks: readonly TaskRecord[]): readonly TaskRecord[] {
+  private filterTasksInMemory(
+    tasks: readonly TaskRecord[],
+    labelId: number | undefined = this._labelId,
+    quickAccess: Partial<QuickAccessRecord> | undefined = this._quickAccess,
+    searchKeyword: string = this._searchKeyword,
+  ): readonly TaskRecord[] {
     let filtered = [...tasks];
-    const term = this._searchKeyword.trim().toLowerCase();
+    const term = searchKeyword.trim().toLowerCase();
 
     if (term !== "") {
       filtered = filtered.filter((t) => matchesTaskKeyword(t, term));
     }
 
-    if (this._labelId !== undefined) {
-      filtered = filtered.filter((t) => t.labelId === this._labelId);
+    if (labelId !== undefined) {
+      filtered = filtered.filter((t) => t.labelId === labelId);
     }
 
-    if (this._quickAccess) {
-      filtered = applyQuickAccessFilter(filtered, this._quickAccess);
+    if (quickAccess) {
+      filtered = applyQuickAccessFilter(filtered, quickAccess);
     }
 
     return sortTasksByDueDateAndName(filtered);

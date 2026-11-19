@@ -107,6 +107,7 @@ export class SearchInput extends LitElement {
    */
   private _debouncedSearch: DebouncedFunction<(val: string) => void> | null = null;
   private _currentWait = 0;
+  private _skipNextEmptyInput = false;
 
   constructor() {
     super();
@@ -116,6 +117,7 @@ export class SearchInput extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._debouncedSearch?.cancel();
+    this._skipNextEmptyInput = false;
     this._stopLoading();
   }
 
@@ -176,6 +178,23 @@ export class SearchInput extends LitElement {
   }
 
   /**
+   * デバウンス待機中に値が空文字へ変化していないか判定する
+   */
+  private _isClearedBeforeDebounce(scheduledVal: string): boolean {
+    if (scheduledVal === "") {
+      return false;
+    }
+    if (this.value === "") {
+      return true;
+    }
+    const waInput = this.renderRoot?.querySelector("wa-input") as
+      | { value?: string | null }
+      | null
+      | undefined;
+    return waInput !== null && waInput !== undefined && (waInput.value ?? "") === "";
+  }
+
+  /**
    * デバウンス待機時間の変更を検知してデバウンス関数を再初期化する
    */
   private _initDebounce(): void {
@@ -186,9 +205,37 @@ export class SearchInput extends LitElement {
     this._currentWait = this.debounceWait;
     this._debouncedSearch = debounce((val: string) => {
       this._isWaitingDebounce = false;
+      if (this._isClearedBeforeDebounce(val)) {
+        this._stopLoading();
+        return;
+      }
       this._emitSearch(val);
       this._scheduleLoadingEnd();
     }, this.debounceWait);
+  }
+
+  /**
+   * デバウンスをキャンセルし、空文字で即座に検索イベントを発火する
+   */
+  private _emitEmptyImmediately(): void {
+    this._debouncedSearch?.cancel();
+    this._stopLoading();
+    this._emitSearch("");
+  }
+
+  /**
+   * イベントから入力値（内部 input 要素を優先）を抽出する
+   */
+  private _extractInputValue(e: Event): string {
+    const pathTarget =
+      typeof e.composedPath === "function"
+        ? (e.composedPath()[0] as { value?: unknown } | undefined)
+        : undefined;
+    if (pathTarget && typeof pathTarget.value === "string") {
+      return pathTarget.value;
+    }
+    const target = e.target as HTMLInputElement | null;
+    return target?.value ?? "";
   }
 
   /**
@@ -207,6 +254,15 @@ export class SearchInput extends LitElement {
   }
 
   /**
+   * クリアボタン押下（wa-clear）イベントハンドラー
+   */
+  handleClear = (): void => {
+    this._skipNextEmptyInput = true;
+    this.value = "";
+    this._emitEmptyImmediately();
+  };
+
+  /**
    * IME変換開始イベントハンドラー
    */
   handleCompositionStart = (): void => {
@@ -218,12 +274,13 @@ export class SearchInput extends LitElement {
    */
   handleCompositionEnd = (e: CompositionEvent): void => {
     this._isComposing = false;
-    const target = e.target as HTMLInputElement | null;
-    const val = target?.value ?? "";
+    const val = this._extractInputValue(e);
     this.value = val;
-    if (val !== "") {
-      this._startLoading();
+    if (val === "") {
+      this._emitEmptyImmediately();
+      return;
     }
+    this._startLoading();
     this._initDebounce();
     this._debouncedSearch?.(val);
   };
@@ -232,17 +289,20 @@ export class SearchInput extends LitElement {
    * 入力イベントハンドラー
    */
   handleInput = (e: Event): void => {
-    const target = e.target as HTMLInputElement | null;
-    const val = target?.value ?? "";
+    const val = this._extractInputValue(e);
     this.value = val;
 
     // 空文字（クリア操作等）の場合は待機せずに即座に発火し、ローディングも即時停止
     if (val === "") {
-      this._debouncedSearch?.cancel();
-      this._stopLoading();
-      this._emitSearch(val);
+      if (this._skipNextEmptyInput) {
+        this._skipNextEmptyInput = false;
+        return;
+      }
+      this._emitEmptyImmediately();
       return;
     }
+
+    this._skipNextEmptyInput = false;
 
     // IME変換中は発火およびローディング表示をスキップ
     if (this._isComposing) {
@@ -266,6 +326,7 @@ export class SearchInput extends LitElement {
         .value=${this.value}
         with-clear
         @input=${this.handleInput}
+        @wa-clear=${this.handleClear}
         @compositionstart=${this.handleCompositionStart}
         @compositionend=${this.handleCompositionEnd}
       >
