@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { ScratchController } from "@/controllers/scratch.controller.js";
 import { ScratchPane } from "./scratch-pane.js";
@@ -12,9 +12,11 @@ import { ScratchPane } from "./scratch-pane.js";
  *    - 1-1. ルート要素 .scratch-pane がレンダリングされること
  *    - 1-2. ヘッダー部 (.scratch-pane__header) が存在し、タイトルとして「SCRATCH」(.scratch-pane__title) が表示されること
  *
- * 2. メインコンテンツ描画
+ * 2. メインコンテンツ描画とナビゲーション
  *    - 2-1. コンテンツ領域 (.scratch-pane__content) 内に notes-view コンポーネントが存在し、.showTabId=${false} および .controller に scratchController がバインドされていること
  *    - 2-2. theme プロパティが notes-view に伝播されること
+ *    - 2-3. notes-view に .jumpTagType=${"scratch"} がバインドされ、.showTabId=${false} が維持されていること
+ *    - 2-4. navigateToScratch(scratchId) 呼び出し時に配下の notes-view の handleSelectNote(scratchId) が呼び出されること
  *
  * 3. BEM設計およびSCSSスタイルの検証
  *    - 3-1. SCSSスタイルシート (scratch-pane.scss) が存在し、ルートブロック .scratch-pane および主要セレクタが定義されていること
@@ -61,6 +63,31 @@ describe("ScratchPane Component", () => {
       element.theme = "dark";
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/<notes-view[^>]*data-theme=["']?dark["']?/);
+    });
+
+    it("2-3. notes-view に .jumpTagType=${'scratch'} がバインドされ、.showTabId=${false} が維持されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.jumpTagType=["']?scratch["']?/);
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.showTabId=["']?false["']?/);
+    });
+
+    it("2-4. navigateToScratch(scratchId) 呼び出し時に配下の notes-view の handleSelectNote(scratchId) が呼び出されること", async () => {
+      const handleSelectNoteSpy = vi.fn();
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "notes-view") {
+              return { handleSelectNote: handleSelectNoteSpy };
+            }
+            return null;
+          }),
+        },
+      });
+
+      await element.navigateToScratch(42);
+
+      expect(handleSelectNoteSpy).toHaveBeenCalledWith(42);
     });
   });
 

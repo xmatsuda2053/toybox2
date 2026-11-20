@@ -27,6 +27,29 @@ export class ScratchPane extends WithScratchController(SubscriberElement) {
   public theme: string = "light";
 
   /**
+   * 指定した Scratch ノートへ切り替えて選択表示する
+   *
+   * @param {number} scratchId
+   * @return {Promise<void>}
+   * @memberof ScratchPane
+   */
+  public navigateToScratch = async (scratchId: number): Promise<void> => {
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+    const notesView = this.renderRoot?.querySelector("notes-view") as
+      | (HTMLElement & {
+          handleSelectNote?: (id: number) => void;
+          updateComplete?: Promise<unknown>;
+        })
+      | null;
+    if (notesView?.isConnected) {
+      await notesView.updateComplete;
+    }
+    notesView?.handleSelectNote?.(scratchId);
+  };
+
+  /**
    * ヘッダー部の描画
    *
    * @private
@@ -55,6 +78,7 @@ export class ScratchPane extends WithScratchController(SubscriberElement) {
           .theme=${this.theme}
           data-theme=${this.theme}
           .showTabId=${false}
+          .jumpTagType=${"scratch"}
           .controller=${this.scratchController}
         ></notes-view>
       </div>

@@ -5,7 +5,7 @@ import type { Root as MdastRoot, Text, Parent, Content } from "mdast";
 import { visit } from "unist-util-visit";
 import type { MarkdownFeatureExtension } from "../types.js";
 
-export type IdLinkType = "task" | "issue" | "note";
+export type IdLinkType = "task" | "issue" | "note" | "scratch";
 
 export interface IdJumpDetail {
   type: IdLinkType;
@@ -79,6 +79,11 @@ export class IdLinkBadge extends LitElement {
       background-color: var(--wa-color-emerald-10);
       color: var(--wa-color-emerald-70);
     }
+    .id-link-badge--scratch {
+      border-color: var(--wa-color-purple-30);
+      background-color: var(--wa-color-purple-10);
+      color: var(--wa-color-purple-70);
+    }
   `;
 
   @property({ type: String })
@@ -134,12 +139,13 @@ declare global {
 }
 
 const ID_LINK_REGEX =
-  /(?:#\{(\d+)\}|#\[(\d+)\]|#\((\d+)\))(?:\{([^}]*)\})?/g;
+  /(?:#\{(\d+)\}|#\[(\d+)\]|#\((\d+)\)|#<(\d+)>)(?:\{([^}]*)\})?/g;
 
 const TYPE_PREFIX_MAP: Record<IdLinkType, string> = {
   task: "Task",
   issue: "Issue",
   note: "Note",
+  scratch: "Scratch",
 };
 
 /**
@@ -151,6 +157,7 @@ function extractMatchTarget(
   if (match[1]) return { type: "task", idStr: match[1] };
   if (match[2]) return { type: "issue", idStr: match[2] };
   if (match[3]) return { type: "note", idStr: match[3] };
+  if (match[4]) return { type: "scratch", idStr: match[4] };
   return null;
 }
 
@@ -212,7 +219,7 @@ export function splitTextByIdLinks(value: string): (Text | IdLinkBadgeNode)[] {
 
     const target = extractMatchTarget(match);
     if (target) {
-      nodes.push(createIdLinkNode(target.type, target.idStr, match[4]));
+      nodes.push(createIdLinkNode(target.type, target.idStr, match[5]));
     }
 
     lastIndex = match.index + match[0].length;
@@ -252,7 +259,7 @@ export const idLinkExtension: MarkdownFeatureExtension = {
   id: "id-link",
   label: "IDリンク",
   description:
-    "タスク・Issue・Noteへのリンクタグを挿入し、クリックで対象項目へジャンプします",
+    "タスク・Issue・Note・Scratchへのリンクタグを挿入し、クリックで対象項目へジャンプします",
   template: "#{ID}{テキスト}",
   example: "#{3}{タスク概要}",
   toolbarItem: {
