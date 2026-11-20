@@ -1,5 +1,6 @@
 import {
   html,
+  nothing,
   unsafeCSS,
   type HTMLTemplateResult,
   type PropertyValues,
@@ -16,13 +17,20 @@ import type { DatePickerChangeEventDetail } from "@shared/components";
 import {
   SubscriberElement,
   WithLabelsController,
+  WithTagsController,
+  WithTagSetsController,
   WithTaskController,
   WithTaskTemplateController,
 } from "@/utils/controller-consumers.mixin.js";
 import { WithDialogBase } from "@/utils/dialog-element.mixin.js";
 import { generateTemplateIssuePayloads } from "@/utils/task-template.utils.js";
+import {
+  normalizeTagIds,
+  resolveWaTagVariant,
+} from "@/utils/tag.utils.js";
 import type { TaskTemplateRecord } from "@/db/models/template.model.js";
 import type { LabelRecord } from "@/db/models/navigation.model.js";
+import type { TagRecord, TagSetRecord } from "@/db/models/tag.model.js";
 import { sortLabelsByNameAsc } from "@/components/navigation/navigation-labels.utils.js";
 import styles from "./task-create-dialog.scss?inline";
 
@@ -30,16 +38,19 @@ import styles from "./task-create-dialog.scss?inline";
  * 新規タスク作成ダイアログコンポーネント (TaskCreateDialog)
  *
  * Task List パネルヘッダから呼び出され、タスク新規登録用のモーダルフォームを提供する。
- * タスク名（必須）、期日（必須・初期値システム日付）、作業年度、ラベル、テンプレートの入力を受け付ける。
+ * タスク名（必須）、期日（必須・初期値システム日付）、作業年度、ラベル、テンプレート、タグセットの入力を受け付ける。
  *
  * @export
  * @class TaskCreateDialog
- * @extends {WithDialogBase(WithTaskController(WithLabelsController(WithTaskTemplateController(SubscriberElement))))}
  */
 @customElement("task-create-dialog")
 export class TaskCreateDialog extends WithDialogBase(
-  WithTaskController(
-    WithLabelsController(WithTaskTemplateController(SubscriberElement)),
+  WithTagSetsController(
+    WithTagsController(
+      WithTaskController(
+        WithLabelsController(WithTaskTemplateController(SubscriberElement)),
+      ),
+    ),
   ),
 ) {
   public static styles = unsafeCSS(styles);
@@ -75,6 +86,10 @@ export class TaskCreateDialog extends WithDialogBase(
   /** 入力フォーム状態: テンプレートID */
   @state()
   public inputTemplateId: number | undefined;
+
+  /** 入力フォーム状態: 選択中のタグセットID */
+  @state()
+  public inputTagSetId: number | undefined;
 
   /**
    * フォームの入力バリデーション状態
@@ -115,6 +130,27 @@ export class TaskCreateDialog extends WithDialogBase(
   }
 
   /**
+   * 選択中のタグセットを取得する
+   */
+  public get selectedTagSet(): TagSetRecord | undefined {
+    if (this.inputTagSetId === undefined || !this.tagSetsController) {
+      return undefined;
+    }
+    return this.tagSetsController.getTagSetById(this.inputTagSetId);
+  }
+
+  /**
+   * 選択中タグセットに含まれるタグレコード一覧（プレビュー用）を取得する
+   */
+  public get selectedTagSetTags(): TagRecord[] {
+    const tagSet = this.selectedTagSet;
+    if (!tagSet || !this.tagsController || tagSet.tagIds.length === 0) {
+      return [];
+    }
+    return this.tagsController.getTagsByIds(tagSet.tagIds);
+  }
+
+  /**
    * フォーム入力値を初期状態へリセットする
    */
   public resetForm(): void {
@@ -122,6 +158,7 @@ export class TaskCreateDialog extends WithDialogBase(
     this.inputDueDate = format(new Date(), "yyyy-MM-dd");
     this.inputFiscalYear = this.fiscalYear ?? getCurrentFiscalYear();
     this.inputTemplateId = undefined;
+    this.inputTagSetId = undefined;
 
     const fallbackLabelId =
       this.selectedLabelId ??
@@ -170,6 +207,16 @@ export class TaskCreateDialog extends WithDialogBase(
     const target = e.target as HTMLElement & { value?: string };
     const val = target.value;
     this.inputTemplateId =
+      val !== undefined && val !== "" ? Number(val) : undefined;
+  };
+
+  /**
+   * タグセット変更ハンドラー
+   */
+  public handleSelectTagSet = (e: Event): void => {
+    const target = e.target as HTMLElement & { value?: string };
+    const val = target.value;
+    this.inputTagSetId =
       val !== undefined && val !== "" ? Number(val) : undefined;
   };
 
@@ -231,6 +278,7 @@ export class TaskCreateDialog extends WithDialogBase(
       labelId: fallbackLabelId,
       description: selectedTemplate?.description ?? "",
       templateName: selectedTemplate?.name,
+      tagIds: normalizeTagIds(this.selectedTagSet?.tagIds),
     };
 
     const initialIssues = this.resolveTemplateIssues(selectedTemplate, dueDate);
@@ -245,6 +293,60 @@ export class TaskCreateDialog extends WithDialogBase(
   };
 
   /**
+   * 左側ラベル＋右側コントロールの横並びフォーム行を描画する
+   */
+  private renderFormRow(
+    forId: string,
+    label: string,
+    control: HTMLTemplateResult,
+    options?: {
+      required?: boolean;
+      extra?: HTMLTemplateResult | typeof nothing;
+    },
+  ): HTMLTemplateResult {
+    return html`
+      <div class="task-create-dialog__row">
+        <label class="task-create-dialog__label" for="${forId}">
+          ${label}${options?.required
+            ? html`<span class="task-create-dialog__required" aria-hidden="true">*</span>`
+            : nothing}
+        </label>
+        <div class="task-create-dialog__control">${control}</div>
+        ${options?.extra ?? nothing}
+      </div>
+    `;
+  }
+
+  /**
+   * wa-select を持つ横並びフォーム行を描画する
+   */
+  private renderSelectRow(
+    id: string,
+    label: string,
+    value: string,
+    onChange: (e: Event) => void,
+    optionsContent: HTMLTemplateResult,
+    extra?: HTMLTemplateResult | typeof nothing,
+  ): HTMLTemplateResult {
+    return this.renderFormRow(
+      id,
+      label,
+      html`
+        <wa-select
+          id="${id}"
+          class="task-create-dialog__field"
+          aria-label="${label}"
+          .value=${value}
+          @change=${onChange}
+        >
+          ${optionsContent}
+        </wa-select>
+      `,
+      { extra },
+    );
+  }
+
+  /**
    * 年度・ラベル・テンプレート選択項目の描画
    */
   private renderSelectors(): HTMLTemplateResult {
@@ -253,35 +355,82 @@ export class TaskCreateDialog extends WithDialogBase(
     const templates = this.taskTemplateController?.state ?? [];
 
     return html`
-      <wa-select
-        id="task-create-fiscal-year"
-        class="task-create-dialog__field"
-        label="対象年度"
-        .value=${String(this.inputFiscalYear)}
-        @change=${this.handleSelectFiscalYear}
-      >
-        ${fiscalYears.map((fy) => html`<wa-option value=${String(fy)}>${fy}年度</wa-option>`)}
-      </wa-select>
-      <wa-select
-        id="task-create-label"
-        class="task-create-dialog__field"
-        label="ラベル"
-        .value=${this.inputLabelId !== undefined ? String(this.inputLabelId) : ""}
-        @change=${this.handleSelectLabel}
-      >
-        ${labels.map((l) => html`<wa-option value=${String(l.id)}>${l.name}</wa-option>`)}
-      </wa-select>
-      <wa-select
-        id="task-create-template"
-        class="task-create-dialog__field"
-        label="テンプレート"
-        .value=${this.inputTemplateId !== undefined ? String(this.inputTemplateId) : ""}
-        @change=${this.handleSelectTemplate}
-      >
-        <wa-option value="">テンプレートなし</wa-option>
-        ${templates.map((t) => html`<wa-option value=${String(t.id)}>${t.name}</wa-option>`)}
-      </wa-select>
+      ${this.renderSelectRow(
+        "task-create-fiscal-year",
+        "対象年度",
+        String(this.inputFiscalYear),
+        this.handleSelectFiscalYear,
+        html`${fiscalYears.map((fy) => html`<wa-option value=${String(fy)}>${fy}年度</wa-option>`)}`,
+      )}
+      ${this.renderSelectRow(
+        "task-create-label",
+        "ラベル",
+        this.inputLabelId !== undefined ? String(this.inputLabelId) : "",
+        this.handleSelectLabel,
+        html`${labels.map((l) => html`<wa-option value=${String(l.id)}>${l.name}</wa-option>`)}`,
+      )}
+      ${this.renderSelectRow(
+        "task-create-template",
+        "テンプレート",
+        this.inputTemplateId !== undefined ? String(this.inputTemplateId) : "",
+        this.handleSelectTemplate,
+        html`
+          <wa-option value="">テンプレートなし</wa-option>
+          ${templates.map((t) => html`<wa-option value=${String(t.id)}>${t.name}</wa-option>`)}
+        `,
+      )}
     `;
+  }
+
+  /**
+   * 選択中タグセットに含まれるタグのプレビュー一覧を描画する
+   */
+  private renderTagPreview(): HTMLTemplateResult | typeof nothing {
+    const previewTags = this.selectedTagSetTags;
+    if (previewTags.length === 0) {
+      return nothing;
+    }
+
+    return html`
+      <div class="task-create-dialog__tag-preview">
+        ${previewTags.map(
+          (tag) => html`
+            <wa-tag
+              class="task-create-dialog__tag-preview-item stepnote-tag stepnote-tag--${tag.variant}"
+              size="s"
+              pill
+              appearance="filled"
+              variant=${resolveWaTagVariant(tag.variant)}
+              title=${tag.description || tag.name}
+            >
+              ${tag.name}
+            </wa-tag>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
+   * タグセット選択欄および付与タグプレビューの描画
+   */
+  private renderTagSetField(): HTMLTemplateResult {
+    const tagSets = this.tagSetsController?.state ?? [];
+
+    return this.renderSelectRow(
+      "task-create-tag-set",
+      "タグセット",
+      this.inputTagSetId !== undefined ? String(this.inputTagSetId) : "",
+      this.handleSelectTagSet,
+      html`
+        <wa-option value="">タグセットなし</wa-option>
+        ${tagSets.map(
+          (set) =>
+            html`<wa-option value=${String(set.id ?? "")}>${set.name}</wa-option>`,
+        )}
+      `,
+      this.renderTagPreview(),
+    );
   }
 
   /**
@@ -293,25 +442,40 @@ export class TaskCreateDialog extends WithDialogBase(
         class="task-create-dialog__form"
         @submit=${this.handleSave}
       >
-        <wa-input
-          id="task-create-name"
-          class="task-create-dialog__field"
-          label="タスク名"
-          placeholder="タスク名を入力"
-          .value=${this.inputName}
-          required
-          @input=${this.handleInputName}
-        ></wa-input>
-        <datepicker-input
-          id="task-create-due-date"
-          class="task-create-dialog__field"
-          label="期日"
-          required
-          size="m"
-          .value=${this.inputDueDate}
-          @datepicker-change=${this.handleDateChange}
-        ></datepicker-input>
+        ${this.renderFormRow(
+          "task-create-name",
+          "タスク名",
+          html`
+            <wa-input
+              id="task-create-name"
+              class="task-create-dialog__field"
+              aria-label="タスク名"
+              placeholder="タスク名を入力"
+              .value=${this.inputName}
+              required
+              @input=${this.handleInputName}
+            ></wa-input>
+          `,
+          { required: true },
+        )}
+        ${this.renderFormRow(
+          "task-create-due-date",
+          "期日",
+          html`
+            <datepicker-input
+              id="task-create-due-date"
+              class="task-create-dialog__field"
+              aria-label="期日"
+              required
+              size="m"
+              .value=${this.inputDueDate}
+              @datepicker-change=${this.handleDateChange}
+            ></datepicker-input>
+          `,
+          { required: true },
+        )}
         ${this.renderSelectors()}
+        ${this.renderTagSetField()}
       </form>
     `;
   }

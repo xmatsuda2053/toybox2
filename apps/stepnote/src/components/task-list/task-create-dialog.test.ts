@@ -3,6 +3,9 @@ import * as fs from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate, format } from "@shared/utils";
 import type { LabelRecord } from "@/db/models/navigation.model";
+import type { TagRecord, TagSetRecord } from "@/db/models/tag.model";
+import type { TagsController } from "@/controllers/tags.controller";
+import type { TagSetsController } from "@/controllers/tag-sets.controller";
 import { TaskCreateDialog } from "./task-create-dialog.js";
 
 /**
@@ -46,7 +49,35 @@ import { TaskCreateDialog } from "./task-create-dialog.js";
  *
  * 6. Web Awesome コンポーネント登録の検証
  *    - [x] 6-1. アプリケーションエントリ（index.ts）および登録基盤（webawesome.ts）で wa-select および wa-option が登録されていること
+ *
+ * 7. タグセット選択およびタグプレビュー機能
+ *    - [x] 7-1. テンプレート選択欄の下にタグセット選択欄（wa-select#task-create-tag-set）が配置され、「タグセットなし」および登録済みタグセット一覧が選択肢としてレンダリングされること
+ *    - [x] 7-2. タグの個別選択用チェックボックス（wa-checkbox）および削除ボタン付きタグチップ（with-remove）が描画されないこと
+ *    - [x] 7-3. handleSelectTagSet でタグセットIDを選択・解除（空選択時は undefined）でき、選択中タグセットに含まれるタグがカラー付き wa-tag でプレビュー表示されること
+ *    - [x] 7-4. タグセット未選択時はタグプレビュー領域が表示されないこと
+ *    - [x] 7-5. タスク登録（handleSave）実行時、選択中タグセットの tagIds が taskController.createTask に渡されること（未選択時は空配列）
+ *    - [x] 7-6. フォームリセット（resetForm / handleCancel）時に inputTagSetId が undefined に初期化されること
+ *    - [x] 7-7. SCSS にタグプレビュー用のBEMセレクタおよび stepnote-tag-styles Mixin が適用されており、個別選択用チェックリストのスタイルが存在しないこと
+ *
+ * 8. 横並びラベルレイアウトの検証
+ *    - [x] 8-1. 各入力項目（タスク名・期日・対象年度・ラベル・テンプレート・タグセット）が横並び行（.task-create-dialog__row）と左側ラベル（.task-create-dialog__label）でレンダリングされ、入力要素自体に上配置用の label 属性が付与されていないこと
+ *    - [x] 8-2. 必須項目（タスク名・期日）のラベルに必須マーク（.task-create-dialog__required）が表示されること
+ *    - [x] 8-3. SCSS に左ラベル横並びレイアウト用のBEMセレクタ（.task-create-dialog__row / .task-create-dialog__label / .task-create-dialog__required）および grid-template-columns が定義されていること
+ *    - [x] 8-4. 入力要素内部（wa-input / datepicker-input）のデフォルト必須アスタリスクおよび内部ラベル領域が SCSS で非表示にされていること
+ *    - [x] 8-5. wa-dialog の幅（--width）が横並びラベル表示に適した幅（640px）に拡張されていること
  */
+
+interface MockTagsController {
+  state: TagRecord[];
+  getTagsByIds: (ids?: readonly number[]) => TagRecord[];
+  subscribe?: ReturnType<typeof vi.fn>;
+}
+
+interface MockTagSetsController {
+  state: TagSetRecord[];
+  getTagSetById: (id: number) => TagSetRecord | undefined;
+  subscribe?: ReturnType<typeof vi.fn>;
+}
 
 describe("TaskCreateDialog Component", () => {
   let element: TaskCreateDialog;
@@ -62,6 +93,29 @@ describe("TaskCreateDialog Component", () => {
   let mockTaskTemplateController: {
     state: any[];
   };
+  let mockTagsController: MockTagsController;
+  let mockTagSetsController: MockTagSetsController;
+
+  const initialTags: TagRecord[] = [
+    { id: 10, name: "重要", description: "最優先タスク", variant: "danger" },
+    { id: 20, name: "定例", description: "定期実施", variant: "brand" },
+    { id: 30, name: "確認待ち", description: "", variant: "purple" },
+  ];
+
+  const initialTagSets: TagSetRecord[] = [
+    {
+      id: 1,
+      name: "リリース前チェック",
+      description: "リリース時に付与",
+      tagIds: [10, 30],
+    },
+    {
+      id: 2,
+      name: "定例対応セット",
+      description: "",
+      tagIds: [20],
+    },
+  ];
 
   const initialLabels: LabelRecord[] = [
     {
@@ -103,6 +157,25 @@ describe("TaskCreateDialog Component", () => {
       ],
     };
     (element as any).taskTemplateController = mockTaskTemplateController;
+
+    mockTagsController = {
+      state: [...initialTags],
+      getTagsByIds: (ids?: readonly number[]) => {
+        if (!ids || ids.length === 0) return [];
+        const map = new Map(mockTagsController.state.map((t) => [t.id, t]));
+        return ids
+          .map((id) => map.get(id))
+          .filter((t): t is TagRecord => t !== undefined);
+      },
+    };
+    mockTagSetsController = {
+      state: [...initialTagSets],
+      getTagSetById: (id: number) =>
+        mockTagSetsController.state.find((s) => s.id === id),
+    };
+    element.tagsController = mockTagsController as unknown as TagsController;
+    element.tagSetsController =
+      mockTagSetsController as unknown as TagSetsController;
   });
 
   describe("1. ダイアログの基本構造およびレンダリング", () => {
@@ -452,6 +525,166 @@ describe("TaskCreateDialog Component", () => {
       const webawesomeContent = fs.readFileSync(webawesomePath, "utf-8");
       expect(webawesomeContent).toContain("components/select/select.js");
       expect(webawesomeContent).toContain("components/option/option.js");
+    });
+  });
+
+  describe("7. タグセット選択およびタグプレビュー機能", () => {
+    it("7-1. テンプレート選択欄の下にタグセット選択欄（wa-select#task-create-tag-set）が配置され、「タグセットなし」および登録済みタグセット一覧が選択肢としてレンダリングされること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const posTemplate = htmlStr.indexOf('id="task-create-template"');
+      const posTagSet = htmlStr.indexOf('id="task-create-tag-set"');
+
+      expect(posTemplate).toBeGreaterThan(-1);
+      expect(posTagSet).toBeGreaterThan(posTemplate);
+      expect(htmlStr).toContain("タグセットなし");
+      expect(htmlStr).toContain("リリース前チェック");
+      expect(htmlStr).toContain("定例対応セット");
+    });
+
+    it("7-2. タグの個別選択用チェックボックス（wa-checkbox）および削除ボタン付きタグチップ（with-remove）が描画されないこと", () => {
+      element.inputTagSetId = 1;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("wa-checkbox");
+      expect(htmlStr).not.toContain("with-remove");
+    });
+
+    it("7-3. handleSelectTagSet でタグセットIDを選択・解除（空選択時は undefined）でき、選択中タグセットに含まれるタグがカラー付き wa-tag でプレビュー表示されること", () => {
+      element.handleSelectTagSet({
+        target: { value: "1" },
+      } as unknown as Event);
+      expect(element.inputTagSetId).toBe(1);
+
+      const htmlStr = flattenTemplate(element.render());
+      const previewStart = htmlStr.indexOf("task-create-dialog__tag-preview");
+      expect(previewStart).toBeGreaterThan(-1);
+      const previewHtml = htmlStr.slice(previewStart);
+      expect(previewHtml).toContain("重要");
+      expect(previewHtml).toContain("確認待ち");
+      expect(previewHtml).toContain("stepnote-tag--danger");
+      expect(previewHtml).toContain("stepnote-tag--purple");
+      expect(previewHtml).not.toContain("stepnote-tag--brand");
+      expect(previewHtml).not.toContain("定例");
+
+      element.handleSelectTagSet({
+        target: { value: "" },
+      } as unknown as Event);
+      expect(element.inputTagSetId).toBeUndefined();
+    });
+
+    it("7-4. タグセット未選択時はタグプレビュー領域が表示されないこと", () => {
+      element.inputTagSetId = undefined;
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).not.toContain("task-create-dialog__tag-preview");
+    });
+
+    it("7-5. タスク登録（handleSave）実行時、選択中タグセットの tagIds が taskController.createTask に渡されること（未選択時は空配列）", async () => {
+      element.inputName = "タグセット付き新規タスク";
+      element.inputDueDate = "2026-11-20";
+      element.handleSelectTagSet({
+        target: { value: "1" },
+      } as unknown as Event);
+
+      const result = await element.handleSave();
+      expect(result).toBe(true);
+      expect(mockTaskController.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "タグセット付き新規タスク",
+          tagIds: [10, 30],
+        }),
+        undefined,
+      );
+
+      mockTaskController.createTask.mockClear();
+      element.inputName = "タグセットなしタスク";
+      element.inputDueDate = "2026-11-20";
+      element.handleSelectTagSet({
+        target: { value: "" },
+      } as unknown as Event);
+
+      await element.handleSave();
+      expect(mockTaskController.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "タグセットなしタスク",
+          tagIds: [],
+        }),
+        undefined,
+      );
+    });
+
+    it("7-6. フォームリセット（resetForm / handleCancel）時に inputTagSetId が undefined に初期化されること", () => {
+      element.handleSelectTagSet({
+        target: { value: "1" },
+      } as unknown as Event);
+      expect(element.inputTagSetId).toBe(1);
+
+      element.handleCancel();
+      expect(element.inputTagSetId).toBeUndefined();
+    });
+
+    it("7-7. SCSS にタグプレビュー用のBEMセレクタおよび stepnote-tag-styles Mixin が適用されており、個別選択用チェックリストのスタイルが存在しないこと", () => {
+      const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain(".task-create-dialog__tag-preview");
+      expect(scssContent).toContain("@include stepnote-tag-styles");
+      expect(scssContent).not.toContain(".task-create-dialog__tag-list");
+      expect(scssContent).not.toContain(".task-create-dialog__tag-checkbox");
+    });
+  });
+
+  describe("8. 横並びラベルレイアウトの検証", () => {
+    it("8-1. 各入力項目（タスク名・期日・対象年度・ラベル・テンプレート・タグセット）が横並び行（.task-create-dialog__row）と左側ラベル（.task-create-dialog__label）でレンダリングされ、入力要素自体に上配置用の label 属性が付与されていないこと", () => {
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("task-create-dialog__row");
+      expect(htmlStr).toContain('for="task-create-name"');
+      expect(htmlStr).toContain('for="task-create-due-date"');
+      expect(htmlStr).toContain('for="task-create-fiscal-year"');
+      expect(htmlStr).toContain('for="task-create-label"');
+      expect(htmlStr).toContain('for="task-create-template"');
+      expect(htmlStr).toContain('for="task-create-tag-set"');
+
+      // 入力要素自体の上配置 label="..." が除去されていること（wa-dialog のタイトル label は除く）
+      expect(htmlStr).not.toMatch(/\slabel="タスク名"/);
+      expect(htmlStr).not.toMatch(/\slabel="期日"/);
+      expect(htmlStr).not.toMatch(/\slabel="対象年度"/);
+      expect(htmlStr).not.toMatch(/\slabel="ラベル"/);
+      expect(htmlStr).not.toMatch(/\slabel="テンプレート"/);
+      expect(htmlStr).not.toMatch(/\slabel="タグセット"/);
+    });
+
+    it("8-2. 必須項目（タスク名・期日）のラベルに必須マーク（.task-create-dialog__required）が表示されること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const matches = htmlStr.match(/task-create-dialog__required/g) ?? [];
+      expect(matches.length).toBe(2);
+    });
+
+    it("8-3. SCSS に左ラベル横並びレイアウト用のBEMセレクタ（.task-create-dialog__row / .task-create-dialog__label / .task-create-dialog__required）および grid-template-columns が定義されていること", () => {
+      const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain(".task-create-dialog__row");
+      expect(scssContent).toContain(".task-create-dialog__label");
+      expect(scssContent).toContain(".task-create-dialog__required");
+      expect(scssContent).toContain("grid-template-columns");
+    });
+
+    it("8-4. 入力要素内部（wa-input / datepicker-input）のデフォルト必須アスタリスクおよび内部ラベル領域が SCSS で非表示にされていること", () => {
+      const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain('--wa-form-control-required-content: ""');
+      expect(scssContent).toContain("&::part(form-control-label)");
+      expect(scssContent).toContain("display: none;");
+    });
+
+    it("8-5. wa-dialog の幅（--width）が横並びラベル表示に適した幅（640px）に拡張されていること", () => {
+      const scssPath = new URL("./task-create-dialog.scss", import.meta.url);
+      const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+      expect(scssContent).toContain("--width: 640px;");
     });
   });
 });
