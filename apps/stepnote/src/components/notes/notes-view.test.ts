@@ -31,6 +31,7 @@ import { NotesView } from "./notes-view";
  *    - 3-1. search-input 入力（handleSearchInput）によりセレクト候補一覧がリアルタイムに絞り込まれること
  *    - 3-2. 絞り込みによって現在アクティブなノートが除外された場合、絞り込み結果の先頭ノートへ自動でアクティブが切り替わること
  *    - 3-3. 絞り込み結果が0件の場合、検索ヒット0件メッセージ（.notes-view__no-results）が表示されること
+ *    - 3-4. 検索フィルタで対象外となっているノートIDを handleSelectNote で指定した場合、検索クエリがクリアされ対象ノートがアクティブになること
  *
  * 4. Markdownエディタ（markdown-editor-preview）の連携
  *    - 4-1. アクティブなノートの本文が markdown-editor-preview に渡されて描画されること
@@ -48,6 +49,8 @@ import { NotesView } from "./notes-view";
  *    - 4-13. handleSelectChange 呼び出し時に event.stopPropagation() が呼び出され、親コンテナへのイベント伝播が防止されること
  *    - 4-14. markdown-editor-preview にジャンプ用タグコピーコマンド（commands）が設定されていること
  *    - 4-15. handleCopyJumpTag 実行時に #(noteId){title} の形式でクリップボードへ書き込みが行われること
+ *    - 4-16. 初期表示時（activeNoteId 未設定）でも handleCopyJumpTag 実行時に先頭ノートの #(noteId){title} がクリップボードへ書き込みが行われること
+ *    - 4-17. jumpTagType が "scratch" の場合、handleCopyJumpTag 実行時に #<id>{title} の形式でクリップボードへ書き込みが行われること
  *
  * 5. 新規ページ作成 (Create Page)
  *    - 5-1. 新規追加ボタンクリック（handleOpenAddDialog）で isAddDialogOpen が true となり、タイトル入力ダイアログが開くこと
@@ -286,6 +289,18 @@ describe("NotesView Component", () => {
       expect(htmlStr).toContain("notes-view__no-results");
       expect(htmlStr).toContain("一致するメモが見つかりません");
     });
+
+    it("3-4. 検索フィルタで対象外となっているノートIDを handleSelectNote で指定した場合、検索クエリがクリアされ対象ノートがアクティブになること", () => {
+      element.handleSearchInput("会議");
+      expect(element.filteredNotes).toHaveLength(1);
+      expect(element.filteredNotes[0].id).toBe(202);
+
+      element.handleSelectNote(201);
+
+      expect(element.searchQuery).toBe("");
+      expect(element.activeNoteId).toBe(201);
+      expect(element.effectiveActiveNoteId).toBe(201);
+    });
   });
 
   describe("4. Markdownエディタ（markdown-editor-preview）の連携", () => {
@@ -482,6 +497,50 @@ describe("NotesView Component", () => {
       await element.handleCopyJumpTag();
 
       expect(writeTextMock).toHaveBeenCalledWith("#(201){仕様メモ}");
+
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
+    });
+
+    it("4-16. 初期表示時（activeNoteId 未設定）でも handleCopyJumpTag 実行時に先頭ノートの #(noteId){title} がクリップボードへ書き込みが行われること", async () => {
+      const originalClipboard = navigator.clipboard;
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: writeTextMock },
+      });
+
+      element.activeNoteId = undefined;
+      await element.handleCopyJumpTag();
+
+      expect(writeTextMock).toHaveBeenCalledWith("#(201){仕様メモ}");
+
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
+    });
+
+    it("4-17. jumpTagType が 'scratch' の場合、handleCopyJumpTag 実行時に #<id>{title} の形式でクリップボードへ書き込みが行われること", async () => {
+      const originalClipboard = navigator.clipboard;
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: writeTextMock },
+      });
+
+      element.jumpTagType = "scratch";
+      element.activeNoteId = undefined;
+      await element.handleCopyJumpTag();
+
+      expect(writeTextMock).toHaveBeenCalledWith("#<201>{仕様メモ}");
+
+      element.activeNoteId = 202;
+      await element.handleCopyJumpTag();
+
+      expect(writeTextMock).toHaveBeenLastCalledWith("#<202>{会議メモ}");
 
       Object.defineProperty(navigator, "clipboard", {
         configurable: true,

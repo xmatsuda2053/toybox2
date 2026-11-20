@@ -72,6 +72,10 @@ export class NotesView extends WithNotesController(
   @property({ type: Boolean })
   public showTabId: boolean = true;
 
+  /** コピーするジャンプ用タグの種別（"note": #(ID){title} / "scratch": #<ID>{title}） */
+  @property({ type: String })
+  public jumpTagType: "note" | "scratch" = "note";
+
   @state()
   public searchQuery: string = "";
 
@@ -218,12 +222,16 @@ export class NotesView extends WithNotesController(
    * ジャンプ用タグのクリップボードコピーハンドラー
    */
   public handleCopyJumpTag = async (): Promise<void> => {
-    if (this.activeNoteId === undefined) return;
-    const activeNote = this.effectiveNotes.find((n) => n.id === this.activeNoteId);
+    const targetId = this.effectiveActiveNoteId;
+    if (targetId === undefined) return;
+    const activeNote = this.effectiveNotes.find((n) => n.id === targetId);
     if (!activeNote) return;
 
     const title = activeNote.title || extractNoteTitle(activeNote.value);
-    const copyText = `#(${this.activeNoteId}){${title}}`;
+    const copyText =
+      this.jumpTagType === "scratch"
+        ? `#<${targetId}>{${title}}`
+        : `#(${targetId}){${title}}`;
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(copyText);
     }
@@ -238,6 +246,12 @@ export class NotesView extends WithNotesController(
 
   /** ノート選択ハンドラー（別ノートへの切り替え時のみプレビューモードで初期化） */
   public handleSelectNote = (noteId: number): void => {
+    if (
+      this.searchQuery !== "" &&
+      !this.filteredNotes.some((n) => n.id === noteId)
+    ) {
+      this.searchQuery = "";
+    }
     if (this.activeNoteId !== noteId) {
       this.activeNoteId = noteId;
       this.noteModeMap.set(noteId, "preview");

@@ -35,6 +35,8 @@ import { JournalPane } from "./journal-pane.js";
  *    - 3-8. 無効なタブ名（子孫コンポーネントのタブIDや 'notes' 等）で handleTabShow が呼び出された場合、activeTab が更新されず、子コンポーネントの resetModesToPreview も呼び出されないこと
  *    - 3-9. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、activeTab が 'logs' に初期化されること
  *    - 3-10. 同一タスクの再描画（taskId 変更なし）の場合、現在の activeTab が維持されること
+ *    - 3-11. scratch パネル内の notes-view に .jumpTagType=${"scratch"} がバインドされ、.showTabId=${false} が維持されていること
+ *    - 3-12. navigateToScratch(scratchId) 呼び出し時に activeTab が 'scratch' に切り替わり、wa-tab-group.show('scratch') および配下 notes-view の handleSelectNote(scratchId) が呼び出されること
  *
  * 4. BEM設計およびSCSSスタイルの検証
  *    - 4-1. SCSSスタイルシート (journal-pane.scss) が存在し、ルートブロック .journal-pane および主要BEMセレクタ（.journal-pane__empty等）が定義されていること
@@ -346,6 +348,35 @@ describe("JournalPane Component", () => {
       element.willUpdate(new Map([["taskController", undefined]]));
 
       expect(element.activeTab).toBe("scratch");
+    });
+
+    it("3-11. scratch パネル内の notes-view に .jumpTagType=${'scratch'} がバインドされ、.showTabId=${false} が維持されていること", () => {
+      const template = element.render();
+      const htmlStr = flattenTemplate(template);
+
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.jumpTagType=["']?scratch["']?/);
+      expect(htmlStr).toMatch(/<notes-view[^>]*\.showTabId=["']?false["']?/);
+    });
+
+    it("3-12. navigateToScratch(scratchId) 呼び出し時に activeTab が 'scratch' に切り替わり、wa-tab-group.show('scratch') および配下 notes-view の handleSelectNote(scratchId) が呼び出されること", async () => {
+      const showSpy = vi.fn();
+      const handleSelectNoteSpy = vi.fn();
+      Object.defineProperty(element, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn((sel: string) => {
+            if (sel === "wa-tab-group") return { show: showSpy };
+            if (sel === "notes-view") return { handleSelectNote: handleSelectNoteSpy };
+            return null;
+          }),
+        },
+      });
+
+      await element.navigateToScratch(77);
+
+      expect(element.activeTab).toBe("scratch");
+      expect(showSpy).toHaveBeenCalledWith("scratch");
+      expect(handleSelectNoteSpy).toHaveBeenCalledWith(77);
     });
   });
 

@@ -100,6 +100,30 @@ export class JournalPane extends WithScratchController(
   };
 
   /**
+   * 指定した Scratch ノートへ切り替えて選択表示する
+   */
+  public navigateToScratch = async (scratchId: number): Promise<void> => {
+    this.activeTab = "scratch";
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+    const tabGroup = this.renderRoot?.querySelector("wa-tab-group") as
+      | (HTMLElement & { show?: (name: string) => void })
+      | null;
+    tabGroup?.show?.("scratch");
+    const notesView = this.renderRoot?.querySelector("notes-view") as
+      | (HTMLElement & {
+          handleSelectNote?: (id: number) => void;
+          updateComplete?: Promise<unknown>;
+        })
+      | null;
+    if (notesView?.isConnected) {
+      await notesView.updateComplete;
+    }
+    notesView?.handleSelectNote?.(scratchId);
+  };
+
+  /**
    * 空状態テンプレートの描画
    */
   private renderEmptyState(): HTMLTemplateResult {
@@ -170,6 +194,7 @@ export class JournalPane extends WithScratchController(
           .theme=${this.theme}
           data-theme=${this.theme}
           .showTabId=${false}
+          .jumpTagType=${"scratch"}
           .controller=${this.scratchController}
         ></notes-view>
       </wa-tab-panel>

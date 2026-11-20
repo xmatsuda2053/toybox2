@@ -7,14 +7,17 @@
  *   - タスクID構文（#{3}{タスク詳細}）が id-link-badge 要素（type="task", item-id="3"）に変換され、"[Task#3] タスク詳細" が描画されること
  *   - IssueID構文（#[4]{課題対応}）が id-link-badge 要素（type="issue", item-id="4"）に変換され、"[Issue#4] 課題対応" が描画されること
  *   - NoteID構文（#(5){設計メモ}）が id-link-badge 要素（type="note", item-id="5") に変換され、"[Note#5] 設計メモ" が描画されること
+ *   - ScratchID構文（#<6>{議事録メモ}）が id-link-badge 要素（type="scratch", item-id="6"）に変換され、"[Scratch#6] 議事録メモ" が描画されること
+ *   - ScratchID構文でプレビューテキスト省略時（#<6>）および空波括弧時（#<6>{}）に "[Scratch#6]" のみ描画されること
  *   - プレビューテキストが省略された場合（#{3}）に "[Task#3]" のみ描画されること
  *   - プレビューテキストが空波括弧の場合（#{3}{}）に "[Task#3]" のみ描画されること
  *   - 文中の前後に存在するテキストが欠損せず保持されること
- *   - 同一文内に複数・異なる種類のID構文が混在してもすべて正しく変換されること
+ *   - 同一文内に複数・異なる種類のID構文（Task/Issue/Note/Scratch）が混在してもすべて正しく変換されること
  * 3. サニタイズの安全性
  *   - id-link-badge 要素および属性（type, item-id, class, style）がサニタイズで保持されること
- * 4. クリックイベント（id-jump）の発行
- *   - IdLinkBadge 要素のクリック時に bubbles: true, composed: true, detail: { type, id } を持つ id-jump イベントが発火すること
+ * 4. クリックイベント（id-jump）の発行およびスタイル定義
+ *   - IdLinkBadge 要素のクリック時に bubbles: true, composed: true, detail: { type, id } を持つ id-jump イベントが発火すること（task および scratch）
+ *   - IdLinkBadge のスタイルに .id-link-badge--scratch（purple 系トークン）が定義されていること
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -62,6 +65,30 @@ describe("idLinkExtension", () => {
       expect(html).toContain("[Note#5] 設計メモ");
     });
 
+    it("ScratchID構文（#<6>{議事録メモ}）が正しく変換されること", async () => {
+      const html = await processor.process("スクラッチ: #<6>{議事録メモ}");
+      expect(html).toContain("<id-link-badge");
+      expect(html).toContain('type="scratch"');
+      expect(html).toContain('item-id="6"');
+      expect(html).toContain("[Scratch#6] 議事録メモ");
+    });
+
+    it("ScratchID構文でプレビューテキスト省略時（#<6>）および空波括弧時（#<6>{}）にIDのみ描画されること", async () => {
+      const htmlOmitted = await processor.process("スクラッチ #<6> を確認");
+      expect(htmlOmitted).toContain("<id-link-badge");
+      expect(htmlOmitted).toContain('type="scratch"');
+      expect(htmlOmitted).toContain('item-id="6"');
+      expect(htmlOmitted).toContain("[Scratch#6]");
+      expect(htmlOmitted).not.toContain("[Scratch#6] ");
+
+      const htmlEmpty = await processor.process("スクラッチ #<6>{} を確認");
+      expect(htmlEmpty).toContain("<id-link-badge");
+      expect(htmlEmpty).toContain('type="scratch"');
+      expect(htmlEmpty).toContain('item-id="6"');
+      expect(htmlEmpty).toContain("[Scratch#6]");
+      expect(htmlEmpty).not.toContain("[Scratch#6] ");
+    });
+
     it("プレビューテキストが省略された場合（#{3}）にIDのみ描画されること", async () => {
       const html = await processor.process("タスク #{3} を確認");
       expect(html).toContain("<id-link-badge");
@@ -80,7 +107,7 @@ describe("idLinkExtension", () => {
 
     it("同一文内に複数種類の構文が混在しても正しく変換されること", async () => {
       const html = await processor.process(
-        "タスク #{10}{親タスク} と 課題 #[20] と メモ #(30){確認点}",
+        "タスク #{10}{親タスク} と 課題 #[20] と メモ #(30){確認点} と スクラッチ #<40>{雑記}",
       );
       expect(html).toContain('type="task"');
       expect(html).toContain('item-id="10"');
@@ -93,6 +120,10 @@ describe("idLinkExtension", () => {
       expect(html).toContain('type="note"');
       expect(html).toContain('item-id="30"');
       expect(html).toContain("[Note#30] 確認点");
+
+      expect(html).toContain('type="scratch"');
+      expect(html).toContain('item-id="40"');
+      expect(html).toContain("[Scratch#40] 雑記");
     });
   });
 
@@ -110,7 +141,7 @@ describe("idLinkExtension", () => {
     });
   });
 
-  describe("4. クリックイベント（id-jump）の発行", () => {
+  describe("4. クリックイベント（id-jump）の発行およびスタイル定義", () => {
     it("IdLinkBadge 要素クリック時に bubbles: true, composed: true, detail を持つ id-jump イベントが発火すること", () => {
       const badge = new IdLinkBadge();
       badge.type = "task";
@@ -131,6 +162,32 @@ describe("idLinkExtension", () => {
         type: "task",
         id: 42,
       });
+    });
+
+    it("type='scratch' の IdLinkBadge 要素クリック時に detail: { type: 'scratch', id } の id-jump イベントが発火すること", () => {
+      const badge = new IdLinkBadge();
+      badge.type = "scratch";
+      badge.itemId = 6;
+
+      const listener = vi.fn();
+      badge.addEventListener("id-jump", listener);
+
+      badge.handleBadgeClick();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const event = listener.mock.calls[0][0] as CustomEvent;
+      expect(event.detail).toEqual({
+        type: "scratch",
+        id: 6,
+      });
+    });
+
+    it("IdLinkBadge のスタイルに .id-link-badge--scratch（purple 系カラー）が定義されていること", () => {
+      const cssText = IdLinkBadge.styles.cssText;
+      expect(cssText).toContain(".id-link-badge--scratch");
+      expect(cssText).toContain("--wa-color-purple-30");
+      expect(cssText).toContain("--wa-color-purple-10");
+      expect(cssText).toContain("--wa-color-purple-70");
     });
   });
 });

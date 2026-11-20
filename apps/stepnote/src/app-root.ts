@@ -100,6 +100,7 @@ export class AppRoot extends LitElement {
   public taskRepository!: TaskRepository;
   public issuesRepository!: IssuesRepository;
   public notesRepository!: NotesRepository;
+  public scratchRepository!: ScratchRepository;
 
   @state()
   public isGlobalSearchOpen = false;
@@ -164,17 +165,16 @@ export class AppRoot extends LitElement {
   private setupRepositories(): {
     labelsRepository: LabelsRepository;
     logsRepository: LogsRepository;
-    scratchRepository: ScratchRepository;
     tagsRepository: TagsRepository;
     tagSetsRepository: TagSetsRepository;
   } {
     this.taskRepository = new TaskRepository();
     this.issuesRepository = new IssuesRepository();
     this.notesRepository = new NotesRepository();
+    this.scratchRepository = new ScratchRepository();
     return {
       labelsRepository: new LabelsRepository(),
       logsRepository: new LogsRepository(),
-      scratchRepository: new ScratchRepository(),
       tagsRepository: new TagsRepository(),
       tagSetsRepository: new TagSetsRepository(),
     };
@@ -189,7 +189,6 @@ export class AppRoot extends LitElement {
   private setupNavigationAndJournalControllers(repos: {
     labelsRepository: LabelsRepository;
     logsRepository: LogsRepository;
-    scratchRepository: ScratchRepository;
   }): void {
     this.layoutUIController = new LayoutUIController(this);
     this.quickAccessController = new QuickAccessController(
@@ -200,7 +199,7 @@ export class AppRoot extends LitElement {
     this.logsController = new LogsController(this, repos.logsRepository);
     this.scratchController = new ScratchController(
       this,
-      repos.scratchRepository,
+      this.scratchRepository,
     );
     this.systemLogService = new SystemLogService(
       repos.logsRepository,
@@ -445,6 +444,11 @@ export class AppRoot extends LitElement {
     const { type, id } = detail;
     if (!id || typeof id !== "number") return;
 
+    if (type === "scratch") {
+      await this.handleScratchJump(id);
+      return;
+    }
+
     if (this.layoutUIController.state.isScratchMode) {
       this.layoutUIController.setScratchMode(false);
     }
@@ -459,6 +463,63 @@ export class AppRoot extends LitElement {
     } else if (type === "note") {
       await this.handleNoteJump(id);
     }
+  }
+
+  /**
+   * Scratch ID へのジャンプ処理（現在画面に応じて Journal ペインまたは全画面 Scratch へ遷移）
+   */
+  private async handleScratchJump(scratchId: number): Promise<void> {
+    const scratch = await this.scratchRepository.getById(scratchId);
+    if (!scratch) return;
+
+    const { isScratchMode, isSettingsMode } = this.layoutUIController.state;
+    const canUseJournalPane =
+      !isScratchMode && !isSettingsMode && this.taskController.state !== undefined;
+
+    if (canUseJournalPane) {
+      await this.navigateToJournalScratch(scratchId);
+      return;
+    }
+
+    await this.navigateToScratchPane(scratchId);
+  }
+
+  /**
+   * 通常画面右端の Journal ペイン（Scratch タブ）で対象 Scratch を開く
+   */
+  private async navigateToJournalScratch(scratchId: number): Promise<void> {
+    if (!this.layoutUIController.state.isJournalAreaOpen) {
+      this.layoutUIController.setJournalAreaOpen(true);
+    }
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+
+    const journalPane = this.renderRoot?.querySelector("journal-pane") as
+      | (HTMLElement & {
+          navigateToScratch?: (id: number) => Promise<void> | void;
+        })
+      | null;
+    await journalPane?.navigateToScratch?.(scratchId);
+  }
+
+  /**
+   * 全画面 Scratch ペインへ遷移して対象 Scratch を開く
+   */
+  private async navigateToScratchPane(scratchId: number): Promise<void> {
+    if (!this.layoutUIController.state.isScratchMode) {
+      this.layoutUIController.setScratchMode(true);
+    }
+    if (this.isConnected) {
+      await this.updateComplete;
+    }
+
+    const scratchPane = this.renderRoot?.querySelector("scratch-pane") as
+      | (HTMLElement & {
+          navigateToScratch?: (id: number) => Promise<void> | void;
+        })
+      | null;
+    await scratchPane?.navigateToScratch?.(scratchId);
   }
 
   /**

@@ -128,6 +128,17 @@ import { AppRoot } from "./app-root.js";
  *    - [ ] 14-3. isSettingsMode が true の際、ヘッダーの全体検索ボタン（#header-global-search-trigger）が無効化（disabled属性）されること
  *    - [ ] 14-4. isSettingsMode が true の際、Ctrl+K, Alt+N, Ctrl+/, Ctrl+Alt+Z のキーボードショートカットが抑止されること
  *    - [ ] 14-6. isSettingsMode が true の際でも、Ctrl+Alt+S 押下によりスクラッチモードへ直接切り替えられること
+ *
+ * 【AppRoot Markdown IDジャンプ仕様 (Phase 15)】
+ * 15. Markdown IDジャンプ（id-jump）イベント連携仕様
+ *    - [x] 15-1. type='task' の id-jump イベント受信時に selectAndShowTask が実行されること
+ *    - [x] 15-2. type='issue' の id-jump イベント受信時に親タスク選択および task-pane.navigateToIssue が実行されること
+ *    - [x] 15-3. type='note' の id-jump イベント受信時に親タスク選択および task-pane.navigateToNote が実行されること
+ *    - [x] 15-4. スクラッチモードまたは設定モード中に task/issue/note への id-jump 受信時は通常表示へ復帰すること
+ *    - [x] 15-5. type='scratch' の id-jump イベントをスクラッチモード中に受信した際、スクラッチモードを維持したまま scratch-pane.navigateToScratch が呼び出されること
+ *    - [x] 15-6. type='scratch' の id-jump イベントを設定モード中（またはタスク未選択時）に受信した際、スクラッチモードへ切り替わり scratch-pane.navigateToScratch が呼び出されること
+ *    - [x] 15-7. 存在しない Scratch ID で type='scratch' の id-jump イベントを受信した際、スクラッチモードへ切り替わらず navigateToScratch も呼び出されないこと
+ *    - [x] 15-8. 通常画面（タスク選択中）で type='scratch' の id-jump イベントを受信した際、全画面スクラッチモードへ切り替えず Journal ペインを展開して journal-pane.navigateToScratch が呼び出されること
  */
 
 /**
@@ -1110,6 +1121,164 @@ describe("AppRoot Controller 状態連携仕様", () => {
 
       expect(appRoot.layoutUIController.state.isScratchMode).toBe(false);
       expect(appRoot.layoutUIController.state.isSettingsMode).toBe(false);
+    });
+
+    it("15-5. type='scratch' の id-jump イベントをスクラッチモード中に受信した際、スクラッチモードを維持したまま scratch-pane の navigateToScratch が呼び出されること", async () => {
+      appRoot.layoutUIController.setScratchMode(true);
+      const mockScratchPane = {
+        navigateToScratch: vi.fn().mockResolvedValue(undefined),
+      };
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "scratch-pane") return mockScratchPane;
+            return null;
+          }),
+        },
+      });
+      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue({
+        id: 50,
+        title: "スクラッチメモ",
+        value: "## スクラッチメモ",
+      });
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "scratch", id: 50 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(appRoot.layoutUIController.state.isScratchMode).toBe(true);
+      expect(mockScratchPane.navigateToScratch).toHaveBeenCalledWith(50);
+    });
+
+    it("15-6. type='scratch' の id-jump イベントを通常画面・設定モードから受信した際、スクラッチモードへ切り替わり scratch-pane の navigateToScratch が呼び出されること", async () => {
+      appRoot.layoutUIController.setSettingsMode(true);
+      const mockScratchPane = {
+        navigateToScratch: vi.fn().mockResolvedValue(undefined),
+      };
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "scratch-pane") return mockScratchPane;
+            return null;
+          }),
+        },
+      });
+      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue({
+        id: 60,
+        title: "別画面からのジャンプ先",
+        value: "## 別画面からのジャンプ先",
+      });
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "scratch", id: 60 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(appRoot.layoutUIController.state.isScratchMode).toBe(true);
+      expect(appRoot.layoutUIController.state.isSettingsMode).toBe(false);
+      expect(mockScratchPane.navigateToScratch).toHaveBeenCalledWith(60);
+    });
+
+    it("15-7. 存在しない Scratch ID で type='scratch' の id-jump イベントを受信した際、スクラッチモードへ切り替わらず navigateToScratch も呼び出されないこと", async () => {
+      appRoot.layoutUIController.resetToHome();
+      const mockScratchPane = {
+        navigateToScratch: vi.fn().mockResolvedValue(undefined),
+      };
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "scratch-pane") return mockScratchPane;
+            return null;
+          }),
+        },
+      });
+      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue(undefined);
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "scratch", id: 9999 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(appRoot.layoutUIController.state.isScratchMode).toBe(false);
+      expect(mockScratchPane.navigateToScratch).not.toHaveBeenCalled();
+    });
+
+    it("15-8. 通常画面（タスク選択中）で type='scratch' の id-jump イベントを受信した際、全画面スクラッチモードへ切り替えず Journal ペインを展開して journal-pane の navigateToScratch が呼び出されること", async () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setJournalAreaOpen(false);
+      const taskStateSpy = vi
+        .spyOn(appRoot.taskController, "state", "get")
+        .mockReturnValue({
+          id: 10,
+          name: "選択中タスク",
+          statusCode: 0,
+          dueDate: new Date("2026-06-15T00:00:00.000Z"),
+          contacts: [],
+          description: "",
+          fiscalYear: 2026,
+          labelId: 1,
+          bookmark: false,
+          selected: true,
+        });
+      const mockJournalPane = {
+        navigateToScratch: vi.fn().mockResolvedValue(undefined),
+      };
+      const mockScratchPane = {
+        navigateToScratch: vi.fn().mockResolvedValue(undefined),
+      };
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "journal-pane") return mockJournalPane;
+            if (sel === "scratch-pane") return mockScratchPane;
+            return null;
+          }),
+        },
+      });
+      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue({
+        id: 70,
+        title: "通常画面からのジャンプ先",
+        value: "## 通常画面からのジャンプ先",
+      });
+
+      try {
+        appRoot.dispatchEvent(
+          new CustomEvent("id-jump", {
+            bubbles: true,
+            composed: true,
+            detail: { type: "scratch", id: 70 },
+          }),
+        );
+
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(appRoot.layoutUIController.state.isScratchMode).toBe(false);
+        expect(appRoot.layoutUIController.state.isJournalAreaOpen).toBe(true);
+        expect(mockJournalPane.navigateToScratch).toHaveBeenCalledWith(70);
+        expect(mockScratchPane.navigateToScratch).not.toHaveBeenCalled();
+      } finally {
+        taskStateSpy.mockRestore();
+      }
     });
   });
 
