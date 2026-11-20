@@ -181,24 +181,9 @@ describe("AppRoot Provider (Phase 1)", () => {
       expect(appRoot.issuesController).toBeInstanceOf(IssuesController);
       expect(appRoot.themeController).toBeInstanceOf(ThemeController);
       expect(appRoot.scratchController).toBeInstanceOf(ScratchController);
-      expect(appRoot.taskHistoryController).toBeInstanceOf(TaskHistoryController);
-    });
-
-    it("2-11. autoExportContext が配下コンポーネントへ正しく配給されること", () => {
-      const consumed = consumeContext(appRoot, autoExportContext);
-      expect(consumed).toBeDefined();
-      expect(consumed).toBe(appRoot.autoExportController);
-    });
-
-    it("2-12. taskHistoryContext が配下コンポーネントへ正しく配給されること", () => {
-      const consumed = consumeContext(appRoot, taskHistoryContext);
-      expect(consumed).toBeDefined();
-      expect(consumed).toBe(appRoot.taskHistoryController);
-    });
-
-    it("3-6. wa-toast 要素がレンダリングされること", () => {
-      const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toMatch(/<wa-toast/);
+      expect(appRoot.taskHistoryController).toBeInstanceOf(
+        TaskHistoryController,
+      );
     });
   });
 
@@ -274,11 +259,6 @@ describe("AppRoot Provider (Phase 1)", () => {
       expect(consumed).toBeDefined();
       expect(consumed).toBe(appRoot.taskHistoryController);
     });
-
-    it("3-6. wa-toast 要素がレンダリングされること", () => {
-      const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toMatch(/<wa-toast/);
-    });
   });
 });
 
@@ -312,6 +292,11 @@ describe("AppRoot Layout 仕様 (Phase 2)", () => {
       expect(htmlStr).toContain("app-footer");
       expect(htmlStr).toContain("<app-footer");
     });
+
+    it("3-6. wa-toast 要素がレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toMatch(/<wa-toast/);
+    });
   });
 });
 
@@ -330,7 +315,9 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
     });
 
     it("4-2. isNavigationListAreaOpen の状態（開状態: true）が app-menu のプロパティへ反映されること", () => {
-      expect(appRoot.layoutUIController.state.isNavigationListAreaOpen).toBe(true);
+      expect(appRoot.layoutUIController.state.isNavigationListAreaOpen).toBe(
+        true,
+      );
       const htmlStr = flattenTemplate(appRoot.render());
       expect(htmlStr).toContain(".isNavigationListAreaOpen=true");
     });
@@ -357,34 +344,56 @@ describe("AppRoot Menu & Side Panel Layout 連動仕様 (Phase 3)", () => {
   describe("5. パネル非表示レイアウト連動とコラプシブルクラス付与", () => {
     it("5-1. Navigation ペインおよび Task List ペインに開閉アニメーション用の共通クラス（pane-collapsible）が付与されていること", () => {
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toMatch(/class="[^"]*\bpane-navigation\b[^"]*\bpane-collapsible\b/);
-      expect(htmlStr).toMatch(/class="[^"]*\btask-list\b[^"]*\bpane-collapsible\b/);
+      expect(htmlStr).toMatch(
+        /class="[^"]*\bpane-navigation\b[^"]*\bpane-collapsible\b/,
+      );
+      expect(htmlStr).toMatch(
+        /class="[^"]*\btask-list\b[^"]*\bpane-collapsible\b/,
+      );
     });
 
     it("5-2. isNavigationListAreaOpen が false の場合、Navigation ペイン（pane-navigation）および Task List（task-list）に hidden 属性が付与されること", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(false);
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toMatch(/class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/);
+      expect(htmlStr).toMatch(
+        /class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/,
+      );
       expect(htmlStr).toMatch(/class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/);
     });
 
     it("5-3. isNavigationListAreaOpen が true の場合、Navigation ペインおよび Task List に hidden 属性が付与されないこと", () => {
       appRoot.layoutUIController.setNavigationListAreaOpen(true);
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).not.toMatch(/class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/);
-      expect(htmlStr).not.toMatch(/class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/);
+      expect(htmlStr).not.toMatch(
+        /class="[^"]*\bpane-navigation\b[^"]*"[^>]*\bhidden\b/,
+      );
+      expect(htmlStr).not.toMatch(
+        /class="[^"]*\btask-list\b[^"]*"[^>]*\bhidden\b/,
+      );
     });
 
     it("5-4. isJournalAreaOpen が false の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されること", () => {
-      (appRoot.layoutUIController as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(false);
+      (
+        appRoot.layoutUIController as unknown as {
+          setJournalAreaOpen: (isOpen: boolean) => void;
+        }
+      ).setJournalAreaOpen(false);
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).toMatch(/class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/);
+      expect(htmlStr).toMatch(
+        /class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/,
+      );
     });
 
     it("5-5. isJournalAreaOpen が true の場合、Journal ペイン（.journal-pane）に journal-pane--collapsed クラスが付与されないこと", () => {
-      (appRoot.layoutUIController as unknown as { setJournalAreaOpen: (isOpen: boolean) => void }).setJournalAreaOpen(true);
+      (
+        appRoot.layoutUIController as unknown as {
+          setJournalAreaOpen: (isOpen: boolean) => void;
+        }
+      ).setJournalAreaOpen(true);
       const htmlStr = flattenTemplate(appRoot.render());
-      expect(htmlStr).not.toMatch(/class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/);
+      expect(htmlStr).not.toMatch(
+        /class="[^"]*\bjournal-pane\b[^"]*\bjournal-pane--collapsed\b[^"]*"/,
+      );
     });
   });
 });
@@ -494,12 +503,14 @@ describe("AppRoot Controller 状態連携仕様", () => {
 
     it("8-5. handleCloseGlobalSearch 実行時に、検索トリガーボタン（#header-global-search-trigger）の blur が呼ばれてフォーカス状態が解除されること", () => {
       const mockTrigger = { blur: vi.fn() };
-      const querySelectorSpy = vi.fn().mockImplementation((selector: string) => {
-        if (selector === "#header-global-search-trigger") {
-          return mockTrigger;
-        }
-        return null;
-      });
+      const querySelectorSpy = vi
+        .fn()
+        .mockImplementation((selector: string) => {
+          if (selector === "#header-global-search-trigger") {
+            return mockTrigger;
+          }
+          return null;
+        });
 
       Object.defineProperty(appRoot, "renderRoot", {
         value: {
@@ -509,7 +520,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
       });
 
       (appRoot as any).handleCloseGlobalSearch();
-      expect(querySelectorSpy).toHaveBeenCalledWith("#header-global-search-trigger");
+      expect(querySelectorSpy).toHaveBeenCalledWith(
+        "#header-global-search-trigger",
+      );
       expect(mockTrigger.blur).toHaveBeenCalled();
     });
   });
@@ -523,13 +536,17 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
 
     it("9-2. handleOpenTaskCreate 実行時、ラベルが1件以上存在すれば isTaskCreateDialogOpen が true に更新されること", () => {
-      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        true,
+      );
       (appRoot as any).handleOpenTaskCreate();
       expect((appRoot as any).isTaskCreateDialogOpen).toBe(true);
     });
 
     it("9-3. handleOpenTaskCreate 実行時、ラベルが0件の場合は isTaskCreateDialogOpen が false のままであること", () => {
-      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(false);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        false,
+      );
       (appRoot as any).isTaskCreateDialogOpen = false;
       (appRoot as any).handleOpenTaskCreate();
       expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
@@ -542,7 +559,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
 
     it("9-5. Alt+N キーボードショートカットで、ラベルが1件以上存在する場合に isTaskCreateDialogOpen が true になること（0件の場合は抑制され、Ctrl+Nや単一nでは反応しないこと）", () => {
-      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        true,
+      );
       (appRoot as any).isTaskCreateDialogOpen = false;
 
       // Alt+N でダイアログが開くこと
@@ -576,7 +595,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect((appRoot as any).isTaskCreateDialogOpen).toBe(false);
 
       // ラベルが0件の場合は Alt+N でも開かないこと
-      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(false);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        false,
+      );
       (appRoot as any).isTaskCreateDialogOpen = false;
       const altNEvent2 = {
         key: "n",
@@ -660,7 +681,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: true,
       };
-      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(true);
+      vi.spyOn(appRoot.labelsController, "hasLabels", "get").mockReturnValue(
+        true,
+      );
 
       // Ctrl+K の抑止確認
       const ctrlKEvent = {
@@ -802,7 +825,10 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: false,
       };
-      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+      const toggleZenSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleZenMode",
+      );
 
       const ctrlAltZEvent = {
         key: "z",
@@ -821,7 +847,10 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: false,
       };
-      const toggleScratchSpy = vi.spyOn(appRoot.layoutUIController, "toggleScratchMode");
+      const toggleScratchSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleScratchMode",
+      );
 
       const ctrlAltSEvent = {
         key: "s",
@@ -840,7 +869,10 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: true,
       };
-      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+      const toggleZenSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleZenMode",
+      );
 
       const ctrlAltZEvent = {
         key: "z",
@@ -915,7 +947,10 @@ describe("AppRoot Controller 状態連携仕様", () => {
       appRoot.isTaskCreateDialogOpen = false;
       appRoot.isShortcutHelpOpen = false;
 
-      const toggleZenSpy = vi.spyOn(appRoot.layoutUIController, "toggleZenMode");
+      const toggleZenSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleZenMode",
+      );
 
       // Ctrl+K
       const ctrlKEvent = {
@@ -1032,12 +1067,15 @@ describe("AppRoot Controller 状態連携仕様", () => {
       const mockTaskPane = {
         navigateToIssue: vi.fn(),
       };
-      Object.defineProperty(appRoot, "renderRoot", { configurable: true, value: {
-        querySelector: vi.fn().mockImplementation((sel: string) => {
-          if (sel === "task-pane") return mockTaskPane;
-          return null;
-        }),
-      }});
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "task-pane") return mockTaskPane;
+            return null;
+          }),
+        },
+      });
 
       vi.spyOn(appRoot.issuesRepository, "getById").mockResolvedValue({
         id: 20,
@@ -1075,12 +1113,15 @@ describe("AppRoot Controller 状態連携仕様", () => {
       const mockTaskPane = {
         navigateToNote: vi.fn(),
       };
-      Object.defineProperty(appRoot, "renderRoot", { configurable: true, value: {
-        querySelector: vi.fn().mockImplementation((sel: string) => {
-          if (sel === "task-pane") return mockTaskPane;
-          return null;
-        }),
-      }});
+      Object.defineProperty(appRoot, "renderRoot", {
+        configurable: true,
+        value: {
+          querySelector: vi.fn().mockImplementation((sel: string) => {
+            if (sel === "task-pane") return mockTaskPane;
+            return null;
+          }),
+        },
+      });
       vi.spyOn(appRoot.notesRepository, "getById").mockResolvedValue({
         id: 30,
         taskId: 10,
@@ -1105,7 +1146,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
     it("15-4. スクラッチモードまたは設定モードが有効な場合、id-jump 受信時に通常表示へ復帰すること", async () => {
       appRoot.layoutUIController.setScratchMode(true);
       appRoot.layoutUIController.setSettingsMode(true);
-      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({ id: 10 } as any);
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 10,
+      } as any);
       vi.spyOn(appRoot.taskListController, "selectTask").mockResolvedValue();
       vi.spyOn(appRoot.taskController, "setTaskId").mockResolvedValue();
 
@@ -1206,7 +1249,9 @@ describe("AppRoot Controller 状態連携仕様", () => {
           }),
         },
       });
-      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue(undefined);
+      vi.spyOn(appRoot.scratchRepository, "getById").mockResolvedValue(
+        undefined,
+      );
 
       appRoot.dispatchEvent(
         new CustomEvent("id-jump", {
@@ -1288,7 +1333,10 @@ describe("AppRoot Controller 状態連携仕様", () => {
         ...appRoot.layoutUIController.state,
         isScratchMode: true,
       };
-      const toggleScratchSpy = vi.spyOn(appRoot.layoutUIController, "toggleScratchMode");
+      const toggleScratchSpy = vi.spyOn(
+        appRoot.layoutUIController,
+        "toggleScratchMode",
+      );
 
       const ctrlAltSEvent = {
         key: "s",
@@ -1336,8 +1384,3 @@ describe("AppRoot Controller 状態連携仕様", () => {
     });
   });
 });
-
-
-
-
-
