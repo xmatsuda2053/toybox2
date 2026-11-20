@@ -15,6 +15,7 @@
    ========================================================================== */
 wa-dialog {
   @include dialog-surface;
+  --width: 640px;
 }
 
 .task-create-dialog {
@@ -25,8 +26,49 @@ wa-dialog {
   @include dialog-form-layout;
 }
 
+.task-create-dialog__row {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--wa-space-s, 12px);
+  row-gap: var(--wa-space-xs, 8px);
+}
+
+.task-create-dialog__label {
+  font-weight: 600;
+  color: var(--stepnote-form-label-color, var(--wa-color-text-normal));
+  white-space: nowrap;
+  @include theme-transition;
+}
+
+.task-create-dialog__required {
+  margin-inline-start: var(--wa-space-3xs, 2px);
+  color: var(--wa-color-danger-60);
+}
+
+.task-create-dialog__control {
+  min-width: 0;
+}
+
 .task-create-dialog__field {
   @include dialog-field-layout;
+  --wa-form-control-required-content: "";
+
+  &::part(form-control-label),
+  &::part(label) {
+    display: none;
+  }
+}
+
+.task-create-dialog__tag-preview {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wa-space-2xs, 4px);
+}
+
+.task-create-dialog__tag-preview-item {
+  flex-shrink: 0;
 }
 
 .task-create-dialog__actions {
@@ -37,6 +79,8 @@ wa-dialog {
 .task-create-dialog__btn-submit {
   min-width: 80px;
 }
+
+@include stepnote-tag-styles;
 
 /* ==========================================================================
    Dark モード時のダイアログ（独立サーフェス・高コントラスト）
