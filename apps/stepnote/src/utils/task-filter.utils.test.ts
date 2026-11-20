@@ -7,6 +7,9 @@ import {
   matchesStatusFilter,
   applyQuickAccessFilter,
   sortTasksByDueDateAndName,
+  sortTasksByNameAndDueDate,
+  sortTasks,
+  normalizeTaskSortMode,
   sortIssuesByDueDateAndTitle,
   toDueDateTimestamp,
   compareDueDates,
@@ -41,6 +44,12 @@ import {
  * 4. sortTasksByDueDateAndName
  *    - 期限日（dueDate）の昇順で正しくソートされること
  *    - 期限日が同一の場合、タスク名の日本語五十音順で正しくソートされること
+ * 4b. sortTasksByNameAndDueDate / sortTasks / normalizeTaskSortMode
+ *    - タスク名の日本語自然順（numeric: true）で昇順ソートされること
+ *    - タスク名が同一の場合、期限日の昇順でソートされること
+ *    - 元の配列を変更せず新しい配列を返すこと
+ *    - sortTasks が sortMode に応じて期限日昇順／タスク名昇順を切り替えてソートすること
+ *    - normalizeTaskSortMode が有効なモードをそのまま返し、未指定・不正値時は "dueDate" を返すこと
  * 5. sortIssuesByDueDateAndTitle
  *    - 期限日（dueDate）の昇順で正しくソートされること
  *    - 期限日が同一の場合、Issueタイトルの日本語五十音順で正しくソートされること
@@ -345,6 +354,99 @@ describe("task-filter.utils", () => {
       ];
       const sorted = sortTasksByDueDateAndName(tasks);
       expect(sorted.map((t) => t.id)).toEqual([2, 3, 1]);
+    });
+  });
+
+  describe("sortTasksByNameAndDueDate / sortTasks / normalizeTaskSortMode", () => {
+    it("タスク名の日本語自然順（numeric: true）で昇順ソートされること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          dueDate: new Date("2026-04-01T00:00:00.000Z"),
+          name: "タスク10",
+        }),
+        createDummyTask({
+          id: 2,
+          dueDate: new Date("2026-06-01T00:00:00.000Z"),
+          name: "タスク2",
+        }),
+        createDummyTask({
+          id: 3,
+          dueDate: new Date("2026-05-01T00:00:00.000Z"),
+          name: "あさひ",
+        }),
+        createDummyTask({
+          id: 4,
+          dueDate: new Date("2026-05-01T00:00:00.000Z"),
+          name: "タスク1",
+        }),
+      ];
+
+      const sorted = sortTasksByNameAndDueDate(tasks);
+      expect(sorted.map((t) => t.id)).toEqual([3, 4, 2, 1]);
+    });
+
+    it("タスク名が同一の場合、期限日（dueDate）の昇順でソートされること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          dueDate: new Date("2026-08-01T00:00:00.000Z"),
+          name: "定例会議",
+        }),
+        createDummyTask({
+          id: 2,
+          dueDate: new Date("2026-04-01T00:00:00.000Z"),
+          name: "定例会議",
+        }),
+        createDummyTask({
+          id: 3,
+          dueDate: new Date("2026-06-01T00:00:00.000Z"),
+          name: "定例会議",
+        }),
+      ];
+
+      const sorted = sortTasksByNameAndDueDate(tasks);
+      expect(sorted.map((t) => t.id)).toEqual([2, 3, 1]);
+    });
+
+    it("元の配列を変更せず、新しいソート済み配列を返すこと", () => {
+      const tasks = [
+        createDummyTask({ id: 1, name: "Bタスク" }),
+        createDummyTask({ id: 2, name: "Aタスク" }),
+      ];
+      const originalOrder = tasks.map((t) => t.id);
+
+      const sorted = sortTasksByNameAndDueDate(tasks);
+      expect(sorted).not.toBe(tasks);
+      expect(tasks.map((t) => t.id)).toEqual(originalOrder);
+      expect(sorted.map((t) => t.id)).toEqual([2, 1]);
+    });
+
+    it("sortTasks が sortMode に応じて期限日昇順／タスク名昇順を切り替えてソートすること", () => {
+      const tasks = [
+        createDummyTask({
+          id: 1,
+          dueDate: new Date("2026-04-01T00:00:00.000Z"),
+          name: "タスク10",
+        }),
+        createDummyTask({
+          id: 2,
+          dueDate: new Date("2026-06-01T00:00:00.000Z"),
+          name: "タスク2",
+        }),
+      ];
+
+      expect(sortTasks(tasks).map((t) => t.id)).toEqual([1, 2]);
+      expect(sortTasks(tasks, "dueDate").map((t) => t.id)).toEqual([1, 2]);
+      expect(sortTasks(tasks, "name").map((t) => t.id)).toEqual([2, 1]);
+    });
+
+    it("normalizeTaskSortMode が有効なモードをそのまま返し、未指定・不正値時は 'dueDate' を返すこと", () => {
+      expect(normalizeTaskSortMode("dueDate")).toBe("dueDate");
+      expect(normalizeTaskSortMode("name")).toBe("name");
+      expect(normalizeTaskSortMode(null)).toBe("dueDate");
+      expect(normalizeTaskSortMode(undefined)).toBe("dueDate");
+      expect(normalizeTaskSortMode("invalid")).toBe("dueDate");
     });
   });
 

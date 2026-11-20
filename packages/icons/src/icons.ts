@@ -4,6 +4,8 @@ import angle_right_solid_full from "./assets/icons/angle-right-solid-full.svg?ra
 import angle_up_solid_full from "./assets/icons/angle-up-solid-full.svg?raw";
 import angles_left_solid_full from "./assets/icons/angles-left-solid-full.svg?raw";
 import angles_right_solid_full from "./assets/icons/angles-right-solid-full.svg?raw";
+import arrow_down_1_9_solid_full from "./assets/icons/arrow-down-1-9-solid-full.svg?raw";
+import arrow_down_a_z_solid_full from "./assets/icons/arrow-down-a-z-solid-full.svg?raw";
 import arrows_up_down_solid_full from "./assets/icons/arrows-up-down-solid-full.svg?raw";
 import bars_solid_full from "./assets/icons/bars-solid-full.svg?raw";
 import blockquote_left from "./assets/icons/blockquote-left.svg?raw";
@@ -93,6 +95,8 @@ export const icons: Record<string, string> = {
   "angle-up-solid-full": angle_up_solid_full,
   "angles-left-solid-full": angles_left_solid_full,
   "angles-right-solid-full": angles_right_solid_full,
+  "arrow-down-1-9-solid-full": arrow_down_1_9_solid_full,
+  "arrow-down-a-z-solid-full": arrow_down_a_z_solid_full,
   "arrows-up-down-solid-full": arrows_up_down_solid_full,
   "bars-solid-full": bars_solid_full,
   "blockquote-left": blockquote_left,
@@ -114,7 +118,6 @@ export const icons: Record<string, string> = {
   "circle-plus": circle_plus_solid_full,
   "circle-stop-solid-full": circle_stop_solid_full,
   "circle-xmark-solid-full": circle_xmark_solid_full,
-  "circle-xmark": circle_xmark_solid_full,
   "clock-rotate-left-solid-full": clock_rotate_left_solid_full,
   "code-branch-solid-full": code_branch_solid_full,
   "code-solid-full": code_solid_full,

@@ -112,6 +112,14 @@ const createMockHost = () => {
  * 13. 非同期ロードの競合制御（レースコンディション防止）
  *    - 13-1. setSearchKeyword で重い検索クエリ実行中に空文字で検索解除した際、後の空文字ロードが先に完了しても、遅れて完了した古い検索結果で state が上書きされないこと
  *    - 13-2. 古いロード処理が遅れて完了した際、state・tasks・集計件数および subscribe 通知が古い結果で上書き・発火されないこと
+ *
+ * 14. ソートモード切替および永続化（Sort Mode & LocalStorage Persistence）
+ *    - 14-1. 初期状態（ストレージ未保存時）の sortMode が "dueDate" であること
+ *    - 14-2. 初期化時に storage に "name" が保存されている場合、sortMode が "name" として復元されタスク名昇順（自然順）でソートされること
+ *    - 14-3. 初期化時に storage に不正な値が保存されている場合、フォールバックとして "dueDate" が適用されること
+ *    - 14-4. toggleSortMode 実行時に "dueDate" ⇄ "name" が交互に切り替わり、storage へ永続化され、一覧が再ソートされて通知されること
+ *    - 14-5. setSortMode 実行時に同一モードが渡された場合は不要な再取得・通知を行わないこと
+ *    - 14-6. query 指定時、getFilteredTasks 呼び出し引数に現在の sortMode が渡されること
  */
 describe("TaskListController (TDD)", () => {
   let fakeRepository: FakeTaskRepository;
@@ -854,6 +862,190 @@ describe("TaskListController (TDD)", () => {
       expect(controller.fiscalYearIssueCounts).toEqual({ done: 2, total: 4 });
       expect(listenerAfterClear).not.toHaveBeenCalled();
       expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("14. ソートモード切替および永続化（Sort Mode & LocalStorage Persistence）", () => {
+    const createMemoryStorage = (initial: Record<string, string> = {}) => {
+      const store = new Map<string, string>(Object.entries(initial));
+      return {
+        getItem: vi.fn((key: string) => store.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          store.set(key, value);
+        }),
+      };
+    };
+
+    const sortToggleTasks: TaskRecord[] = [
+      {
+        id: 1,
+        name: "タスク10",
+        statusCode: 0,
+        dueDate: new Date("2026-04-01"),
+        contacts: [],
+        description: "",
+        fiscalYear: currentYear,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      },
+      {
+        id: 2,
+        name: "タスク2",
+        statusCode: 0,
+        dueDate: new Date("2026-08-01"),
+        contacts: [],
+        description: "",
+        fiscalYear: currentYear,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      },
+    ];
+
+    it("14-1. 初期状態（ストレージ未保存時）の sortMode が 'dueDate' であること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage();
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        undefined,
+        { storage },
+      );
+      await controller.initialized;
+
+      expect(controller.sortMode).toBe("dueDate");
+      expect(controller.state.map((t) => t.id)).toEqual([1, 2]);
+    });
+
+    it("14-2. 初期化時に storage に 'name' が保存されている場合、sortMode が 'name' として復元されタスク名昇順（自然順）でソートされること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage({
+        stepnote_task_list_sort: "name",
+      });
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        undefined,
+        { storage },
+      );
+      await controller.initialized;
+
+      expect(controller.sortMode).toBe("name");
+      expect(controller.state.map((t) => t.id)).toEqual([2, 1]);
+    });
+
+    it("14-3. 初期化時に storage に不正な値が保存されている場合、フォールバックとして 'dueDate' が適用されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage({
+        stepnote_task_list_sort: "unknown_mode",
+      });
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        undefined,
+        { storage },
+      );
+      await controller.initialized;
+
+      expect(controller.sortMode).toBe("dueDate");
+      expect(controller.state.map((t) => t.id)).toEqual([1, 2]);
+    });
+
+    it("14-4. toggleSortMode 実行時に 'dueDate' ⇄ 'name' が交互に切り替わり、storage へ永続化され、一覧が再ソートされて通知されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage();
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        undefined,
+        { storage },
+      );
+      await controller.initialized;
+      mockHost.requestUpdateMock.mockClear();
+
+      const listener = vi.fn();
+      controller.subscribe(listener);
+
+      await controller.toggleSortMode();
+      expect(controller.sortMode).toBe("name");
+      expect(storage.setItem).toHaveBeenCalledWith(
+        "stepnote_task_list_sort",
+        "name",
+      );
+      expect(controller.state.map((t) => t.id)).toEqual([2, 1]);
+      expect(mockHost.requestUpdateMock).toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      await controller.toggleSortMode();
+      expect(controller.sortMode).toBe("dueDate");
+      expect(storage.setItem).toHaveBeenCalledWith(
+        "stepnote_task_list_sort",
+        "dueDate",
+      );
+      expect(controller.state.map((t) => t.id)).toEqual([1, 2]);
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
+    it("14-5. setSortMode 実行時に同一モードが渡された場合は不要な再取得・通知を行わないこと", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage();
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        undefined,
+        { storage },
+      );
+      await controller.initialized;
+      mockHost.requestUpdateMock.mockClear();
+      storage.setItem.mockClear();
+
+      const listener = vi.fn();
+      controller.subscribe(listener);
+
+      await controller.setSortMode("dueDate");
+      expect(mockHost.requestUpdateMock).not.toHaveBeenCalled();
+      expect(listener).not.toHaveBeenCalled();
+      expect(storage.setItem).not.toHaveBeenCalled();
+    });
+
+    it("14-6. query 指定時、getFilteredTasks 呼び出し引数に現在の sortMode が渡されること", async () => {
+      mockHost = createMockHost();
+      fakeRepository = new FakeTaskRepository(sortToggleTasks);
+      const storage = createMemoryStorage();
+      const fakeQuery = {
+        getFilteredTasks: vi.fn().mockResolvedValue(sortToggleTasks),
+        getQuickAccessTaskCounts: vi.fn().mockResolvedValue({}),
+        getTaskIssueCounts: vi.fn().mockResolvedValue(new Map()),
+      };
+
+      controller = new TaskListController(
+        mockHost.host,
+        fakeRepository as unknown as TaskRepository,
+        currentYear,
+        fakeQuery as unknown as TaskListQuery,
+        { storage },
+      );
+      await controller.initialized;
+
+      expect(fakeQuery.getFilteredTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ sortMode: "dueDate" }),
+      );
+
+      await controller.toggleSortMode();
+      expect(fakeQuery.getFilteredTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sortMode: "name" }),
+      );
     });
   });
 });

@@ -77,6 +77,8 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("icon-hub-address")).toBe(true);
       expect(hasIcon("tag-solid-full")).toBe(true);
       expect(hasIcon("tags-solid-full")).toBe(true);
+      expect(hasIcon("arrow-down-a-z-solid-full")).toBe(true);
+      expect(hasIcon("arrow-down-1-9-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }
@@ -115,6 +117,14 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const houseRegularSvg = getIconSvg("house-regular-full");
       expect(houseRegularSvg).toBeDefined();
       expect(houseRegularSvg).toContain("<svg");
+
+      const sortNameSvg = getIconSvg("arrow-down-a-z-solid-full");
+      expect(sortNameSvg).toBeDefined();
+      expect(sortNameSvg).toContain("<svg");
+
+      const sortDueSvg = getIconSvg("arrow-down-1-9-solid-full");
+      expect(sortDueSvg).toBeDefined();
+      expect(sortDueSvg).toContain("<svg");
     });
 
     it("未登録のアイコン名に対して getIconSvg が undefined を返すこと", () => {

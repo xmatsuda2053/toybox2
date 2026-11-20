@@ -11,7 +11,8 @@ import {
   applyQuickAccessFilter,
   matchesTagNames,
   matchesTaskKeyword,
-  sortTasksByDueDateAndName,
+  sortTasks,
+  type TaskSortMode,
 } from "@/utils/task-filter.utils";
 import {
   getTaskDueIconInfo,
@@ -36,6 +37,8 @@ export interface TaskFilterOptions {
   quickAccess?: Partial<QuickAccessRecord>;
   /** 横断検索キーワード（任意。空文字・空白のみの場合は検索除外なし） */
   searchKeyword?: string;
+  /** ソートモード（任意。未指定時は期限日昇順） */
+  sortMode?: TaskSortMode;
 }
 
 /**
@@ -205,7 +208,7 @@ export class TaskListQuery {
       tasks = applyQuickAccessFilter(tasks, options.quickAccess, issueStatusMap);
     }
 
-    return sortTasksByDueDateAndName(tasks);
+    return sortTasks(tasks, options.sortMode);
   }
 
   /**

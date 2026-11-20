@@ -36,6 +36,8 @@ import {
  * 3. 複合フィルタリングおよびソート
  *    - 3-1. fiscalYear, labelId, QuickAccess, 検索キーワードを同時に指定した場合、全ての条件を満たすタスクのみ抽出されること
  *    - 3-2. 抽出されたタスクが第1キー: dueDate 昇順、第2キー: name 昇順（五十音順）で正しくソートされること
+ *    - 3-3. sortMode に "name" を指定した場合、第1キー: name 昇順（日本語自然順）、第2キー: dueDate 昇順で正しくソートされること
+ *    - 3-4. sortMode に "dueDate" を指定した場合、期限日昇順 → タスク名昇順で正しくソートされること
  *
  * 4. QuickAccess タスク件数の集計機能（getQuickAccessTaskCounts）
  *    - 4-1. 対象年度に属する未完了タスク（対応中・開始待ち）のうち、bookmark が true の件数が正しく集計され、完了タスクは除外されること
@@ -929,6 +931,87 @@ describe("TaskListQuery Tests", () => {
       expect(results[1].id).toBe(t1);
       // date2: "かタスク" (t3)
       expect(results[2].id).toBe(t3);
+    });
+
+    it("3-3. sortMode に 'name' を指定した場合、第1キー: name 昇順（日本語自然順）、第2キー: dueDate 昇順で正しくソートされること", async () => {
+      const dateEarly = new Date("2026-04-01");
+      const dateLate = new Date("2026-08-01");
+
+      const t1 = await db.tasks.add({
+        name: "タスク10",
+        statusCode: 0,
+        dueDate: dateEarly,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      const t2 = await db.tasks.add({
+        name: "タスク2",
+        statusCode: 0,
+        dueDate: dateLate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      const t3 = await db.tasks.add({
+        name: "タスク2",
+        statusCode: 0,
+        dueDate: dateEarly,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        sortMode: "name",
+      });
+
+      expect(results.map((t) => t.id)).toEqual([t3, t2, t1]);
+    });
+
+    it("3-4. sortMode に 'dueDate' を指定した場合、期限日昇順 → タスク名昇順で正しくソートされること", async () => {
+      const dateEarly = new Date("2026-04-01");
+      const dateLate = new Date("2026-08-01");
+
+      const t1 = await db.tasks.add({
+        name: "タスク10",
+        statusCode: 0,
+        dueDate: dateEarly,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+      const t2 = await db.tasks.add({
+        name: "タスク2",
+        statusCode: 0,
+        dueDate: dateLate,
+        contacts: [],
+        description: "",
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: false,
+        selected: false,
+      });
+
+      const results = await query.getFilteredTasks({
+        fiscalYear: 2026,
+        sortMode: "dueDate",
+      });
+
+      expect(results.map((t) => t.id)).toEqual([t1, t2]);
     });
   });
 

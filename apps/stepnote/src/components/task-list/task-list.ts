@@ -25,6 +25,10 @@ import {
   WithIssuesController,
   WithTagsController,
 } from "@/utils/controller-consumers.mixin.js";
+import {
+  DEFAULT_TASK_SORT_MODE,
+  type TaskSortMode,
+} from "@/utils/task-filter.utils.js";
 import "./task-create-button.js";
 import "./task-list-item.js";
 import taskListStyles from "./task-list.scss?inline";
@@ -206,6 +210,27 @@ export class TaskList extends WithTagsController(
   public searchKeyword: string = "";
 
   /**
+   * ソートモード（コントローラー未接続時のフォールバック用）
+   *
+   * @type {TaskSortMode}
+   * @memberof TaskList
+   */
+  @property({ type: String })
+  public sortMode: TaskSortMode = DEFAULT_TASK_SORT_MODE;
+
+  /**
+   * 現在有効なソートモード
+   * コントローラーが接続されている場合はコントローラーのソートモードを優先
+   *
+   * @readonly
+   * @type {TaskSortMode}
+   * @memberof TaskList
+   */
+  public get currentSortMode(): TaskSortMode {
+    return this.taskListController?.sortMode ?? this.sortMode;
+  }
+
+  /**
    * 登録済みのラベルが存在するか判定する
    *
    * @readonly
@@ -312,6 +337,70 @@ export class TaskList extends WithTagsController(
   }
 
   /**
+   * ソートモードトグルハンドラー
+   *
+   * @return {Promise<void>}
+   * @memberof TaskList
+   */
+  public handleSortModeToggle = async (): Promise<void> => {
+    let nextMode: TaskSortMode;
+    if (this.taskListController) {
+      await this.taskListController.toggleSortMode();
+      nextMode = this.taskListController.sortMode;
+      this.sortMode = nextMode;
+    } else {
+      nextMode = this.sortMode === "dueDate" ? "name" : "dueDate";
+      this.sortMode = nextMode;
+    }
+    dispatchCustomEvent(this, "sort-mode-change", {
+      detail: { sortMode: nextMode },
+    });
+    this.requestUpdate();
+  };
+
+  /**
+   * ソートモード切替トグルボタンを描画する
+   */
+  private renderSortModeButton(
+    currentSortMode: TaskSortMode = this.currentSortMode,
+  ): HTMLTemplateResult {
+    const isNameSort = currentSortMode === "name";
+    const iconName = isNameSort
+      ? "arrow-down-a-z-solid-full"
+      : "arrow-down-1-9-solid-full";
+    const tooltipText = isNameSort
+      ? "並び替え：タスク名順（クリックで期限日順に切替）"
+      : "並び替え：期限日順（クリックでタスク名順に切替）";
+    const iconLabel = isNameSort
+      ? "タスク名順で並び替え中"
+      : "期限日順で並び替え中";
+
+    return html`
+      <wa-tooltip
+        for="task-list-btn-sort"
+        placement="bottom"
+        trigger="hover"
+      >
+        ${tooltipText}
+      </wa-tooltip>
+      <wa-button
+        id="task-list-btn-sort"
+        class="task-list__btn-sort"
+        variant="neutral"
+        appearance="plain"
+        size="m"
+        @click=${this.handleSortModeToggle}
+      >
+        <wa-icon
+          library="my-icons"
+          name="${iconName}"
+          label="${iconLabel}"
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
    * ヘッダー部（タイトルおよび操作ボタン）を描画する
    */
   private renderHeader(): HTMLTemplateResult {
@@ -322,6 +411,7 @@ export class TaskList extends WithTagsController(
         <span class="task-list__title">LIST ${currentYear}</span>
         <div class="task-list__actions">
           ${this.renderFiscalYearDropdown(currentYear)}
+          ${this.renderSortModeButton()}
           <task-create-button
             buttonId="task-list-btn-add"
             size="m"
