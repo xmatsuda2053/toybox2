@@ -112,10 +112,10 @@ $stepnote-tag-variants: (
   @each $variant, $color in $variant-colors {
     .#{$block}__variant-select--#{$variant} {
       --wa-form-control-value-color: #{$color};
+    }
 
-      &::part(display-input) {
-        color: #{$color};
-      }
+    .#{$block}__variant-select--#{$variant}::part(display-input) {
+      color: #{$color};
     }
 
     .#{$block}__variant-option--#{$variant}:not(:state(current)) {

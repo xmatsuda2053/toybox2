@@ -37,6 +37,15 @@ import * as fs from "node:fs";
  * - 7-1: pane-common.scss に @mixin pane-border-right が定義され、境界線（border-right）およびテーマ切替トランジションが指定されていること
  * - 7-2: app-root.scss で pane-common.scss がインポートされ、各ペインに @include pane-border-right が適用されていること
  * - 7-3: task-list-item.scss に @include box-sizing-reset が適用されていること
+ *
+ * 【仕様 8: SCSS-018: app-root.scss のカラー直値除去およびネスト平坦化】
+ * - 8-1: app-root.scss にカラー直値（Hex / RGB）が含まれないこと
+ * - 8-2: app-root.scss の .header-search-trigger:hover 内における 3階層ネストがフラット展開されていること
+ *
+ * 【仕様 9: SCSS-019: タブ付きペイン共通レイアウト Mixin 群の定義と適用】
+ * - 9-1: pane-common.scss に @mixin pane-tab-host, @mixin pane-tab-empty, @mixin pane-tab-group, @mixin pane-tab-panel が定義されていること
+ * - 9-2: @mixin pane-tab-panel で &[active]::part(base) がフラット定義され、3階層ネストが存在しないこと
+ * - 9-3: journal-pane.scss および task-pane.scss で共通 Mixin 群が @include されていること
  */
 describe("pane-common.scss および Task List スタイル標準化仕様", () => {
   const paneCommonScssPath = new URL("./pane-common.scss", import.meta.url);
@@ -233,6 +242,58 @@ describe("pane-common.scss および Task List スタイル標準化仕様", () 
     it("仕様 7-3: task-list-item.scss に @include box-sizing-reset が適用されていること", () => {
       const scss = fs.readFileSync(taskListItemScssPath, "utf-8");
       expect(scss).toContain("@include box-sizing-reset;");
+    });
+  });
+
+  describe("8. SCSS-018: app-root.scss のカラー直値除去およびネスト平坦化", () => {
+    const appRootScssPath = new URL("../../app-root.scss", import.meta.url);
+
+    it("仕様 8-1: app-root.scss にカラー直値（Hex / RGB）が含まれないこと", () => {
+      const scss = fs.readFileSync(appRootScssPath, "utf-8");
+      expect(scss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+      expect(scss).not.toMatch(/\brgba?\s*\(/);
+    });
+
+    it("仕様 8-2: app-root.scss の .header-search-trigger:hover 内における 3階層ネストがフラット展開されていること", () => {
+      const scss = fs.readFileSync(appRootScssPath, "utf-8");
+      expect(scss).toMatch(
+        /\.header-search-trigger:hover\s+\.header-search-trigger__icon/,
+      );
+      expect(scss).toMatch(
+        /\.header-search-trigger:hover\s+\.header-search-trigger__shortcut/,
+      );
+      expect(scss).not.toMatch(
+        /&:hover\s*\{[^}]*\.header-search-trigger__icon/,
+      );
+    });
+  });
+
+  describe("9. SCSS-019: タブ付きペイン共通レイアウト Mixin 群の定義と適用", () => {
+    const journalPaneScssPath = new URL("./journal-pane.scss", import.meta.url);
+    const taskPaneScssPath = new URL("./task-pane.scss", import.meta.url);
+
+    it("仕様 9-1: pane-common.scss に @mixin pane-tab-host, @mixin pane-tab-empty, @mixin pane-tab-group, @mixin pane-tab-panel が定義されていること", () => {
+      const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
+      expect(scss).toMatch(/@mixin\s+pane-tab-host\s*\{/);
+      expect(scss).toMatch(/@mixin\s+pane-tab-empty\s*\{/);
+      expect(scss).toMatch(/@mixin\s+pane-tab-group\s*\{/);
+      expect(scss).toMatch(/@mixin\s+pane-tab-panel\s*\{/);
+    });
+
+    it("仕様 9-2: @mixin pane-tab-panel で &[active]::part(base) がフラット定義され、3階層ネストが存在しないこと", () => {
+      const scss = fs.readFileSync(paneCommonScssPath, "utf-8");
+      expect(scss).toMatch(/&\[active\]::part\(base\)\s*\{/);
+      expect(scss).not.toMatch(/&\[active\]\s*\{[\s\S]*?&::part\(base\)/);
+    });
+
+    it("仕様 9-3: journal-pane.scss および task-pane.scss で共通 Mixin 群が @include されていること", () => {
+      for (const fileUrl of [journalPaneScssPath, taskPaneScssPath]) {
+        const scss = fs.readFileSync(fileUrl, "utf-8");
+        expect(scss).toContain("@include pane-tab-host;");
+        expect(scss).toContain("@include pane-tab-empty;");
+        expect(scss).toContain("@include pane-tab-group;");
+        expect(scss).toContain("@include pane-tab-panel;");
+      }
     });
   });
 });

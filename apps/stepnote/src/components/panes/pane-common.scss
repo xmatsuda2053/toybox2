@@ -95,4 +95,93 @@
   @include theme-transition;
 }
 
+/**
+ * タブ付きペイン（TaskPane / JournalPane）用 :host 基底レイアウト Mixin
+ */
+@mixin pane-tab-host {
+  :host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--wa-color-surface-default);
+    @include theme-transition;
+  }
+}
+
+/**
+ * タブ付きペイン（TaskPane / JournalPane）用 空状態表示 Mixin
+ */
+@mixin pane-tab-empty {
+  @include flex-center;
+  height: 100%;
+  width: 100%;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-m);
+}
+
+/**
+ * タブ付きペイン（TaskPane / JournalPane）用 wa-tab-group 共通レイアウト Mixin
+ */
+@mixin pane-tab-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0 var(--wa-space-xs, 8px) var(--wa-space-xs, 8px);
+  box-sizing: border-box;
+
+  &::part(tab-group) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  &::part(body) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  wa-tab {
+    font-size: var(--wa-font-size-xs, 12px);
+  }
+}
+
+/**
+ * タブ付きペイン（TaskPane / JournalPane）用 wa-tab-panel 共通レイアウト Mixin
+ */
+@mixin pane-tab-panel {
+  display: none;
+
+  &[active] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    @include custom-scrollbar;
+    --padding: 0;
+    padding: 0 var(--wa-space-m, 12px) var(--wa-space-l, 16px);
+    box-sizing: border-box;
+  }
+
+  &[active]::part(base) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100%;
+    padding-top: var(--wa-space-l, 16px);
+    box-sizing: border-box;
+  }
+}
+
 
