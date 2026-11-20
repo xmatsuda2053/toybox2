@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import * as fs from "node:fs";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
+import type { TaskListController } from "@/controllers/task-list.controller.js";
 import { TaskList } from "./task-list.js";
 
 /**
@@ -63,6 +64,14 @@ import { TaskList } from "./task-list.js";
  *
  * 13. TaskListItem への Issue 件数バインド
  *    - [ ] 13-1. renderTaskItem 呼び出し時に taskListController.getTaskIssueCount から件数がバインドされること
+ *
+ * 14. ソートモード切替ボタン（Header Sort Toggle）
+ *    - [ ] 14-1. ヘッダーアクション領域（task-list__actions）に [年度選択] [ソート切替] [タスク追加] の順でボタンが配置されていること
+ *    - [ ] 14-2. 期限日順（"dueDate"）時、ソート切替ボタン（#task-list-btn-sort / .task-list__btn-sort）に arrow-down-1-9-solid-full アイコンが表示され、trigger="hover" のツールチップに期限日順である旨が表示されること
+ *    - [ ] 14-3. タスク名順（"name"）時、ソート切替ボタンに arrow-down-a-z-solid-full アイコンが表示され、trigger="hover" のツールチップにタスク名順である旨が表示されること
+ *    - [ ] 14-4. handleSortModeToggle 実行時に taskListController.toggleSortMode が呼び出され、sort-mode-change イベントがディスパッチされること
+ *    - [ ] 14-5. taskListController 未注入時でも handleSortModeToggle により sortMode が "dueDate" ⇄ "name" で切り替わること
+ *    - [ ] 14-6. task-list.scss に .task-list__btn-sort が定義されていること
  *
  */
 
@@ -310,7 +319,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         subscribe: vi.fn(() => vi.fn()),
       };
 
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
       element.taskController = fakeTaskController as any;
 
       const fakeCustomEvent = new CustomEvent("task-select", {
@@ -331,7 +341,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         fiscalYear: 2026,
       };
 
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
 
       const fakeCustomEvent = new CustomEvent("bookmark-toggle", {
         detail: { taskId: 42, bookmark: true },
@@ -351,7 +362,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         state: [],
         fiscalYear: 2026,
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
 
       const event = new CustomEvent("search-input", {
         detail: { value: "test", keyword: "test" },
@@ -369,7 +381,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         state: [],
         fiscalYear: 2026,
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
       element.searchKeyword = "before";
 
       const event = new CustomEvent("search-input", {
@@ -390,7 +403,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         state: [],
         fiscalYear: 2026,
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
 
       const fakeQuickAccessController = {
         state: { isBookmarkSelected: true },
@@ -411,7 +425,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         state: [],
         fiscalYear: 2026,
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
 
       let subscriberCallback: (() => void) | undefined;
       const fakeQuickAccessController = {
@@ -472,7 +487,8 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         getTaskIssueCount: vi.fn().mockReturnValue({ done: 3, total: 5 }),
         subscribe: vi.fn(() => vi.fn()),
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
 
       const htmlStr = flattenTemplate(
         element.renderTaskItem(fakeTaskListController.state[0] as any),
@@ -499,11 +515,96 @@ describe("TaskList Component (Task List ドメイン独立化)", () => {
         ]),
         subscribe: vi.fn(() => vi.fn()),
       };
-      element.taskListController = fakeTaskListController as any;
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
       element.tagsController = fakeTagsController as any;
 
       element.renderTaskItem(fakeTaskListController.state[0] as any);
       expect(fakeTagsController.getTagsByIds).toHaveBeenCalledWith([1, 2]);
+    });
+  });
+
+  describe("14. ソートモード切替ボタン（Header Sort Toggle）", () => {
+    it("14-1. ヘッダーアクション領域（task-list__actions）に [年度選択] [ソート切替] [タスク追加] の順でボタンが配置されていること", () => {
+      const htmlStr = flattenTemplate(element.render());
+      const yearIdx = htmlStr.indexOf("task-list-btn-year");
+      const sortIdx = htmlStr.indexOf("task-list-btn-sort");
+      const addIdx = htmlStr.indexOf("task-list-btn-add");
+
+      expect(yearIdx).toBeGreaterThan(-1);
+      expect(sortIdx).toBeGreaterThan(-1);
+      expect(addIdx).toBeGreaterThan(-1);
+      expect(yearIdx).toBeLessThan(sortIdx);
+      expect(sortIdx).toBeLessThan(addIdx);
+    });
+
+    it("14-2. 期限日順（'dueDate'）時、ソート切替ボタンに arrow-down-1-9-solid-full アイコンが表示され、trigger='hover' のツールチップに期限日順である旨が表示されること", () => {
+      element.sortMode = "dueDate";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("task-list__btn-sort");
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-list-btn-sort"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toContain("arrow-down-1-9-solid-full");
+      expect(htmlStr).toContain("期限日順");
+    });
+
+    it("14-3. タスク名順（'name'）時、ソート切替ボタンに arrow-down-a-z-solid-full アイコンが表示され、trigger='hover' のツールチップにタスク名順である旨が表示されること", () => {
+      element.sortMode = "name";
+      const htmlStr = flattenTemplate(element.render());
+
+      expect(htmlStr).toContain("task-list__btn-sort");
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-list-btn-sort"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toContain("arrow-down-a-z-solid-full");
+      expect(htmlStr).toContain("タスク名順");
+    });
+
+    it("14-4. handleSortModeToggle 実行時に taskListController.toggleSortMode が呼び出され、sort-mode-change イベントがディスパッチされること", async () => {
+      const fakeTaskListController = {
+        sortMode: "dueDate" as "dueDate" | "name",
+        toggleSortMode: vi.fn(async () => {
+          fakeTaskListController.sortMode =
+            fakeTaskListController.sortMode === "dueDate" ? "name" : "dueDate";
+        }),
+        subscribe: vi.fn(() => vi.fn()),
+        state: [],
+        fiscalYear: 2026,
+      };
+      element.taskListController =
+        fakeTaskListController as unknown as TaskListController;
+
+      let dispatchedMode: string | undefined;
+      element.addEventListener("sort-mode-change", ((
+        e: CustomEvent<{ sortMode: string }>,
+      ) => {
+        dispatchedMode = e.detail?.sortMode;
+      }) as EventListener);
+
+      await element.handleSortModeToggle();
+
+      expect(fakeTaskListController.toggleSortMode).toHaveBeenCalledTimes(1);
+      expect(dispatchedMode).toBe("name");
+    });
+
+    it("14-5. taskListController 未注入時でも handleSortModeToggle により sortMode が 'dueDate' ⇄ 'name' で切り替わること", async () => {
+      expect(element.currentSortMode).toBe("dueDate");
+
+      await element.handleSortModeToggle();
+      expect(element.currentSortMode).toBe("name");
+
+      await element.handleSortModeToggle();
+      expect(element.currentSortMode).toBe("dueDate");
+    });
+
+    it("14-6. task-list.scss に .task-list__btn-sort が定義されていること", () => {
+      const scssContent = fs.readFileSync(
+        new URL("./task-list.scss", import.meta.url),
+        "utf-8",
+      );
+      expect(scssContent).toContain("&__btn-sort");
     });
   });
 });

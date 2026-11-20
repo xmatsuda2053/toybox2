@@ -127,17 +127,75 @@ export function compareDueDates(
 }
 
 /**
+ * タスクリストのソートモード
+ * - "dueDate": 期限日昇順（同一期限時はタスク名昇順）
+ * - "name": タスク名昇順（日本語自然順・同一名時は期限日昇順）
+ */
+export type TaskSortMode = "dueDate" | "name";
+
+/**
+ * タスクリストのデフォルトソートモード
+ */
+export const DEFAULT_TASK_SORT_MODE: TaskSortMode = "dueDate";
+
+/**
+ * 外部入力・ストレージ保存値から安全な TaskSortMode へ正規化する。
+ * 未指定または不正値の場合はデフォルト値（"dueDate"）を返す。
+ *
+ * @param {unknown} value 判定対象の値
+ * @return {TaskSortMode} 正規化済みソートモード
+ */
+export function normalizeTaskSortMode(value: unknown): TaskSortMode {
+  return value === "name" ? "name" : DEFAULT_TASK_SORT_MODE;
+}
+
+/**
  * タスク一覧を期限日昇順、タスク名五十音順でソートする。
  * 元の配列を変更せず、新しいソート済み配列を返す。
  *
- * @param {TaskRecord[]} tasks ソート対象のタスク配列
+ * @param {readonly TaskRecord[]} tasks ソート対象のタスク配列
  * @return {TaskRecord[]} ソート後のタスク配列
  */
-export function sortTasksByDueDateAndName(tasks: TaskRecord[]): TaskRecord[] {
+export function sortTasksByDueDateAndName(
+  tasks: readonly TaskRecord[],
+): TaskRecord[] {
   return [...tasks].sort((a, b) => {
     const timeDiff = compareDueDates(a.dueDate, b.dueDate);
     return timeDiff !== 0 ? timeDiff : a.name.localeCompare(b.name, "ja");
   });
+}
+
+/**
+ * タスク一覧をタスク名昇順（日本語自然順）、同名時は期限日昇順でソートする。
+ * 元の配列を変更せず、新しいソート済み配列を返す。
+ *
+ * @param {readonly TaskRecord[]} tasks ソート対象のタスク配列
+ * @return {TaskRecord[]} ソート後のタスク配列
+ */
+export function sortTasksByNameAndDueDate(
+  tasks: readonly TaskRecord[],
+): TaskRecord[] {
+  return [...tasks].sort((a, b) => {
+    const nameDiff = a.name.localeCompare(b.name, "ja", { numeric: true });
+    return nameDiff !== 0 ? nameDiff : compareDueDates(a.dueDate, b.dueDate);
+  });
+}
+
+/**
+ * 指定されたソートモードに従ってタスク一覧をソートする。
+ * 元の配列を変更せず、新しいソート済み配列を返す。
+ *
+ * @param {readonly TaskRecord[]} tasks ソート対象のタスク配列
+ * @param {TaskSortMode} [sortMode=DEFAULT_TASK_SORT_MODE] ソートモード
+ * @return {TaskRecord[]} ソート後のタスク配列
+ */
+export function sortTasks(
+  tasks: readonly TaskRecord[],
+  sortMode: TaskSortMode = DEFAULT_TASK_SORT_MODE,
+): TaskRecord[] {
+  return sortMode === "name"
+    ? sortTasksByNameAndDueDate(tasks)
+    : sortTasksByDueDateAndName(tasks);
 }
 
 /**

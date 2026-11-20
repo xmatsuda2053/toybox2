@@ -12,9 +12,31 @@ import type { QuickAccessTaskCounts } from "@/types/view/navigation-view.type";
 import {
   applyQuickAccessFilter,
   matchesTaskKeyword,
-  sortTasksByDueDateAndName,
+  normalizeTaskSortMode,
+  sortTasks,
+  type TaskSortMode,
 } from "@/utils/task-filter.utils";
 import { BaseDataController } from "./base-reactive.controller";
+
+/**
+ * ソートモード永続化用のストレージ互換インターフェース
+ */
+export interface TaskListStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/**
+ * TaskListController のオプション設定
+ */
+export interface TaskListControllerOptions {
+  /** ソート設定の保存先ストレージ（デフォルト: window.localStorage） */
+  storage?: TaskListStorage;
+  /** ストレージの保存キー（デフォルト: 'stepnote_task_list_sort'） */
+  storageKey?: string;
+}
+
+const DEFAULT_SORT_STORAGE_KEY = "stepnote_task_list_sort";
 
 /**
  * Task List ペインにおけるタスク一覧および年度・検索・フィルタ状態を管理する Reactive Controller
@@ -31,6 +53,9 @@ export class TaskListController extends BaseDataController<
   private _labelId?: number;
   private _searchKeyword: string = "";
   private _quickAccess?: Partial<QuickAccessRecord>;
+  private _sortMode: TaskSortMode;
+  private readonly _storage?: TaskListStorage;
+  private readonly _storageKey: string;
   private _query?: TaskListQuery;
   private _tasks: readonly TaskRecord[] = [];
   private _quickAccessTaskCounts: QuickAccessTaskCounts = {};
@@ -121,11 +146,23 @@ export class TaskListController extends BaseDataController<
   }
 
   /**
+   * 現在設定されているソートモード
+   *
+   * @readonly
+   * @type {TaskSortMode}
+   * @memberof TaskListController
+   */
+  public get sortMode(): TaskSortMode {
+    return this._sortMode;
+  }
+
+  /**
    * Creates an instance of TaskListController.
    * @param {ReactiveControllerHost} host ホストコンポーネント
    * @param {TaskRepository} repository タスクリポジトリ
    * @param {number} [fiscalYear=getCurrentFiscalYear()] 初期対象年度
    * @param {TaskListQuery} [query] 横断検索およびクエリサービス（任意）
+   * @param {TaskListControllerOptions} [options] 永続化ストレージ等のオプション設定（任意）
    * @memberof TaskListController
    */
   constructor(
@@ -133,10 +170,39 @@ export class TaskListController extends BaseDataController<
     repository: TaskRepository,
     fiscalYear: number = getCurrentFiscalYear(),
     query?: TaskListQuery,
+    options?: TaskListControllerOptions,
   ) {
     super(host, repository, []);
     this._fiscalYear = fiscalYear;
     this._query = query;
+    this._storageKey = options?.storageKey ?? DEFAULT_SORT_STORAGE_KEY;
+    this._storage =
+      options?.storage ??
+      (typeof window !== "undefined" ? window.localStorage : undefined);
+    this._sortMode = this.readSavedSortMode();
+  }
+
+  /**
+   * ストレージから保存済みソートモードを読み込む
+   */
+  private readSavedSortMode(): TaskSortMode {
+    try {
+      const saved = this._storage?.getItem(this._storageKey);
+      return normalizeTaskSortMode(saved);
+    } catch {
+      return normalizeTaskSortMode(undefined);
+    }
+  }
+
+  /**
+   * ソートモードをストレージへ保存する
+   */
+  private saveSortMode(mode: TaskSortMode): void {
+    try {
+      this._storage?.setItem(this._storageKey, mode);
+    } catch {
+      // ストレージ書き込み不可環境では無視する
+    }
   }
 
   /**
@@ -152,6 +218,7 @@ export class TaskListController extends BaseDataController<
     const labelId = this._labelId;
     const quickAccess = this._quickAccess ? { ...this._quickAccess } : undefined;
     const searchKeyword = this._searchKeyword;
+    const sortMode = this._sortMode;
 
     const allTasks = await this.repository.getByFiscalYear(fiscalYear);
     if (requestId !== this._loadRequestId) {
@@ -164,6 +231,7 @@ export class TaskListController extends BaseDataController<
       labelId,
       quickAccess,
       searchKeyword,
+      sortMode,
     );
     if (requestId !== this._loadRequestId) {
       return;
@@ -185,6 +253,7 @@ export class TaskListController extends BaseDataController<
     labelId: number | undefined,
     quickAccess: Partial<QuickAccessRecord> | undefined,
     searchKeyword: string,
+    sortMode: TaskSortMode,
   ): Promise<{
     state: readonly TaskRecord[];
     quickAccessTaskCounts: QuickAccessTaskCounts;
@@ -197,6 +266,7 @@ export class TaskListController extends BaseDataController<
           labelId,
           quickAccess,
           searchKeyword,
+          sortMode,
         ),
         quickAccessTaskCounts: calculateQuickAccessTaskCounts(allTasks),
         taskIssueCounts: new Map(),
@@ -209,6 +279,7 @@ export class TaskListController extends BaseDataController<
         labelId,
         quickAccess,
         searchKeyword,
+        sortMode,
       }),
       this._query.getQuickAccessTaskCounts(fiscalYear),
       this._query.getTaskIssueCounts(fiscalYear),
@@ -236,6 +307,7 @@ export class TaskListController extends BaseDataController<
     labelId: number | undefined = this._labelId,
     quickAccess: Partial<QuickAccessRecord> | undefined = this._quickAccess,
     searchKeyword: string = this._searchKeyword,
+    sortMode: TaskSortMode = this._sortMode,
   ): readonly TaskRecord[] {
     let filtered = [...tasks];
     const term = searchKeyword.trim().toLowerCase();
@@ -252,8 +324,38 @@ export class TaskListController extends BaseDataController<
       filtered = applyQuickAccessFilter(filtered, quickAccess);
     }
 
-    return sortTasksByDueDateAndName(filtered);
+    return sortTasks(filtered, sortMode);
   }
+
+  /**
+   * ソートモードを設定・永続化し、タスク一覧を再読み込みする。
+   * 現在と同一のモードが指定された場合は処理をスキップする。
+   *
+   * @param {TaskSortMode} mode 変更後のソートモード
+   * @return {*}  {Promise<void>}
+   * @memberof TaskListController
+   */
+  public setSortMode = async (mode: TaskSortMode): Promise<void> => {
+    const normalized = normalizeTaskSortMode(mode);
+    if (this._sortMode === normalized) {
+      return;
+    }
+    this._sortMode = normalized;
+    this.saveSortMode(normalized);
+    await this.loadState();
+  };
+
+  /**
+   * ソートモードを「期限日昇順（dueDate）」と「タスク名昇順（name）」でトグル切替する。
+   *
+   * @return {*}  {Promise<void>}
+   * @memberof TaskListController
+   */
+  public toggleSortMode = async (): Promise<void> => {
+    const nextMode: TaskSortMode =
+      this._sortMode === "dueDate" ? "name" : "dueDate";
+    await this.setSortMode(nextMode);
+  };
 
   /**
    * 表示対象の会計年度を変更し、タスク一覧を再読み込みする。
