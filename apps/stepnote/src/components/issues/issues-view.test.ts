@@ -376,7 +376,7 @@ describe("IssuesView Component", () => {
     });
 
     it("2-11. セクション内の各Issue行がLitのrepeatディレクティブを用いてissue.idでキーバインドされてレンダリングされること", () => {
-      const tsPath = path.resolve(__dirname, "./issues-view.ts");
+      const tsPath = path.resolve(__dirname, "./issues-view.templates.ts");
       const tsContent = fs.readFileSync(tsPath, "utf-8");
       expect(tsContent).toMatch(
         /import\s*\{[^}]*repeat[^}]*\}\s*from\s*["']lit\/directives\/repeat\.js["']/,

@@ -1,39 +1,21 @@
-import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
+import { LitElement, html, unsafeCSS } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { ContextProvider } from "@lit/context";
 import appRootStyles from "./app-root.scss?inline";
-import {
-  layoutUIContext,
-  quickAccessContext,
-  labelsContext,
-  taskContext,
-  taskListContext,
-  logsContext,
-  notesContext,
-  issuesContext,
-  themeContext,
-  scratchContext,
-  taskTemplateContext,
-  autoExportContext,
-  taskHistoryContext,
-  tagsContext,
-  tagSetsContext,
-} from "@/contexts/index.js";
-import { LayoutUIController } from "@/controllers/layout-ui.controller.js";
-import { QuickAccessController } from "@/controllers/quick-access.controller.js";
-import { LabelsController } from "@/controllers/labels.controller.js";
-import { TagsController } from "@/controllers/tags.controller.js";
-import { TagSetsController } from "@/controllers/tag-sets.controller.js";
-import { TaskController } from "@/controllers/task.controller.js";
-import { TaskListController } from "@/controllers/task-list.controller.js";
-import { LogsController } from "@/controllers/logs.controller.js";
-import { NotesController } from "@/controllers/notes.controller.js";
-import { IssuesController } from "@/controllers/issues.controller.js";
-import { ThemeController } from "@/controllers/theme.controller.js";
-import { ScratchController } from "@/controllers/scratch.controller.js";
-import { TaskTemplateController } from "@/controllers/task-template.controller.js";
-import { AutoExportController } from "@/controllers/auto-export.controller.js";
-import { TaskHistoryController } from "@/controllers/task-history.controller.js";
+import type { LayoutUIController } from "@/controllers/layout-ui.controller.js";
+import type { QuickAccessController } from "@/controllers/quick-access.controller.js";
+import type { LabelsController } from "@/controllers/labels.controller.js";
+import type { TagsController } from "@/controllers/tags.controller.js";
+import type { TagSetsController } from "@/controllers/tag-sets.controller.js";
+import type { TaskController } from "@/controllers/task.controller.js";
+import type { TaskListController } from "@/controllers/task-list.controller.js";
+import type { LogsController } from "@/controllers/logs.controller.js";
+import type { NotesController } from "@/controllers/notes.controller.js";
+import type { IssuesController } from "@/controllers/issues.controller.js";
+import type { ThemeController } from "@/controllers/theme.controller.js";
+import type { ScratchController } from "@/controllers/scratch.controller.js";
+import type { TaskTemplateController } from "@/controllers/task-template.controller.js";
+import type { AutoExportController } from "@/controllers/auto-export.controller.js";
+import type { TaskHistoryController } from "@/controllers/task-history.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
 import "@/components/navigation/task-history-menu.js";
 import "@/components/menu/app-menu.js";
@@ -51,26 +33,33 @@ import "@/components/help/shortcut-help-drawer.js";
 import { getCurrentFiscalYear } from "@shared/utils";
 import type { IdJumpDetail } from "@shared/components";
 import { db } from "@/db/schema/database.schema.js";
-import { TaskListQuery } from "@/db/queries/task-list.query.js";
-import { SystemLogService } from "@/services/system-log.service.js";
+import type { SystemLogService } from "@/services/system-log.service.js";
 import { DatabaseBackupService } from "@/services/database-backup.service.js";
-import {
-  QuickAccessRepository,
-  LabelsRepository,
+import type {
   TaskRepository,
-  LogsRepository,
-  NotesRepository,
   IssuesRepository,
+  NotesRepository,
   ScratchRepository,
-  TaskTemplateRepository,
-  TagsRepository,
-  TagSetsRepository,
 } from "@/repositories/index.js";
+import {
+  createAppRepositories,
+  createAppControllers,
+  provideAppContexts,
+  bindAppControllerSubscriptions,
+  type AppControllerBundle,
+} from "./app-root.bootstrap.js";
+import {
+  selectAndShowTask,
+  navigateByIdJump,
+  type IdJumpCoordinatorDeps,
+} from "./app-root.navigation.js";
+import { dispatchGlobalShortcut } from "./app-root.shortcuts.js";
+import { renderAppHeader, renderAppPanesLayout } from "./app-root.templates.js";
 
 /**
  * StepNote アプリケーションのルートコンポーネント (AppRoot)
  *
- * 全体で利用する 9 つの Reactive Controller をインスタンス化し、
+ * 全体で利用する各 Reactive Controller をインスタンス化し、
  * @lit/context を通じて子コンポーネントへ配給（Provider）する。
  *
  * @export
@@ -79,7 +68,6 @@ import {
  */
 @customElement("app-root")
 export class AppRoot extends LitElement {
-  // 1. 各 Controller のインスタンス
   public layoutUIController!: LayoutUIController;
   public quickAccessController!: QuickAccessController;
   public labelsController!: LabelsController;
@@ -111,30 +99,58 @@ export class AppRoot extends LitElement {
   @state()
   public isShortcutHelpOpen = false;
 
+  private readonly controllerBundle: AppControllerBundle;
+
+  public static override styles = unsafeCSS(appRootStyles);
+
   constructor() {
     super();
     this.databaseBackupService = new DatabaseBackupService();
+    const repos = createAppRepositories();
+    this.taskRepository = repos.taskRepository;
+    this.issuesRepository = repos.issuesRepository;
+    this.notesRepository = repos.notesRepository;
+    this.scratchRepository = repos.scratchRepository;
+
+    this.controllerBundle = createAppControllers(this, repos, {
+      exportCallback: () => this.handleExportDatabase(),
+      notifyCallback: (fileName: string) =>
+        this.handleAutoExportNotified(fileName),
+    });
+    this.assignControllerBundle(this.controllerBundle);
 
     this.setupEventListeners();
-    this.setupControllers();
-    this.registerContextProviders();
+    provideAppContexts(this, this.controllerBundle);
   }
 
-  /**
-   * ルートコンポーネントが処理するカスタムイベントリスナーを登録する。
-   *
-   * @private
-   * @memberof AppRoot
-   */
+  private assignControllerBundle(bundle: AppControllerBundle): void {
+    this.layoutUIController = bundle.layoutUIController;
+    this.quickAccessController = bundle.quickAccessController;
+    this.labelsController = bundle.labelsController;
+    this.taskController = bundle.taskController;
+    this.taskListController = bundle.taskListController;
+    this.logsController = bundle.logsController;
+    this.notesController = bundle.notesController;
+    this.issuesController = bundle.issuesController;
+    this.themeController = bundle.themeController;
+    this.scratchController = bundle.scratchController;
+    this.taskTemplateController = bundle.taskTemplateController;
+    this.autoExportController = bundle.autoExportController;
+    this.taskHistoryController = bundle.taskHistoryController;
+    this.tagsController = bundle.tagsController;
+    this.tagSetsController = bundle.tagSetsController;
+    this.systemLogService = bundle.systemLogService;
+  }
+
   private setupEventListeners(): void {
     this.addEventListener("request-task-create", () => {
       this.handleOpenTaskCreate();
     });
     this.addEventListener("request-database-export", () => {
-      this.handleExportDatabase();
+      void this.handleExportDatabase();
     });
     this.addEventListener("request-database-import", (e: Event) => {
-      this.handleImportDatabase(e as CustomEvent<{ file: File }>);
+      void this.handleImportDatabase(e as CustomEvent<{ file: File }>);
     });
     this.addEventListener("request-shortcut-help", () => {
       this.handleToggleShortcutHelp();
@@ -149,211 +165,6 @@ export class AppRoot extends LitElement {
       }
     });
   }
-
-  /**
-   * Controller および Service インスタンスを生成・初期化する。
-   *
-   * @private
-   * @memberof AppRoot
-   */
-  /**
-   * コントローラーが利用するリポジトリ群を初期化する。
-   *
-   * @private
-   * @memberof AppRoot
-   */
-  private setupRepositories(): {
-    labelsRepository: LabelsRepository;
-    logsRepository: LogsRepository;
-    tagsRepository: TagsRepository;
-    tagSetsRepository: TagSetsRepository;
-  } {
-    this.taskRepository = new TaskRepository();
-    this.issuesRepository = new IssuesRepository();
-    this.notesRepository = new NotesRepository();
-    this.scratchRepository = new ScratchRepository();
-    return {
-      labelsRepository: new LabelsRepository(),
-      logsRepository: new LogsRepository(),
-      tagsRepository: new TagsRepository(),
-      tagSetsRepository: new TagSetsRepository(),
-    };
-  }
-
-  private setupControllers(): void {
-    const repos = this.setupRepositories();
-    this.setupNavigationAndJournalControllers(repos);
-    this.setupTaskAndFeatureControllers(repos);
-  }
-
-  private setupNavigationAndJournalControllers(repos: {
-    labelsRepository: LabelsRepository;
-    logsRepository: LogsRepository;
-  }): void {
-    this.layoutUIController = new LayoutUIController(this);
-    this.quickAccessController = new QuickAccessController(
-      this,
-      new QuickAccessRepository(),
-    );
-    this.labelsController = new LabelsController(this, repos.labelsRepository);
-    this.logsController = new LogsController(this, repos.logsRepository);
-    this.scratchController = new ScratchController(
-      this,
-      this.scratchRepository,
-    );
-    this.systemLogService = new SystemLogService(
-      repos.logsRepository,
-      this.logsController,
-    );
-    this.notesController = new NotesController(
-      this,
-      this.notesRepository,
-      undefined,
-      this.systemLogService,
-    );
-  }
-
-  private setupTaskAndFeatureControllers(repos: {
-    labelsRepository: LabelsRepository;
-    tagsRepository: TagsRepository;
-    tagSetsRepository: TagSetsRepository;
-  }): void {
-    this.taskTemplateController = new TaskTemplateController(
-      this,
-      new TaskTemplateRepository(),
-    );
-    this.taskController = new TaskController(
-      this,
-      this.taskRepository,
-      undefined,
-      this.issuesRepository,
-      this.systemLogService,
-      repos.labelsRepository,
-    );
-    this.taskListController = new TaskListController(
-      this,
-      this.taskRepository,
-      getCurrentFiscalYear(),
-      new TaskListQuery(db),
-    );
-    this.issuesController = new IssuesController(
-      this,
-      this.issuesRepository,
-      undefined,
-      this.systemLogService,
-    );
-    this.themeController = new ThemeController(this);
-    this.autoExportController = this.setupAutoExportController();
-    this.taskHistoryController = new TaskHistoryController(this);
-    this.tagsController = new TagsController(this, repos.tagsRepository);
-    this.tagSetsController = new TagSetsController(this, repos.tagSetsRepository);
-  }
-
-  /**
-   * @lit/context Provider による Context 配給を登録する。
-   *
-   * @private
-   * @memberof AppRoot
-   */
-  /**
-   * 自動エクスポート管理コントローラーを初期化する。
-   *
-   * @private
-   * @return {AutoExportController}
-   * @memberof AppRoot
-   */
-  private setupAutoExportController(): AutoExportController {
-    return new AutoExportController(this, {
-      exportCallback: async () => {
-        await this.handleExportDatabase();
-      },
-      notifyCallback: (fileName: string) => {
-        this.handleAutoExportNotified(fileName);
-      },
-    });
-  }
-
-  private registerContextProviders(): void {
-    this.registerCoreContextProviders();
-    this.registerFeatureContextProviders();
-  }
-
-  private registerCoreContextProviders(): void {
-    new ContextProvider(this, {
-      context: layoutUIContext,
-      initialValue: this.layoutUIController,
-    });
-    new ContextProvider(this, {
-      context: quickAccessContext,
-      initialValue: this.quickAccessController,
-    });
-    new ContextProvider(this, {
-      context: labelsContext,
-      initialValue: this.labelsController,
-    });
-    new ContextProvider(this, {
-      context: taskContext,
-      initialValue: this.taskController,
-    });
-    new ContextProvider(this, {
-      context: taskListContext,
-      initialValue: this.taskListController,
-    });
-    new ContextProvider(this, {
-      context: logsContext,
-      initialValue: this.logsController,
-    });
-    new ContextProvider(this, {
-      context: notesContext,
-      initialValue: this.notesController,
-    });
-    new ContextProvider(this, {
-      context: issuesContext,
-      initialValue: this.issuesController,
-    });
-  }
-
-  private registerFeatureContextProviders(): void {
-    new ContextProvider(this, {
-      context: themeContext,
-      initialValue: this.themeController,
-    });
-    new ContextProvider(this, {
-      context: scratchContext,
-      initialValue: this.scratchController,
-    });
-    new ContextProvider(this, {
-      context: taskTemplateContext,
-      initialValue: this.taskTemplateController,
-    });
-    new ContextProvider(this, {
-      context: autoExportContext,
-      initialValue: this.autoExportController,
-    });
-    new ContextProvider(this, {
-      context: taskHistoryContext,
-      initialValue: this.taskHistoryController,
-    });
-    new ContextProvider(this, {
-      context: tagsContext,
-      initialValue: this.tagsController,
-    });
-    new ContextProvider(this, {
-      context: tagSetsContext,
-      initialValue: this.tagSetsController,
-    });
-  }
-
-  /**
-   * サイドパネル（ナビゲーションおよびタスク一覧）の開閉状態を切り替える。
-   *
-   * @memberof AppRoot
-   */
-  public handleToggleNavigationList = (): void => {
-    this.layoutUIController.toggleNavigationListArea();
-  };
-
-  public static override styles = unsafeCSS(appRootStyles);
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -373,6 +184,18 @@ export class AppRoot extends LitElement {
       window.removeEventListener("keydown", this.handleGlobalKeyDown);
     }
   }
+
+  /** 各 Controller 間の状態変更イベントの購読と連携を設定する。 */
+  public setupControllerSubscriptions(): void {
+    bindAppControllerSubscriptions(this.controllerBundle, () => {
+      this.requestUpdate();
+    });
+  }
+
+  /** サイドパネル（ナビゲーションおよびタスク一覧）の開閉状態を切り替える。 */
+  public handleToggleNavigationList = (): void => {
+    this.layoutUIController.toggleNavigationListArea();
+  };
 
   public handleOpenGlobalSearch = (): void => {
     this.isGlobalSearchOpen = true;
@@ -394,12 +217,30 @@ export class AppRoot extends LitElement {
     }
   };
 
-  /**
-   * id-jump イベントのディスパッチハンドラー
-   *
-   * @param {Event} e
-   * @memberof AppRoot
-   */
+  private createNavigationDeps(): IdJumpCoordinatorDeps {
+    return {
+      getTaskById: (taskId) => this.taskRepository.getById(taskId),
+      getIssueById: (issueId) => this.issuesRepository.getById(issueId),
+      getNoteById: (noteId) => this.notesRepository.getById(noteId),
+      getScratchById: (scratchId) => this.scratchRepository.getById(scratchId),
+      getLayoutState: () => this.layoutUIController.state,
+      setScratchMode: (isOpen) => this.layoutUIController.setScratchMode(isOpen),
+      setSettingsMode: (isOpen) =>
+        this.layoutUIController.setSettingsMode(isOpen),
+      setJournalAreaOpen: (isOpen) =>
+        this.layoutUIController.setJournalAreaOpen(isOpen),
+      selectLabel: (labelId) => this.labelsController.selectLabel(labelId),
+      selectTask: (taskId) => this.taskListController.selectTask(taskId),
+      setTaskId: (taskId) => this.taskController.setTaskId(taskId),
+      hasSelectedTask: () => this.taskController.state !== undefined,
+      waitForUpdate: () =>
+        this.isConnected ? this.updateComplete : Promise.resolve(true),
+      queryPane: <T>(selector: string): T | null =>
+        (this.renderRoot?.querySelector(selector) as T | null) ?? null,
+    };
+  }
+
+  /** id-jump イベントのディスパッチハンドラー */
   public handleIdJumpEvent = (e: Event): void => {
     const customEvent = e as CustomEvent<IdJumpDetail>;
     if (customEvent.detail) {
@@ -407,151 +248,14 @@ export class AppRoot extends LitElement {
     }
   };
 
-  /**
-   * 指定したタスクを選択し、画面全体（ラベル、タスク一覧、タスク詳細）を更新する
-   *
-   * @param {number} taskId
-   * @return {Promise<boolean>}
-   */
+  /** 指定したタスクを選択し、画面全体（ラベル、タスク一覧、タスク詳細）を更新する */
   public async selectAndShowTask(taskId: number): Promise<boolean> {
-    const task = await this.taskRepository.getById(taskId);
-    if (!task) return false;
-
-    if (this.labelsController && task.labelId !== undefined) {
-      try {
-        await this.labelsController.selectLabel(task.labelId);
-      } catch {
-        // ラベルが存在しない場合はタスク選択を継続
-      }
-    }
-    if (this.taskListController) {
-      await this.taskListController.selectTask(taskId);
-    }
-    if (this.taskController) {
-      await this.taskController.setTaskId(taskId);
-    }
-    return true;
+    return selectAndShowTask(this.createNavigationDeps(), taskId);
   }
 
-  /**
-   * Markdown から発行された ID ジャンプ処理を実行する
-   *
-   * @param {IdJumpDetail} detail
-   * @return {Promise<void>}
-   * @memberof AppRoot
-   */
+  /** Markdown から発行された ID ジャンプ処理を実行する */
   public async handleIdJump(detail: IdJumpDetail): Promise<void> {
-    const { type, id } = detail;
-    if (!id || typeof id !== "number") return;
-
-    if (type === "scratch") {
-      await this.handleScratchJump(id);
-      return;
-    }
-
-    if (this.layoutUIController.state.isScratchMode) {
-      this.layoutUIController.setScratchMode(false);
-    }
-    if (this.layoutUIController.state.isSettingsMode) {
-      this.layoutUIController.setSettingsMode(false);
-    }
-
-    if (type === "task") {
-      await this.selectAndShowTask(id);
-    } else if (type === "issue") {
-      await this.handleIssueJump(id);
-    } else if (type === "note") {
-      await this.handleNoteJump(id);
-    }
-  }
-
-  /**
-   * Scratch ID へのジャンプ処理（現在画面に応じて Journal ペインまたは全画面 Scratch へ遷移）
-   */
-  private async handleScratchJump(scratchId: number): Promise<void> {
-    const scratch = await this.scratchRepository.getById(scratchId);
-    if (!scratch) return;
-
-    const { isScratchMode, isSettingsMode } = this.layoutUIController.state;
-    const canUseJournalPane =
-      !isScratchMode && !isSettingsMode && this.taskController.state !== undefined;
-
-    if (canUseJournalPane) {
-      await this.navigateToJournalScratch(scratchId);
-      return;
-    }
-
-    await this.navigateToScratchPane(scratchId);
-  }
-
-  /**
-   * 通常画面右端の Journal ペイン（Scratch タブ）で対象 Scratch を開く
-   */
-  private async navigateToJournalScratch(scratchId: number): Promise<void> {
-    if (!this.layoutUIController.state.isJournalAreaOpen) {
-      this.layoutUIController.setJournalAreaOpen(true);
-    }
-    if (this.isConnected) {
-      await this.updateComplete;
-    }
-
-    const journalPane = this.renderRoot?.querySelector("journal-pane") as
-      | (HTMLElement & {
-          navigateToScratch?: (id: number) => Promise<void> | void;
-        })
-      | null;
-    await journalPane?.navigateToScratch?.(scratchId);
-  }
-
-  /**
-   * 全画面 Scratch ペインへ遷移して対象 Scratch を開く
-   */
-  private async navigateToScratchPane(scratchId: number): Promise<void> {
-    if (!this.layoutUIController.state.isScratchMode) {
-      this.layoutUIController.setScratchMode(true);
-    }
-    if (this.isConnected) {
-      await this.updateComplete;
-    }
-
-    const scratchPane = this.renderRoot?.querySelector("scratch-pane") as
-      | (HTMLElement & {
-          navigateToScratch?: (id: number) => Promise<void> | void;
-        })
-      | null;
-    await scratchPane?.navigateToScratch?.(scratchId);
-  }
-
-  /**
-   * Issue ID へのジャンプ処理（親タスク選択および該当Issue展開）
-   */
-  private async handleIssueJump(issueId: number): Promise<void> {
-    const issue = await this.issuesRepository.getById(issueId);
-    if (!issue) return;
-
-    await this.selectAndShowTask(issue.taskId);
-
-
-    const taskPane = this.renderRoot?.querySelector("task-pane") as
-      | (HTMLElement & { navigateToIssue?: (id: number) => void })
-      | null;
-    taskPane?.navigateToIssue?.(issueId);
-  }
-
-  /**
-   * Note ID へのジャンプ処理（親タスク選択および該当Note選択）
-   */
-  private async handleNoteJump(noteId: number): Promise<void> {
-    const note = await this.notesRepository.getById(noteId);
-    if (!note) return;
-
-    await this.selectAndShowTask(note.taskId);
-
-
-    const taskPane = this.renderRoot?.querySelector("task-pane") as
-      | (HTMLElement & { navigateToNote?: (id: number) => void })
-      | null;
-    taskPane?.navigateToNote?.(noteId);
+    await navigateByIdJump(this.createNavigationDeps(), detail);
   }
 
   public handleOpenTaskCreate = (): void => {
@@ -576,17 +280,7 @@ export class AppRoot extends LitElement {
     this.requestUpdate();
   };
 
-  /**
-   * データベースの全テーブルをエクスポートする。
-   *
-   * @memberof AppRoot
-   */
-  /**
-   * 自動エクスポート完了通知ハンドラー
-   *
-   * @param {string} fileName バックアップファイル名
-   * @memberof AppRoot
-   */
+  /** 自動エクスポート完了通知ハンドラー */
   public handleAutoExportNotified = (fileName: string): void => {
     const toast =
       this.shadowRoot?.querySelector<
@@ -602,7 +296,9 @@ export class AppRoot extends LitElement {
       });
     }
   };
-    public handleExportDatabase = async (): Promise<void> => {
+
+  /** データベースの全テーブルをエクスポートする。 */
+  public handleExportDatabase = async (): Promise<void> => {
     try {
       await this.databaseBackupService.exportDatabase(db);
     } catch (error) {
@@ -610,12 +306,7 @@ export class AppRoot extends LitElement {
     }
   };
 
-  /**
-   * 選択されたバックアップファイルからデータベースをインポートし、画面を再読み込みする。
-   *
-   * @memberof AppRoot
-   * @param {CustomEvent<{ file: File }>} event
-   */
+  /** 選択されたバックアップファイルからデータベースをインポートし、画面を再読み込みする。 */
   public handleImportDatabase = async (
     event: CustomEvent<{ file: File }>,
   ): Promise<void> => {
@@ -642,93 +333,17 @@ export class AppRoot extends LitElement {
   };
 
   public handleGlobalKeyDown = (e: KeyboardEvent): void => {
-    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
-    const lowerKey = e.key.toLowerCase();
-
-    // 全画面スクラッチモード切替（スクラッチモードや設定モード中であっても直接切り替え・復帰できるよう最優先で判定）
-    if (isCtrlOrMeta && e.altKey && lowerKey === "s") {
-      e.preventDefault();
-      this.layoutUIController.toggleScratchMode();
-      return;
-    }
-
-    if (
-      this.layoutUIController.state.isScratchMode ||
-      this.layoutUIController.state.isSettingsMode
-    ) {
-      return;
-    }
-
-    // 集中モード切替
-    if (isCtrlOrMeta && e.altKey && lowerKey === "z") {
-      e.preventDefault();
-      this.layoutUIController.toggleZenMode();
-      return;
-    }
-
-    if (isCtrlOrMeta && !e.altKey && lowerKey === "k") {
-      e.preventDefault();
-      this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
-      return;
-    }
-
-    if (isCtrlOrMeta && !e.altKey && e.key === "/") {
-      e.preventDefault();
-      this.handleToggleShortcutHelp();
-      return;
-    }
-
-    if (e.altKey && !isCtrlOrMeta && lowerKey === "n") {
-      e.preventDefault();
-      this.handleOpenTaskCreate();
-    }
+    dispatchGlobalShortcut(e, this.layoutUIController.state, {
+      toggleScratchMode: () => this.layoutUIController.toggleScratchMode(),
+      toggleZenMode: () => this.layoutUIController.toggleZenMode(),
+      toggleGlobalSearch: () => {
+        this.isGlobalSearchOpen = !this.isGlobalSearchOpen;
+      },
+      toggleShortcutHelp: () => this.handleToggleShortcutHelp(),
+      openTaskCreate: () => this.handleOpenTaskCreate(),
+    });
   };
 
-  /**
-   * 各 Controller 間の状態変更イベントの購読と連携を設定する。
-   */
-  public setupControllerSubscriptions(): void {
-    this.taskController.subscribe(async () => {
-      const currentTaskId = this.taskController.state?.id;
-      if (this.issuesController.taskId !== currentTaskId) {
-        this.issuesController.setTaskId(currentTaskId);
-      }
-      if (this.logsController.taskId !== currentTaskId) {
-        this.logsController.setTaskId(currentTaskId);
-      }
-      if (this.notesController.taskId !== currentTaskId) {
-        this.notesController.setTaskId(currentTaskId);
-      }
-      if (currentTaskId) {
-        this.taskHistoryController.record(currentTaskId);
-      }
-      await this.taskListController.refresh();
-    });
-
-    this.issuesController.subscribe(async () => {
-      await Promise.all([
-        this.taskListController.refresh(),
-        this.taskController.refresh(),
-      ]);
-    });
-
-    this.labelsController.subscribe(() => {
-      this.requestUpdate();
-    });
-
-    this.tagsController.subscribe(async () => {
-      await Promise.all([
-        this.taskListController.refresh(),
-        this.taskController.refresh(),
-        this.tagSetsController.refresh(),
-      ]);
-      this.requestUpdate();
-    });
-  }
-
-  /**
-   * AppRoot 自身（:host）のクラスおよび属性を現在の適用テーマと同期する。
-   */
   private syncThemeToHost(): void {
     const resolved = this.themeController.resolvedTheme;
     if (resolved === "dark") {
@@ -742,256 +357,29 @@ export class AppRoot extends LitElement {
     }
   }
 
-  /**
-   * ヘッダー領域の HTML テンプレートを描画する。
-   *
-   * @private
-   * @param {boolean} [isSearchDisabled=false]
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderHeader(isSearchDisabled: boolean = false): HTMLTemplateResult {
-    return html`
-      <header class="app-header">
-        <div class="header-branding">
-          <wa-icon library="my-icons" name="cubes-stacked-solid-full"></wa-icon>
-          StepNote
-        </div>
-        <div class="header-search">
-          <button
-            type="button"
-            id="header-global-search-trigger"
-            class="header-search-trigger"
-            aria-label="全体検索 (Ctrl+K)"
-            ?disabled=${isSearchDisabled}
-            @click=${this.handleOpenGlobalSearch}
-          >
-            <div class="header-search-trigger__lead">
-              <wa-icon
-                library="my-icons"
-                name="magnifying-glass-solid-full"
-                class="header-search-trigger__icon"
-              ></wa-icon>
-              <span class="header-search-trigger__placeholder"
-                >全体を検索...</span
-              >
-            </div>
-            <kbd class="header-search-trigger__shortcut">Ctrl K</kbd>
-          </button>
-        </div>
-        <div class="header-actions">
-          <task-history-menu
-            .taskRepository=${this.taskRepository}
-            data-theme=${this.themeController.resolvedTheme}
-          ></task-history-menu>
-          <theme-switcher></theme-switcher>
-        </div>
-      </header>
-    `;
+  private renderHeader(isSearchDisabled: boolean = false) {
+    return renderAppHeader({
+      isSearchDisabled,
+      resolvedTheme: this.themeController.resolvedTheme,
+      taskRepository: this.taskRepository,
+      onOpenGlobalSearch: this.handleOpenGlobalSearch,
+    });
   }
 
-  /**
-   * 最左メニュー領域 (app-menu) を描画する。
-   *
-   * @private
-   * @param {string} resolvedTheme
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderAppMenu(resolvedTheme: string): HTMLTemplateResult {
-    const {
-      isNavigationListAreaOpen,
-      isZenMode,
-      isScratchMode,
-      isSettingsMode,
-    } = this.layoutUIController.state;
-
-    return html`
-      <app-menu
-        class="app-menu"
-        data-theme=${resolvedTheme}
-        .isNavigationListAreaOpen=${isNavigationListAreaOpen}
-        .isZenMode=${isZenMode}
-        .isScratchMode=${isScratchMode}
-        .isSettingsMode=${isSettingsMode}
-      ></app-menu>
-    `;
-  }
-
-  /**
-   * 全画面スクラッチモード時の HTML テンプレートを描画する。
-   *
-   * @private
-   * @param {string} resolvedTheme
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderScratchPanes(resolvedTheme: string): HTMLTemplateResult {
-    return html`
-      <div class="panes-container">
-        <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
-        ${this.renderAppMenu(resolvedTheme)}
-
-        <!-- 全画面スクラッチペイン -->
-        <scratch-pane
-          class="pane-scratch"
-          data-theme=${resolvedTheme}
-        ></scratch-pane>
-      </div>
-    `;
-  }
-
-  /**
-   * 全画面設定モード時の HTML テンプレートを描画する。
-   *
-   * @private
-   * @param {string} resolvedTheme
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderSettingsPanes(resolvedTheme: string): HTMLTemplateResult {
-    return html`
-      <div class="panes-container">
-        <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
-        ${this.renderAppMenu(resolvedTheme)}
-
-        <!-- 全画面設定ペイン -->
-        <settings-pane
-          class="pane-settings"
-          data-theme=${resolvedTheme}
-        ></settings-pane>
-      </div>
-    `;
-  }
-
-  /**
-   * Navigation ペイン（第2ペイン）を描画する。
-   *
-   * @private
-   * @param {boolean} isOpen ナビゲーションリストエリアが開いているかどうか
-   * @param {string} resolvedTheme 適用中の解決済みテーマ名
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderNavigationAside(
-    isOpen: boolean,
-    resolvedTheme: string,
-  ): HTMLTemplateResult {
-    return html`
-      <aside class="pane-navigation pane-collapsible" ?hidden=${!isOpen}>
-        <navigation-quick-access
-          class="navigation-quick-access"
-          data-theme=${resolvedTheme}
-        ></navigation-quick-access>
-        <navigation-labels
-          class="navigation-labels"
-          data-theme=${resolvedTheme}
-        ></navigation-labels>
-      </aside>
-    `;
-  }
-
-  /**
-   * Journal ペイン（第5ペイン）を描画する。
-   *
-   * @private
-   * @param {boolean} isJournalOpen ジャーナルエリアが開いているかどうか
-   * @param {string} resolvedTheme 適用中の解決済みテーマ名
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderJournalAside(
-    isJournalOpen: boolean,
-    resolvedTheme: string,
-  ): HTMLTemplateResult {
-    const journalPaneClass = isJournalOpen
-      ? "journal-pane"
-      : "journal-pane journal-pane--collapsed";
-
-    return html`
-      <aside class="${journalPaneClass}">
-        <journal-pane
-          data-theme=${resolvedTheme}
-          .isJournalAreaOpen=${isJournalOpen}
-        ></journal-pane>
-      </aside>
-    `;
-  }
-
-  /**
-   * 5ペイン（中央コンテンツ領域）の HTML テンプレートを描画する。
-   *
-   * @private
-   * @param {string} resolvedTheme 適用中の解決済みテーマ名
-   * @return {HTMLTemplateResult}
-   * @memberof AppRoot
-   */
-  private renderPanes(resolvedTheme: string): HTMLTemplateResult {
-    const {
-      isNavigationListAreaOpen: isOpen,
-      isJournalAreaOpen: isJournalOpen,
-      isScratchMode,
-      isSettingsMode,
-    } = this.layoutUIController.state;
-
-    if (isScratchMode) {
-      return this.renderScratchPanes(resolvedTheme);
-    }
-    if (isSettingsMode) {
-      return this.renderSettingsPanes(resolvedTheme);
-    }
-
-    return html`
-      <div class="panes-container">
-        <!-- 1. Menu (最左メニュー領域: 固定 45px) -->
-        ${this.renderAppMenu(resolvedTheme)}
-
-        <!-- 2. Navigation ペイン (第2ペイン: 上下2分割) -->
-        ${this.renderNavigationAside(isOpen, resolvedTheme)}
-
-        <!-- 3. Task List (第3ペイン) -->
-        <task-list
-          class="task-list pane-collapsible"
-          data-theme=${resolvedTheme}
-          ?hidden=${!isOpen}
-        ></task-list>
-
-        <!-- 4. Task ペイン (第4ペイン: タスク管理) -->
-        <main class="task-pane">
-          <task-pane data-theme=${resolvedTheme}></task-pane>
-        </main>
-
-        <!-- 5. Journal ペイン (第5ペイン: 作業記録・履歴) -->
-        ${this.renderJournalAside(isJournalOpen, resolvedTheme)}
-      </div>
-    `;
-  }
-
-  /**
-   * コンポーネント描画
-   *
-   * メインコンテンツのペインを構成する。
-   *
-   * @memberof AppRoot
-   */
   override render() {
-    const { isScratchMode, isSettingsMode } = this.layoutUIController.state;
-    const isSearchDisabled = isScratchMode || isSettingsMode;
+    const layoutState = this.layoutUIController.state;
+    const isSearchDisabled =
+      layoutState.isScratchMode || layoutState.isSettingsMode;
     const resolvedTheme = this.themeController.resolvedTheme;
     const themeClass = resolvedTheme === "dark" ? "wa-dark" : "wa-light";
 
     return html`
       <div class="app-shell ${themeClass}" data-theme=${resolvedTheme}>
-        <!-- Header (上部固定) -->
         ${this.renderHeader(isSearchDisabled)}
+        ${renderAppPanesLayout(layoutState, resolvedTheme)}
 
-        <!-- Panes (中央5ペイン領域) -->
-        ${this.renderPanes(resolvedTheme)}
-
-        <!-- Footer (下部固定) -->
         <app-footer class="app-footer"></app-footer>
 
-        <!-- 全体検索モーダル -->
         <global-search-dialog
           .open=${this.isGlobalSearchOpen}
           data-theme=${resolvedTheme}
@@ -999,7 +387,6 @@ export class AppRoot extends LitElement {
           @global-search-select=${this.handleCloseGlobalSearch}
         ></global-search-dialog>
 
-        <!-- 新規タスク作成モーダル -->
         <task-create-dialog
           .open=${this.isTaskCreateDialogOpen}
           .fiscalYear=${getCurrentFiscalYear()}
@@ -1008,14 +395,12 @@ export class AppRoot extends LitElement {
           @task-created=${this.handleTaskCreated}
         ></task-create-dialog>
 
-        <!-- ショートカットヘルプ Drawer -->
         <shortcut-help-drawer
           .open=${this.isShortcutHelpOpen}
           data-theme=${resolvedTheme}
           @drawer-close=${this.handleCloseShortcutHelp}
         ></shortcut-help-drawer>
 
-        <!-- 自動バックアップ通知トースト -->
         <wa-toast id="app-toast"></wa-toast>
       </div>
     `;
@@ -1027,5 +412,3 @@ declare global {
     "app-root": AppRoot;
   }
 }
-
-
