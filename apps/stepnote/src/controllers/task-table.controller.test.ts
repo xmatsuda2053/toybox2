@@ -64,7 +64,10 @@ describe("TaskTableController", () => {
   let issues: IssueRecord[];
   let labels: LabelRecord[];
   let tags: TagRecord[];
-  let taskRepoMock: { getAll: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  let taskRepoMock: {
+    getAll: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
   let issuesRepoMock: { getAll: ReturnType<typeof vi.fn> };
   let labelsRepoMock: { getAll: ReturnType<typeof vi.fn> };
   let tagsRepoMock: { getAll: ReturnType<typeof vi.fn> };
@@ -113,11 +116,17 @@ describe("TaskTableController", () => {
     ];
 
     taskRepoMock = {
-      getAll: vi.fn().mockImplementation(async () => tasks.map((t) => ({ ...t }))),
-      update: vi.fn().mockImplementation(async (id: number, partial: Partial<TaskRecord>) => {
-        const target = tasks.find((t) => t.id === id);
-        if (target) Object.assign(target, partial);
-      }),
+      getAll: vi
+        .fn()
+        .mockImplementation(async () => tasks.map((t) => ({ ...t }))),
+      update: vi
+        .fn()
+        .mockImplementation(
+          async (id: number, partial: Partial<TaskRecord>) => {
+            const target = tasks.find((t) => t.id === id);
+            if (target) Object.assign(target, partial);
+          },
+        ),
     };
     issuesRepoMock = { getAll: vi.fn().mockResolvedValue(issues) };
     labelsRepoMock = { getAll: vi.fn().mockResolvedValue(labels) };

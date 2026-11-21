@@ -5,6 +5,7 @@ import {
   labelsContext,
   taskContext,
   taskListContext,
+  taskTableContext,
   issuesContext,
   notesContext,
   logsContext,
@@ -21,6 +22,7 @@ import type { TagsController } from "@/controllers/tags.controller";
 import type { TagSetsController } from "@/controllers/tag-sets.controller";
 import type { TaskController } from "@/controllers/task.controller";
 import type { TaskListController } from "@/controllers/task-list.controller";
+import type { TaskTableController } from "@/controllers/task-table.controller";
 import type { IssuesController } from "@/controllers/issues.controller";
 import type { NotesController } from "@/controllers/notes.controller";
 import type { LogsController } from "@/controllers/logs.controller";
@@ -112,6 +114,33 @@ export function WithTaskController<T extends LitElementConstructor>(Base: T) {
     }
   }
   return TaskConsumerClass;
+}
+
+/**
+ * TaskTableController を Lit Context 経由で受信・購読する Mixin。
+ */
+export function WithTaskTableController<T extends LitElementConstructor>(
+  Base: T,
+) {
+  class TaskTableConsumerClass extends Base {
+    private _taskTableController?: TaskTableController;
+
+    /** タスク一覧テーブル管理コントローラー */
+    public get taskTableController(): TaskTableController | undefined {
+      return this._taskTableController;
+    }
+
+    @consume({ context: taskTableContext, subscribe: true })
+    @property({ attribute: false })
+    public set taskTableController(controller: TaskTableController | undefined) {
+      this._taskTableController = this.subscriber.bind(
+        "taskTable",
+        this._taskTableController,
+        controller,
+      );
+    }
+  }
+  return TaskTableConsumerClass;
 }
 
 /**

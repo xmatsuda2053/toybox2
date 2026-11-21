@@ -1436,5 +1436,37 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect(htmlStr).not.toContain("<task-list");
       expect(htmlStr).not.toContain("<task-table-pane");
     });
+
+    it("17-5. taskTableController がインスタンス化され、task-table-open-task イベント受信時にタスク選択と詳細ビュー遷移が実行されること", async () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+      const ctrl = (appRoot as unknown as { taskTableController: unknown })
+        .taskTableController;
+      expect(ctrl).toBeDefined();
+
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 101,
+        labelId: 1,
+      } as never);
+      const selectTaskSpy = vi
+        .spyOn(appRoot.taskListController, "selectTask")
+        .mockResolvedValue();
+      const setTaskIdSpy = vi
+        .spyOn(appRoot.taskController, "setTaskId")
+        .mockResolvedValue();
+
+      appRoot.dispatchEvent(
+        new CustomEvent("task-table-open-task", {
+          bubbles: true,
+          composed: true,
+          detail: { taskId: 101 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+      expect(selectTaskSpy).toHaveBeenCalledWith(101);
+      expect(setTaskIdSpy).toHaveBeenCalledWith(101);
+      expect(appRoot.layoutUIController.state.isListDetailOpen).toBe(true);
+    });
   });
 });
