@@ -1,30 +1,18 @@
-import type { ReactiveControllerHost } from "lit";
 import type { TagSetsRepository } from "@/repositories/tag-sets.repository";
 import type { CreateTagSetInput, TagSetRecord } from "@/db/models/tag.model";
-import { BaseDataController } from "./base-reactive.controller";
+import { BaseSortedDataController } from "./base-reactive.controller";
 
 /**
  * TagSet マスタ関連イベント・状態を管理する Reactive Controller
  *
  * @export
  * @class TagSetsController
- * @extends {BaseDataController<TagSetsRepository, readonly TagSetRecord[]>}
+ * @extends {BaseSortedDataController<TagSetsRepository, TagSetRecord>}
  */
-export class TagSetsController extends BaseDataController<
+export class TagSetsController extends BaseSortedDataController<
   TagSetsRepository,
-  readonly TagSetRecord[]
+  TagSetRecord
 > {
-  constructor(host: ReactiveControllerHost, repository: TagSetsRepository) {
-    super(host, repository, []);
-  }
-
-  /**
-   * 登録済みタグセット全件をソート済みで取得し、変更を全購読者へ通知する。
-   */
-  protected async loadState(): Promise<void> {
-    this._state = [...(await this.repository.getAllSorted())];
-    this.notify();
-  }
 
   /**
    * 新規タグセットを作成する。

@@ -4,6 +4,7 @@ import {
   SubscriberElement,
   WithScratchController,
 } from "@/utils/controller-consumers.mixin.js";
+import { selectNotesViewItem } from "@/utils/view-state.utils.js";
 import "@/components/notes/notes-view.js";
 import styles from "./scratch-pane.scss?inline";
 
@@ -37,16 +38,7 @@ export class ScratchPane extends WithScratchController(SubscriberElement) {
     if (this.isConnected) {
       await this.updateComplete;
     }
-    const notesView = this.renderRoot?.querySelector("notes-view") as
-      | (HTMLElement & {
-          handleSelectNote?: (id: number) => void;
-          updateComplete?: Promise<unknown>;
-        })
-      | null;
-    if (notesView?.isConnected) {
-      await notesView.updateComplete;
-    }
-    notesView?.handleSelectNote?.(scratchId);
+    await selectNotesViewItem(this.renderRoot, scratchId);
   };
 
   /**

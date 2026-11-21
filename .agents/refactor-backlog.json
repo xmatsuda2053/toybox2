@@ -6489,8 +6489,12 @@
     "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "skipped",
+    "execution": {
+      "skipped_at": "2026-11-21T15:26:30+09:00",
+      "issue_number": 499,
+      "reason": "Lit Web Component 公開 @property デコレーター宣言（themeMode 等）であり、過剰抽象化による可読性・型表現低下を避けるため意図的に独立維持（Phase 6 で確認・確定）"
+    }
   },
   {
     "id": "REF-221",
@@ -6508,8 +6512,12 @@
     "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "skipped",
+    "execution": {
+      "skipped_at": "2026-11-21T15:26:30+09:00",
+      "issue_number": 499,
+      "reason": "50トークン未満かつ Lit 公開 @property デコレーター宣言であり、過剰抽象化回避のため対応不要（Phase 6 で確認・確定）"
+    }
   },
   {
     "id": "REF-222",
@@ -6527,8 +6535,12 @@
     "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "skipped",
+    "execution": {
+      "skipped_at": "2026-11-21T15:26:30+09:00",
+      "issue_number": 499,
+      "reason": "50トークン未満の局所的類似断片かつ現行 jscpd (--min-tokens 50) 非検出のため対応不要（Phase 6 で確認・確定）"
+    }
   },
   {
     "id": "REF-223",
@@ -6546,8 +6558,12 @@
     "test_file": "packages/components/src/markdown/editor-preview/markdown-editor-preview.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "skipped",
+    "execution": {
+      "skipped_at": "2026-11-21T15:26:30+09:00",
+      "issue_number": 499,
+      "reason": "50トークン未満の局所的類似断片かつ現行 jscpd (--min-tokens 50) 非検出のため対応不要（Phase 6 で確認・確定）"
+    }
   },
   {
     "id": "REF-224",
@@ -6565,8 +6581,12 @@
     "test_file": "packages/components/src/markdown/editor/markdown-syntax.utils.test.ts",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "skipped",
+    "execution": {
+      "skipped_at": "2026-11-21T15:26:30+09:00",
+      "issue_number": 499,
+      "reason": "50トークン未満の局所的類似断片かつ現行 jscpd (--min-tokens 50) 非検出のため対応不要（Phase 6 で確認・確定）"
+    }
   },
   {
     "id": "REF-225",

@@ -3,6 +3,7 @@ import type { ReactiveControllerHost } from "lit";
 import {
   BaseReactiveController,
   BaseTaskSubItemController,
+  BaseSortedDataController,
 } from "./base-reactive.controller";
 import type { BaseTaskSubItemRepository } from "@/repositories/base-task-sub-item.repository";
 
@@ -278,5 +279,39 @@ describe("BaseTaskSubItemController", () => {
 
     expect(repo.delete).toHaveBeenCalledWith(id);
     expect(controller.state).toHaveLength(0);
+  });
+});
+
+describe("3. BaseSortedDataController", () => {
+  interface DummyMaster {
+    id: number;
+    order: number;
+    name: string;
+  }
+
+  class ConcreteSortedController extends BaseSortedDataController<
+    { getAllSorted: () => Promise<DummyMaster[]> },
+    DummyMaster
+  > {}
+
+  it("初期化時に repository.getAllSorted() を呼び出してソート済み一覧を読み込み、購読者へ通知すること", async () => {
+    const host = createMockHost();
+    const sortedRows: DummyMaster[] = [
+      { id: 1, order: 1, name: "Alpha" },
+      { id: 2, order: 2, name: "Beta" },
+    ];
+    const repo = {
+      getAllSorted: vi.fn(async () => sortedRows),
+    };
+    const controller = new ConcreteSortedController(host, repo);
+    const listener = vi.fn();
+    controller.subscribe(listener);
+
+    await controller.initialized;
+    await controller.refresh();
+
+    expect(repo.getAllSorted).toHaveBeenCalled();
+    expect(controller.state).toEqual(sortedRows);
+    expect(listener).toHaveBeenCalled();
   });
 });
