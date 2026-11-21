@@ -1,14 +1,6 @@
 @use "../../styles/mixins.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  @include theme-transition;
-}
+@include task-detail-host($box-sizing: true);
 
 .issues-view {
   display: flex;
@@ -17,367 +9,295 @@
   min-height: 100%;
   gap: var(--wa-space-m);
   @include theme-transition;
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--wa-space-s);
+.issues-view__header {
+  @include tab-view-header($margin-bottom: 0, $gap: var(--wa-space-s));
+}
+
+.issues-view__search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.issues-view__actions {
+  @include tab-view-actions;
+}
+
+.issues-view__btn-template,
+.issues-view__btn-add {
+  @include flex-center;
+  cursor: pointer;
+}
+
+.issues-view__empty {
+  @include task-detail-empty;
+}
+
+.issues-view__list,
+.issues-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs);
+}
+
+.issues-view__list {
+  flex: 1;
+}
+
+.issues-view__section-header {
+  font-size: var(--wa-font-size-s, 13px);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-text-quiet);
+  padding: var(--wa-space-xs, 8px) var(--wa-space-xs, 8px)
+    var(--wa-space-2xs, 4px);
+  user-select: none;
+}
+
+.issues-view__divider {
+  margin: var(--wa-space-xs) 0;
+}
+
+.issues-view__row-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.issues-view__item {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-s);
+  padding: var(--wa-space-2xs, 4px) var(--wa-space-m);
+  border-radius: var(--wa-border-radius-m);
+  border: 1px solid var(--wa-color-surface-border);
+  background-color: var(--wa-color-neutral-fill-quiet);
+  cursor: pointer;
+  min-height: 36px;
+  box-sizing: border-box;
+  @include theme-transition;
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-normal);
   }
+}
 
-  &__search-input {
-    flex: 1;
-    min-width: 0;
-  }
+.issues-view__item:hover .issues-view__item-caret {
+  color: var(--wa-color-text-normal);
+}
 
-  &__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--wa-space-2xs, 4px);
-  }
+.issues-view__item--expanded {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
 
-  &__btn-template {
-    @include flex-center;
-    cursor: pointer;
-  }
+.issues-view__item--expanded .issues-view__item-caret {
+  transform: rotate(90deg);
+  color: var(--wa-color-text-normal);
+}
 
-  &__btn-add {
-    @include flex-center;
-    cursor: pointer;
-  }
+.issues-view__item--completed {
+  opacity: 0.7;
+}
 
-  &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--wa-space-xl);
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-  }
+.issues-view__item--completed .issues-view__item-title {
+  text-decoration: line-through;
+}
 
-  &__list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-xs);
-    flex: 1;
-  }
+.issues-view__item-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--wa-font-size-l, 18px);
+  cursor: pointer;
+  @include task-status-icon-colors;
+}
 
-  &__section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-xs);
-  }
+.issues-view__status-dropdown {
+  display: inline-flex;
+  align-items: center;
+}
 
-  &__section-header {
+.issues-view__status-btn {
+  @include flex-center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  color: inherit;
+  font: inherit;
+}
+
+.issues-view__status-icon {
+  font-size: var(--wa-font-size-s);
+  @include task-status-icon-colors;
+}
+
+.issues-view__item-id {
+  flex-shrink: 0;
+  font-size: var(--wa-font-size-xs, 12px);
+  font-weight: var(--wa-font-weight-normal, 400);
+  color: var(--wa-color-text-quiet);
+  user-select: none;
+}
+
+.issues-view__item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--wa-font-size-m, 15px);
+  font-weight: var(--wa-font-weight-medium, 500);
+  color: var(--wa-color-text-normal);
+  line-height: 1.4;
+  @include text-ellipsis;
+}
+
+.issues-view__item-due {
+  flex-shrink: 0;
+  width: 170px;
+  --wa-form-control-background-color: transparent;
+  @include task-due-icon-colors;
+
+  &::part(input) {
     font-size: var(--wa-font-size-s, 13px);
-    font-weight: var(--wa-font-weight-semibold, 600);
-    color: var(--wa-color-text-quiet);
-    padding: var(--wa-space-xs, 8px) var(--wa-space-xs, 8px) var(--wa-space-2xs, 4px);
-    user-select: none;
   }
+}
 
-  &__divider {
-    margin: var(--wa-space-xs) 0;
+.issues-view__item-caret {
+  @include flex-center;
+  flex-shrink: 0;
+  font-size: var(--wa-font-size-s, 14px);
+  color: var(--wa-color-text-quiet);
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s ease;
+  cursor: pointer;
+}
+
+.issues-view__detail-container {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  animation: issues-view-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1)
+    forwards;
+  will-change: grid-template-rows, opacity;
+
+  &--collapsing {
+    animation: issues-view-detail-collapse 0.28s cubic-bezier(0.25, 1, 0.5, 1)
+      forwards;
+    pointer-events: none;
   }
+}
 
-  &__row-group {
-    display: flex;
-    flex-direction: column;
-  }
+.issues-view__detail {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--wa-color-surface-default);
+  border: 1px solid var(--wa-color-surface-border);
+  border-top: none;
+  border-bottom-left-radius: var(--wa-border-radius-m);
+  border-bottom-right-radius: var(--wa-border-radius-m);
+  padding: var(--wa-space-s);
+  box-sizing: border-box;
+}
 
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: var(--wa-space-s);
-    padding: var(--wa-space-2xs, 4px) var(--wa-space-m);
-    border-radius: var(--wa-border-radius-m);
-    border: 1px solid var(--wa-color-surface-border);
-    background-color: var(--wa-color-neutral-fill-quiet);
-    cursor: pointer;
-    min-height: 36px;
-    box-sizing: border-box;
-    @include theme-transition;
+.issues-view__detail-editor {
+  width: 100%;
+  min-height: 240px;
+}
 
-    &:hover {
-      background-color: var(--wa-color-neutral-fill-normal);
+.issues-view__delete-dialog-body {
+  @include tab-view-dialog-body;
+}
 
-      .issues-view__item-caret {
-        color: var(--wa-color-text-normal);
-      }
-    }
+.issues-view__delete-dialog-footer,
+.issues-view__add-dialog-footer,
+.issues-view__template-dialog-footer {
+  @include tab-view-dialog-footer;
+}
 
-    &--expanded {
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
+.issues-view__add-dialog,
+.issues-view__template-dialog {
+  --width: 520px;
+}
 
-      .issues-view__item-caret {
-        transform: rotate(90deg);
-        color: var(--wa-color-text-normal);
-      }
-    }
+.issues-view__add-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s);
+}
 
-    &--completed {
-      opacity: 0.7;
+.issues-view__add-dialog-description {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-quiet);
+  line-height: var(--wa-line-height-normal);
+}
 
-      .issues-view__item-title {
-        text-decoration: line-through;
-      }
-    }
-  }
+.issues-view__add-textarea {
+  width: 100%;
+  min-height: 160px;
+  font-family: inherit;
+}
 
-  &__item-status {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    font-size: var(--wa-font-size-l, 18px);
-    cursor: pointer;
+.issues-view__template-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-m);
+}
 
-    &.type-pending {
-      color: var(--quick-access-icon-pending);
-    }
+.issues-view__template-empty-message {
+  padding: var(--wa-space-m);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+  text-align: center;
+}
 
-    &.type-progress {
-      color: var(--quick-access-icon-progress);
-    }
+.issues-view__template-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-2xs);
+}
 
-    &.type-done {
-      color: var(--quick-access-icon-done);
-    }
-  }
+.issues-view__template-label,
+.issues-view__template-preview-header {
+  font-size: var(--wa-font-size-xs);
+  font-weight: var(--wa-font-weight-semibold);
+  color: var(--wa-color-text-quiet);
+}
 
-  &__status-dropdown {
-    display: inline-flex;
-    align-items: center;
-  }
+.issues-view__template-select {
+  width: 100%;
+}
 
-  &__status-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-    outline: none;
-    color: inherit;
-    font: inherit;
-  }
+.issues-view__template-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs);
+  padding: var(--wa-space-s);
+  background-color: var(--wa-color-surface-subtle);
+  border: 1px solid var(--wa-color-border-subtle);
+  border-radius: var(--wa-border-radius-m);
+}
 
-  &__status-icon {
-    font-size: var(--wa-font-size-s);
+.issues-view__template-preview-empty {
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+  font-style: italic;
+}
 
-    &.type-done {
-      color: var(--quick-access-icon-done);
-    }
+.issues-view__template-preview-list {
+  margin: 0;
+  padding-left: var(--wa-space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-2xs);
+}
 
-    &.type-progress {
-      color: var(--quick-access-icon-progress);
-    }
-
-    &.type-pending {
-      color: var(--quick-access-icon-pending);
-    }
-  }
-
-  &__item-id {
-    flex-shrink: 0;
-    font-size: var(--wa-font-size-xs, 12px);
-    font-weight: var(--wa-font-weight-normal, 400);
-    color: var(--wa-color-text-quiet);
-    user-select: none;
-  }
-
-  &__item-title {
-    flex: 1;
-    min-width: 0;
-    font-size: var(--wa-font-size-m, 15px);
-    font-weight: var(--wa-font-weight-medium, 500);
-    color: var(--wa-color-text-normal);
-    line-height: 1.4;
-    @include text-ellipsis;
-  }
-
-  &__item-due {
-    flex-shrink: 0;
-    width: 170px;
-    --wa-form-control-background-color: transparent;
-
-    &::part(input) {
-      font-size: var(--wa-font-size-s, 13px);
-    }
-
-    &--overdue {
-      --datepicker-icon-color: var(--quick-access-icon-overdue);
-    }
-
-    &--asap {
-      --datepicker-icon-color: var(--quick-access-icon-asap);
-    }
-
-    &--upcoming {
-      --datepicker-icon-color: var(--quick-access-icon-upcoming);
-    }
-  }
-
-  &__item-caret {
-    flex-shrink: 0;
-    font-size: var(--wa-font-size-s, 14px);
-    color: var(--wa-color-text-quiet);
-    transition:
-      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-      color 0.2s ease;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &__detail-container {
-    display: grid;
-    grid-template-rows: 1fr;
-    overflow: hidden;
-    animation: issues-view-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    will-change: grid-template-rows, opacity;
-
-    &--collapsing {
-      animation: issues-view-detail-collapse 0.28s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-      pointer-events: none;
-    }
-  }
-
-  &__detail {
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--wa-color-surface-default);
-    border: 1px solid var(--wa-color-surface-border);
-    border-top: none;
-    border-bottom-left-radius: var(--wa-border-radius-m);
-    border-bottom-right-radius: var(--wa-border-radius-m);
-    padding: var(--wa-space-s);
-    box-sizing: border-box;
-  }
-
-  &__detail-editor {
-    width: 100%;
-    min-height: 240px;
-  }
-
-  &__delete-dialog-body {
-    font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-normal);
-    line-height: var(--wa-line-height-normal);
-  }
-
-  &__delete-dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--wa-space-s);
-  }
-
-  &__add-dialog {
-    --width: 520px;
-  }
-
-  &__add-dialog-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-s);
-  }
-
-  &__add-dialog-description {
-    font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-quiet);
-    line-height: var(--wa-line-height-normal);
-  }
-
-  &__add-textarea {
-    width: 100%;
-    min-height: 160px;
-    font-family: inherit;
-  }
-
-  &__add-dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--wa-space-s);
-  }
-
-  &__template-dialog {
-    --width: 520px;
-  }
-
-  &__template-dialog-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-m);
-  }
-
-  &__template-empty-message {
-    padding: var(--wa-space-m);
-    color: var(--wa-color-text-quiet);
-    font-size: var(--wa-font-size-s);
-    text-align: center;
-  }
-
-  &__template-select-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-2xs);
-  }
-
-  &__template-label {
-    font-size: var(--wa-font-size-xs);
-    font-weight: var(--wa-font-weight-semibold);
-    color: var(--wa-color-text-quiet);
-  }
-
-  &__template-select {
-    width: 100%;
-  }
-
-  &__template-preview {
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-xs);
-    padding: var(--wa-space-s);
-    background-color: var(--wa-color-surface-subtle);
-    border: 1px solid var(--wa-color-border-subtle);
-    border-radius: var(--wa-border-radius-m);
-  }
-
-  &__template-preview-header {
-    font-size: var(--wa-font-size-xs);
-    font-weight: var(--wa-font-weight-semibold);
-    color: var(--wa-color-text-quiet);
-  }
-
-  &__template-preview-empty {
-    font-size: var(--wa-font-size-xs);
-    color: var(--wa-color-text-quiet);
-    font-style: italic;
-  }
-
-  &__template-preview-list {
-    margin: 0;
-    padding-left: var(--wa-space-l);
-    display: flex;
-    flex-direction: column;
-    gap: var(--wa-space-2xs);
-  }
-
-  &__template-preview-item {
-    font-size: var(--wa-font-size-s);
-    color: var(--wa-color-text-normal);
-  }
-
-  &__template-dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--wa-space-s);
-  }
+.issues-view__template-preview-item {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-normal);
 }
 
 @keyframes issues-view-detail-expand {

@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model";
@@ -349,40 +350,40 @@ describe("TaskSummary Component", () => {
     });
 
     it("5-6. task-summary.scss において .task-summary__field が横並び配置され、ラベル幅が固定されていること、および詳細説明が領域一杯（flex: 1）に伸長すること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.task-summary__field\s*\{[^}]*flex-direction:\s*row/,
       );
-      expect(content).toMatch(/\.task-summary__label\s*\{[^}]*width:\s*\d+px/);
-      expect(content).toMatch(/flex:\s*1/);
+      expect(compiledCss).toMatch(/\.task-summary__label\s*\{[^}]*width:\s*\d+px/);
+      expect(compiledCss).toMatch(/flex:\s*1/);
     });
 
     it("5-7. task-summary.scss に .task-summary__due-date の各修飾子（--overdue, --asap, --upcoming）および --datepicker-icon-color が定義されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toContain(".task-summary__due-date");
-      expect(content).toContain("&--overdue");
-      expect(content).toContain("&--asap");
-      expect(content).toContain("&--upcoming");
-      expect(content).toContain("--datepicker-icon-color");
-      expect(content).toContain("var(--quick-access-icon-overdue)");
-      expect(content).toContain("var(--quick-access-icon-asap)");
-      expect(content).toContain("var(--quick-access-icon-upcoming)");
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toContain(".task-summary__due-date");
+      expect(compiledCss).toContain(".task-summary__due-date--overdue");
+      expect(compiledCss).toContain(".task-summary__due-date--asap");
+      expect(compiledCss).toContain(".task-summary__due-date--upcoming");
+      expect(compiledCss).toContain("--datepicker-icon-color");
+      expect(compiledCss).toContain("var(--quick-access-icon-overdue)");
+      expect(compiledCss).toContain("var(--quick-access-icon-asap)");
+      expect(compiledCss).toContain("var(--quick-access-icon-upcoming)");
     });
 
     it("5-8. task-summary.scss に .task-summary__label--contacts および .task-summary__btn-add-contact が定義され、ポインターカーソルとホバー色が設定されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toContain(".task-summary__label--contacts");
-      expect(content).toContain(".task-summary__btn-add-contact");
-      expect(content).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toContain(".task-summary__label--contacts");
+      expect(compiledCss).toContain(".task-summary__btn-add-contact");
+      expect(compiledCss).toMatch(
         /\.task-summary__btn-add-contact\s*\{[^}]*cursor:\s*pointer;/,
       );
-      expect(content).toContain("var(--label-icon-color)");
+      expect(compiledCss).toContain("var(--label-icon-color)");
     });
 
     it("5-9. task-summary.scss において :host および .task-summary に min-height: 100% が定義され、コンテンツが少ない時はタスクエリア末尾まで広がり、コンテンツ増大時は縦に自然伸長すること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/:host\s*\{[^}]*min-height:\s*100%;/);
-      expect(content).toMatch(/\.task-summary\s*\{[^}]*min-height:\s*100%;/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(/:host\s*\{[^}]*min-height:\s*100%;/);
+      expect(compiledCss).toMatch(/\.task-summary\s*\{[^}]*min-height:\s*100%;/);
     });
   });
 

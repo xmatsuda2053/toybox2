@@ -1,14 +1,6 @@
 @use "../../styles/mixins.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  @include theme-transition;
-}
+@include task-detail-host($box-sizing: true);
 
 .task-property {
   display: flex;
@@ -20,12 +12,7 @@
 }
 
 .task-property--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--wa-space-xl);
-  color: var(--wa-color-text-quiet);
-  font-size: var(--wa-font-size-s);
+  @include task-detail-empty;
 }
 
 .task-property__field {
@@ -37,12 +24,7 @@
 }
 
 .task-property__label {
-  width: 64px;
-  min-width: 64px;
-  flex-shrink: 0;
-  font-size: var(--wa-font-size-s);
-  font-weight: var(--wa-font-weight-semibold);
-  color: var(--wa-color-text-quiet);
+  @include task-detail-label;
 }
 
 .task-property__control {
@@ -65,4 +47,3 @@
   margin: 0;
   @include theme-transition;
 }
-

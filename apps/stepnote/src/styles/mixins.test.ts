@@ -12,6 +12,7 @@ import * as fs from "node:fs";
  * 仕様 6: @mixin stepnote-tag-styles が定義され、border 非表示および全10色のタグ専用トークン参照が含まれていること
  * 仕様 7: @mixin tag-variant-select-styles が全10色に対応し、--stepnote-tag-*-color を参照していること
  * 仕様 8: SCSS-018: @mixin tag-variant-select-styles の ::part(display-input) が3階層ネストされずフラット展開されていること
+ * 仕様 9: SCSS-021〜023: タブビュー・タスク詳細共通 Mixin 群が定義され、task-tag-bar.scss に checkbox-center-alignment が適用され、issues-view / logs-view / task-history-menu の深いネストが解消されていること
  */
 describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
   const mixinsScss = fs.readFileSync(
@@ -109,6 +110,54 @@ describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
         /\.#\{\$block\}__variant-select--#\{\$variant\}::part\(display-input\)/,
       );
       expect(mixinsScss).not.toMatch(/&::part\(display-input\)/);
+    });
+  });
+
+  describe("5. SCSS-021〜023: タブビュー・タスク詳細共通 Mixin 群およびネスト平坦化", () => {
+    const issuesViewScss = fs.readFileSync(
+      new URL("../components/issues/issues-view.scss", import.meta.url),
+      "utf-8",
+    );
+    const logsViewScss = fs.readFileSync(
+      new URL("../components/logs/logs-view.scss", import.meta.url),
+      "utf-8",
+    );
+    const taskHistoryMenuScss = fs.readFileSync(
+      new URL("../components/navigation/task-history-menu.scss", import.meta.url),
+      "utf-8",
+    );
+    const taskTagBarScss = fs.readFileSync(
+      new URL("../components/task/task-tag-bar.scss", import.meta.url),
+      "utf-8",
+    );
+
+    it("仕様 9-1: mixins.scss にタスク詳細・タブビュー共通 Mixin 群が定義されていること", () => {
+      expect(mixinsScss).toMatch(/@mixin\s+task-detail-host\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+task-detail-empty\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+task-detail-label\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+task-status-icon-colors\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+task-due-icon-colors\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+pane-header-icon-btn\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+tab-view-header\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+tab-view-dialog-body\b/);
+      expect(mixinsScss).toMatch(/@mixin\s+tab-view-dialog-footer\b/);
+    });
+
+    it("仕様 9-2: task-tag-bar.scss に @include checkbox-center-alignment が適用されていること", () => {
+      expect(taskTagBarScss).toContain("@include checkbox-center-alignment;");
+    });
+
+    it("仕様 9-3: issues-view.scss / logs-view.scss / task-history-menu.scss がフラット展開され 3階層ネストを含まないこと", () => {
+      expect(issuesViewScss).not.toMatch(/&__header\s*\{/);
+      expect(issuesViewScss).not.toMatch(/&__item\s*\{/);
+      expect(logsViewScss).toMatch(
+        /\.logs-view__row:hover\s+\.logs-view__graph-node\s*\{/,
+      );
+      expect(logsViewScss).not.toMatch(
+        /&:hover\s*\{[^}]*\.logs-view__graph-node/,
+      );
+      expect(taskHistoryMenuScss).toMatch(/\.task-history-menu__trigger\s*\{/);
+      expect(taskHistoryMenuScss).not.toMatch(/&__trigger\s*\{/);
     });
   });
 });

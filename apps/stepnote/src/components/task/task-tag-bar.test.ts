@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { live } from "lit/directives/live.js";
 import { flattenTemplate } from "@shared/utils";
@@ -454,9 +455,18 @@ describe("TaskTagBar Component", () => {
 
       const scssContent = fs.readFileSync(scssPath, "utf-8");
       expect(scssContent).toContain(".task-tag-bar__checkbox");
-      expect(scssContent).toMatch(/&::part\(base\)\s*\{[^}]*align-items:\s*center/);
-      expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*display:\s*inline-flex/);
-      expect(scssContent).toMatch(/&::part\(label\)\s*\{[^}]*align-items:\s*center/);
+      expect(scssContent).toContain("@include checkbox-center-alignment;");
+
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.task-tag-bar__checkbox::part\(base\)\s*\{[^}]*align-items:\s*center/,
+      );
+      expect(compiledCss).toMatch(
+        /\.task-tag-bar__checkbox::part\(label\)\s*\{[^}]*display:\s*inline-flex/,
+      );
+      expect(compiledCss).toMatch(
+        /\.task-tag-bar__checkbox::part\(label\)\s*\{[^}]*align-items:\s*center/,
+      );
     });
 
     it("3-8. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {

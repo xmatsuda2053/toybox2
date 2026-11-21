@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
@@ -712,19 +713,24 @@ describe("IssuesView Component", () => {
     });
 
     it("6-5. issues-view.scss において .issues-view__item-due に対し、背景色を親行と同色にする --wa-form-control-background-color: transparent が設定されていること", () => {
-      expect(scssContent).toMatch(
-        /&__item-due\s*\{[^}]*--wa-form-control-background-color:\s*transparent;/,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.issues-view__item-due\s*\{[^}]*--wa-form-control-background-color:\s*transparent;/,
       );
     });
 
     it("6-6. issues-view.scss において .issues-view__row-group が定義され、display: flex; flex-direction: column; が設定されていること", () => {
-      expect(scssContent).toMatch(
-        /&__row-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.issues-view__row-group\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/,
       );
     });
 
     it("6-7. issues-view.scss において .issues-view__item--expanded に対し、背景色の変更設定（background-color）が含まれず、角丸解除（border-bottom-left-radius / right-radius: 0）のみが設定されていること", () => {
-      const expandedMatch = scssContent.match(/&--expanded\s*\{([^}]+)\}/);
+      const compiledCss = sass.compile(scssPath).css;
+      const expandedMatch = compiledCss.match(
+        /\.issues-view__item--expanded\s*\{([^}]+)\}/,
+      );
       expect(expandedMatch).not.toBeNull();
       const expandedBody = expandedMatch![1];
       expect(expandedBody).not.toMatch(/background-color/);
@@ -733,21 +739,30 @@ describe("IssuesView Component", () => {
     });
 
     it("6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること", () => {
-      expect(scssContent).toMatch(
-        /&__item-caret\s*\{[^}]*color:\s*var\(--wa-color-text-quiet\);[^}]*transition:/s,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.issues-view__item-caret\s*\{[^}]*color:\s*var\(--wa-color-text-quiet\);[^}]*transition:/s,
       );
     });
 
     it("6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること", () => {
-      expect(scssContent).toMatch(
-        /&--expanded\s*\{[^}]*\.issues-view__item-caret\s*\{[^}]*transform:\s*rotate\(90deg\);[^}]*color:\s*var\(--wa-color-text-normal\);/s,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.issues-view__item--expanded\s+\.issues-view__item-caret\s*\{[^}]*transform:\s*rotate\(90deg\);[^}]*color:\s*var\(--wa-color-text-normal\);/s,
       );
     });
 
     it("6-10. issues-view.scss において .issues-view__item-due の状態別修飾クラス（--overdue, --asap, --upcoming）が定義され、デザイントークンのカラーが指定されていること", () => {
-      expect(scssContent).toMatch(/&--overdue\s*\{[^}]*var\(--quick-access-icon-overdue\)/);
-      expect(scssContent).toMatch(/&--asap\s*\{[^}]*var\(--quick-access-icon-asap\)/);
-      expect(scssContent).toMatch(/&--upcoming\s*\{[^}]*var\(--quick-access-icon-upcoming\)/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.issues-view__item-due--overdue\s*\{[^}]*var\(--quick-access-icon-overdue\)/,
+      );
+      expect(compiledCss).toMatch(
+        /\.issues-view__item-due--asap\s*\{[^}]*var\(--quick-access-icon-asap\)/,
+      );
+      expect(compiledCss).toMatch(
+        /\.issues-view__item-due--upcoming\s*\{[^}]*var\(--quick-access-icon-upcoming\)/,
+      );
     });
   });
 

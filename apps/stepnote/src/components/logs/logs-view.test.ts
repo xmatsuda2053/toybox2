@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { LogRecord } from "@/db/models/journal.model";
@@ -598,17 +599,18 @@ describe("LogsView Component", () => {
     });
 
     it("6-12. ヘッダーツールバーに不要なパディングが設定されておらず、ルート要素に不要な overflow: hidden が設定されていないこと", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      const headerBlock = scss.match(/\.logs-view__header\s*\{([^}]+)\}/)?.[1] ?? "";
+      const compiledCss = sass.compile(scssPath).css;
+      const headerBlock =
+        compiledCss.match(/\.logs-view__header\s*\{([^}]+)\}/)?.[1] ?? "";
       expect(headerBlock).not.toContain("padding:");
 
-      const hostBlock = scss.match(/:host\s*\{([^}]+)\}/)?.[1] ?? "";
+      const hostBlock = compiledCss.match(/:host\s*\{([^}]+)\}/)?.[1] ?? "";
       expect(hostBlock).not.toContain("overflow:");
     });
 
     it("6-13. ヘッダーツールバーとリスト一覧の間に 16px のマージンが設定されていること", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.logs-view__header\s*\{[\s\S]*?margin-bottom:\s*var\(--wa-space-m,\s*16px\);/,
       );
     });
