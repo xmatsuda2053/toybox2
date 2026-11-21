@@ -1383,4 +1383,58 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect(recordSpy).toHaveBeenCalledWith(99);
     });
   });
+
+  describe("17. 一覧表示モード（viewMode='list'）のヘッダー切替・レイアウト分岐", () => {
+    it("17-1. ヘッダーの .header-actions 内に task-history-menu → view-mode-switcher → theme-switcher の順でレンダリングされること", () => {
+      const htmlStr = flattenTemplate(appRoot.render());
+      const actionsIdx = htmlStr.indexOf("header-actions");
+      const historyIdx = htmlStr.indexOf("<task-history-menu", actionsIdx);
+      const switcherIdx = htmlStr.indexOf("<view-mode-switcher", actionsIdx);
+      const themeIdx = htmlStr.indexOf("<theme-switcher", actionsIdx);
+
+      expect(actionsIdx).toBeGreaterThan(-1);
+      expect(historyIdx).toBeGreaterThan(actionsIdx);
+      expect(switcherIdx).toBeGreaterThan(historyIdx);
+      expect(themeIdx).toBeGreaterThan(switcherIdx);
+    });
+
+    it("17-2. スクラッチモードまたは設定モード有効時、ヘッダーの view-mode-switcher が disabled となること", () => {
+      appRoot.layoutUIController.setScratchMode(true);
+      const scratchHtml = flattenTemplate(appRoot.render());
+      expect(scratchHtml).toMatch(/<view-mode-switcher[^>]*disabled/);
+
+      appRoot.layoutUIController.setSettingsMode(true);
+      const settingsHtml = flattenTemplate(appRoot.render());
+      expect(settingsHtml).toMatch(/<view-mode-switcher[^>]*disabled/);
+    });
+
+    it("17-3. viewMode='list' かつ詳細未選択時、app-menu と task-table-pane のみがレンダリングされ、Navigation / TaskList / Task / Journal が非表示となること", () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain("<app-menu");
+      expect(htmlStr).toContain("<task-table-pane");
+      expect(htmlStr).not.toContain("<navigation-quick-access");
+      expect(htmlStr).not.toContain("<navigation-labels");
+      expect(htmlStr).not.toContain("<task-list");
+      expect(htmlStr).not.toContain("<task-pane");
+      expect(htmlStr).not.toContain("<journal-pane");
+    });
+
+    it("17-4. viewMode='list' かつ詳細表示中（isListDetailOpen=true）時、app-menu / task-pane / journal-pane がレンダリングされ、Navigation / TaskList / task-table-pane が非表示となること", () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+      appRoot.layoutUIController.openListTaskDetail();
+
+      const htmlStr = flattenTemplate(appRoot.render());
+      expect(htmlStr).toContain("<app-menu");
+      expect(htmlStr).toContain("<task-pane");
+      expect(htmlStr).toContain("<journal-pane");
+      expect(htmlStr).not.toContain("<navigation-quick-access");
+      expect(htmlStr).not.toContain("<navigation-labels");
+      expect(htmlStr).not.toContain("<task-list");
+      expect(htmlStr).not.toContain("<task-table-pane");
+    });
+  });
 });

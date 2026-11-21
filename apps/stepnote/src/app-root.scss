@@ -230,9 +230,10 @@
   }
 }
 
-/* 6. Scratch (全画面Scratchペイン): Menuペイン以外の全幅を占有 */
+/* 6. Scratch / Settings / TaskTable (全画面ペイン): Menuペイン以外の全幅を占有 */
 .pane-scratch,
-.pane-settings {
+.pane-settings,
+.pane-task-table {
   flex: 1 1 0%;
   min-width: 0;
   height: 100%;

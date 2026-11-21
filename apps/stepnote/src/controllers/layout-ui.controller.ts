@@ -1,6 +1,20 @@
 import type { ReactiveControllerHost } from "lit";
-import type { LayoutState } from "@/types/view/ui.types";
+import type { AppViewMode, LayoutState } from "@/types/view/ui.types";
 import { BaseReactiveController } from "./base-reactive.controller";
+
+/** 表示モード永続化用ストレージ互換インターフェース */
+export interface LayoutUIStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/** LayoutUIController の初期化オプション */
+export interface LayoutUIControllerOptions {
+  storage?: LayoutUIStorage;
+  storageKey?: string;
+}
+
+const DEFAULT_VIEW_MODE_STORAGE_KEY = "stepnote_view_mode";
 
 /**
  * 画面レイアウトの初期状態（ホーム状態）
@@ -13,6 +27,8 @@ const INITIAL_LAYOUT_STATE: LayoutState = {
   isZenMode: false,
   isScratchMode: false,
   isSettingsMode: false,
+  viewMode: "standard",
+  isListDetailOpen: false,
 };
 
 /**
@@ -30,6 +46,8 @@ export class LayoutUIController extends BaseReactiveController<void> {
    * @memberof LayoutUIController
    */
   private _state: LayoutState = { ...INITIAL_LAYOUT_STATE };
+  private readonly _storage?: LayoutUIStorage;
+  private readonly _storageKey: string;
 
   /**
    * 画面開閉の状態（読み取り専用）
@@ -45,10 +63,31 @@ export class LayoutUIController extends BaseReactiveController<void> {
   /**
    * Creates an instance of LayoutUIController.
    * @param {ReactiveControllerHost} host
+   * @param {LayoutUIControllerOptions} [options]
    * @memberof LayoutUIController
    */
-  constructor(host: ReactiveControllerHost) {
+  constructor(
+    host: ReactiveControllerHost,
+    options?: LayoutUIControllerOptions,
+  ) {
     super(host);
+    this._storageKey = options?.storageKey ?? DEFAULT_VIEW_MODE_STORAGE_KEY;
+    this._storage =
+      options?.storage ??
+      (typeof window !== "undefined" ? window.localStorage : undefined);
+    this._state = {
+      ...INITIAL_LAYOUT_STATE,
+      viewMode: this.loadInitialViewMode(),
+    };
+  }
+
+  private loadInitialViewMode(): AppViewMode {
+    const saved = this._storage?.getItem(this._storageKey);
+    return saved === "list" ? "list" : "standard";
+  }
+
+  private persistViewMode(mode: AppViewMode): void {
+    this._storage?.setItem(this._storageKey, mode);
   }
 
   /**
@@ -63,6 +102,15 @@ export class LayoutUIController extends BaseReactiveController<void> {
     isJournalAreaOpen?: boolean;
   }): void {
     if (this._state.isScratchMode || this._state.isSettingsMode) return;
+    if (this._state.viewMode === "list") {
+      if (updates.isNavigationListAreaOpen !== undefined) return;
+      if (
+        updates.isJournalAreaOpen !== undefined &&
+        !this._state.isListDetailOpen
+      ) {
+        return;
+      }
+    }
 
     const nextNav =
       updates.isNavigationListAreaOpen ?? this._state.isNavigationListAreaOpen;
@@ -96,24 +144,73 @@ export class LayoutUIController extends BaseReactiveController<void> {
       isNavigationListAreaOpen: !isAnyFullScreen,
       isJournalAreaOpen: !isAnyFullScreen,
       isZenMode: false,
+      isListDetailOpen: false,
     };
     this.notify();
   }
 
   /**
-   * 画面全体のレイアウト状態を初期状態（ホーム状態）に一括リセットする。
-   * スクラッチモード・設定モード・集中モードをすべて解除し、全ペインを展開状態に戻す。
+   * 画面全体のレイアウト状態を現在の表示モードにおける初期状態（ホーム状態）に一括リセットする。
+   * 表示モード（viewMode）は維持しつつ、スクラッチ・設定・集中モード・一覧詳細状態を解除する。
    *
    * @return {*} {void}
    * @memberof LayoutUIController
    */
   public resetToHome = (): void => {
+    const targetState: LayoutState = {
+      ...INITIAL_LAYOUT_STATE,
+      viewMode: this._state.viewMode,
+    };
     const isAlreadyHome = (
-      Object.keys(INITIAL_LAYOUT_STATE) as Array<keyof LayoutState>
-    ).every((key) => this._state[key] === INITIAL_LAYOUT_STATE[key]);
+      Object.keys(targetState) as Array<keyof LayoutState>
+    ).every((key) => this._state[key] === targetState[key]);
     if (isAlreadyHome) return;
 
-    this._state = { ...INITIAL_LAYOUT_STATE };
+    this._state = targetState;
+    this.notify();
+  };
+
+  /**
+   * 表示モード（標準モード / 一覧モード）を設定し、ストレージへ永続化する。
+   */
+  public setViewMode = (mode: AppViewMode): void => {
+    if (this._state.isScratchMode || this._state.isSettingsMode) return;
+    if (this._state.viewMode === mode && !this._state.isListDetailOpen) return;
+
+    this.persistViewMode(mode);
+    this._state = {
+      ...this._state,
+      viewMode: mode,
+      isListDetailOpen: false,
+      isZenMode: mode === "list" ? false : this._state.isZenMode,
+    };
+    this.notify();
+  };
+
+  /**
+   * 一覧モード内でタスク詳細ビュー（Menu + Task + Journal）を開く。
+   */
+  public openListTaskDetail = (): void => {
+    if (this._state.isScratchMode || this._state.isSettingsMode) return;
+    if (this._state.viewMode !== "list" || this._state.isListDetailOpen) return;
+
+    this._state = {
+      ...this._state,
+      isListDetailOpen: true,
+    };
+    this.notify();
+  };
+
+  /**
+   * 一覧モード内でタスク詳細ビューを閉じ、一覧表ビューへ戻る。
+   */
+  public closeListTaskDetail = (): void => {
+    if (!this._state.isListDetailOpen) return;
+
+    this._state = {
+      ...this._state,
+      isListDetailOpen: false,
+    };
     this.notify();
   };
 
@@ -188,6 +285,7 @@ export class LayoutUIController extends BaseReactiveController<void> {
    */
   public setZenMode = (enabled: boolean): void => {
     if (
+      this._state.viewMode === "list" ||
       this._state.isScratchMode ||
       this._state.isSettingsMode ||
       this._state.isZenMode === enabled

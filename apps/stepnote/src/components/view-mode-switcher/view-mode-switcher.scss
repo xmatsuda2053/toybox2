@@ -1,0 +1,21 @@
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  @include theme-transition;
+}
+
+.view-mode-switcher {
+  display: inline-flex;
+  align-items: center;
+}
+
+.view-mode-switcher__btn {
+  @include flex-center;
+  @include theme-transition;
+}
+
+.view-mode-switcher__btn--active {
+  font-weight: var(--wa-font-weight-semibold, 600);
+}

@@ -17,6 +17,7 @@ import type { TaskTemplateController } from "@/controllers/task-template.control
 import type { AutoExportController } from "@/controllers/auto-export.controller.js";
 import type { TaskHistoryController } from "@/controllers/task-history.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
+import "@/components/view-mode-switcher/view-mode-switcher.js";
 import "@/components/navigation/task-history-menu.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
