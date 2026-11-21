@@ -37,9 +37,7 @@ const VALID_SORT_KEYS: ReadonlySet<TaskTableSortKey> = new Set([
 /**
  * 関係者一覧から「先頭氏名 +残件数」形式の表示文字列を整形する。
  */
-export function formatContactsSummary(
-  contacts?: readonly Contact[],
-): string {
+export function formatContactsSummary(contacts?: readonly Contact[]): string {
   if (!contacts || contacts.length === 0) {
     return "-";
   }
@@ -197,16 +195,25 @@ function matchesTableRowFilter(
   filter: TaskTableFilterState,
   matchedKeywordTaskIds?: ReadonlySet<number>,
 ): boolean {
-  if (filter.fiscalYear !== "all" && row.task.fiscalYear !== filter.fiscalYear) {
+  if (
+    filter.fiscalYear !== "all" &&
+    row.task.fiscalYear !== filter.fiscalYear
+  ) {
     return false;
   }
-  if (filter.statusCode !== "all" && row.task.statusCode !== filter.statusCode) {
+  if (
+    filter.statusCode !== "all" &&
+    row.task.statusCode !== filter.statusCode
+  ) {
     return false;
   }
   if (!matchesLabelCondition(row.task.labelId, filter.labelId)) {
     return false;
   }
-  if (filter.tagId !== "all" && !(row.task.tagIds ?? []).includes(filter.tagId)) {
+  if (
+    filter.tagId !== "all" &&
+    !(row.task.tagIds ?? []).includes(filter.tagId)
+  ) {
     return false;
   }
   if (!matchesDueCondition(row, filter.dueFilter)) {
@@ -298,11 +305,18 @@ export function normalizeTaskTableSortState(raw: unknown): TaskTableSortState {
 
 /**
  * ストレージ保存値から安全な会計年度フィルタ値へ正規化する。
+ * 未設定または不正値の場合は標準モード準拠で当年度（getCurrentFiscalYear()）を返す。
  */
-export function normalizeTaskTableFiscalYear(raw: unknown): number | "all" {
-  if (typeof raw !== "string" || !raw || raw === "all") {
+export function normalizeTaskTableFiscalYear(
+  raw: unknown,
+  defaultFiscalYear: number | "all" = getCurrentFiscalYear(),
+): number | "all" {
+  if (raw === "all") {
     return "all";
   }
+  if (typeof raw !== "string" || !raw) {
+    return defaultFiscalYear;
+  }
   const num = Number(raw);
-  return Number.isInteger(num) && num > 0 ? num : "all";
+  return Number.isInteger(num) && num > 0 ? num : defaultFiscalYear;
 }
