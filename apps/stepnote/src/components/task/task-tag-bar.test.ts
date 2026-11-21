@@ -111,7 +111,9 @@ describe("TaskTagBar Component", () => {
       }),
       findByName: vi.fn((name: string) =>
         sampleTags.find(
-          (t) => t.name.toLowerCase() === name.trim().replace(/^#+/, "").toLowerCase(),
+          (t) =>
+            t.name.toLowerCase() ===
+            name.trim().replace(/^#+/, "").toLowerCase(),
         ),
       ),
       subscribe: vi.fn().mockReturnValue(vi.fn()),
@@ -119,7 +121,9 @@ describe("TaskTagBar Component", () => {
 
     mockTagSetsController = {
       state: [...sampleTagSets],
-      getTagSetById: vi.fn((id: number) => sampleTagSets.find((s) => s.id === id)),
+      getTagSetById: vi.fn((id: number) =>
+        sampleTagSets.find((s) => s.id === id),
+      ),
       subscribe: vi.fn().mockReturnValue(vi.fn()),
     };
 
@@ -355,7 +359,10 @@ describe("TaskTagBar Component", () => {
         ) {
           return [];
         }
-        const tpl = node as { strings: readonly string[]; values?: readonly unknown[] };
+        const tpl = node as {
+          strings: readonly string[];
+          values?: readonly unknown[];
+        };
         const results: Array<{ bindingPrefix: string; value: unknown }> = [];
         tpl.strings.forEach((str, idx) => {
           const val = tpl.values?.[idx];
@@ -389,7 +396,9 @@ describe("TaskTagBar Component", () => {
 
   describe("3. BEM設計およびSCSSスタイルの検証", () => {
     const scssPath = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")),
+      path.dirname(
+        new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
+      ),
       "task-tag-bar.scss",
     );
 
@@ -403,7 +412,9 @@ describe("TaskTagBar Component", () => {
 
     it("3-2. テーマ切替トランジションが定義されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/var\(--stepnote-transition-theme\)|@include\s+theme-transition/);
+      expect(content).toMatch(
+        /var\(--stepnote-transition-theme\)|@include\s+theme-transition/,
+      );
     });
 
     it("3-3. !important および @extend が一切含まれていないこと", () => {
@@ -414,15 +425,22 @@ describe("TaskTagBar Component", () => {
 
     it("3-4. ハードコードされたカラーコード（Hex / RGB / HSL）が 0 件であること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
-      const matches = content.match(/(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\))/g);
+      const matches = content.match(
+        /(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\))/g,
+      );
       expect(matches).toBeNull();
     });
 
     it("3-5. カラー選択セレクトおよび選択肢にタグカラーと一致する文字色スタイル（tag-variant-select-styles）が適用されていること", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toContain('@include tag-variant-select-styles("task-tag-bar")');
+      expect(scssContent).toContain(
+        '@include tag-variant-select-styles("task-tag-bar")',
+      );
 
-      const mixinsPath = path.resolve(path.dirname(scssPath), "../../styles/mixins.scss");
+      const mixinsPath = path.resolve(
+        path.dirname(scssPath),
+        "../../styles/mixins.scss",
+      );
       const mixinsContent = fs.readFileSync(mixinsPath, "utf-8");
       expect(mixinsContent).toContain("@mixin tag-variant-select-styles");
       for (const variant of [
@@ -443,10 +461,18 @@ describe("TaskTagBar Component", () => {
 
     it("3-6. タグ追加ポップオーバーおよび新規作成欄（__popover-body / __create-section / __create-row）に十分な余白が確保されていること", () => {
       const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toMatch(/\.task-tag-bar__popover-body\s*\{[^}]*gap:\s*var\(--wa-space-s/);
-      expect(scssContent).toMatch(/\.task-tag-bar__create-section\s*\{[^}]*gap:\s*var\(--wa-space-s/);
-      expect(scssContent).toMatch(/\.task-tag-bar__create-section\s*\{[^}]*padding-top:\s*var\(--wa-space-s/);
-      expect(scssContent).toMatch(/\.task-tag-bar__create-row\s*\{[^}]*gap:\s*var\(--wa-space-s/);
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__popover-body\s*\{[^}]*gap:\s*var\(--wa-space-s/,
+      );
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__create-section\s*\{[^}]*gap:\s*var\(--wa-space-s/,
+      );
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__create-section\s*\{[^}]*padding-top:\s*var\(--wa-space-s/,
+      );
+      expect(scssContent).toMatch(
+        /\.task-tag-bar__create-row\s*\{[^}]*gap:\s*var\(--wa-space-s/,
+      );
     });
 
     it("3-7. チェックリストの wa-checkbox（.task-tag-bar__checkbox）でチェックボックスとタグが縦方向中央揃えになっていること", () => {

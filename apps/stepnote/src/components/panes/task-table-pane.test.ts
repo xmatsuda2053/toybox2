@@ -70,8 +70,18 @@ describe("TaskTablePane Component", () => {
   let pane: TaskTablePane;
   let mockController: {
     rows: TaskTableRowViewModel[];
-    labels: Array<{ id: number; name: string; description: string; isSelected: boolean }>;
-    tags: Array<{ id: number; name: string; description: string; variant: string }>;
+    labels: Array<{
+      id: number;
+      name: string;
+      description: string;
+      isSelected: boolean;
+    }>;
+    tags: Array<{
+      id: number;
+      name: string;
+      description: string;
+      variant: string;
+    }>;
     availableFiscalYears: number[];
     filter: {
       fiscalYear: number | "all";
@@ -81,7 +91,10 @@ describe("TaskTablePane Component", () => {
       tagId: number | "all";
       dueFilter: "all" | "overdue" | "asap" | "upcoming";
     };
-    sort: { key: "id" | "status" | "label" | "name" | "dueDate" | "issues"; direction: "asc" | "desc" };
+    sort: {
+      key: "id" | "status" | "label" | "name" | "dueDate" | "issues";
+      direction: "asc" | "desc";
+    };
     selectedIds: Set<number>;
     selectedCount: number;
     isAllFilteredSelected: boolean;
@@ -99,6 +112,10 @@ describe("TaskTablePane Component", () => {
     toggleSelectAllFiltered: ReturnType<typeof vi.fn>;
     clearSelection: ReturnType<typeof vi.fn>;
     toggleBookmark: ReturnType<typeof vi.fn>;
+    updateTaskStatus: ReturnType<typeof vi.fn>;
+    updateTaskLabel: ReturnType<typeof vi.fn>;
+    updateTaskDueDate: ReturnType<typeof vi.fn>;
+    updateTaskTags: ReturnType<typeof vi.fn>;
     subscribe: ReturnType<typeof vi.fn>;
   };
 
@@ -134,12 +151,15 @@ describe("TaskTablePane Component", () => {
       toggleSelectAllFiltered: vi.fn(),
       clearSelection: vi.fn(),
       toggleBookmark: vi.fn().mockResolvedValue(undefined),
+      updateTaskStatus: vi.fn().mockResolvedValue(undefined),
+      updateTaskLabel: vi.fn().mockResolvedValue(undefined),
+      updateTaskDueDate: vi.fn().mockResolvedValue(undefined),
+      updateTaskTags: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn().mockReturnValue(vi.fn()),
     };
 
     pane = new TaskTablePane();
-    pane.taskTableController =
-      mockController as unknown as TaskTableController;
+    pane.taskTableController = mockController as unknown as TaskTableController;
   });
 
   describe("1. 上部ツールバー（新規作成ボタン・フィルタバー）", () => {
@@ -173,7 +193,9 @@ describe("TaskTablePane Component", () => {
       expect(mockController.setStatusFilter).toHaveBeenCalledWith(5);
 
       pane.handleLabelChange("uncategorized");
-      expect(mockController.setLabelFilter).toHaveBeenCalledWith("uncategorized");
+      expect(mockController.setLabelFilter).toHaveBeenCalledWith(
+        "uncategorized",
+      );
 
       pane.handleTagChange("10");
       expect(mockController.setTagFilter).toHaveBeenCalledWith(10);
@@ -234,7 +256,7 @@ describe("TaskTablePane Component", () => {
   });
 
   describe("4. テーブル行セル描画・インタラクション・空状態", () => {
-    it("4-1. 行に必要な情報（ID, 状態, ラベル, ブックマーク, タスク名, 期限日, 関係者, タグ+N, Issue進捗2/5）が描画されること", () => {
+    it("4-1. 行に必要な情報（ID, 状態, ラベル, ブックマーク, タスク名, 期限日, 関係者, タグバー, Issue進捗2/5）が描画されること", () => {
       const htmlStr = flattenTemplate(pane.render());
       expect(htmlStr).toContain("#101");
       expect(htmlStr).toContain("対応中");
@@ -242,8 +264,7 @@ describe("TaskTablePane Component", () => {
       expect(htmlStr).toContain("一覧表示モードの設計");
       expect(htmlStr).toContain("2026-06-15");
       expect(htmlStr).toContain("山田 太郎 +1");
-      expect(htmlStr).toContain("重要");
-      expect(htmlStr).toContain("+1");
+      expect(htmlStr).toContain("<task-tag-bar");
       expect(htmlStr).toContain("2/5");
       expect(htmlStr).toContain("fire-solid-full");
     });
@@ -279,7 +300,9 @@ describe("TaskTablePane Component", () => {
 
   describe("5. SCSS 品質規約検証", () => {
     const scssPath = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, "$1")),
+      path.dirname(
+        new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, "$1"),
+      ),
       "task-table-pane.scss",
     );
 
@@ -293,6 +316,58 @@ describe("TaskTablePane Component", () => {
 
       const compiled = sass.compile(scssPath).css;
       expect(compiled.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("6. インライン更新 UI・ハンドラー仕様", () => {
+    it("6-1. 状態ドロップダウンが描画され、未完了 Issue がある行のみ「完了 (9)」が disabled となること", () => {
+      const incompleteHtml = flattenTemplate(pane.render());
+      expect(incompleteHtml).toContain("task-table-pane__status-dropdown");
+      expect(incompleteHtml).toMatch(
+        /<wa-dropdown-item[^>]*value="?9"?[^>]*disabled/,
+      );
+
+      mockController.rows = [createMockRow({ issuesDone: 5, issuesTotal: 5 })];
+      const completeHtml = flattenTemplate(pane.render());
+      expect(completeHtml).not.toMatch(
+        /<wa-dropdown-item[^>]*value="?9"?[^>]*disabled/,
+      );
+    });
+
+    it("6-2. ラベルドロップダウンおよび datepicker-input・task-tag-bar がセルに描画されること", () => {
+      const htmlStr = flattenTemplate(pane.render());
+      expect(htmlStr).toContain("task-table-pane__label-dropdown");
+      expect(htmlStr).toContain("<datepicker-input");
+      expect(htmlStr).toContain("<task-tag-bar");
+      expect(htmlStr).toContain(".targetTaskId=101");
+    });
+
+    it("6-3. 各セル更新ハンドラーが taskTableController の対応更新メソッドを呼び出すこと", async () => {
+      const p = pane as unknown as {
+        handleRowStatusUpdate: (id: number, code: 0 | 5 | 9) => Promise<void>;
+        handleRowLabelUpdate: (id: number, labelId: number) => Promise<void>;
+        handleRowDueDateUpdate: (
+          id: number,
+          date: Date | null,
+        ) => Promise<void>;
+        handleRowTagsUpdate: (id: number, tagIds: number[]) => Promise<void>;
+      };
+      const nextDate = new Date("2026-07-01T00:00:00.000Z");
+
+      await p.handleRowStatusUpdate(101, 5);
+      expect(mockController.updateTaskStatus).toHaveBeenCalledWith(101, 5);
+
+      await p.handleRowLabelUpdate(101, 1);
+      expect(mockController.updateTaskLabel).toHaveBeenCalledWith(101, 1);
+
+      await p.handleRowDueDateUpdate(101, nextDate);
+      expect(mockController.updateTaskDueDate).toHaveBeenCalledWith(
+        101,
+        nextDate,
+      );
+
+      await p.handleRowTagsUpdate(101, [10, 20]);
+      expect(mockController.updateTaskTags).toHaveBeenCalledWith(101, [10, 20]);
     });
   });
 });
