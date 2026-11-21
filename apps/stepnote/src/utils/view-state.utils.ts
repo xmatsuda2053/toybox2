@@ -227,3 +227,22 @@ export function extractSearchQuery(
   }
   return eventOrQuery.detail?.keyword ?? "";
 }
+
+/**
+ * ペイン配下の notes-view を取得し、接続完了を待機した上で指定 ID のノートを選択表示する。
+ */
+export async function selectNotesViewItem(
+  renderRoot: Pick<ParentNode, "querySelector"> | null | undefined,
+  noteId: number,
+): Promise<void> {
+  const notesView = renderRoot?.querySelector("notes-view") as
+    | (HTMLElement & {
+        handleSelectNote?: (id: number) => void;
+        updateComplete?: Promise<unknown>;
+      })
+    | null;
+  if (notesView?.isConnected) {
+    await notesView.updateComplete;
+  }
+  notesView?.handleSelectNote?.(noteId);
+}

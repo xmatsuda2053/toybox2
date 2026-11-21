@@ -178,6 +178,26 @@ export abstract class BaseDataController<
 }
 
 /**
+ * getAllSorted() を持つリポジトリからソート済みマスタ一覧を読み込む基底コントローラー
+ */
+export abstract class BaseSortedDataController<
+  TRepository extends { getAllSorted(): Promise<readonly TItem[]> },
+  TItem,
+> extends BaseDataController<TRepository, readonly TItem[]> {
+  constructor(host: ReactiveControllerHost, repository: TRepository) {
+    super(host, repository, []);
+  }
+
+  /**
+   * 登録済みレコード全件をソート済みで取得し、変更を全購読者へ通知する。
+   */
+  protected async loadState(): Promise<void> {
+    this._state = [...(await this.repository.getAllSorted())];
+    this.notify();
+  }
+}
+
+/**
  * 単一タスク（taskId）のスコープを持つコントローラーの基底クラス
  *
  * @export

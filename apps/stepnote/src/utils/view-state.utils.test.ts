@@ -5,6 +5,7 @@ import {
   DeleteDialogState,
   resetModesToPreview,
   extractSearchQuery,
+  selectNotesViewItem,
 } from "./view-state.utils.js";
 import type { MarkdownDisplayMode, SearchInputEventDetail } from "@shared/components";
 
@@ -258,6 +259,32 @@ describe("view-state.utils", () => {
         "search-input",
       );
       expect(extractSearchQuery(eventWithoutDetail)).toBe("");
+    });
+  });
+
+  describe("selectNotesViewItem", () => {
+    it("配下の notes-view を検索し、接続中なら updateComplete 待機後に handleSelectNote を呼び出すこと", async () => {
+      const handleSelectNote = vi.fn();
+      const updateComplete = Promise.resolve(true);
+      const mockRoot = {
+        querySelector: vi.fn().mockReturnValue({
+          isConnected: true,
+          updateComplete,
+          handleSelectNote,
+        }),
+      };
+
+      await selectNotesViewItem(mockRoot, 42);
+
+      expect(mockRoot.querySelector).toHaveBeenCalledWith("notes-view");
+      expect(handleSelectNote).toHaveBeenCalledWith(42);
+    });
+
+    it("notes-view が存在しない場合や renderRoot が null の場合はエラーなく完了すること", async () => {
+      await expect(selectNotesViewItem(null, 1)).resolves.toBeUndefined();
+      await expect(
+        selectNotesViewItem({ querySelector: () => null }, 1),
+      ).resolves.toBeUndefined();
     });
   });
 });
