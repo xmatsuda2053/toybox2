@@ -1,4 +1,8 @@
-import { extractMarkdownTitle, isBlank } from "@shared/utils";
+import {
+  extractMarkdownTitle,
+  isBlank,
+  normalizeAllowedNumber,
+} from "@shared/utils";
 import type {
   DexieExportJsonStructure,
   DexieTableData,
@@ -32,7 +36,9 @@ function validateLegacySnDbData(data: unknown): DexieExportJsonStructure {
 
   const candidate = data as Partial<DexieExportJsonStructure>;
   if (!candidate.data || typeof candidate.data !== "object") {
-    throw new Error("無効なバックアップデータです: data プロパティが存在しません");
+    throw new Error(
+      "無効なバックアップデータです: data プロパティが存在しません",
+    );
   }
 
   if (candidate.data.databaseName !== "SnDB") {
@@ -85,6 +91,7 @@ function migrateTasks(rows: Record<string, unknown>[]): {
 
   const migratedRows = rows.map((row) => {
     const copy = { ...row };
+    copy.statusCode = normalizeAllowedNumber(row.statusCode, [0, 5, 9], 0);
     copy.bookmark = Boolean(row.bookmark);
     copy.selected = Boolean(row.selected);
     if (typeof row.description === "string") {
@@ -112,7 +119,9 @@ function migrateTasks(rows: Record<string, unknown>[]): {
 /**
  * logs テーブルレコードを新仕様へ変換する。
  */
-function migrateLogs(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+function migrateLogs(
+  rows: Record<string, unknown>[],
+): Record<string, unknown>[] {
   return rows.map((row) => {
     const rawVal = typeof row.value === "string" ? row.value : "";
     const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
@@ -154,11 +163,14 @@ function migrateNotes(rows: Record<string, unknown>[]): {
 /**
  * labels テーブルレコードを新仕様へ変換する。
  */
-function migrateLabels(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+function migrateLabels(
+  rows: Record<string, unknown>[],
+): Record<string, unknown>[] {
   return rows.map((row) => {
     const copy = { ...row };
     copy.isSelected = Boolean(row.isSelected);
-    copy.description = typeof row.description === "string" ? row.description : "";
+    copy.description =
+      typeof row.description === "string" ? row.description : "";
     delete copy.fiscalYear;
     delete copy.createdAt;
     delete copy.updatedAt;
@@ -169,7 +181,9 @@ function migrateLabels(rows: Record<string, unknown>[]): Record<string, unknown>
 /**
  * quickAccess テーブルレコードを新仕様へ変換する。
  */
-function migrateQuickAccess(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+function migrateQuickAccess(
+  rows: Record<string, unknown>[],
+): Record<string, unknown>[] {
   const flagKeys = [
     "isBookmarkSelected",
     "isUncategorizedSelected",
@@ -193,14 +207,19 @@ function migrateQuickAccess(rows: Record<string, unknown>[]): Record<string, unk
 /**
  * scratches テーブルレコードを新仕様へ変換する。
  */
-function migrateScratches(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+function migrateScratches(
+  rows: Record<string, unknown>[],
+): Record<string, unknown>[] {
   return rows.map((row) => {
     const copy = { ...row };
     const rawVal = typeof row.value === "string" ? row.value : "";
     const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     copy.value = convertedVal;
     const rawTitle = typeof row.title === "string" ? row.title.trim() : "";
-    copy.title = rawTitle !== "" ? rawTitle : extractMarkdownTitle(convertedVal, "(無題のメモ)");
+    copy.title =
+      rawTitle !== ""
+        ? rawTitle
+        : extractMarkdownTitle(convertedVal, "(無題のメモ)");
     delete copy.selected;
     delete copy.pin;
     return copy;
@@ -331,9 +350,8 @@ export function convertSnDbToStepNote(legacyData: unknown): MigrationResult {
     extractSourceRows(src, "tasks"),
   );
 
-  const { rows: migratedNotes, filteredCount: filteredNotesCount } = migrateNotes(
-    extractSourceRows(src, "notes"),
-  );
+  const { rows: migratedNotes, filteredCount: filteredNotesCount } =
+    migrateNotes(extractSourceRows(src, "notes"));
 
   const tables = {
     tasks: migratedTasks,
@@ -344,5 +362,9 @@ export function convertSnDbToStepNote(legacyData: unknown): MigrationResult {
     scratches: migrateScratches(extractSourceRows(src, "notebooks")),
   };
 
-  return buildMigrationResult(tables, filteredNotesCount, filteredContactsCount);
+  return buildMigrationResult(
+    tables,
+    filteredNotesCount,
+    filteredContactsCount,
+  );
 }

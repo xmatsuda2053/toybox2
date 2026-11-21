@@ -26,6 +26,7 @@ import { exportDB, importInto } from "dexie-export-import";
  *
  * 3. データベースインポート仕様 (importDatabase):
  *    - 3-1. dexie-export-import の importInto が適切なオプション（overwriteValues, clearTablesBeforeImport）で呼び出されること
+ *    - 3-2. インポート完了後に tasks / issues テーブル内の文字列型 statusCode（"0" 等）が数値型へ正規化されること
  */
 describe("DatabaseBackupService", () => {
   let db: Dexie;
@@ -88,6 +89,45 @@ describe("DatabaseBackupService", () => {
           clearTablesBeforeImport: true,
         }),
       );
+    });
+
+    it("3-2. インポート完了後に tasks と issues の文字列型 statusCode が数値型へ正規化されること", async () => {
+      const importDb = new Dexie("BackupImportStatusNormalizeTestDB");
+      importDb.version(1).stores({
+        tasks: "++id, statusCode",
+        issues: "++id, taskId",
+      });
+      await importDb.open();
+
+      const mockFile = new File(['{"test": 1}'], "backup.json", {
+        type: "application/json",
+      });
+      vi.mocked(importInto).mockImplementation(async (targetDb) => {
+        await targetDb
+          .table("tasks")
+          .add({ id: 1, statusCode: "0", name: "t1" });
+        await targetDb
+          .table("tasks")
+          .add({ id: 2, statusCode: "5", name: "t2" });
+        await targetDb
+          .table("issues")
+          .add({ id: 10, taskId: 1, statusCode: "9" });
+      });
+
+      await service.importDatabase(importDb, mockFile);
+
+      const t1 = await importDb.table("tasks").get(1);
+      const t2 = await importDb.table("tasks").get(2);
+      const i1 = await importDb.table("issues").get(10);
+      expect(t1?.statusCode).toBe(0);
+      expect(typeof t1?.statusCode).toBe("number");
+      expect(t2?.statusCode).toBe(5);
+      expect(typeof t2?.statusCode).toBe("number");
+      expect(i1?.statusCode).toBe(9);
+      expect(typeof i1?.statusCode).toBe("number");
+
+      importDb.close();
+      await Dexie.delete("BackupImportStatusNormalizeTestDB");
     });
   });
 });

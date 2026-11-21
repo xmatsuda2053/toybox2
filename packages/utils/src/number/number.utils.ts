@@ -33,3 +33,31 @@ export function clamp(val: number, min: number, max: number): number {
   }
   return Math.min(Math.max(val, min), max);
 }
+
+/**
+ * 未知の値を数値へ変換し、許可された候補値のいずれかに一致する場合はその値を、
+ * 不正または候補外の場合はフォールバック値を返す。
+ *
+ * @export
+ * @template T
+ * @param {unknown} value - 変換対象の値
+ * @param {readonly T[]} allowedValues - 許可する数値候補の配列
+ * @param {T} fallback - 候補外・不正値時のフォールバック値
+ * @return {T} 正規化された数値
+ */
+export function normalizeAllowedNumber<T extends number>(
+  value: unknown,
+  allowedValues: readonly T[],
+  fallback: T,
+): T {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return allowedValues.includes(value as T) ? (value as T) : fallback;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && allowedValues.includes(parsed as T)) {
+      return parsed as T;
+    }
+  }
+  return fallback;
+}

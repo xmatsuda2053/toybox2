@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { convertSnDbToStepNote, convertCopySyntaxToMarkdownLink, isContactEmpty } from "./migration.utils";
+import {
+  convertSnDbToStepNote,
+  convertCopySyntaxToMarkdownLink,
+  isContactEmpty,
+} from "./migration.utils";
 import type { DexieExportJsonStructure } from "../types/migration.types";
 
 /**
@@ -356,7 +360,9 @@ describe("convertSnDbToStepNote", () => {
 
     it("2-5. contacts 配列内の全項目（div, name, tel）が空または空白のみのレコードが除外されること", () => {
       const input = createMockLegacySnDbJson();
-      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      const taskTableData = input.data.data.find(
+        (t) => t.tableName === "tasks",
+      )!;
       taskTableData.rows[1].contacts = [
         { div: "", name: "", tel: "" },
         { div: "   ", name: "", tel: "  " },
@@ -370,7 +376,9 @@ describe("convertSnDbToStepNote", () => {
 
     it("2-6. contacts 配列内に有効な情報（1項目以上入力あり）を持つレコードが維持されること", () => {
       const input = createMockLegacySnDbJson();
-      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      const taskTableData = input.data.data.find(
+        (t) => t.tableName === "tasks",
+      )!;
       taskTableData.rows[1].contacts = [
         { div: "", name: "佐藤", tel: "" },
         { div: "", name: "", tel: "" },
@@ -386,7 +394,9 @@ describe("convertSnDbToStepNote", () => {
 
     it("2-7. contacts が未定義または非配列の場合、空配列 [] に正規化されること", () => {
       const input = createMockLegacySnDbJson();
-      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      const taskTableData = input.data.data.find(
+        (t) => t.tableName === "tasks",
+      )!;
       delete taskTableData.rows[1].contacts;
       const { migratedData } = convertSnDbToStepNote(input);
       const taskTable = migratedData.data.data.find(
@@ -397,16 +407,44 @@ describe("convertSnDbToStepNote", () => {
 
     it("2-8. 除外された空関係者の件数が summary.contactsFilteredCount に正確に集計されること", () => {
       const input = createMockLegacySnDbJson();
-      const taskTableData = input.data.data.find((t) => t.tableName === "tasks")!;
+      const taskTableData = input.data.data.find(
+        (t) => t.tableName === "tasks",
+      )!;
       taskTableData.rows[0].contacts = [
         { div: "開発部", name: "山田", tel: "1234" },
         { div: "", name: "", tel: "" },
       ];
-      taskTableData.rows[1].contacts = [
-        { div: " ", name: "", tel: " " },
-      ];
+      taskTableData.rows[1].contacts = [{ div: " ", name: "", tel: " " }];
       const { summary } = convertSnDbToStepNote(input);
       expect(summary.contactsFilteredCount).toBe(2);
+    });
+
+    it('2-9. statusCode が文字列（"0", "5" 等）の場合に数値（0, 5）へ変換され、不正値は 0 へフォールバックされること', () => {
+      const input = createMockLegacySnDbJson();
+      const taskTableData = input.data.data.find(
+        (t) => t.tableName === "tasks",
+      )!;
+      taskTableData.rows.push({
+        id: 12,
+        statusCode: "invalid",
+        name: "タスク3",
+        dueDate: "2026-11-20T00:00:00.000Z",
+        contacts: [],
+        fiscalYear: 2026,
+        labelId: 1,
+        bookmark: 0,
+        selected: 0,
+      });
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const taskTable = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+      expect(taskTable?.rows[0].statusCode).toBe(5);
+      expect(typeof taskTable?.rows[0].statusCode).toBe("number");
+      expect(taskTable?.rows[1].statusCode).toBe(0);
+      expect(typeof taskTable?.rows[1].statusCode).toBe("number");
+      expect(taskTable?.rows[2].statusCode).toBe(0);
     });
   });
 
@@ -423,7 +461,9 @@ describe("convertSnDbToStepNote", () => {
 
     it("3-2. 本文が空または見出しがない場合、既定値 (無題のログ) が title に設定されること", () => {
       const input = createMockLegacySnDbJson();
-      const logsTableData = input.data.data.find((t) => t.tableName === "logs")!;
+      const logsTableData = input.data.data.find(
+        (t) => t.tableName === "logs",
+      )!;
       logsTableData.rows.push({
         id: 103,
         taskId: 10,
@@ -619,12 +659,12 @@ describe("convertSnDbToStepNote", () => {
     it("9-1. 旧 config テーブルが新データから除外されること", () => {
       const input = createMockLegacySnDbJson();
       const { migratedData } = convertSnDbToStepNote(input);
-      expect(
-        migratedData.data.tables.some((t) => t.name === "config"),
-      ).toBe(false);
-      expect(
-        migratedData.data.data.some((t) => t.tableName === "config"),
-      ).toBe(false);
+      expect(migratedData.data.tables.some((t) => t.name === "config")).toBe(
+        false,
+      );
+      expect(migratedData.data.data.some((t) => t.tableName === "config")).toBe(
+        false,
+      );
     });
   });
 
@@ -647,10 +687,12 @@ describe("convertSnDbToStepNote", () => {
 
   describe("11. Markdown記法変換仕様（convertCopySyntaxToMarkdownLink）", () => {
     it("11-1. 単一の +{text}+ が [text](text) に変換されること", () => {
-      expect(convertCopySyntaxToMarkdownLink("+{sample}+")).toBe("[sample](sample)");
-      expect(convertCopySyntaxToMarkdownLink("前後のテキスト +{abc}+ テキスト")).toBe(
-        "前後のテキスト [abc](abc) テキスト",
+      expect(convertCopySyntaxToMarkdownLink("+{sample}+")).toBe(
+        "[sample](sample)",
       );
+      expect(
+        convertCopySyntaxToMarkdownLink("前後のテキスト +{abc}+ テキスト"),
+      ).toBe("前後のテキスト [abc](abc) テキスト");
     });
 
     it("11-2. URLを含む +{https://example.com}+ が [https://example.com](https://example.com) に変換されること", () => {
@@ -783,7 +825,7 @@ describe("convertSnDbToStepNote", () => {
       );
     });
   });
-describe("13. 空関係者判定仕様 (isContactEmpty)", () => {
+  describe("13. 空関係者判定仕様 (isContactEmpty)", () => {
     it("13-1. null, undefined, 非オブジェクトが渡された場合、空（true）と判定されること", () => {
       expect(isContactEmpty(null)).toBe(true);
       expect(isContactEmpty(undefined)).toBe(true);
@@ -800,7 +842,9 @@ describe("13. 空関係者判定仕様 (isContactEmpty)", () => {
     it("13-3. いずれか1項目でも空でない文字列が存在する場合、空でない（false）と判定されること", () => {
       expect(isContactEmpty({ div: "開発部", name: "", tel: "" })).toBe(false);
       expect(isContactEmpty({ div: "", name: "佐藤", tel: "" })).toBe(false);
-      expect(isContactEmpty({ div: "", name: "", tel: "090-1234-5678" })).toBe(false);
+      expect(isContactEmpty({ div: "", name: "", tel: "090-1234-5678" })).toBe(
+        false,
+      );
     });
   });
 });
