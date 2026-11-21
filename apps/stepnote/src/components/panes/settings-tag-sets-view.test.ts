@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { live } from "lit/directives/live.js";
 import { flattenTemplate } from "@shared/utils";
@@ -286,8 +287,8 @@ describe("SettingsTagSetsView Component", () => {
     });
 
     it("4-4. 詳細ペイン（.settings-tag-sets-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/\.settings-tag-sets-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(/\.settings-tag-sets-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
     });
 
     it("4-5. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {

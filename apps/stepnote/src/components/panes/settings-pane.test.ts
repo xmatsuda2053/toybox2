@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { SettingsPane } from "./settings-pane.js";
@@ -138,8 +139,12 @@ describe("SettingsPane Component", () => {
 
     it("3-5. .settings-pane__tab-panel[active]::part(base) に高さ伝播スタイル（height: 100%）が定義され、3階層ネストが解消されていること", () => {
       const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(/&\[active\]::part\(base\)\s*\{[^}]*?height:\s*100%/);
+      expect(scss).toMatch(/&\[active\]::part\(base\)\s*\{/);
       expect(scss).not.toMatch(/&\[active\]\s*\{[\s\S]*?&::part\(base\)/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.settings-pane__tab-panel\[active\]::part\(base\)\s*\{[^}]*?height:\s*100%/,
+      );
     });
   });
 });

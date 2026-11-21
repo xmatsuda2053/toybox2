@@ -1,17 +1,6 @@
-@use "../../styles/tokens.scss";
-@use "../../styles/mixins.scss" as *;
+@use "./settings-common.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  width: 100%;
-  @include theme-transition;
-}
-
-@include box-sizing-reset;
+@include settings-view-host;
 
 .settings-history-view__layout {
   display: flex;
@@ -28,17 +17,11 @@
 }
 
 .settings-history-view__section-title {
-  margin: 0;
-  font-size: var(--wa-font-size-m, 14px);
-  font-weight: var(--wa-font-weight-semibold, 600);
-  color: var(--wa-color-text-normal);
+  @include settings-section-title($reset-margin: true);
 }
 
 .settings-history-view__section-desc {
-  margin: 0;
-  font-size: var(--wa-font-size-s, 12px);
-  color: var(--wa-color-text-quiet);
-  line-height: var(--wa-line-height-normal, 1.5);
+  @include settings-section-desc($reset-margin: true);
 }
 
 .settings-history-view__form-row {

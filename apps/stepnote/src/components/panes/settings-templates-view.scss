@@ -1,171 +1,83 @@
 @use "../../styles/tokens.scss";
 @use "../../styles/mixins.scss" as *;
+@use "./settings-common.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  width: 100%;
-  @include theme-transition;
-}
-
-@include box-sizing-reset;
+@include settings-view-host;
 
 .settings-templates-view {
-  display: flex;
-  flex-direction: row;
-  gap: var(--wa-space-l, 24px);
-  height: 100%;
-  min-height: 0;
-  flex: 1;
-  overflow: hidden;
-  @include theme-transition;
+  @include settings-master-detail;
 }
 
 .settings-templates-view__master {
-  width: 280px;
-  min-width: 240px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--wa-color-border-subtle);
-  padding-right: var(--wa-space-m, 16px);
-  height: 100%;
-  min-height: 0;
-  box-sizing: border-box;
+  @include settings-master-pane(
+    $width: 280px,
+    $border-color: var(--wa-color-border-subtle)
+  );
 }
 
 .settings-templates-view__master-header {
-  @include flex-between;
-  margin-bottom: var(--wa-space-s, 12px);
-  padding-bottom: var(--wa-space-xs, 8px);
-  padding-inline-start: var(--wa-space-xs, 8px);
-  padding-inline-end: calc(var(--wa-space-xs, 8px) * 1.5);
-  scrollbar-gutter: stable;
-  overflow: hidden;
-  border-bottom: 1px solid var(--wa-color-border-subtle);
+  @include settings-master-header($border-color: var(--wa-color-border-subtle));
 }
 
 .settings-templates-view__master-title {
-  font-size: var(--wa-font-size-s, 14px);
-  font-weight: 600;
-  color: var(--wa-color-text-normal);
+  @include settings-master-title;
 }
 
 .settings-templates-view__btn-new {
-  @include flex-center;
-  color: var(--wa-color-neutral-on-quiet, inherit);
-  border-radius: var(--wa-border-radius-s, 4px);
-  transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
-
-  wa-icon {
-    font-size: var(--wa-font-size-m, 14px);
-    color: inherit;
-  }
-
-  &:hover {
-    background-color: var(--wa-color-neutral-fill-quiet);
-  }
+  @include settings-icon-action-btn;
 }
 
 .settings-templates-view__master-list {
-  @include custom-scrollbar;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding-inline-end: var(--wa-space-xs, 8px);
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-xs, 6px);
+  @include settings-master-list($padding-end: var(--wa-space-xs, 8px));
+}
+
+@mixin settings-template-list-item($font-size: var(--wa-font-size-m, 14px)) {
+  @include settings-master-item(
+    $padding: var(--wa-space-2xs, 4px) var(--wa-space-xs, 8px),
+    $border-color: var(--wa-color-border-subtle),
+    $font-size: $font-size,
+    $color: var(--wa-color-neutral-on-quiet, inherit),
+    $focus-ring: true
+  );
+}
+
+@mixin settings-template-list-item-selected {
+  @include settings-master-item-selected(
+    $border-color: var(--wa-color-surface-border),
+    $bold: true
+  );
 }
 
 .settings-templates-view__master-item {
-  width: 100%;
-  @include flex-between;
-  @include theme-transition;
-  box-sizing: border-box;
-  padding-block: var(--wa-space-2xs, 4px);
-  padding-inline: var(--wa-space-xs, 8px);
-  border-radius: var(--wa-border-radius-m, 4px);
-  border: 1px solid var(--wa-color-border-subtle);
-  background-color: var(--wa-color-surface-raised);
-  color: var(--wa-color-neutral-on-quiet, inherit);
-  font-family: inherit;
-  font-size: var(--wa-font-size-m, 14px);
-  cursor: pointer;
-  user-select: none;
-  outline: none;
-}
-
-.settings-templates-view__master-item:hover {
-  background-color: var(--wa-color-neutral-fill-quiet);
-}
-
-.settings-templates-view__master-item:focus-visible {
-  outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
-  outline-offset: 1px;
+  @include settings-template-list-item;
 }
 
 .settings-templates-view__master-item--selected {
-  transition: none;
-  font-weight: 600;
-  color: var(--wa-color-neutral-on-normal);
-  background-color: var(--wa-color-neutral-fill-normal);
-  border-color: var(--wa-color-surface-border);
-}
-
-.settings-templates-view__master-item--selected:hover {
-  background-color: var(--wa-color-neutral-fill-normal);
+  @include settings-template-list-item-selected;
 }
 
 .settings-templates-view__item-main {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
+  @include settings-item-main($direction: row);
 }
 
 .settings-templates-view__item-title {
-  @include text-ellipsis;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
+  @include settings-item-title;
 }
 
 .settings-templates-view__item-dropdown {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-inline-start: var(--wa-space-3xs, 2px);
+  @include settings-item-dropdown;
 }
 
 .settings-templates-view__btn-menu {
-  opacity: 0.8;
-  @include theme-transition;
-  border-radius: var(--wa-border-radius-s, 4px);
-  color: inherit;
-}
-
-.settings-templates-view__btn-menu:hover {
-  opacity: 1;
-  background-color: var(--wa-color-neutral-fill-quiet);
+  @include settings-btn-menu;
 }
 
 .settings-templates-view__detail {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: var(--wa-space-xs, 8px) var(--wa-space-m, 16px) var(--wa-space-s, 16px)
-    var(--wa-space-xs, 8px);
-  box-sizing: border-box;
+  @include settings-detail-pane(
+    $padding: var(--wa-space-xs, 8px) var(--wa-space-m, 16px)
+      var(--wa-space-s, 16px) var(--wa-space-xs, 8px),
+    $scrollable: false
+  );
 }
 
 .settings-templates-view__name-row {
@@ -181,10 +93,7 @@
   @include flex-center;
   flex-shrink: 0;
   border-radius: var(--wa-border-radius-s, 4px);
-  transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
+  @include settings-btn-transition;
 
   wa-icon {
     font-size: var(--wa-font-size-l, 18px);
@@ -211,15 +120,8 @@
 }
 
 .settings-templates-view__form-body {
-  @include custom-scrollbar;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  display: flex;
-  flex-direction: column;
+  @include settings-master-list($padding-end: var(--wa-space-xs, 8px));
   gap: var(--wa-space-m, 16px);
-  padding-inline-end: var(--wa-space-xs, 8px);
 }
 
 .settings-templates-view__form-name {
@@ -249,9 +151,7 @@
 }
 
 .settings-templates-view__section-label {
-  font-size: var(--wa-font-size-s, 14px);
-  font-weight: 600;
-  color: var(--wa-color-text-normal);
+  @include settings-master-title;
 }
 
 .settings-templates-view__desc-editor {
@@ -271,102 +171,41 @@
 }
 
 .settings-templates-view__issue-master {
-  width: 220px;
-  min-width: 180px;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--wa-color-border-subtle);
-  padding-right: var(--wa-space-s, 12px);
-  box-sizing: border-box;
+  @include settings-master-pane(
+    $width: 220px,
+    $min-width: 180px,
+    $border-color: var(--wa-color-border-subtle),
+    $padding-right: var(--wa-space-s, 12px),
+    $full-height: false
+  );
 }
 
 .settings-templates-view__issue-master-header {
-  @include flex-between;
-  margin-bottom: var(--wa-space-xs, 8px);
-  padding-bottom: var(--wa-space-xs, 8px);
-  padding-inline-start: var(--wa-space-xs, 8px);
-  padding-inline-end: calc(var(--wa-space-xs, 8px) * 1.5);
-  scrollbar-gutter: stable;
-  overflow: hidden;
-  border-bottom: 1px solid var(--wa-color-border-subtle);
+  @include settings-master-header(
+    $border-color: var(--wa-color-border-subtle),
+    $margin-bottom: var(--wa-space-xs, 8px)
+  );
   flex-shrink: 0;
 }
 
 .settings-templates-view__btn-add-issue {
-  @include flex-center;
-  color: var(--wa-color-neutral-on-quiet, inherit);
-  border-radius: var(--wa-border-radius-s, 4px);
-  transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
-
-  wa-icon {
-    font-size: var(--wa-font-size-m, 14px);
-    color: inherit;
-  }
-
-  &:hover {
-    background-color: var(--wa-color-neutral-fill-quiet);
-  }
+  @include settings-icon-action-btn;
 }
 
 .settings-templates-view__issue-list {
-  @include custom-scrollbar;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding-inline-end: var(--wa-space-xs, 8px);
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-xs, 6px);
+  @include settings-master-list($padding-end: var(--wa-space-xs, 8px));
 }
 
 .settings-templates-view__issue-item {
-  width: 100%;
-  @include flex-between;
-  @include theme-transition;
-  box-sizing: border-box;
-  padding-block: var(--wa-space-2xs, 4px);
-  padding-inline: var(--wa-space-xs, 8px);
-  border-radius: var(--wa-border-radius-m, 4px);
-  border: 1px solid var(--wa-color-border-subtle);
-  background-color: var(--wa-color-surface-raised);
-  color: var(--wa-color-neutral-on-quiet, inherit);
-  font-family: inherit;
-  font-size: var(--wa-font-size-s, 14px);
-  cursor: pointer;
-  user-select: none;
-  outline: none;
-}
-
-.settings-templates-view__issue-item:hover {
-  background-color: var(--wa-color-neutral-fill-quiet);
-}
-
-.settings-templates-view__issue-item:focus-visible {
-  outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
-  outline-offset: 1px;
+  @include settings-template-list-item($font-size: var(--wa-font-size-s, 14px));
 }
 
 .settings-templates-view__issue-item--selected {
-  transition: none;
-  font-weight: 600;
-  color: var(--wa-color-neutral-on-normal);
-  background-color: var(--wa-color-neutral-fill-normal);
-  border-color: var(--wa-color-surface-border);
-}
-
-.settings-templates-view__issue-item--selected:hover {
-  background-color: var(--wa-color-neutral-fill-normal);
+  @include settings-template-list-item-selected;
 }
 
 .settings-templates-view__issue-dropdown {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-inline-start: var(--wa-space-3xs, 2px);
+  @include settings-item-dropdown;
 }
 
 .settings-templates-view__issue-detail {
@@ -408,8 +247,5 @@
 }
 
 .settings-templates-view__placeholder {
-  color: var(--wa-color-text-quiet);
-  font-size: var(--wa-font-size-s, 14px);
-  padding: var(--wa-space-l, 24px) 0;
-  text-align: center;
+  @include settings-empty-state($padding: var(--wa-space-l, 24px) 0, $center-flex: false);
 }
