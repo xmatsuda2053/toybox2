@@ -517,5 +517,153 @@
       },
       "regressions_detected": 0
     }
+  },
+  {
+    "id": "SCSS-018",
+    "target_file": "apps/stepnote/src/app-root.scss, apps/stepnote/src/styles/mixins.scss",
+    "target_selector": ".header-search-trigger, @mixin tag-variant-select-styles",
+    "category": "AntiPattern",
+    "metrics": {
+      "raw_color_fallbacks": 2,
+      "deep_nesting_warnings": 4,
+      "files_involved": 2
+    },
+    "issue_summary": "app-root.scss の focus-visible におけるカラー直値フォールバック（#0969da × 2）および app-root.scss / mixins.scss の 3階層ネスト警告（計4件）",
+    "approach": "フォールバック直値の削除（var(--wa-color-brand-60) 統一）およびセレクタのフラット展開によるネスト2階層以下への平坦化",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 18,
+      "completed_at": "2026-11-20T23:54:28.085+09:00",
+      "issue_number": 489,
+      "pr_number": null,
+      "commit_hash": null,
+      "tests_passed": 2401,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 114,
+        "duplicated_lines": 942,
+        "duplicated_tokens": 5555,
+        "anti_pattern_errors": 0,
+        "deep_nesting_warnings_in_scope": 0,
+        "build_size_kb": 2249.79
+      }
+    }
+  },
+  {
+    "id": "SCSS-019",
+    "target_file": "apps/stepnote/src/components/panes/pane-common.scss, apps/stepnote/src/components/panes/journal-pane.scss, apps/stepnote/src/components/panes/task-pane.scss",
+    "target_selector": ":host, .__empty, .__tab-group, .__tab-panel",
+    "category": "PatternDuplication",
+    "metrics": {
+      "clones": 5,
+      "duplicated_lines": 90,
+      "duplicated_tokens": 474,
+      "deep_nesting_warnings": 2,
+      "files_involved": 3
+    },
+    "issue_summary": "journal-pane.scss と task-pane.scss 間でタブグループ・タブパネル・空状態・ホストレイアウト（計5クローン/90行/474トークン）が重複し、&::part(base) の3階層ネスト警告（2件）が発生している",
+    "approach": "pane-common.scss に @mixin pane-tab-group / @mixin pane-tab-panel / @mixin pane-empty-state を新設し、両ペインで @include 置換するとともにアクティブパネルの ::part(base) ネストを2階層以下へ平坦化",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 19,
+      "completed_at": "2026-11-20T23:54:28.085+09:00",
+      "issue_number": 489,
+      "pr_number": null,
+      "commit_hash": null,
+      "tests_passed": 2401,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 114,
+        "duplicated_lines": 942,
+        "duplicated_tokens": 5555,
+        "anti_pattern_errors": 0,
+        "deep_nesting_warnings_in_scope": 0,
+        "build_size_kb": 2249.79
+      }
+    }
+  },
+  {
+    "id": "SCSS-020",
+    "target_file": "apps/stepnote/src/components/panes/settings-pane.scss, apps/stepnote/src/components/panes/settings-tags-view.scss, apps/stepnote/src/components/panes/settings-tag-sets-view.scss",
+    "target_selector": "settings master-detail layout, form, master-item, btn-new",
+    "category": "PatternDuplication",
+    "metrics": {
+      "clones": 41,
+      "duplicated_lines": 372,
+      "duplicated_tokens": 2563,
+      "deep_nesting_warnings": 2,
+      "files_involved": 3
+    },
+    "issue_summary": "設定画面（settings-pane, settings-tags-view, settings-tag-sets-view）および設定内部のテンプレート/Issueセクション間でマスタ・ディテール構造・リストアイテム・フォーム定義が大量重複している",
+    "approach": "設定画面共通レイアウト SCSS（settings-common.scss 等）へマスタ・ディテール・フォーム・アイテム用 Mixin 群を集約し、サブビュー分割と合わせて @include 統一およびネスト平坦化を実施",
+    "scope": "shared",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-021",
+    "target_file": "apps/stepnote/src/components/logs/logs-view.scss, apps/stepnote/src/components/notes/notes-view.scss, apps/stepnote/src/components/issues/issues-view.scss",
+    "target_selector": ":host, .__header, .__search, .__actions, .__empty",
+    "category": "PatternDuplication",
+    "metrics": {
+      "clones": 10,
+      "duplicated_lines": 84,
+      "duplicated_tokens": 422,
+      "files_involved": 3
+    },
+    "issue_summary": "タブ内ビュー（logs-view, notes-view, issues-view）間でルートホスト・ヘッダーツールバー・検索入力・アクション群・空状態のスタイルが重複している",
+    "approach": "タブビュー共通のレイアウト Mixin（pane-common.scss または tab-view-common.scss）を定義し、各ビューで @include 置換",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-022",
+    "target_file": "apps/stepnote/src/components/issues/issues-view.scss, apps/stepnote/src/components/task/task-summary.scss, apps/stepnote/src/components/task/task-property.scss, apps/stepnote/src/components/logs/logs-view.scss, apps/stepnote/src/components/navigation/task-history-menu.scss",
+    "target_selector": "status icons, due-date modifiers, form field rows, deep nesting selectors",
+    "category": "AntiPattern",
+    "metrics": {
+      "clones": 13,
+      "duplicated_lines": 118,
+      "duplicated_tokens": 681,
+      "deep_nesting_warnings": 19,
+      "files_involved": 5
+    },
+    "issue_summary": "issues-view.scss を中心にステータス色・期日アイコン色・フォーム行レイアウトが task-summary/task-property と重複し、issues-view.scss（17件）・logs-view.scss（1件）・task-history-menu.scss（1件）に計19件の3〜4階層ネスト警告が存在する",
+    "approach": "ステータス色・期日色・タスク詳細フォーム行の共通 Mixin 化および BEM フラット化により重複と3階層以上のネスト警告を解消",
+    "scope": "shared",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "SCSS-023",
+    "target_file": "apps/stepnote/src/styles/tokens.scss, apps/stepnote/src/components/navigation/navigation-labels.scss, apps/stepnote/src/components/task/task-tag-bar.scss, apps/stepnote/src/components/panes/scratch-pane.scss",
+    "target_selector": "remaining fine-grained SCSS clones",
+    "category": "Duplication",
+    "metrics": {
+      "clones": 49,
+      "duplicated_lines": 359,
+      "duplicated_tokens": 1827,
+      "files_involved": 8
+    },
+    "issue_summary": "tokens.scss 内のアクティブアイコンエイリアス群および navigation-labels, task-tag-bar, scratch-pane 等に残存する細粒度 SCSS クローン",
+    "approach": "tokens.scss のアクティブアイコン定義の整理、共通リセット・ボタン・タグバーの Mixin 化による残存重複の最小化",
+    "scope": "shared",
+    "risk_level": "Low",
+    "feasibility": "Medium",
+    "status": "pending",
+    "execution": null
   }
 ]

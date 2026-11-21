@@ -11,6 +11,7 @@ import * as fs from "node:fs";
  * 仕様 5: @mixin box-sizing-reset が定義され、*, *::before, *::after の box-sizing: border-box が設定されていること
  * 仕様 6: @mixin stepnote-tag-styles が定義され、border 非表示および全10色のタグ専用トークン参照が含まれていること
  * 仕様 7: @mixin tag-variant-select-styles が全10色に対応し、--stepnote-tag-*-color を参照していること
+ * 仕様 8: SCSS-018: @mixin tag-variant-select-styles の ::part(display-input) が3階層ネストされずフラット展開されていること
  */
 describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
   const mixinsScss = fs.readFileSync(
@@ -101,6 +102,13 @@ describe("mixins.scss 汎用レイアウト Mixin 仕様", () => {
           new RegExp(`"${variant}":\\s*var\\(--stepnote-tag-${variant}-color\\)`),
         );
       }
+    });
+
+    it("仕様 8: SCSS-018: @mixin tag-variant-select-styles の ::part(display-input) が3階層ネストされずフラット展開されていること", () => {
+      expect(mixinsScss).toMatch(
+        /\.#\{\$block\}__variant-select--#\{\$variant\}::part\(display-input\)/,
+      );
+      expect(mixinsScss).not.toMatch(/&::part\(display-input\)/);
     });
   });
 });

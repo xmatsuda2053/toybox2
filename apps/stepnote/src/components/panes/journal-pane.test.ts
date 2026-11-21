@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord } from "@/db/models/task.model.js";
@@ -419,15 +420,26 @@ describe("JournalPane Component", () => {
       expect(scssContent).not.toMatch(rgbPattern);
     });
 
-    it("4-6. journal-pane.scss において .journal-pane__tab-group に flex: 1, min-height: 0 が設定されていること", () => {
+    it("4-6. journal-pane.scss において .journal-pane__tab-group に @include pane-tab-group が適用され、コンパイル後 CSS に flex: 1, min-height: 0 が設定されていること", () => {
       expect(scssContent).toMatch(
-        /\.journal-pane__tab-group\s*\{[\s\S]*?flex:\s*1;[\s\S]*?min-height:\s*0;/,
+        /\.journal-pane__tab-group\s*\{[\s\S]*?@include\s+pane-tab-group;/,
+      );
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.journal-pane__tab-group\s*\{[^}]*flex:\s*1;[^}]*min-height:\s*0;/,
       );
     });
 
-    it("4-7. journal-pane.scss において .journal-pane__tab-panel がデフォルトで display: none となり、&[active] にのみ display: flex が指定されていること", () => {
+    it("4-7. journal-pane.scss において .journal-pane__tab-panel に @include pane-tab-panel が適用され、コンパイル後 CSS でデフォルト display: none、[active] のみ display: flex となること", () => {
       expect(scssContent).toMatch(
-        /\.journal-pane__tab-panel\s*\{[\s\S]*?display:\s*none;[\s\S]*?&\[active\]\s*\{[\s\S]*?display:\s*flex;/,
+        /\.journal-pane__tab-panel\s*\{[\s\S]*?@include\s+pane-tab-panel;/,
+      );
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.journal-pane__tab-panel\s*\{[^}]*display:\s*none;/,
+      );
+      expect(compiledCss).toMatch(
+        /\.journal-pane__tab-panel\[active\]\s*\{[^}]*display:\s*flex;/,
       );
     });
 

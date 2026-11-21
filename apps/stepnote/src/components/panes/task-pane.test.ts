@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
@@ -604,11 +605,14 @@ describe("TaskPane Component", () => {
 
     it("5-7. task-pane.scss において wa-tab のフォントサイズが小さく調整され、.task-pane__tab-panel に Quick Access と同様の padding が設定されていること", () => {
       const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
-        /wa-tab\s*\{[^}]*font-size:\s*var\(--wa-font-size-xs/,
+      expect(content).toContain("@include pane-tab-group;");
+      expect(content).toContain("@include pane-tab-panel;");
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-group\s+wa-tab\s*\{[^}]*font-size:\s*var\(--wa-font-size-xs/,
       );
-      expect(content).toMatch(
-        /\.task-pane__tab-panel\s*\{[^}]*padding:\s*[^;]+;/,
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]\s*\{[^}]*padding:\s*[^;]+;/,
       );
     });
 
@@ -620,45 +624,51 @@ describe("TaskPane Component", () => {
     });
 
     it("5-9. task-pane.scss において .task-pane__tab-group に対し、ヘッダー直下は接したまま左右・下端に余白（padding: 0 var(--wa-space-xs, 8px) var(--wa-space-xs, 8px)）および box-sizing: border-box が設定されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.task-pane__tab-group\s*\{[^}]*padding:\s*0\s+var\(--wa-space-xs[^)]*\)\s+var\(--wa-space-xs[^)]*\);/,
       );
-      expect(content).toMatch(
+      expect(compiledCss).toMatch(
         /\.task-pane__tab-group\s*\{[^}]*box-sizing:\s*border-box;/,
       );
     });
 
-    it("5-10. task-pane.scss において .task-pane__tab-panel がデフォルトで非表示（display: none）となり、&[active] にのみ display: flex が指定されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
+    it("5-10. task-pane.scss において .task-pane__tab-panel がデフォルトで非表示（display: none）となり、[active] にのみ display: flex が指定されていること", () => {
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.task-pane__tab-panel\s*\{[^}]*display:\s*none;/,
       );
-      expect(content).toMatch(/&\[active\]\s*\{[^}]*display:\s*flex;/);
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]\s*\{[^}]*display:\s*flex;/,
+      );
     });
 
     it("5-11. task-pane.scss において .task-pane__tab-group の ::part(tab-group) および ::part(body) に height: 100% と flex: 1 が定義され、タブパネルのスクロールと領域伸長が保護されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/::part\(tab-group\)\s*\{[^}]*height:\s*100%;/);
-      expect(content).toMatch(/::part\(tab-group\)\s*\{[^}]*flex:\s*1;/);
-      expect(content).toMatch(/::part\(body\)\s*\{[^}]*height:\s*100%;/);
-      expect(content).toMatch(/::part\(body\)\s*\{[^}]*flex:\s*1;/);
-      expect(content).toMatch(/::part\(body\)\s*\{[^}]*overflow:\s*hidden;/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(/::part\(tab-group\)\s*\{[^}]*height:\s*100%;/);
+      expect(compiledCss).toMatch(/::part\(tab-group\)\s*\{[^}]*flex:\s*1;/);
+      expect(compiledCss).toMatch(/::part\(body\)\s*\{[^}]*height:\s*100%;/);
+      expect(compiledCss).toMatch(/::part\(body\)\s*\{[^}]*flex:\s*1;/);
+      expect(compiledCss).toMatch(/::part\(body\)\s*\{[^}]*overflow:\s*hidden;/);
     });
 
     it("5-12. task-pane.scss において .task-pane__tab-panel[active] の ::part(base) に flex: 1 および min-height: 100% が定義され、スロットされた子要素への高さ伝播が保証されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(/::part\(base\)\s*\{[^}]*flex:\s*1;/);
-      expect(content).toMatch(/::part\(base\)\s*\{[^}]*min-height:\s*100%;/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]::part\(base\)\s*\{[^}]*flex:\s*1;/,
+      );
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]::part\(base\)\s*\{[^}]*min-height:\s*100%;/,
+      );
     });
 
     it("5-13. task-pane.scss において .task-pane__tab-panel[active] の padding-top が 0 であり、::part(base) に padding-top が指定されていることで、スクロール時のヘッダー上部余白とコンテンツ漏れが防止されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
-        /padding:\s*0\s+var\(--wa-space-m[^)]*\)\s+var\(--wa-space-l[^)]*\);/,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]\s*\{[^}]*padding:\s*0\s+var\(--wa-space-m[^)]*\)\s+var\(--wa-space-l[^)]*\);/,
       );
-      expect(content).toMatch(
-        /::part\(base\)[\s\S]*?padding-top:\s*var\(--wa-space-l[^)]*\);/,
+      expect(compiledCss).toMatch(
+        /\.task-pane__tab-panel\[active\]::part\(base\)\s*\{[^}]*padding-top:\s*var\(--wa-space-l[^)]*\);/,
       );
     });
 
