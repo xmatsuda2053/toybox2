@@ -8887,7 +8887,7 @@
           <wa-checkbox
             class="task-table-pane__checkbox-all"
             aria-label="表示中のタスクをすべて選択"
-            ?checked=${e.isAllFilteredSelected}
+            .checked=${Hn(e.isAllFilteredSelected)}
             .indeterminate=${e.isSomeFilteredSelected}
             @change=${e.onToggleSelectAll}
           ></wa-checkbox>
@@ -9035,7 +9035,7 @@
         <wa-checkbox
           class="task-table-pane__checkbox-row"
           aria-label="タスク #${n} を選択"
-          ?checked=${r}
+          .checked=${Hn(r)}
           @change=${()=>t.onToggleRowSelect(n)}
         ></wa-checkbox>
       </td>
@@ -9062,7 +9062,7 @@
         <table class="task-table-pane__table">
           ${EJ(e)}
           <tbody class="task-table-pane__tbody">
-            ${e.rows.map(t=>PJ(t,e))}
+            ${Uc(e.rows,e=>e.task.id??e,t=>PJ(t,e))}
           </tbody>
         </table>
       </div>

@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { live } from "lit/directives/live.js";
 import { flattenTemplate } from "@shared/utils";
 import type { TaskTableController } from "@/controllers/task-table.controller.js";
 import type { TaskTableRowViewModel } from "@/types";
@@ -29,6 +30,7 @@ import { TaskTablePane } from "./task-table-pane.js";
  *    - 4-2. ブックマークボタンクリックで toggleBookmark(taskId) が呼び出されること
  *    - 4-3. タスク名クリック（handleOpenTask）で task-table-open-task イベントが発火し、clearSelection() が呼び出されること
  *    - 4-4. 行データが空の場合は空状態メッセージ「該当するタスクがありません」が表示されること
+ *    - 4-5. 行描画がタスクIDキー付き repeat を用い、全選択・各行の wa-checkbox が .checked=${live(...)} でバインドされていること
  *
  * 5. SCSS 品質規約検証
  *    - 5-1. task-table-pane.scss に !important、@extend、ハードコードカラー直値が含まれず、theme-transition が適用されていること
@@ -39,6 +41,92 @@ import { TaskTablePane } from "./task-table-pane.js";
  *    - 5-6. タグ列幅が 300px へ拡張され、タスク名列（width: auto）の最小幅が 180px へ調整されていること
  *    - 5-7. 関係者セルにツールチップ（[title]）がある場合に cursor: help が定義されていること
  */
+
+interface RepeatDirectiveNode {
+  _$litDirective$?: unknown;
+  values?: unknown[];
+}
+
+function isRepeatDirectiveNode(node: unknown): node is RepeatDirectiveNode {
+  if (
+    typeof node !== "object" ||
+    node === null ||
+    !("_$litDirective$" in node)
+  ) {
+    return false;
+  }
+  const values = (node as RepeatDirectiveNode).values;
+  return (
+    Array.isArray(values) &&
+    values.length >= 3 &&
+    Array.isArray(values[0]) &&
+    typeof values[1] === "function" &&
+    typeof values[2] === "function"
+  );
+}
+
+function findRepeatDirective(node: unknown): RepeatDirectiveNode | null {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findRepeatDirective(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (isRepeatDirectiveNode(node)) {
+    return node;
+  }
+  if (typeof node !== "object" || node === null) return null;
+  const values = (node as { values?: unknown[] }).values;
+  return Array.isArray(values) ? findRepeatDirective(values) : null;
+}
+
+function collectCheckboxCheckedBindings(
+  node: unknown,
+): Array<{ bindingPrefix: string; value: unknown }> {
+  if (Array.isArray(node)) {
+    return node.flatMap(collectCheckboxCheckedBindings);
+  }
+  if (isRepeatDirectiveNode(node)) {
+    const [items, , tplFn] = node.values as [
+      unknown[],
+      unknown,
+      (item: unknown, idx: number) => unknown,
+    ];
+    return items.flatMap((item, idx) =>
+      collectCheckboxCheckedBindings(tplFn(item, idx)),
+    );
+  }
+  if (
+    typeof node !== "object" ||
+    node === null ||
+    !("strings" in node) ||
+    !Array.isArray((node as { strings: unknown }).strings)
+  ) {
+    return [];
+  }
+  const tpl = node as {
+    strings: readonly string[];
+    values?: readonly unknown[];
+  };
+  const results: Array<{ bindingPrefix: string; value: unknown }> = [];
+  let tagBuffer = "";
+  tpl.strings.forEach((str, idx) => {
+    tagBuffer += str;
+    const val = tpl.values?.[idx];
+    const lastOpen = tagBuffer.lastIndexOf("<");
+    const inWaCheckbox =
+      lastOpen !== -1 && tagBuffer.slice(lastOpen).startsWith("<wa-checkbox");
+    const match = inWaCheckbox ? str.match(/([.?]checked=)$/) : null;
+    if (match) {
+      results.push({ bindingPrefix: match[1], value: val });
+    }
+    if (val !== undefined) {
+      results.push(...collectCheckboxCheckedBindings(val));
+    }
+  });
+  return results;
+}
 
 const createMockRow = (
   overrides: Partial<TaskTableRowViewModel> = {},
@@ -343,6 +431,37 @@ describe("TaskTablePane Component", () => {
       const htmlStr = flattenTemplate(pane.render());
       expect(htmlStr).toContain("task-table-pane__empty");
       expect(htmlStr).toContain("該当するタスクがありません");
+    });
+
+    it("4-5. 行描画がタスクIDキー付き repeat を用い、全選択・各行の wa-checkbox が live() 付き .checked でバインドされていること", () => {
+      const row1 = createMockRow();
+      const row2 = createMockRow({
+        task: { ...createMockRow().task, id: 202, name: "2件目タスク" },
+      });
+      mockController.rows = [row1, row2];
+      mockController.selectedIds = new Set([202]);
+
+      const rendered = pane.render();
+      const repeatDir = findRepeatDirective(rendered);
+      expect(repeatDir).not.toBeNull();
+      const keyFn = repeatDir?.values?.[1] as
+        ((r: TaskTableRowViewModel) => unknown) | undefined;
+      expect(typeof keyFn).toBe("function");
+      expect(keyFn?.(row1)).toBe(101);
+      expect(keyFn?.(row2)).toBe(202);
+
+      expect(collectCheckboxCheckedBindings(rendered)).toEqual([
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(true) },
+      ]);
+
+      mockController.rows = [row2, row1];
+      expect(collectCheckboxCheckedBindings(pane.render())).toEqual([
+        { bindingPrefix: ".checked=", value: live(false) },
+        { bindingPrefix: ".checked=", value: live(true) },
+        { bindingPrefix: ".checked=", value: live(false) },
+      ]);
     });
   });
 
