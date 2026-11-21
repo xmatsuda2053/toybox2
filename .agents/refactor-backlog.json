@@ -6616,8 +6616,21 @@
     "test_file": "apps/stepnote/src/app-root.test.ts",
     "risk_level": "Medium",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 169,
+      "completed_at": "2026-11-21T15:13:50.167+09:00",
+      "issue_number": 497,
+      "pr_number": null,
+      "commit_hash": null,
+      "regressions_detected": 0,
+      "tests_passed": 2430,
+      "metrics_after": {
+        "app_root_lines": 415,
+        "eslint_non_test_warnings": 0,
+        "new_ts_clones_in_scope": 0
+      }
+    }
   },
   {
     "id": "REF-227",
@@ -6634,7 +6647,20 @@
     "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
     "risk_level": "Medium",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 170,
+      "completed_at": "2026-11-21T15:13:50.167+09:00",
+      "issue_number": 497,
+      "pr_number": null,
+      "commit_hash": null,
+      "regressions_detected": 0,
+      "tests_passed": 2430,
+      "metrics_after": {
+        "issues_view_lines": 422,
+        "eslint_non_test_warnings": 0,
+        "new_ts_clones_in_scope": 0
+      }
+    }
   }
 ]
