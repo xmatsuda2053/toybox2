@@ -8,6 +8,7 @@ import type { TagsController } from "@/controllers/tags.controller.js";
 import type { TagSetsController } from "@/controllers/tag-sets.controller.js";
 import type { TaskController } from "@/controllers/task.controller.js";
 import type { TaskListController } from "@/controllers/task-list.controller.js";
+import type { TaskTableController } from "@/controllers/task-table.controller.js";
 import type { LogsController } from "@/controllers/logs.controller.js";
 import type { NotesController } from "@/controllers/notes.controller.js";
 import type { IssuesController } from "@/controllers/issues.controller.js";
@@ -17,12 +18,14 @@ import type { TaskTemplateController } from "@/controllers/task-template.control
 import type { AutoExportController } from "@/controllers/auto-export.controller.js";
 import type { TaskHistoryController } from "@/controllers/task-history.controller.js";
 import "@/components/theme-switcher/theme-switcher.js";
+import "@/components/view-mode-switcher/view-mode-switcher.js";
 import "@/components/navigation/task-history-menu.js";
 import "@/components/menu/app-menu.js";
 import "@/components/navigation/navigation-quick-access.js";
 import "@/components/navigation/navigation-labels.js";
 import "@/components/task-list/task-list.js";
 import "@/components/panes/task-pane.js";
+import "@/components/panes/task-table-pane.js";
 import "@/components/panes/journal-pane.js";
 import "@/components/panes/scratch-pane.js";
 import "@/components/panes/settings-pane.js";
@@ -73,6 +76,7 @@ export class AppRoot extends LitElement {
   public labelsController!: LabelsController;
   public taskController!: TaskController;
   public taskListController!: TaskListController;
+  public taskTableController!: TaskTableController;
   public logsController!: LogsController;
   public notesController!: NotesController;
   public issuesController!: IssuesController;
@@ -129,6 +133,7 @@ export class AppRoot extends LitElement {
     this.labelsController = bundle.labelsController;
     this.taskController = bundle.taskController;
     this.taskListController = bundle.taskListController;
+    this.taskTableController = bundle.taskTableController;
     this.logsController = bundle.logsController;
     this.notesController = bundle.notesController;
     this.issuesController = bundle.issuesController;
@@ -162,6 +167,12 @@ export class AppRoot extends LitElement {
       const customEvent = e as CustomEvent<{ taskId: number }>;
       if (customEvent.detail?.taskId) {
         void this.selectAndShowTask(customEvent.detail.taskId);
+      }
+    });
+    this.addEventListener("task-table-open-task", (e: Event) => {
+      const customEvent = e as CustomEvent<{ taskId: number }>;
+      if (customEvent.detail?.taskId) {
+        void this.openTaskFromTable(customEvent.detail.taskId);
       }
     });
   }
@@ -217,6 +228,15 @@ export class AppRoot extends LitElement {
     }
   };
 
+  /** 全体検索結果選択時のハンドラー（ダイアログを閉じ、一覧モード時は詳細ビューへ遷移する） */
+  public handleGlobalSearchSelect = (): void => {
+    this.handleCloseGlobalSearch();
+    if (this.layoutUIController.state.viewMode === "list") {
+      this.taskTableController.clearSelection();
+      this.layoutUIController.openListTaskDetail();
+    }
+  };
+
   private createNavigationDeps(): IdJumpCoordinatorDeps {
     return {
       getTaskById: (taskId) => this.taskRepository.getById(taskId),
@@ -229,6 +249,8 @@ export class AppRoot extends LitElement {
         this.layoutUIController.setSettingsMode(isOpen),
       setJournalAreaOpen: (isOpen) =>
         this.layoutUIController.setJournalAreaOpen(isOpen),
+      openListTaskDetail: () => this.layoutUIController.openListTaskDetail(),
+      clearTableSelection: () => this.taskTableController.clearSelection(),
       selectLabel: (labelId) => this.labelsController.selectLabel(labelId),
       selectTask: (taskId) => this.taskListController.selectTask(taskId),
       setTaskId: (taskId) => this.taskController.setTaskId(taskId),
@@ -247,6 +269,14 @@ export class AppRoot extends LitElement {
       void this.handleIdJump(customEvent.detail);
     }
   };
+
+  /** 一覧表からタスクを開き、詳細ビューへ遷移する */
+  public async openTaskFromTable(taskId: number): Promise<void> {
+    const selected = await this.selectAndShowTask(taskId);
+    if (selected && this.layoutUIController.state.viewMode === "list") {
+      this.layoutUIController.openListTaskDetail();
+    }
+  }
 
   /** 指定したタスクを選択し、画面全体（ラベル、タスク一覧、タスク詳細）を更新する */
   public async selectAndShowTask(taskId: number): Promise<boolean> {
@@ -273,7 +303,10 @@ export class AppRoot extends LitElement {
     event?: CustomEvent<{ taskId?: number }>,
   ): Promise<void> => {
     this.isTaskCreateDialogOpen = false;
-    await this.taskListController.refresh();
+    await Promise.all([
+      this.taskListController.refresh(),
+      this.taskTableController.refresh(),
+    ]);
     if (event?.detail?.taskId !== undefined) {
       await this.taskListController.selectTask(event.detail.taskId);
     }
@@ -384,7 +417,7 @@ export class AppRoot extends LitElement {
           .open=${this.isGlobalSearchOpen}
           data-theme=${resolvedTheme}
           @global-search-close=${this.handleCloseGlobalSearch}
-          @global-search-select=${this.handleCloseGlobalSearch}
+          @global-search-select=${this.handleGlobalSearchSelect}
         ></global-search-dialog>
 
         <task-create-dialog

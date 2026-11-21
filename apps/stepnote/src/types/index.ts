@@ -6,3 +6,4 @@ export * from "./view/ui.types";
 export * from "./view/task-view.type";
 export * from "./view/journal-view.type";
 export * from "./view/navigation-view.type";
+export * from "./view/task-table-view.type";

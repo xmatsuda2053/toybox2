@@ -143,4 +143,32 @@ describe("app-root.navigation", () => {
 
     expect(deps.getTaskById).not.toHaveBeenCalled();
   });
+
+  it("2-5. viewMode='list' の場合、selectAndShowTask および id-jump で一覧詳細ビューが開きテーブル選択がクリアされること", async () => {
+    const navigateToIssue = vi.fn();
+    const openListTaskDetail = vi.fn();
+    const clearTableSelection = vi.fn();
+    const deps = createMockDeps({
+      getLayoutState: () => ({
+        isScratchMode: false,
+        isSettingsMode: false,
+        isJournalAreaOpen: true,
+        viewMode: "list",
+      }),
+      openListTaskDetail,
+      clearTableSelection,
+      getIssueById: vi.fn().mockResolvedValue({ id: 30, taskId: 10 }),
+      getTaskById: vi.fn().mockResolvedValue({ id: 10, labelId: 1 }),
+      queryPane: vi.fn().mockImplementation((sel) =>
+        sel === "task-pane" ? { navigateToIssue } : null,
+      ),
+    });
+
+    await navigateByIdJump(deps, { type: "issue", id: 30 });
+
+    expect(openListTaskDetail).toHaveBeenCalledTimes(1);
+    expect(clearTableSelection).toHaveBeenCalledTimes(1);
+    expect(deps.waitForUpdate).toHaveBeenCalled();
+    expect(navigateToIssue).toHaveBeenCalledWith(30);
+  });
 });

@@ -38,6 +38,7 @@
   @include theme-transition;
 }
 
+.task-pane__btn-back-to-list,
 .task-pane__btn-copy-tag {
   @include pane-header-icon-btn;
 }

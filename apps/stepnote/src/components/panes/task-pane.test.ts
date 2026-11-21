@@ -732,4 +732,65 @@ describe("TaskPane Component", () => {
       expect(mockNotesView.handleSelectNote).toHaveBeenCalledWith(99);
     });
   });
+
+  describe("7. 一覧モード時の「一覧に戻る」ボタンと削除時復帰", () => {
+    it("7-1. layoutUIController.state.viewMode が 'list' のとき、ヘッダー左側に「一覧に戻る」ボタン（#task-pane-btn-back-to-list）が表示されること", () => {
+      const mockLayoutUI = {
+        state: { viewMode: "list" },
+        closeListTaskDetail: vi.fn(),
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+      (element as unknown as { layoutUIController: unknown }).layoutUIController =
+        mockLayoutUI;
+
+      const htmlStr = flattenTemplate(element.render());
+      expect(htmlStr).toContain('id="task-pane-btn-back-to-list"');
+      expect(htmlStr).toContain('name="angle-left-solid-full"');
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="task-pane-btn-back-to-list"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toContain("一覧に戻る");
+    });
+
+    it("7-2. viewMode が 'standard' または layoutUIController 未設定のとき、「一覧に戻る」ボタンが表示されないこと", () => {
+      const htmlWithoutCtrl = flattenTemplate(element.render());
+      expect(htmlWithoutCtrl).not.toContain('id="task-pane-btn-back-to-list"');
+
+      const mockLayoutUI = {
+        state: { viewMode: "standard" },
+        closeListTaskDetail: vi.fn(),
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+      (element as unknown as { layoutUIController: unknown }).layoutUIController =
+        mockLayoutUI;
+
+      const htmlStandard = flattenTemplate(element.render());
+      expect(htmlStandard).not.toContain('id="task-pane-btn-back-to-list"');
+    });
+
+    it("7-3. handleBackToList 実行時に layoutUIController.closeListTaskDetail が呼び出されること", () => {
+      const closeListTaskDetailMock = vi.fn();
+      (element as unknown as { layoutUIController: unknown }).layoutUIController = {
+        state: { viewMode: "list" },
+        closeListTaskDetail: closeListTaskDetailMock,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+
+      (element as unknown as { handleBackToList: () => void }).handleBackToList();
+      expect(closeListTaskDetailMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("7-4. viewMode が 'list' の状態でタスク削除を確定した際、deleteTask 後に closeListTaskDetail が呼び出されること", async () => {
+      const closeListTaskDetailMock = vi.fn();
+      (element as unknown as { layoutUIController: unknown }).layoutUIController = {
+        state: { viewMode: "list" },
+        closeListTaskDetail: closeListTaskDetailMock,
+        subscribe: vi.fn().mockReturnValue(vi.fn()),
+      };
+
+      await element.handleConfirmDelete();
+      expect(mockTaskController.deleteTask).toHaveBeenCalledTimes(1);
+      expect(closeListTaskDetailMock).toHaveBeenCalledTimes(1);
+    });
+  });
 });

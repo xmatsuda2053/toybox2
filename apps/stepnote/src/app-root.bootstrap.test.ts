@@ -58,6 +58,7 @@ describe("app-root.bootstrap", () => {
     expect(bundle.labelsController).toBeDefined();
     expect(bundle.taskController).toBeDefined();
     expect(bundle.taskListController).toBeDefined();
+    expect(bundle.taskTableController).toBeDefined();
     expect(bundle.logsController).toBeDefined();
     expect(bundle.notesController).toBeDefined();
     expect(bundle.issuesController).toBeDefined();
@@ -88,7 +89,7 @@ describe("app-root.bootstrap", () => {
         .map(([controller]) => controller)
         .filter((controller) => controller instanceof ContextProvider),
     );
-    expect(uniqueProviders.size).toBe(15);
+    expect(uniqueProviders.size).toBe(16);
   });
 
   it("2-2. bindAppControllerSubscriptions が各 Controller 間の連動購読を設定すること", async () => {
@@ -127,6 +128,7 @@ describe("app-root.bootstrap", () => {
     const setNotesTaskId = vi.spyOn(bundle.notesController, "setTaskId").mockResolvedValue();
     const recordHistory = vi.spyOn(bundle.taskHistoryController, "record").mockImplementation(() => {});
     const refreshList = vi.spyOn(bundle.taskListController, "refresh").mockResolvedValue();
+    const refreshTable = vi.spyOn(bundle.taskTableController, "refresh").mockResolvedValue();
     const refreshTask = vi.spyOn(bundle.taskController, "refresh").mockResolvedValue();
     const refreshTagSets = vi.spyOn(bundle.tagSetsController, "refresh").mockResolvedValue();
 
@@ -152,6 +154,7 @@ describe("app-root.bootstrap", () => {
     expect(setNotesTaskId).toHaveBeenCalledWith(42);
     expect(recordHistory).toHaveBeenCalledWith(42);
     expect(refreshList).toHaveBeenCalled();
+    expect(refreshTable).toHaveBeenCalled();
 
     await issueListeners[0]?.();
     expect(refreshTask).toHaveBeenCalled();

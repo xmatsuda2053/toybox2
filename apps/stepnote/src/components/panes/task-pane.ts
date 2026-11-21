@@ -15,6 +15,7 @@ import {
 } from "@/constants/task-status.constants.js";
 import {
   SubscriberElement,
+  WithLayoutUIController,
   WithTaskController,
   WithIssuesController,
 } from "@/utils/controller-consumers.mixin.js";
@@ -37,8 +38,8 @@ import styles from "./task-pane.scss?inline";
  * @extends {WithIssuesController(WithTaskController(SubscriberElement))}
  */
 @customElement("task-pane")
-export class TaskPane extends WithIssuesController(
-  WithTaskController(SubscriberElement),
+export class TaskPane extends WithLayoutUIController(
+  WithIssuesController(WithTaskController(SubscriberElement)),
 ) {
   public static styles = unsafeCSS(styles);
 
@@ -132,6 +133,16 @@ export class TaskPane extends WithIssuesController(
   public handleConfirmDelete = async (): Promise<void> => {
     await this.taskController?.deleteTask();
     this.handleCloseDeleteDialog();
+    if (this.layoutUIController?.state.viewMode === "list") {
+      this.layoutUIController.closeListTaskDetail();
+    }
+  };
+
+  /**
+   * 一覧表ビューへ戻るハンドラー
+   */
+  public handleBackToList = (): void => {
+    this.layoutUIController?.closeListTaskDetail();
   };
 
   /**
@@ -224,12 +235,42 @@ export class TaskPane extends WithIssuesController(
   }
 
   /**
-   * ヘッダー左側（タスク識別子・コピーボタン）の描画
+   * 一覧モード時のみ表示する「一覧に戻る」ボタンの描画
+   */
+  private renderBackToListButton(): HTMLTemplateResult | null {
+    if (this.layoutUIController?.state.viewMode !== "list") {
+      return null;
+    }
+
+    return html`
+      <wa-tooltip for="task-pane-btn-back-to-list" trigger="hover">
+        一覧に戻る
+      </wa-tooltip>
+      <wa-button
+        id="task-pane-btn-back-to-list"
+        class="task-pane__btn-back-to-list"
+        variant="neutral"
+        appearance="plain"
+        size="s"
+        @click=${this.handleBackToList}
+      >
+        <wa-icon
+          library="my-icons"
+          name="angle-left-solid-full"
+          label="一覧に戻る"
+        ></wa-icon>
+      </wa-button>
+    `;
+  }
+
+  /**
+   * ヘッダー左側（一覧戻る・タスク識別子・コピーボタン）の描画
    */
   private renderHeaderLeft(): HTMLTemplateResult {
     const task = this.taskController?.state;
     return html`
       <div class="task-pane__header-left">
+        ${this.renderBackToListButton()}
         <span class="task-pane__title">TASK #${task?.id}</span>
         <wa-tooltip for="task-pane-btn-copy-tag" trigger="hover">
           ジャンプ用タグをコピー

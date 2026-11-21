@@ -1,4 +1,11 @@
 /**
+ * アプリケーションの表示モード
+ * - "standard": 標準モード（5ペイン構成）
+ * - "list": 一覧モード（全幅一覧テーブル / 詳細ビュー構成）
+ */
+export type AppViewMode = "standard" | "list";
+
+/**
  * 画面全体のレイアウト・各パネルの開閉状態
  */
 export interface LayoutState {
@@ -16,6 +23,10 @@ export interface LayoutState {
   isScratchMode: boolean;
   /** 全画面設定モード (Settings Mode) の有効・無効状態 */
   isSettingsMode: boolean;
+  /** 表示モード（標準モード / 一覧モード） */
+  viewMode: AppViewMode;
+  /** 一覧モード内でタスク詳細ビューを開いているかどうか */
+  isListDetailOpen: boolean;
 }
 
 /**

@@ -727,4 +727,24 @@ describe("AppMenu Component", () => {
       );
     });
   });
+
+  describe("22. 一覧モード（viewMode='list'）有効時におけるボタン無効化制御", () => {
+    it("22-1. viewMode が 'list' の際、開閉ボタン（#app-menu-toggle-btn）および集中モードボタン（#app-menu-zen-btn）に disabled 属性が付与されること", () => {
+      (appMenu as unknown as { viewMode: string }).viewMode = "list";
+      const htmlStr = flattenTemplate(appMenu.render());
+
+      expect(htmlStr).toMatch(/id="app-menu-toggle-btn"[^>]*disabled/);
+      expect(htmlStr).toMatch(/id="app-menu-zen-btn"[^>]*disabled/);
+    });
+
+    it("22-2. viewMode が 'list' の際も、ホーム・新規作成・スクラッチ・設定ボタンには disabled 属性が付与されないこと", () => {
+      (appMenu as unknown as { viewMode: string }).viewMode = "list";
+      const htmlStr = flattenTemplate(appMenu.render());
+
+      expect(htmlStr).not.toMatch(/id="app-menu-home-btn"[^>]*disabled/);
+      expect(htmlStr).not.toMatch(/id="app-menu-task-create-btn"[^>]*disabled/);
+      expect(htmlStr).not.toMatch(/id="app-menu-scratch-btn"[^>]*disabled/);
+      expect(htmlStr).not.toMatch(/id="app-menu-settings-btn"[^>]*disabled/);
+    });
+  });
 });

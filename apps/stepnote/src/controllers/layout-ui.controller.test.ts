@@ -44,6 +44,12 @@ const createMockHost = () => {
  * 仕様 23:設定モード有効時、toggleNavigationListArea, toggleJournalArea, toggleZenMode を呼び出しても状態が変更されずガードされ、toggleScratchMode の実行時は設定モードが解除されてスクラッチモードへ直接切り替わること。
  * 仕様 24:resetToHome の実行により、スクラッチモード・設定モード・集中モードがすべて解除され、すべてのペイン開閉状態（Quick Access含む）が初期状態（開いた状態）へ一括リセットされること。
  * 仕様 25:すでにすべての状態が初期値である場合に resetToHome を実行しても不要な再描画通知が行われないこと。
+ * 仕様 26:setViewMode により表示モード（standard / list）を切り替えられ、ストレージへ永続化されること。
+ * 仕様 27:永続化ストレージの保存値（list）から初期状態の viewMode が復元され、不正値の場合は standard にフォールバックすること。
+ * 仕様 28:スクラッチモード・設定モード有効時は setViewMode がガードされ、モード変更されないこと。
+ * 仕様 29:一覧モード（viewMode === "list"）のとき、toggleZenMode / setZenMode / toggleNavigationListArea がガードされること。
+ * 仕様 30:openListTaskDetail / closeListTaskDetail により一覧モード内のタスク詳細表示状態が切り替わり、標準モード時は openListTaskDetail がガードされること。
+ * 仕様 31:resetToHome 実行時、現在の viewMode は維持したまま Scratch / Settings / Zen / 詳細表示状態およびペイン開閉状態がリセットされること。
  *  */
 describe("layout-ui.controller", () => {
   describe("初期状態の検証", () => {
@@ -58,6 +64,8 @@ describe("layout-ui.controller", () => {
         isZenMode: false,
         isScratchMode: false,
         isSettingsMode: false,
+        viewMode: "standard",
+        isListDetailOpen: false,
       });
     });
   });
@@ -541,6 +549,8 @@ describe("layout-ui.controller", () => {
         isZenMode: false,
         isScratchMode: false,
         isSettingsMode: false,
+        viewMode: "standard",
+        isListDetailOpen: false,
       });
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
 
@@ -560,6 +570,8 @@ describe("layout-ui.controller", () => {
         isZenMode: false,
         isScratchMode: false,
         isSettingsMode: false,
+        viewMode: "standard",
+        isListDetailOpen: false,
       });
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
 
@@ -579,6 +591,8 @@ describe("layout-ui.controller", () => {
         isZenMode: false,
         isScratchMode: false,
         isSettingsMode: false,
+        viewMode: "standard",
+        isListDetailOpen: false,
       });
       expect(requestUpdateMock).toHaveBeenCalledTimes(1);
     });
@@ -592,6 +606,162 @@ describe("layout-ui.controller", () => {
       ).resetToHome();
 
       expect(requestUpdateMock).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe("表示モード（standard / list）および一覧詳細サブ状態の検証", () => {
+    const createMockStorage = (initial?: Record<string, string>) => {
+      const store = new Map<string, string>(Object.entries(initial ?? {}));
+      return {
+        getItem: vi.fn((key: string) => store.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          store.set(key, value);
+        }),
+      };
+    };
+
+    it("仕様 26: setViewMode により表示モード（standard / list）を切り替えられ、ストレージへ永続化されること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const storage = createMockStorage();
+      const controller = new (LayoutUIController as unknown as {
+        new (
+          h: ReactiveControllerHost,
+          opts?: { storage?: ReturnType<typeof createMockStorage> },
+        ): LayoutUIController & {
+          setViewMode: (mode: "standard" | "list") => void;
+        };
+      })(host, { storage });
+
+      controller.setViewMode("list");
+      expect((controller.state as { viewMode: string }).viewMode).toBe("list");
+      expect(storage.setItem).toHaveBeenCalledWith("stepnote_view_mode", "list");
+      expect(requestUpdateMock).toHaveBeenCalledTimes(1);
+
+      controller.setViewMode("standard");
+      expect((controller.state as { viewMode: string }).viewMode).toBe("standard");
+      expect(storage.setItem).toHaveBeenCalledWith(
+        "stepnote_view_mode",
+        "standard",
+      );
+      expect(requestUpdateMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("仕様 27: 永続化ストレージの保存値（list）から初期状態の viewMode が復元され、不正値の場合は standard にフォールバックすること", () => {
+      const { host } = createMockHost();
+      const listStorage = createMockStorage({ stepnote_view_mode: "list" });
+      const listController = new (LayoutUIController as unknown as {
+        new (
+          h: ReactiveControllerHost,
+          opts?: { storage?: ReturnType<typeof createMockStorage> },
+        ): LayoutUIController;
+      })(host, { storage: listStorage });
+      expect((listController.state as { viewMode: string }).viewMode).toBe("list");
+
+      const invalidStorage = createMockStorage({ stepnote_view_mode: "unknown" });
+      const fallbackController = new (LayoutUIController as unknown as {
+        new (
+          h: ReactiveControllerHost,
+          opts?: { storage?: ReturnType<typeof createMockStorage> },
+        ): LayoutUIController;
+      })(host, { storage: invalidStorage });
+      expect((fallbackController.state as { viewMode: string }).viewMode).toBe(
+        "standard",
+      );
+    });
+
+    it("仕様 28: スクラッチモード・設定モード有効時は setViewMode がガードされ、モード変更されないこと", () => {
+      const { host } = createMockHost();
+      const storage = createMockStorage();
+      const controller = new (LayoutUIController as unknown as {
+        new (
+          h: ReactiveControllerHost,
+          opts?: { storage?: ReturnType<typeof createMockStorage> },
+        ): LayoutUIController & {
+          setViewMode: (mode: "standard" | "list") => void;
+        };
+      })(host, { storage });
+
+      controller.setScratchMode(true);
+      controller.setViewMode("list");
+      expect((controller.state as { viewMode: string }).viewMode).toBe("standard");
+
+      controller.setSettingsMode(true);
+      controller.setViewMode("list");
+      expect((controller.state as { viewMode: string }).viewMode).toBe("standard");
+      expect(storage.setItem).not.toHaveBeenCalled();
+    });
+
+    it("仕様 29: 一覧モード（viewMode === 'list'）のとき、toggleZenMode / setZenMode / toggleNavigationListArea がガードされること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new (LayoutUIController as unknown as {
+        new (h: ReactiveControllerHost): LayoutUIController & {
+          setViewMode: (mode: "standard" | "list") => void;
+        };
+      })(host);
+
+      controller.setViewMode("list");
+      requestUpdateMock.mockClear();
+
+      controller.toggleZenMode();
+      controller.setZenMode(true);
+      controller.toggleNavigationListArea();
+
+      expect(controller.state.isZenMode).toBe(false);
+      expect(controller.state.isNavigationListAreaOpen).toBe(true);
+      expect(requestUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it("仕様 30: openListTaskDetail / closeListTaskDetail により一覧モード内のタスク詳細表示状態が切り替わり、標準モード時は openListTaskDetail がガードされること", () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const controller = new (LayoutUIController as unknown as {
+        new (h: ReactiveControllerHost): LayoutUIController & {
+          setViewMode: (mode: "standard" | "list") => void;
+          openListTaskDetail: () => void;
+          closeListTaskDetail: () => void;
+        };
+      })(host);
+
+      // 標準モード時は openListTaskDetail がガードされる
+      controller.openListTaskDetail();
+      expect(
+        (controller.state as { isListDetailOpen: boolean }).isListDetailOpen,
+      ).toBe(false);
+      expect(requestUpdateMock).not.toHaveBeenCalled();
+
+      controller.setViewMode("list");
+      controller.openListTaskDetail();
+      expect(
+        (controller.state as { isListDetailOpen: boolean }).isListDetailOpen,
+      ).toBe(true);
+
+      controller.closeListTaskDetail();
+      expect(
+        (controller.state as { isListDetailOpen: boolean }).isListDetailOpen,
+      ).toBe(false);
+    });
+
+    it("仕様 31: resetToHome 実行時、現在の viewMode は維持したまま Scratch / Settings / Zen / 詳細表示状態およびペイン開閉状態がリセットされること", () => {
+      const { host } = createMockHost();
+      const controller = new (LayoutUIController as unknown as {
+        new (h: ReactiveControllerHost): LayoutUIController & {
+          setViewMode: (mode: "standard" | "list") => void;
+          openListTaskDetail: () => void;
+        };
+      })(host);
+
+      controller.setViewMode("list");
+      controller.openListTaskDetail();
+      controller.setScratchMode(true);
+
+      controller.resetToHome();
+
+      expect((controller.state as { viewMode: string }).viewMode).toBe("list");
+      expect(
+        (controller.state as { isListDetailOpen: boolean }).isListDetailOpen,
+      ).toBe(false);
+      expect(controller.state.isScratchMode).toBe(false);
+      expect(controller.state.isSettingsMode).toBe(false);
+      expect(controller.state.isZenMode).toBe(false);
     });
   });
 });

@@ -1,0 +1,314 @@
+@use "../../styles/mixins.scss" as *;
+@use "./pane-common.scss" as *;
+
+@include pane-host-layout;
+@include stepnote-tag-styles;
+
+.task-table-pane {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--wa-color-surface-default);
+  @include theme-transition;
+}
+
+.task-table-pane__header {
+  @include pane-section-header;
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+}
+
+.task-table-pane__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.task-table-pane__title {
+  @include pane-section-title;
+}
+
+.task-table-pane__count {
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+  @include theme-transition;
+}
+
+.task-table-pane__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.task-table-pane__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wa-space-xs, 8px);
+  padding: var(--wa-space-xs, 8px) var(--wa-space-s, 12px);
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  background-color: var(--wa-color-surface-lowered);
+  @include theme-transition;
+}
+
+.task-table-pane__filter-keyword {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.task-table-pane__filter-select {
+  width: 136px;
+  flex-shrink: 0;
+}
+
+.task-table-pane__selection-bar {
+  @include flex-between;
+  padding: var(--wa-space-2xs, 6px) var(--wa-space-s, 12px);
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-brand-border-normal, var(--wa-color-surface-border));
+  background-color: var(--wa-color-brand-fill-quiet, var(--wa-color-neutral-fill-quiet));
+  @include theme-transition;
+}
+
+.task-table-pane__selection-count {
+  font-size: var(--wa-font-size-s);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-brand-on-quiet, var(--wa-color-text-normal));
+}
+
+.task-table-pane__selection-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.task-table-pane__table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  @include custom-scrollbar;
+}
+
+.task-table-pane__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-normal);
+  @include theme-transition;
+}
+
+.task-table-pane__thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--wa-color-surface-lowered);
+  @include theme-transition;
+}
+
+.task-table-pane__th {
+  text-align: left;
+  font-weight: var(--wa-font-weight-semibold, 600);
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+  padding: var(--wa-space-xs, 8px) var(--wa-space-xs, 8px);
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  white-space: nowrap;
+  @include theme-transition;
+}
+
+.task-table-pane__th--select {
+  width: 40px;
+  text-align: center;
+}
+
+.task-table-pane__th--id {
+  width: 72px;
+}
+
+.task-table-pane__th--status {
+  width: 104px;
+}
+
+.task-table-pane__th--label {
+  width: 120px;
+}
+
+.task-table-pane__th--name {
+  width: auto;
+  min-width: 200px;
+}
+
+.task-table-pane__th--due {
+  width: 124px;
+}
+
+.task-table-pane__th--contacts {
+  width: 136px;
+}
+
+.task-table-pane__th--tags {
+  width: 180px;
+}
+
+.task-table-pane__th--issues {
+  width: 96px;
+}
+
+.task-table-pane__sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--wa-color-text-normal);
+  }
+}
+
+.task-table-pane__sort-btn--active {
+  color: var(--wa-color-brand-on-quiet, var(--wa-color-text-normal));
+}
+
+.task-table-pane__sort-icon {
+  font-size: var(--wa-font-size-2xs, 11px);
+}
+
+.task-table-pane__tr {
+  border-bottom: var(--wa-border-width-s) var(--wa-border-style)
+    var(--wa-color-surface-border);
+  @include theme-transition;
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+.task-table-pane__tr--head:hover {
+  background-color: transparent;
+}
+
+.task-table-pane__tr--selected {
+  background-color: var(--wa-color-brand-fill-quiet, var(--wa-color-neutral-fill-quiet));
+}
+
+.task-table-pane__td {
+  padding: var(--wa-space-2xs, 6px) var(--wa-space-xs, 8px);
+  vertical-align: middle;
+  @include text-ellipsis;
+}
+
+.task-table-pane__td--select {
+  text-align: center;
+  overflow: visible;
+}
+
+.task-table-pane__td--id {
+  color: var(--wa-color-text-quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-table-pane__status-cell,
+.task-table-pane__due-cell,
+.task-table-pane__issues-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-table-pane__status-icon {
+  font-size: var(--wa-font-size-s);
+  flex-shrink: 0;
+  @include task-status-icon-colors;
+}
+
+.task-table-pane__due-icon {
+  font-size: var(--wa-font-size-xs);
+  flex-shrink: 0;
+}
+
+.task-table-pane__due-icon--overdue {
+  color: var(--quick-access-icon-overdue);
+}
+
+.task-table-pane__due-icon--asap {
+  color: var(--quick-access-icon-asap);
+}
+
+.task-table-pane__due-icon--upcoming {
+  color: var(--quick-access-icon-upcoming);
+}
+
+.task-table-pane__name-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs, 6px);
+  min-width: 0;
+}
+
+.task-table-pane__bookmark-btn {
+  @include flex-center;
+  flex-shrink: 0;
+  padding: var(--wa-space-3xs, 2px);
+  border: none;
+  background: transparent;
+  color: var(--wa-color-text-quiet);
+  opacity: 0.45;
+  cursor: pointer;
+  @include theme-transition;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.task-table-pane__bookmark-btn--active {
+  color: var(--quick-access-icon-bookmark, var(--wa-color-warning-fill-loud));
+  opacity: 1;
+}
+
+.task-table-pane__task-link {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--wa-color-text-normal);
+  font: inherit;
+  font-weight: var(--wa-font-weight-medium, 500);
+  text-align: left;
+  cursor: pointer;
+  @include text-ellipsis;
+  @include theme-transition;
+
+  &:hover {
+    color: var(--wa-color-brand-on-quiet, var(--wa-color-brand));
+    text-decoration: underline;
+  }
+}
+
+.task-table-pane__tags-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-3xs, 4px);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.task-table-pane__muted {
+  color: var(--wa-color-text-quiet);
+}
+
+.task-table-pane__empty {
+  @include pane-tab-empty;
+}

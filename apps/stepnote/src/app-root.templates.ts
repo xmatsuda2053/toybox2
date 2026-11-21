@@ -49,6 +49,9 @@ export function renderAppHeader(
           .taskRepository=${params.taskRepository}
           data-theme=${params.resolvedTheme}
         ></task-history-menu>
+        <view-mode-switcher
+          ?disabled=${params.isSearchDisabled}
+        ></view-mode-switcher>
         <theme-switcher></theme-switcher>
       </div>
     </header>
@@ -64,6 +67,7 @@ function renderAppMenuTemplate(
     isZenMode,
     isScratchMode,
     isSettingsMode,
+    viewMode,
   } = layoutState;
 
   return html`
@@ -74,6 +78,7 @@ function renderAppMenuTemplate(
       .isZenMode=${isZenMode}
       .isScratchMode=${isScratchMode}
       .isSettingsMode=${isSettingsMode}
+      .viewMode=${viewMode}
     ></app-menu>
   `;
 }
@@ -142,8 +147,35 @@ function renderSingleModePane(
   `;
 }
 
+function renderListModeLayout(
+  layoutState: LayoutState,
+  resolvedTheme: string,
+): HTMLTemplateResult {
+  if (!layoutState.isListDetailOpen) {
+    return html`
+      <div class="panes-container">
+        ${renderAppMenuTemplate(layoutState, resolvedTheme)}
+        <task-table-pane
+          class="pane-task-table"
+          data-theme=${resolvedTheme}
+        ></task-table-pane>
+      </div>
+    `;
+  }
+
+  return html`
+    <div class="panes-container">
+      ${renderAppMenuTemplate(layoutState, resolvedTheme)}
+      <main class="task-pane">
+        <task-pane data-theme=${resolvedTheme}></task-pane>
+      </main>
+      ${renderJournalAside(layoutState.isJournalAreaOpen, resolvedTheme)}
+    </div>
+  `;
+}
+
 /**
- * 5ペイン（または Scratch / Settings 単一モード）の中央コンテンツ領域を描画する。
+ * 5ペイン（または Scratch / Settings / 一覧モード）の中央コンテンツ領域を描画する。
  */
 export function renderAppPanesLayout(
   layoutState: LayoutState,
@@ -154,6 +186,7 @@ export function renderAppPanesLayout(
     isJournalAreaOpen: isJournalOpen,
     isScratchMode,
     isSettingsMode,
+    viewMode,
   } = layoutState;
 
   if (isScratchMode) {
@@ -161,6 +194,9 @@ export function renderAppPanesLayout(
   }
   if (isSettingsMode) {
     return renderSingleModePane(layoutState, resolvedTheme, "settings");
+  }
+  if (viewMode === "list") {
+    return renderListModeLayout(layoutState, resolvedTheme);
   }
 
   return html`

@@ -6,6 +6,7 @@ import {
   labelsContext,
   taskContext,
   taskListContext,
+  taskTableContext,
   logsContext,
   notesContext,
   issuesContext,
@@ -24,6 +25,7 @@ import { TagsController } from "@/controllers/tags.controller.js";
 import { TagSetsController } from "@/controllers/tag-sets.controller.js";
 import { TaskController } from "@/controllers/task.controller.js";
 import { TaskListController } from "@/controllers/task-list.controller.js";
+import { TaskTableController } from "@/controllers/task-table.controller.js";
 import { LogsController } from "@/controllers/logs.controller.js";
 import { NotesController } from "@/controllers/notes.controller.js";
 import { IssuesController } from "@/controllers/issues.controller.js";
@@ -70,6 +72,7 @@ export interface AppControllerBundle {
   labelsController: LabelsController;
   taskController: TaskController;
   taskListController: TaskListController;
+  taskTableController: TaskTableController;
   logsController: LogsController;
   notesController: NotesController;
   issuesController: IssuesController;
@@ -165,6 +168,13 @@ function createTaskAndFeatureControllers(
       getCurrentFiscalYear(),
       new TaskListQuery(db),
     ),
+    taskTableController: new TaskTableController(host, {
+      taskRepository: repos.taskRepository,
+      issuesRepository: repos.issuesRepository,
+      labelsRepository: repos.labelsRepository,
+      tagsRepository: repos.tagsRepository,
+      taskListQuery: new TaskListQuery(db),
+    }),
     issuesController: new IssuesController(
       host,
       repos.issuesRepository,
@@ -220,6 +230,7 @@ function provideCoreContexts(
   provideContext(host, labelsContext, bundle.labelsController);
   provideContext(host, taskContext, bundle.taskController);
   provideContext(host, taskListContext, bundle.taskListController);
+  provideContext(host, taskTableContext, bundle.taskTableController);
   provideContext(host, logsContext, bundle.logsController);
   provideContext(host, notesContext, bundle.notesController);
   provideContext(host, issuesContext, bundle.issuesController);
@@ -265,7 +276,10 @@ async function syncSelectedTaskChildren(
   if (currentTaskId) {
     bundle.taskHistoryController.record(currentTaskId);
   }
-  await bundle.taskListController.refresh();
+  await Promise.all([
+    bundle.taskListController.refresh(),
+    bundle.taskTableController.refresh(),
+  ]);
 }
 
 /**
@@ -280,17 +294,20 @@ export function bindAppControllerSubscriptions(
   bundle.issuesController.subscribe(async () => {
     await Promise.all([
       bundle.taskListController.refresh(),
+      bundle.taskTableController.refresh(),
       bundle.taskController.refresh(),
     ]);
   });
 
-  bundle.labelsController.subscribe(() => {
+  bundle.labelsController.subscribe(async () => {
+    await bundle.taskTableController.refresh();
     onRequestUpdate();
   });
 
   bundle.tagsController.subscribe(async () => {
     await Promise.all([
       bundle.taskListController.refresh(),
+      bundle.taskTableController.refresh(),
       bundle.taskController.refresh(),
       bundle.tagSetsController.refresh(),
     ]);

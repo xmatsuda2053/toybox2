@@ -62,10 +62,16 @@ trigger: always_on
     - 内部は Task 側と縦位置（ベースライン）を揃えるためタブ構造を維持しつつ、**Logs タブ** による画面構成とし、タブ下のコンテンツ領域で垂直スクロール可能とする。
       - **Logs タブ**: 作業実績・行動履歴ログの一覧表示および追加。
 
+- **表示モード構成（標準モード / 一覧モード）**:
+  - ヘッダーの `header-actions` 内の切替UIにより「標準モード（5ペイン）」と「一覧モード」を切り替え可能とし、選択状態は永続化する。
+  - **一覧モード（一覧表ビュー）**: 最左の Menu（45px）を残し、Navigation・Task List・Task・Journal を非表示として全幅の一覧テーブル（`task-table-pane`）を表示する。
+  - **一覧モード（タスク詳細ビュー）**: 一覧表のタスク名クリック、または一覧モード中の全体検索・履歴・IDジャンプからタスクを開いた際は、Menu・Task・Journal の3ペインのみを表示し（Navigation・Task List は非表示）、Task ペインヘッダー左上の「一覧に戻る」ボタンで一覧表ビューへ復帰できる。
+  - **Scratch / Settings モードとの連携**: Scratch / Settings 表示中はヘッダーのモード切替を操作不可（disabled）とし、Menu のホームボタン押下で選択中の表示モードの初期画面へ戻る。
+
 ## 3. 開閉状態管理（LayoutUIController）
 
-- Navigation Area および Task List Area の表示・非表示、Quick Access の上下開閉状態、ならびに Journal Area の開閉・縮小状態は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
-- Lit コンポーネント側に直接開閉フラグを持たせず、`LayoutState`（`isNavigationAreaOpen`, `isNavigationListAreaOpen`, `isQuickAccessOpen`, `isJournalAreaOpen`）を通じて制御すること。
+- Navigation Area および Task List Area の表示・非表示、Quick Access の上下開閉状態、Journal Area の開閉・縮小状態、ならびに表示モード（`viewMode`）・一覧詳細状態（`isListDetailOpen`）は `LayoutUIController`（`apps/stepnote/src/controllers/layout-ui.controller.ts`）で一元管理する。
+- Lit コンポーネント側に直接開閉フラグを持たせず、`LayoutState`（`isNavigationAreaOpen`, `isNavigationListAreaOpen`, `isQuickAccessOpen`, `isJournalAreaOpen`, `viewMode`, `isListDetailOpen` 等）を通じて制御すること。
 
 ## 4. アーキテクチャ・層の責務分離（Pure Lit ＋ Dexie）
 

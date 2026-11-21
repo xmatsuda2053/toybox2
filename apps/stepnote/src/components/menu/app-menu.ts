@@ -1,5 +1,6 @@
 import { html, unsafeCSS } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import type { AppViewMode } from "@/types";
 import {
   SubscriberElement,
   WithLabelsController,
@@ -60,6 +61,12 @@ export class AppMenu extends WithLayoutUIController(
    */
   @property({ type: Boolean })
   public isSettingsMode: boolean = false;
+
+  /**
+   * 表示モード（"standard" | "list"）
+   */
+  @property({ type: String })
+  public viewMode: AppViewMode = "standard";
 
   /**
    * 登録済みのラベルが存在するか判定する
@@ -488,6 +495,8 @@ export class AppMenu extends WithLayoutUIController(
 
   override render() {
     const isPrimaryDisabled = this.isScratchMode || this.isSettingsMode;
+    const isStandardOnlyControlDisabled =
+      isPrimaryDisabled || this.viewMode === "list";
 
     return html`
       <!-- 上部エリア (メイン機能群) -->
@@ -497,9 +506,12 @@ export class AppMenu extends WithLayoutUIController(
           ${this.renderHomeButton()}
           ${this.renderSidebarToggleButton(
             this.isNavigationListAreaOpen,
-            isPrimaryDisabled,
+            isStandardOnlyControlDisabled,
           )}
-          ${this.renderZenModeButton(this.isZenMode, isPrimaryDisabled)}
+          ${this.renderZenModeButton(
+            this.isZenMode,
+            isStandardOnlyControlDisabled,
+          )}
         </div>
 
         <!-- タスク・作業操作系グループ -->
