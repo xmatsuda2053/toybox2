@@ -52,6 +52,17 @@
   @include pane-header-icon-btn;
 }
 
+:host([compact]) .task-tag-bar__btn-add {
+  justify-content: flex-start;
+
+  &::part(button) {
+    width: auto;
+    min-width: auto;
+    aspect-ratio: auto;
+    padding-inline: 0 var(--wa-space-3xs, 4px);
+  }
+}
+
 .task-tag-bar__btn-add-icon {
   font-size: 1.35em;
 }

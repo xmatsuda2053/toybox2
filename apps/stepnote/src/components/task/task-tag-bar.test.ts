@@ -526,6 +526,17 @@ describe("TaskTagBar Component", () => {
         /\.task-tag-bar__btn-add-icon\s*\{[^}]*font-size:\s*1\.35em;/,
       );
     });
+
+    it("3-11. compact 属性指定時は追加ボタンの左余白と正方形固定が解除され、左端揃えスタイルになること", () => {
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /:host\(\[compact\]\) \.task-tag-bar__btn-add::part\(button\)\s*\{[^}]*aspect-ratio:\s*auto/,
+      );
+      expect(compiledCss).toMatch(
+        /:host\(\[compact\]\) \.task-tag-bar__btn-add::part\(button\)\s*\{[^}]*padding-inline:\s*0/,
+      );
+      expect((element as unknown as { compact?: boolean }).compact).toBe(false);
+    });
   });
 
   describe("4. 外部対象タスク指定モード（targetTaskId / targetTagIds）", () => {

@@ -209,7 +209,7 @@
 
 .task-table-pane__th--name {
   width: auto;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .task-table-pane__th--due {
@@ -221,7 +221,7 @@
 }
 
 .task-table-pane__th--tags {
-  width: 220px;
+  width: 300px;
 }
 
 .task-table-pane__th--issues {
@@ -294,6 +294,10 @@
 .task-table-pane__td--id {
   color: var(--wa-color-text-quiet);
   font-variant-numeric: tabular-nums;
+}
+
+.task-table-pane__td--contacts[title] {
+  cursor: help;
 }
 
 .task-table-pane__status-dropdown,

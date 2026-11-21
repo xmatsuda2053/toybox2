@@ -77,6 +77,25 @@ export function formatContactsSummary(contacts?: readonly Contact[]): string {
   return `${firstName} +${contacts.length - 1}`;
 }
 
+/**
+ * 関係者一覧からマウスオーバー（title属性）用の詳細文字列を整形する。
+ * 各関係者について「所属 / 氏名 / 連絡先」（入力がある項目のみ）を1行とし、複数人は改行で連結する。
+ */
+export function formatContactsTooltip(contacts?: readonly Contact[]): string {
+  if (!contacts || contacts.length === 0) {
+    return "";
+  }
+  return contacts
+    .map((contact) =>
+      [contact.div, contact.name, contact.tel]
+        .map((part) => part?.trim() ?? "")
+        .filter((part) => part.length > 0)
+        .join(" / "),
+    )
+    .filter((line) => line.length > 0)
+    .join("\n");
+}
+
 function resolvePriorityDueInfo(
   current: TaskDueIconInfo | undefined,
   candidate: TaskDueIconInfo | null,

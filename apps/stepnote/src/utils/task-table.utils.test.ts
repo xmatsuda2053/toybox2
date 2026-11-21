@@ -6,6 +6,7 @@ import type { TaskTableRowViewModel } from "@/types";
 import {
   DEFAULT_TASK_TABLE_STATUS_CODES,
   formatContactsSummary,
+  formatContactsTooltip,
   buildTaskIssueCountMap,
   extractAvailableFiscalYears,
   filterTaskTableRows,
@@ -18,10 +19,11 @@ import {
 /**
  * 【task-table.utils 仕様 (タスク一覧表示モード 純粋ロジック)】
  *
- * 1. 関係者表示サマリー整形（formatContactsSummary）
+ * 1. 関係者表示サマリー整形（formatContactsSummary / formatContactsTooltip）
  *    - 1-1. 空配列または未定義の場合は "-" を返すこと
  *    - 1-2. 1件の場合は先頭関係者の氏名をそのまま返すこと
  *    - 1-3. 複数件の場合は「先頭氏名 +残件数」形式で返すこと
+ *    - 1-4. formatContactsTooltip が全関係者の所属・氏名・連絡先を改行区切りで整形し、空項目・0件を適切に扱うこと
  *
  * 2. Issue集計マップ構築（buildTaskIssueCountMap）
  *    - 2-1. タスクごとの完了数・総数および未完了Issueの最優先期限ステータスが集計されること
@@ -92,6 +94,21 @@ describe("task-table.utils", () => {
           { div: "総務部", name: "鈴木 一郎", tel: "" },
         ]),
       ).toBe("山田 太郎 +2");
+    });
+
+    it("1-4. formatContactsTooltip が全関係者の所属・氏名・連絡先を改行区切りで整形し、空項目・0件を適切に扱うこと", () => {
+      expect(formatContactsTooltip(undefined)).toBe("");
+      expect(formatContactsTooltip([])).toBe("");
+      expect(formatContactsTooltip([{ div: "", name: "明智", tel: "" }])).toBe(
+        "明智",
+      );
+      expect(
+        formatContactsTooltip([
+          { div: "所属１", name: "田中", tel: "1234" },
+          { div: "所属２", name: "山田", tel: "4321" },
+          { div: "営業部", name: "佐藤", tel: "" },
+        ]),
+      ).toBe("所属１ / 田中 / 1234\n所属２ / 山田 / 4321\n営業部 / 佐藤");
     });
   });
 
