@@ -1,5 +1,6 @@
 import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import "@shared/components";
 import { dispatchCustomEvent, getCurrentFiscalYear } from "@shared/utils";
 import type { SearchInputEventDetail } from "@shared/components";
@@ -256,7 +257,11 @@ export class TaskTablePane extends WithLabelsController(
         <table class="task-table-pane__table">
           ${renderTaskTableHeaderRow(params)}
           <tbody class="task-table-pane__tbody">
-            ${params.rows.map((row) => renderTaskTableRow(row, params))}
+            ${repeat(
+              params.rows,
+              (row) => row.task.id ?? row,
+              (row) => renderTaskTableRow(row, params),
+            )}
           </tbody>
         </table>
       </div>

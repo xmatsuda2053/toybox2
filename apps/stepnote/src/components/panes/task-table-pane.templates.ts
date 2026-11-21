@@ -1,4 +1,5 @@
 import { html, nothing, type HTMLTemplateResult } from "lit";
+import { live } from "lit/directives/live.js";
 import { format } from "@shared/utils";
 import type {
   DatePickerChangeEventDetail,
@@ -431,7 +432,7 @@ export function renderTaskTableHeaderRow(
           <wa-checkbox
             class="task-table-pane__checkbox-all"
             aria-label="表示中のタスクをすべて選択"
-            ?checked=${params.isAllFilteredSelected}
+            .checked=${live(params.isAllFilteredSelected)}
             .indeterminate=${params.isSomeFilteredSelected}
             @change=${params.onToggleSelectAll}
           ></wa-checkbox>
@@ -718,7 +719,7 @@ export function renderTaskTableRow(
         <wa-checkbox
           class="task-table-pane__checkbox-row"
           aria-label="タスク #${taskId} を選択"
-          ?checked=${isSelected}
+          .checked=${live(isSelected)}
           @change=${() => params.onToggleRowSelect(taskId)}
         ></wa-checkbox>
       </td>
