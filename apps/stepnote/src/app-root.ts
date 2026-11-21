@@ -228,6 +228,15 @@ export class AppRoot extends LitElement {
     }
   };
 
+  /** 全体検索結果選択時のハンドラー（ダイアログを閉じ、一覧モード時は詳細ビューへ遷移する） */
+  public handleGlobalSearchSelect = (): void => {
+    this.handleCloseGlobalSearch();
+    if (this.layoutUIController.state.viewMode === "list") {
+      this.taskTableController.clearSelection();
+      this.layoutUIController.openListTaskDetail();
+    }
+  };
+
   private createNavigationDeps(): IdJumpCoordinatorDeps {
     return {
       getTaskById: (taskId) => this.taskRepository.getById(taskId),
@@ -240,6 +249,8 @@ export class AppRoot extends LitElement {
         this.layoutUIController.setSettingsMode(isOpen),
       setJournalAreaOpen: (isOpen) =>
         this.layoutUIController.setJournalAreaOpen(isOpen),
+      openListTaskDetail: () => this.layoutUIController.openListTaskDetail(),
+      clearTableSelection: () => this.taskTableController.clearSelection(),
       selectLabel: (labelId) => this.labelsController.selectLabel(labelId),
       selectTask: (taskId) => this.taskListController.selectTask(taskId),
       setTaskId: (taskId) => this.taskController.setTaskId(taskId),
@@ -406,7 +417,7 @@ export class AppRoot extends LitElement {
           .open=${this.isGlobalSearchOpen}
           data-theme=${resolvedTheme}
           @global-search-close=${this.handleCloseGlobalSearch}
-          @global-search-select=${this.handleCloseGlobalSearch}
+          @global-search-select=${this.handleGlobalSearchSelect}
         ></global-search-dialog>
 
         <task-create-dialog

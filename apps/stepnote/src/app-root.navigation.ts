@@ -1,4 +1,5 @@
 import type { IdJumpDetail } from "@shared/components";
+import type { AppViewMode } from "@/types";
 
 type ScratchPaneHandle = HTMLElement & {
   navigateToScratch?: (id: number) => Promise<void> | void;
@@ -25,10 +26,13 @@ export interface IdJumpCoordinatorDeps {
     isScratchMode: boolean;
     isSettingsMode: boolean;
     isJournalAreaOpen: boolean;
+    viewMode?: AppViewMode;
   };
   setScratchMode: (isOpen: boolean) => void;
   setSettingsMode: (isOpen: boolean) => void;
   setJournalAreaOpen: (isOpen: boolean) => void;
+  openListTaskDetail?: () => void;
+  clearTableSelection?: () => void;
   selectLabel: (labelId: number) => Promise<void>;
   selectTask: (taskId: number) => Promise<void>;
   setTaskId: (taskId: number) => Promise<void>;
@@ -56,6 +60,11 @@ export async function selectAndShowTask(
   }
   await deps.selectTask(taskId);
   await deps.setTaskId(taskId);
+  if (deps.getLayoutState().viewMode === "list") {
+    deps.clearTableSelection?.();
+    deps.openListTaskDetail?.();
+    await deps.waitForUpdate();
+  }
   return true;
 }
 

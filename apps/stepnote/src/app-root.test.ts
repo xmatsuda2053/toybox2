@@ -1468,5 +1468,67 @@ describe("AppRoot Controller 状態連携仕様", () => {
       expect(setTaskIdSpy).toHaveBeenCalledWith(101);
       expect(appRoot.layoutUIController.state.isListDetailOpen).toBe(true);
     });
+
+    it("17-6. viewMode='list' 中に global-search-select を受信した際、詳細ビューへ遷移しテーブル選択がクリアされること", () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+      appRoot.isGlobalSearchOpen = true;
+      const clearSpy = vi.spyOn(appRoot.taskTableController, "clearSelection");
+
+      const searchDialog = {
+        dispatchSelect: () => {
+          appRoot.handleGlobalSearchSelect();
+        },
+      };
+      searchDialog.dispatchSelect();
+
+      expect(appRoot.isGlobalSearchOpen).toBe(false);
+      expect(clearSpy).toHaveBeenCalledTimes(1);
+      expect(appRoot.layoutUIController.state.isListDetailOpen).toBe(true);
+    });
+
+    it("17-7. viewMode='list' 中に task-history-select イベントを受信した際、詳細ビューへ遷移すること", async () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 55,
+        labelId: 1,
+      } as never);
+      vi.spyOn(appRoot.taskListController, "selectTask").mockResolvedValue();
+      vi.spyOn(appRoot.taskController, "setTaskId").mockResolvedValue();
+
+      appRoot.dispatchEvent(
+        new CustomEvent("task-history-select", {
+          bubbles: true,
+          composed: true,
+          detail: { taskId: 55 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+      expect(appRoot.layoutUIController.state.isListDetailOpen).toBe(true);
+    });
+
+    it("17-8. viewMode='list' 中に type='task' の id-jump イベントを受信した際、詳細ビューへ遷移すること", async () => {
+      appRoot.layoutUIController.resetToHome();
+      appRoot.layoutUIController.setViewMode("list");
+      vi.spyOn(appRoot.taskRepository, "getById").mockResolvedValue({
+        id: 77,
+        labelId: 1,
+      } as never);
+      vi.spyOn(appRoot.taskListController, "selectTask").mockResolvedValue();
+      vi.spyOn(appRoot.taskController, "setTaskId").mockResolvedValue();
+
+      appRoot.dispatchEvent(
+        new CustomEvent("id-jump", {
+          bubbles: true,
+          composed: true,
+          detail: { type: "task", id: 77 },
+        }),
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+      expect(appRoot.layoutUIController.state.isListDetailOpen).toBe(true);
+    });
   });
 });
