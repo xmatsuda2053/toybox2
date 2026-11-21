@@ -146,4 +146,5 @@ trigger: always_on
 | **カラー直値** | SCSS走査 / リント | 新規SCSS内で Hex / RGB / RGBA 直値が 0 件（トークン参照）であること |
 | **コード重複** | `jscpd` | 他ファイルからの明らかなブロックコピペ（10行以上）が存在しないこと |
 | **依存関係整合性** | `git status` / `npm ci` | 新ワークスペース追加時に `package-lock.json` が同期されていること |
+| **フォーマット統一** | `npx prettier --write <対象>`<br/>`npx prettier --check <対象>` | 新規・変更ファイルがリポジトリの `.prettierrc` 基準に整形されており、`npm run lint` の関数行数制限に抵触しないこと |
 | **リグレッション** | `npm test`<br/>`npm run build:stepnote` | 既存単体テストが全件パス、かつ単一 HTML ビルドが成功すること |
