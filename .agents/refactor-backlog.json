@@ -6567,5 +6567,74 @@
     "feasibility": "High",
     "status": "pending",
     "execution": null
+  },
+  {
+    "id": "REF-225",
+    "target_file": "apps/stepnote/src/components/panes/settings-pane.ts",
+    "target_symbol": "SettingsPane (1133 lines) / renderHistoryPanel (56 lines)",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 1133,
+      "function_lines": 56
+    },
+    "issue_summary": "Method renderHistoryPanel has too many lines (56 > 50 allowed) および settings-pane.ts への複数設定タブ（テンプレート・自動エクスポート・履歴）の肥大化集中",
+    "approach": "既存の settings-tags-view / settings-tag-sets-view パターンに倣い、テンプレート・自動エクスポート・閲覧履歴の各タブを独立したサブビューコンポーネントへ分離し、renderHistoryPanel の行数超過と settings-pane.ts の肥大化を解消",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/panes/settings-pane.test.ts",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "completed",
+    "execution": {
+      "completed_order": 168,
+      "completed_at": "2026-11-21T14:25:49.186+09:00",
+      "issue_number": 491,
+      "pr_number": null,
+      "commit_hash": null,
+      "prompt_turns": 2,
+      "regressions_detected": 0,
+      "tests_passed": 2398,
+      "metrics_after": {
+        "settings_pane_lines": 89,
+        "max_function_lines_in_scope": 45,
+        "eslint_non_test_warnings": 0
+      }
+    }
+  },
+  {
+    "id": "REF-226",
+    "target_file": "apps/stepnote/src/app-root.ts",
+    "target_symbol": "StepNoteAppRoot (1032 lines)",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 1032
+    },
+    "issue_summary": "app-root.ts が1,032行に達し、IDジャンプ遷移ロジック（Scratch/Issue/Note/Task）およびリポジトリ/コンテキスト初期化配線が単一クラスに集中している",
+    "approach": "IDジャンプ・画面遷移調停ロジックおよびリポジトリ/コントローラー初期化ヘルパーを専用モジュール（例: app-navigation.utils.ts / app-bootstrap 等）へ分離し、app-root.ts をルートシェルに専念させる",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/app-root.test.ts",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
+  },
+  {
+    "id": "REF-227",
+    "target_file": "apps/stepnote/src/components/issues/issues-view.ts",
+    "target_symbol": "IssuesView (880 lines)",
+    "category": "Complexity",
+    "metrics": {
+      "lines": 880
+    },
+    "issue_summary": "issues-view.ts が880行に達し、一覧表示・インライン編集・各種ダイアログ（追加・削除・テンプレート取込プレビュー）が単一コンポーネントに混在している",
+    "approach": "ダイアログ群（追加・削除・テンプレート取込）および状態表示用純粋ヘルパーをサブコンポーネント/utilsへ分離し、一覧ビューの責務を軽量化",
+    "scope": "internal",
+    "test_status": "covered",
+    "test_file": "apps/stepnote/src/components/issues/issues-view.test.ts",
+    "risk_level": "Medium",
+    "feasibility": "High",
+    "status": "pending",
+    "execution": null
   }
 ]

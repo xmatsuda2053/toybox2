@@ -1,0 +1,61 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  @include theme-transition;
+}
+
+@include box-sizing-reset;
+
+.settings-history-view__layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-l, 24px);
+  padding: var(--wa-space-l, 24px);
+  max-width: 600px;
+}
+
+.settings-history-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs, 8px);
+}
+
+.settings-history-view__section-title {
+  margin: 0;
+  font-size: var(--wa-font-size-m, 14px);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-text-normal);
+}
+
+.settings-history-view__section-desc {
+  margin: 0;
+  font-size: var(--wa-font-size-s, 12px);
+  color: var(--wa-color-text-quiet);
+  line-height: var(--wa-line-height-normal, 1.5);
+}
+
+.settings-history-view__form-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-m, 16px);
+  margin-top: var(--wa-space-xs, 4px);
+}
+
+.settings-history-view__form-label {
+  font-size: var(--wa-font-size-s, 12px);
+  font-weight: var(--wa-font-weight-medium, 500);
+  color: var(--wa-color-text-normal);
+  min-width: 100px;
+}
+
+.settings-history-view__btn-clear {
+  align-self: flex-start;
+  margin-top: var(--wa-space-xs, 4px);
+}

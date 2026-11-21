@@ -1,0 +1,183 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  @include theme-transition;
+}
+
+@include box-sizing-reset;
+
+.settings-auto-export-view__layout {
+  display: flex;
+  flex-direction: row;
+  gap: var(--wa-space-xl, 32px);
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.settings-auto-export-view__main {
+  flex: 1;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-l, 24px);
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+  @include custom-scrollbar;
+}
+
+.settings-auto-export-view__schedule-pane {
+  flex: 1;
+  min-width: 300px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s, 8px);
+  height: 100%;
+  min-height: 0;
+  border-left: 1px solid var(--wa-color-border-subtle);
+  padding-left: var(--wa-space-xl, 32px);
+  box-sizing: border-box;
+}
+
+.settings-auto-export-view__schedule-header {
+  @include flex-between;
+  padding-bottom: var(--wa-space-2xs, 4px);
+  flex-shrink: 0;
+}
+
+.settings-auto-export-view__schedule-count {
+  font-size: var(--wa-font-size-xs, 12px);
+  color: var(--wa-color-text-quiet);
+  background-color: var(--wa-color-surface-raised);
+  border: 1px solid var(--wa-color-border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--wa-border-radius-pill, 9999px);
+  @include theme-transition;
+}
+
+.settings-auto-export-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-s, 8px);
+}
+
+.settings-auto-export-view__section-title {
+  font-size: var(--wa-font-size-m, 14px);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-text-normal);
+}
+
+.settings-auto-export-view__desc {
+  font-size: var(--wa-font-size-s, 12px);
+  color: var(--wa-color-text-quiet);
+  line-height: var(--wa-line-height-normal, 1.5);
+}
+
+.settings-auto-export-view__switch {
+  font-weight: var(--wa-font-weight-medium, 500);
+}
+
+.settings-auto-export-view__schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs, 4px);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: var(--wa-space-xs, 4px);
+  @include custom-scrollbar;
+}
+
+.settings-auto-export-view__schedule-item {
+  @include flex-between;
+  padding: var(--wa-space-xs, 4px) var(--wa-space-s, 8px);
+  background-color: var(--wa-color-surface-raised);
+  border-radius: var(--wa-border-radius-s, 4px);
+  border: 1px solid var(--wa-color-border-subtle);
+  flex-shrink: 0;
+  @include theme-transition;
+}
+
+.settings-auto-export-view__schedule-time {
+  font-size: var(--wa-font-size-m, 14px);
+  font-family: var(--stepnote-font-mono, monospace);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-text-normal);
+}
+
+.settings-auto-export-view__schedule-form {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-s, 8px);
+  margin-top: var(--wa-space-xs, 4px);
+}
+
+.settings-auto-export-view__btn-add-time {
+  @include flex-center;
+  color: var(--wa-color-neutral-on-quiet, inherit);
+  border-radius: var(--wa-border-radius-s, 4px);
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  wa-icon {
+    font-size: var(--wa-font-size-m, 14px);
+    color: inherit;
+  }
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+.settings-auto-export-view__btn-add-time--active {
+  cursor: pointer;
+}
+
+.settings-auto-export-view__time-input {
+  width: 140px;
+}
+
+.settings-auto-export-view__export-status {
+  @include flex-between;
+  padding: var(--wa-space-m, 16px);
+  background-color: var(--wa-color-surface-raised);
+  border-radius: var(--wa-border-radius-m, 8px);
+  border: 1px solid var(--wa-color-border-subtle);
+  @include theme-transition;
+}
+
+.settings-auto-export-view__export-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-3xs, 2px);
+}
+
+.settings-auto-export-view__export-status-label {
+  font-size: var(--wa-font-size-xs, 11px);
+  color: var(--wa-color-text-quiet);
+}
+
+.settings-auto-export-view__export-status-value {
+  font-size: var(--wa-font-size-s, 12px);
+  color: var(--wa-color-text-normal);
+}
+
+.settings-auto-export-view__placeholder {
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s, 14px);
+  padding: var(--wa-space-l, 24px) 0;
+  text-align: center;
+}
