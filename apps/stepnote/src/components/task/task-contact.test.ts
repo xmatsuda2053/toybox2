@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { Contact } from "@/types";
@@ -280,11 +281,11 @@ describe("TaskContact Component", () => {
     });
 
     it("4-6. task-contact.scss において .task-contact__btn-remove に cursor: pointer およびホバー時のトークン色が定義されていること", () => {
-      const content = fs.readFileSync(scssPath, "utf-8");
-      expect(content).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.task-contact__btn-remove\s*\{[^}]*cursor:\s*pointer;/,
       );
-      expect(content).toContain("var(--quick-access-icon-overdue)");
+      expect(compiledCss).toContain("var(--quick-access-icon-overdue)");
     });
 
     it("4-7. task-contact.scss において .task-contact__footer および .task-contact__btn-add が存在しないこと", () => {

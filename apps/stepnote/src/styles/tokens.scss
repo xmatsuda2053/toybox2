@@ -2,6 +2,19 @@
    StepNote Design Tokens & Theming (tokens.scss)
    ========================================================================== */
 
+@mixin quick-access-icon-active-aliases {
+  --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
+  --quick-access-icon-active-uncategorized: var(
+    --quick-access-icon-uncategorized
+  );
+  --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
+  --quick-access-icon-active-asap: var(--quick-access-icon-asap);
+  --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
+  --quick-access-icon-active-done: var(--quick-access-icon-done);
+  --quick-access-icon-active-progress: var(--quick-access-icon-progress);
+  --quick-access-icon-active-pending: var(--quick-access-icon-pending);
+}
+
 /* --------------------------------------------------------------------------
  * 1. 基本トークン & Light モード トークン (:root / .wa-light)
  * -------------------------------------------------------------------------- */
@@ -50,16 +63,7 @@
   --quick-access-icon-pending: var(--wa-color-text-normal);
 
   /* Quick Access アイコンカラー（Light モード・アクティブ時: 通常時と同一色を維持） */
-  --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
-  --quick-access-icon-active-uncategorized: var(
-    --quick-access-icon-uncategorized
-  );
-  --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
-  --quick-access-icon-active-asap: var(--quick-access-icon-asap);
-  --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
-  --quick-access-icon-active-done: var(--quick-access-icon-done);
-  --quick-access-icon-active-progress: var(--quick-access-icon-progress);
-  --quick-access-icon-active-pending: var(--quick-access-icon-pending);
+  @include quick-access-icon-active-aliases;
 
   /* Labels アイコンカラー・メニュートリガー・スクロールバー（Light モード） */
   --label-icon-color: var(--wa-color-brand-60, #0969da);
@@ -164,16 +168,7 @@
   --quick-access-icon-pending: var(--stepnote-color-white);
 
   /* Quick Access アイコンカラー（Dark モード・アクティブ時: 通常時と同一色を維持） */
-  --quick-access-icon-active-bookmark: var(--quick-access-icon-bookmark);
-  --quick-access-icon-active-uncategorized: var(
-    --quick-access-icon-uncategorized
-  );
-  --quick-access-icon-active-overdue: var(--quick-access-icon-overdue);
-  --quick-access-icon-active-asap: var(--quick-access-icon-asap);
-  --quick-access-icon-active-upcoming: var(--quick-access-icon-upcoming);
-  --quick-access-icon-active-done: var(--quick-access-icon-done);
-  --quick-access-icon-active-progress: var(--quick-access-icon-progress);
-  --quick-access-icon-active-pending: var(--quick-access-icon-pending);
+  @include quick-access-icon-active-aliases;
 
   /* Labels アイコンカラー・メニュートリガー・スクロールバー（Dark モード） */
   --label-icon-color: var(--wa-color-brand-70, #218bff);

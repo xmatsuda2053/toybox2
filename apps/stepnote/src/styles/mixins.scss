@@ -140,4 +140,150 @@ $stepnote-tag-variants: (
   }
 }
 
+/* タスク詳細系コンポーネント（TaskSummary / TaskProperty / IssuesView）の :host 共通レイアウト */
+@mixin task-detail-host($box-sizing: true) {
+  :host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100%;
+    width: 100%;
+    @if $box-sizing {
+      box-sizing: border-box;
+    }
+    @include theme-transition;
+  }
+}
+
+/* タスク詳細系コンポーネントの空状態表示 */
+@mixin task-detail-empty {
+  @include flex-center;
+  padding: var(--wa-space-xl);
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+}
+
+/* タスク詳細系コンポーネント（TaskSummary / TaskProperty）の固定幅フォームラベル */
+@mixin task-detail-label($padding-top: null) {
+  width: 64px;
+  min-width: 64px;
+  flex-shrink: 0;
+  @if $padding-top != null {
+    padding-top: $padding-top;
+  }
+  font-size: var(--wa-font-size-s);
+  font-weight: var(--wa-font-weight-semibold);
+  color: var(--wa-color-text-quiet);
+}
+
+/* ステータスアイコン（done / progress / pending）共通配色 */
+@mixin task-status-icon-colors {
+  &.type-done {
+    color: var(--quick-access-icon-done);
+  }
+
+  &.type-progress {
+    color: var(--quick-access-icon-progress);
+  }
+
+  &.type-pending {
+    color: var(--quick-access-icon-pending);
+  }
+}
+
+/* 期日アイコン（overdue / asap / upcoming）共通配色 */
+@mixin task-due-icon-colors {
+  &--overdue {
+    --datepicker-icon-color: var(--quick-access-icon-overdue);
+  }
+
+  &--asap {
+    --datepicker-icon-color: var(--quick-access-icon-asap);
+  }
+
+  &--upcoming {
+    --datepicker-icon-color: var(--quick-access-icon-upcoming);
+  }
+}
+
+/* 連絡先追加/削除等のインラインアイコンアクション */
+@mixin task-contact-action-icon($hover-color) {
+  cursor: pointer;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-m, 16px);
+  flex-shrink: 0;
+  @include theme-transition;
+
+  &:hover {
+    color: $hover-color;
+  }
+}
+
+/* タスクヘッダー等のアイコン専用アクションボタン（::part(button) 含む） */
+@mixin pane-header-icon-btn {
+  @include flex-center;
+  flex-shrink: 0;
+  color: var(--wa-color-text-quiet);
+
+  &::part(button) {
+    padding-inline: var(--wa-space-3xs, 4px);
+    height: 28px;
+    color: inherit;
+    @include theme-transition;
+  }
+
+  &:hover {
+    color: var(--wa-color-brand-60, var(--wa-color-text-normal));
+  }
+}
+
+/* タブ内ビュー（Logs / Notes / Issues）の :host 共通レイアウト */
+@mixin tab-view-host {
+  :host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: var(--wa-color-surface-default);
+    @include theme-transition;
+  }
+}
+
+/* タブ内ビュー（Logs / Notes）のヘッダーツールバー */
+@mixin tab-view-header($margin-bottom: var(--wa-space-xs, 8px), $gap: var(--wa-space-xs, 8px)) {
+  @include flex-between;
+  gap: $gap;
+  margin-bottom: $margin-bottom;
+  box-sizing: border-box;
+}
+
+/* タブ内ビュー（Logs / Notes）の検索入力欄 */
+@mixin tab-view-search {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--wa-font-size-s, 13px);
+}
+
+/* タブ内ビュー（Logs / Notes / Issues）のヘッダー右側アクション群 */
+@mixin tab-view-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs, 4px);
+  flex-shrink: 0;
+}
+
+/* ダイアログ本文共通テキストスタイル */
+@mixin tab-view-dialog-body {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-normal);
+  line-height: var(--wa-line-height-normal);
+}
+
+/* ダイアログフッター共通右寄せレイアウト */
+@mixin tab-view-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-s);
+}
+
 

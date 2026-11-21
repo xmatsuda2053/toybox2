@@ -640,8 +640,24 @@
     "scope": "shared",
     "risk_level": "Low",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 21,
+      "completed_at": "2026-11-21T14:59:02.691+09:00",
+      "issue_number": 495,
+      "pr_number": null,
+      "commit_hash": null,
+      "tests_passed": 2408,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 67,
+        "duplicated_lines": 466,
+        "duplicated_tokens": 2148,
+        "anti_pattern_errors": 0,
+        "deep_nesting_warnings_in_scope": 0,
+        "build_size_kb": 2294.53
+      }
+    }
   },
   {
     "id": "SCSS-022",
@@ -660,8 +676,24 @@
     "scope": "shared",
     "risk_level": "Medium",
     "feasibility": "High",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 22,
+      "completed_at": "2026-11-21T14:59:02.691+09:00",
+      "issue_number": 495,
+      "pr_number": null,
+      "commit_hash": null,
+      "tests_passed": 2408,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 67,
+        "duplicated_lines": 466,
+        "duplicated_tokens": 2148,
+        "anti_pattern_errors": 0,
+        "deep_nesting_warnings_in_scope": 0,
+        "build_size_kb": 2294.53
+      }
+    }
   },
   {
     "id": "SCSS-023",
@@ -679,7 +711,23 @@
     "scope": "shared",
     "risk_level": "Low",
     "feasibility": "Medium",
-    "status": "pending",
-    "execution": null
+    "status": "completed",
+    "execution": {
+      "completed_order": 23,
+      "completed_at": "2026-11-21T14:59:02.691+09:00",
+      "issue_number": 495,
+      "pr_number": null,
+      "commit_hash": null,
+      "tests_passed": 2408,
+      "regressions_detected": 0,
+      "metrics_after": {
+        "clones": 67,
+        "duplicated_lines": 466,
+        "duplicated_tokens": 2148,
+        "anti_pattern_errors": 0,
+        "deep_nesting_warnings_in_scope": 0,
+        "build_size_kb": 2294.53
+      }
+    }
   }
 ]

@@ -49,21 +49,7 @@
 }
 
 .task-tag-bar__btn-add {
-  @include flex-center;
-  flex-shrink: 0;
-  color: var(--wa-color-text-quiet);
-  @include theme-transition;
-
-  &::part(button) {
-    padding-inline: var(--wa-space-3xs, 4px);
-    height: 28px;
-    color: inherit;
-    @include theme-transition;
-  }
-
-  &:hover {
-    color: var(--wa-color-brand-60, var(--wa-color-text-normal));
-  }
+  @include pane-header-icon-btn;
 }
 
 .task-tag-bar__btn-add-icon {
@@ -133,18 +119,7 @@
 }
 
 .task-tag-bar__checkbox {
-  width: 100%;
-  align-items: center;
-
-  &::part(base) {
-    align-items: center;
-    width: 100%;
-  }
-
-  &::part(label) {
-    display: inline-flex;
-    align-items: center;
-  }
+  @include checkbox-center-alignment;
 }
 
 .task-tag-bar__empty {

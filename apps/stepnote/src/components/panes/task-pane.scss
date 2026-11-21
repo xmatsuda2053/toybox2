@@ -39,20 +39,7 @@
 }
 
 .task-pane__btn-copy-tag {
-  @include flex-center;
-  flex-shrink: 0;
-  color: var(--wa-color-text-quiet);
-
-  &::part(button) {
-    padding-inline: var(--wa-space-3xs, 4px);
-    height: 28px;
-    color: inherit;
-    @include theme-transition;
-  }
-
-  &:hover {
-    color: var(--wa-color-brand-60, var(--wa-color-text-normal));
-  }
+  @include pane-header-icon-btn;
 }
 
 .task-pane__tag-bar {
@@ -102,18 +89,7 @@
 
 .task-pane__status-icon {
   font-size: var(--wa-font-size-s);
-
-  &.type-done {
-    color: var(--quick-access-icon-done);
-  }
-
-  &.type-progress {
-    color: var(--quick-access-icon-progress);
-  }
-
-  &.type-pending {
-    color: var(--quick-access-icon-pending);
-  }
+  @include task-status-icon-colors;
 }
 
 .task-pane__tab-group {
@@ -152,13 +128,9 @@
 }
 
 .task-pane__delete-dialog-body {
-  font-size: var(--wa-font-size-s);
-  color: var(--wa-color-text-normal);
-  line-height: var(--wa-line-height-normal);
+  @include tab-view-dialog-body;
 }
 
 .task-pane__delete-dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--wa-space-s);
+  @include tab-view-dialog-footer;
 }

@@ -1,14 +1,7 @@
 @use "../../styles/mixins.scss" as *;
 @use "../panes/pane-common.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  background-color: var(--wa-color-surface-default);
-  @include theme-transition;
-}
+@include tab-view-host;
 
 .notes-view {
   display: flex;
@@ -21,26 +14,16 @@
 
 /* ヘッダーツールバー */
 .notes-view__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--wa-space-xs, 8px);
-  margin-bottom: var(--wa-space-xs, 8px);
-  box-sizing: border-box;
+  @include tab-view-header;
   flex-shrink: 0;
 }
 
 .notes-view__search {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--wa-font-size-s, 13px);
+  @include tab-view-search;
 }
 
 .notes-view__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--wa-space-2xs, 4px);
-  flex-shrink: 0;
+  @include tab-view-actions;
 }
 
 .notes-view__btn-add {
@@ -98,13 +81,10 @@
   --width: 440px;
 }
 
-.notes-view__add-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-s, 12px);
-  padding: var(--wa-space-xs, 8px) 0;
+.notes-view__delete-dialog-body {
+  @include tab-view-dialog-body;
 }
 
-.notes-view__input-title {
-  width: 100%;
+.notes-view__delete-dialog-footer {
+  @include tab-view-dialog-footer;
 }
