@@ -15,7 +15,7 @@ import { TaskTableController } from "./task-table.controller.js";
  * 【TaskTableController 仕様 (タスク一覧表示モード状態管理)】
  *
  * 1. 初期化・永続化復元
- *    - 1-1. ストレージ未設定時は fiscalYear="all", sort={ key: "dueDate", direction: "asc" } で初期化されること
+ *    - 1-1. ストレージ未設定時は当年度、statusCodes=[0, 5]（完了未選択）、sort={ key: "dueDate", direction: "asc" } で初期化されること
  *    - 1-2. ストレージの保存値から年度選択・ソート順が復元されること
  *
  * 2. データロード（refresh）
@@ -23,9 +23,9 @@ import { TaskTableController } from "./task-table.controller.js";
  *
  * 3. フィルタ操作と永続化・選択リセット
  *    - 3-1. setFiscalYearFilter 実行時に年度が永続化され、rows が絞り込まれ、selectedIds がリセットされること
- *    - 3-2. setStatusFilter / setLabelFilter / setTagFilter / setDueFilter / setKeywordFilter により絞り込まれ、selectedIds がリセットされること
+ *    - 3-2. toggleStatusFilter / setStatusFilters / setLabelFilter / setTagFilter / setDueFilter により絞り込まれ、selectedIds がリセットされること
  *    - 3-3. setKeywordFilter 時に taskListQuery.searchTaskIds が利用されて横断検索が行われること
- *    - 3-4. resetFilters により年度以外の条件が初期値へ戻ること
+ *    - 3-4. resetFilters により年度以外の条件が初期値（statusCodes=[0, 5]含む）へ戻ること
  *
  * 4. 列ソート切替と永続化
  *    - 4-1. toggleSort で同一列を指定すると昇順/降順が反転し、別列を指定すると昇順に切り替わり、ストレージへ保存されること
@@ -171,9 +171,10 @@ describe("TaskTableController", () => {
     );
 
   describe("1. 初期化・永続化復元", () => {
-    it("1-1. ストレージ未設定時は当年度（標準モード準拠）およびデフォルトソートで初期化されること", () => {
+    it("1-1. ストレージ未設定時は当年度（標準モード準拠）・完了未選択（statusCodes=[0, 5]）・デフォルトソートで初期化されること", () => {
       const { controller } = createController();
       expect(controller.filter.fiscalYear).toBe(getCurrentFiscalYear());
+      expect(controller.filter.statusCodes).toEqual([0, 5]);
       expect(controller.sort).toEqual({ key: "dueDate", direction: "asc" });
       expect(controller.selectedCount).toBe(0);
     });
@@ -225,16 +226,21 @@ describe("TaskTableController", () => {
       expect(controller.selectedCount).toBe(0);
     });
 
-    it("3-2. setStatusFilter / setLabelFilter / setTagFilter / setDueFilter により絞り込まれ、selectedIds がリセットされること", async () => {
+    it("3-2. toggleStatusFilter / setStatusFilters / setLabelFilter / setTagFilter / setDueFilter により絞り込まれ、selectedIds がリセットされること", async () => {
       const { controller } = createAllYearController();
       await controller.refresh();
       controller.toggleRowSelection(2);
 
-      controller.setStatusFilter(5);
+      controller.toggleStatusFilter(0);
+      expect(controller.filter.statusCodes).toEqual([5]);
       expect(controller.rows.map((r) => r.task.id)).toEqual([2]);
       expect(controller.selectedCount).toBe(0);
 
-      controller.setStatusFilter("all");
+      controller.toggleStatusFilter(5);
+      expect(controller.filter.statusCodes).toEqual([]);
+      expect(controller.rows).toEqual([]);
+
+      controller.setStatusFilters([0, 5, 9]);
       controller.setLabelFilter(10);
       expect(controller.rows.map((r) => r.task.id)).toEqual([1]);
 
@@ -256,14 +262,14 @@ describe("TaskTableController", () => {
       const { controller } = createController();
       await controller.refresh();
       await controller.setFiscalYearFilter(2026);
-      controller.setStatusFilter(5);
+      controller.setStatusFilters([9]);
       controller.setLabelFilter(10);
       controller.setTagFilter(100);
       controller.setDueFilter("overdue");
 
       await controller.resetFilters();
       expect(controller.filter.fiscalYear).toBe(2026);
-      expect(controller.filter.statusCode).toBe("all");
+      expect(controller.filter.statusCodes).toEqual([0, 5]);
       expect(controller.filter.labelId).toBe("all");
       expect(controller.filter.tagId).toBe("all");
       expect(controller.filter.dueFilter).toBe("all");

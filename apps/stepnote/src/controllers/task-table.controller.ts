@@ -20,11 +20,13 @@ import { normalizeTagIds } from "@/utils/tag.utils.js";
 import {
   buildTaskTableRows,
   DEFAULT_TASK_TABLE_SORT,
+  DEFAULT_TASK_TABLE_STATUS_CODES,
   extractAvailableFiscalYears,
   filterTaskTableRows,
   normalizeTaskTableFiscalYear,
   normalizeTaskTableSortState,
   sortTaskTableRows,
+  toggleStatusCodeFilter,
 } from "@/utils/task-table.utils.js";
 import { BaseReactiveController } from "./base-reactive.controller.js";
 
@@ -56,7 +58,7 @@ const createDefaultFilter = (
 ): TaskTableFilterState => ({
   fiscalYear,
   keyword: "",
-  statusCode: "all",
+  statusCodes: [...DEFAULT_TASK_TABLE_STATUS_CODES],
   labelId: "all",
   tagId: "all",
   dueFilter: "all",
@@ -245,9 +247,14 @@ export class TaskTableController extends BaseReactiveController<void> {
     this.applyFilterChange({ keyword });
   };
 
-  public setStatusFilter = (statusCode: TaskStatusCode | "all"): void => {
-    if (this._filter.statusCode === statusCode) return;
-    this.applyFilterChange({ statusCode });
+  public setStatusFilters = (statusCodes: readonly TaskStatusCode[]): void => {
+    const unique = Array.from(new Set(statusCodes));
+    this.applyFilterChange({ statusCodes: unique });
+  };
+
+  public toggleStatusFilter = (statusCode: TaskStatusCode): void => {
+    const next = toggleStatusCodeFilter(this._filter.statusCodes, statusCode);
+    this.applyFilterChange({ statusCodes: next });
   };
 
   public setLabelFilter = (labelId: number | "all" | "uncategorized"): void => {
@@ -272,7 +279,7 @@ export class TaskTableController extends BaseReactiveController<void> {
     this._matchedKeywordTaskIds = undefined;
     this.applyFilterChange({
       keyword: "",
-      statusCode: "all",
+      statusCodes: [...DEFAULT_TASK_TABLE_STATUS_CODES],
       labelId: "all",
       tagId: "all",
       dueFilter: "all",

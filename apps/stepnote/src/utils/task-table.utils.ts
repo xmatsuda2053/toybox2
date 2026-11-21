@@ -1,9 +1,14 @@
 import { getCurrentFiscalYear } from "@shared/utils";
+import {
+  TASK_STATUS_CODE,
+  TASK_STATUS_LIST,
+} from "@/constants/task-status.constants.js";
 import type { IssueRecord, TaskRecord } from "@/db/models/task.model";
 import type { LabelRecord } from "@/db/models/navigation.model";
 import type { TagRecord } from "@/db/models/tag.model";
 import type { TaskIssueCount } from "@/db/queries/task-list.query";
 import type { Contact } from "@/types/domain/task-detail.type";
+import type { TaskStatusCode } from "@/types/domain/task-status.type";
 import type {
   TaskTableFilterState,
   TaskTableRowViewModel,
@@ -18,6 +23,30 @@ import {
   type TaskDueStatus,
 } from "./task-due.utils.js";
 import { compareDueDates, matchesTaskKeyword } from "./task-filter.utils.js";
+
+/** 一覧テーブルの状態フィルタ初期値（完了以外を選択） */
+export const DEFAULT_TASK_TABLE_STATUS_CODES: readonly TaskStatusCode[] = [
+  TASK_STATUS_CODE.PENDING,
+  TASK_STATUS_CODE.PROGRESS,
+];
+
+/**
+ * 状態コード配列を指定コードでトグルし、定義順（開始待ち・対応中・完了）を保って返す。
+ */
+export function toggleStatusCodeFilter(
+  current: readonly TaskStatusCode[],
+  target: TaskStatusCode,
+): TaskStatusCode[] {
+  const nextSet = new Set(current);
+  if (nextSet.has(target)) {
+    nextSet.delete(target);
+  } else {
+    nextSet.add(target);
+  }
+  return TASK_STATUS_LIST.map((s) => s.code).filter((code) =>
+    nextSet.has(code),
+  );
+}
 
 /** 一覧テーブルのデフォルトソート設定 */
 export const DEFAULT_TASK_TABLE_SORT: TaskTableSortState = {
@@ -201,10 +230,7 @@ function matchesTableRowFilter(
   ) {
     return false;
   }
-  if (
-    filter.statusCode !== "all" &&
-    row.task.statusCode !== filter.statusCode
-  ) {
+  if (!filter.statusCodes.includes(row.task.statusCode)) {
     return false;
   }
   if (!matchesLabelCondition(row.task.labelId, filter.labelId)) {

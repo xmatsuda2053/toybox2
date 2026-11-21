@@ -10,6 +10,7 @@ import {
   WithLabelsController,
   WithTaskTableController,
 } from "@/utils/controller-consumers.mixin.js";
+import { DEFAULT_TASK_TABLE_STATUS_CODES } from "@/utils/task-table.utils.js";
 import "@/components/task/task-tag-bar.js";
 import {
   renderSelectionFeedbackBar,
@@ -71,10 +72,8 @@ export class TaskTablePane extends WithLabelsController(
     await this.taskTableController?.setKeywordFilter(keyword);
   };
 
-  public handleStatusChange = (value: string): void => {
-    const next: TaskStatusCode | "all" =
-      value === "all" ? "all" : (Number(value) as TaskStatusCode);
-    this.taskTableController?.setStatusFilter(next);
+  public handleStatusToggle = (statusCode: TaskStatusCode): void => {
+    this.taskTableController?.toggleStatusFilter(statusCode);
   };
 
   public handleLabelChange = (value: string): void => {
@@ -176,8 +175,8 @@ export class TaskTablePane extends WithLabelsController(
       onFiscalYearSelectChange: (e: Event) => {
         void this.handleFiscalYearChange(this.readSelectValue(e));
       },
-      onStatusSelectChange: (e: Event) => {
-        this.handleStatusChange(this.readSelectValue(e));
+      onStatusToggle: (statusCode: TaskStatusCode) => {
+        this.handleStatusToggle(statusCode);
       },
       onLabelSelectChange: (e: Event) => {
         this.handleLabelChange(this.readSelectValue(e));
@@ -226,7 +225,7 @@ export class TaskTablePane extends WithLabelsController(
       filter: ctrl?.filter ?? {
         fiscalYear: getCurrentFiscalYear(),
         keyword: "",
-        statusCode: "all",
+        statusCodes: [...DEFAULT_TASK_TABLE_STATUS_CODES],
         labelId: "all",
         tagId: "all",
         dueFilter: "all",

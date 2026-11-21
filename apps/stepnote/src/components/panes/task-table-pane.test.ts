@@ -12,8 +12,9 @@ import { TaskTablePane } from "./task-table-pane.js";
  *
  * 1. 上部ツールバー（新規作成ボタン・フィルタバー）
  *    - 1-1. 「+ 新規タスク」操作導線（task-create-button または作成ボタン）がレンダリングされること
- *    - 1-2. 年度（全年度含む）・キーワード・ステータス・ラベル・タグ・期限状況のフィルタUIおよびリセットボタンがレンダリングされること
+ *    - 1-2. 年度・キーワード・状態複数選択ドロップダウン（アイコン付き、「すべて」なし）・期限フィルタ（状態右隣・アイコン付き）・ラベル・タグ・リセットボタンがレンダリングされること
  *    - 1-3. 各フィルタ変更ハンドラーが taskTableController の対応メソッドを呼び出すこと
+ *    - 1-4. 状態フィルタの選択件数に応じてトリガー表示（未選択/単一アイコン付き/複数連結/全選択時は「状態: すべて」）が切り替わること
  *
  * 2. 選択件数フィードバックバー
  *    - 2-1. selectedCount === 0 のとき選択件数バーが表示されないこと
@@ -34,6 +35,7 @@ import { TaskTablePane } from "./task-table-pane.js";
  *    - 5-2. ラベル列幅が 160px であり、トリガーボタン内ラベルの左寄せ・省略表示（text-ellipsis）・はみ出し防止ルールが定義されていること
  *    - 5-3. 状態列幅が「開始待ち」を省略せず表示できる 140px であること
  *    - 5-4. 期限日列幅が「yyyy-MM-dd (EEE)」を途切れず表示できる 180px であること
+ *    - 5-5. 期限フィルタ幅が「期限: すべて」の折り返しを防ぐ 160px であり、調整分としてキーワード検索の最小幅が 156px へ調整されていること
  */
 
 const createMockRow = (
@@ -89,7 +91,7 @@ describe("TaskTablePane Component", () => {
     filter: {
       fiscalYear: number | "all";
       keyword: string;
-      statusCode: 0 | 5 | 9 | "all";
+      statusCodes: Array<0 | 5 | 9>;
       labelId: number | "all" | "uncategorized";
       tagId: number | "all";
       dueFilter: "all" | "overdue" | "asap" | "upcoming";
@@ -105,7 +107,8 @@ describe("TaskTablePane Component", () => {
     refresh: ReturnType<typeof vi.fn>;
     setFiscalYearFilter: ReturnType<typeof vi.fn>;
     setKeywordFilter: ReturnType<typeof vi.fn>;
-    setStatusFilter: ReturnType<typeof vi.fn>;
+    toggleStatusFilter: ReturnType<typeof vi.fn>;
+    setStatusFilters: ReturnType<typeof vi.fn>;
     setLabelFilter: ReturnType<typeof vi.fn>;
     setTagFilter: ReturnType<typeof vi.fn>;
     setDueFilter: ReturnType<typeof vi.fn>;
@@ -131,7 +134,7 @@ describe("TaskTablePane Component", () => {
       filter: {
         fiscalYear: "all",
         keyword: "",
-        statusCode: "all",
+        statusCodes: [0, 5],
         labelId: "all",
         tagId: "all",
         dueFilter: "all",
@@ -144,7 +147,8 @@ describe("TaskTablePane Component", () => {
       refresh: vi.fn().mockResolvedValue(undefined),
       setFiscalYearFilter: vi.fn().mockResolvedValue(undefined),
       setKeywordFilter: vi.fn().mockResolvedValue(undefined),
-      setStatusFilter: vi.fn(),
+      toggleStatusFilter: vi.fn(),
+      setStatusFilters: vi.fn(),
       setLabelFilter: vi.fn(),
       setTagFilter: vi.fn(),
       setDueFilter: vi.fn(),
@@ -172,15 +176,32 @@ describe("TaskTablePane Component", () => {
       expect(htmlStr).toContain("新規タスク");
     });
 
-    it("1-2. 年度・キーワード・ステータス・ラベル・タグ・期限状況のフィルタUIおよびリセットボタンがレンダリングされること", () => {
+    it("1-2. 年度・キーワード・状態複数選択（アイコン付き・すべて削除）・期限（状態の右・アイコン付き）・ラベル・タグ・リセットボタンが描画されること", () => {
       const htmlStr = flattenTemplate(pane.render());
       expect(htmlStr).toContain("task-table-pane__filter-keyword");
       expect(htmlStr).toContain("task-table-pane__filter-year");
       expect(htmlStr).toContain("task-table-pane__filter-status");
+      expect(htmlStr).toContain("task-table-pane__filter-due");
       expect(htmlStr).toContain("task-table-pane__filter-label");
       expect(htmlStr).toContain("task-table-pane__filter-tag");
-      expect(htmlStr).toContain("task-table-pane__filter-due");
       expect(htmlStr).toContain("task-table-pane__filter-reset");
+
+      expect(htmlStr).not.toContain("状態: すべて");
+      expect(htmlStr).toContain("<wa-dropdown");
+      expect(htmlStr).toContain("circle-stop-solid-full");
+      expect(htmlStr).toContain("circle-play-solid-full");
+      expect(htmlStr).toContain("circle-check-solid-full");
+      expect(htmlStr).toContain("triangle-exclamation-solid-full");
+      expect(htmlStr).toContain("calendar-solid-full");
+      expect(htmlStr).toMatch(
+        /<wa-option value="all">[\s\S]*?calendar-solid-full[\s\S]*?task-table-pane__due-icon--default[\s\S]*?期限: すべて/,
+      );
+
+      const statusIdx = htmlStr.indexOf("task-table-pane__filter-status");
+      const dueIdx = htmlStr.indexOf("task-table-pane__filter-due");
+      const labelIdx = htmlStr.indexOf("task-table-pane__filter-label");
+      expect(dueIdx).toBeGreaterThan(statusIdx);
+      expect(labelIdx).toBeGreaterThan(dueIdx);
     });
 
     it("1-3. 各フィルタ変更ハンドラーが taskTableController の対応メソッドを呼び出すこと", async () => {
@@ -192,8 +213,10 @@ describe("TaskTablePane Component", () => {
       await pane.handleKeywordChange("テスト");
       expect(mockController.setKeywordFilter).toHaveBeenCalledWith("テスト");
 
-      pane.handleStatusChange("5");
-      expect(mockController.setStatusFilter).toHaveBeenCalledWith(5);
+      (
+        pane as unknown as { handleStatusToggle: (code: 0 | 5 | 9) => void }
+      ).handleStatusToggle(5);
+      expect(mockController.toggleStatusFilter).toHaveBeenCalledWith(5);
 
       pane.handleLabelChange("uncategorized");
       expect(mockController.setLabelFilter).toHaveBeenCalledWith(
@@ -208,6 +231,23 @@ describe("TaskTablePane Component", () => {
 
       await pane.handleResetFilters();
       expect(mockController.resetFilters).toHaveBeenCalledTimes(1);
+    });
+
+    it("1-4. 状態フィルタの選択状態に応じてトリガー表示（未選択/単一/複数連結/全選択）が切り替わること", () => {
+      mockController.filter.statusCodes = [];
+      expect(flattenTemplate(pane.render())).toContain("状態: 未選択");
+
+      mockController.filter.statusCodes = [9];
+      const singleHtml = flattenTemplate(pane.render());
+      expect(singleHtml).toContain("完了");
+
+      mockController.filter.statusCodes = [0, 5];
+      const multiHtml = flattenTemplate(pane.render());
+      expect(multiHtml).toContain("開始待ち・対応中");
+
+      mockController.filter.statusCodes = [0, 5, 9];
+      const allHtml = flattenTemplate(pane.render());
+      expect(allHtml).toContain("状態: すべて");
     });
   });
 
@@ -354,6 +394,16 @@ describe("TaskTablePane Component", () => {
       const compiled = sass.compile(scssPath).css;
       expect(compiled).toMatch(
         /\.task-table-pane__th--due\s*\{[^}]*width:\s*180px/,
+      );
+    });
+
+    it("5-5. 期限フィルタ幅が 160px であり、調整分としてキーワード検索幅が縮小されていること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__filter-due\s*\{[^}]*width:\s*160px/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__filter-keyword\s*\{[^}]*min-width:\s*156px/,
       );
     });
   });

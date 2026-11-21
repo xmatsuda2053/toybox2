@@ -37,7 +37,7 @@ export interface TaskTableTemplatesParams {
   onCreateTask: () => void;
   onKeywordInput: (e: CustomEvent<SearchInputEventDetail>) => void;
   onFiscalYearSelectChange: (e: Event) => void;
-  onStatusSelectChange: (e: Event) => void;
+  onStatusToggle: (statusCode: TaskStatusCode) => void;
   onLabelSelectChange: (e: Event) => void;
   onTagSelectChange: (e: Event) => void;
   onDueSelectChange: (e: Event) => void;
@@ -109,7 +109,157 @@ export function renderTaskTableHeader(
   `;
 }
 
-function renderYearAndStatusFilters(
+function renderStatusFilterTriggerContent(
+  statusCodes: readonly TaskStatusCode[],
+): HTMLTemplateResult {
+  if (statusCodes.length === 0) {
+    return html`
+      <span
+        class="task-table-pane__filter-status-text task-table-pane__filter-status-text--empty"
+      >
+        状態: 未選択
+      </span>
+    `;
+  }
+  if (statusCodes.length === 1) {
+    const code = statusCodes[0];
+    return html`
+      <wa-icon
+        library="my-icons"
+        name=${TASK_STATUS_ICON_MAP[code]}
+        class="task-table-pane__status-icon type-${TASK_STATUS_TYPE_MAP[code]}"
+      ></wa-icon>
+      <span class="task-table-pane__filter-status-text">
+        ${TASK_STATUS_MAP[code].labelJa}
+      </span>
+    `;
+  }
+  if (statusCodes.length === TASK_STATUS_LIST.length) {
+    return html`
+      <span class="task-table-pane__filter-status-text">状態: すべて</span>
+    `;
+  }
+  const label = statusCodes
+    .map((code) => TASK_STATUS_MAP[code].labelJa)
+    .join("・");
+  return html`
+    <span class="task-table-pane__filter-status-text">${label}</span>
+  `;
+}
+
+function renderStatusFilterOption(
+  s: (typeof TASK_STATUS_LIST)[number],
+  statusCodes: readonly TaskStatusCode[],
+): HTMLTemplateResult {
+  return html`
+    <wa-dropdown-item
+      value=${String(s.code)}
+      type="checkbox"
+      ?checked=${statusCodes.includes(s.code)}
+    >
+      <wa-icon
+        slot="icon"
+        library="my-icons"
+        name=${TASK_STATUS_ICON_MAP[s.code]}
+        class="task-table-pane__status-icon type-${
+          TASK_STATUS_TYPE_MAP[s.code]
+        }"
+      ></wa-icon>
+      ${s.labelJa}
+    </wa-dropdown-item>
+  `;
+}
+
+function renderStatusFilterDropdown(
+  params: TaskTableTemplatesParams,
+): HTMLTemplateResult {
+  const { statusCodes } = params.filter;
+  const titleText =
+    statusCodes.length > 0
+      ? statusCodes.map((c) => TASK_STATUS_MAP[c].labelJa).join("・")
+      : "状態: 未選択";
+
+  return html`
+    <wa-dropdown
+      class="task-table-pane__filter-dropdown task-table-pane__filter-status"
+      placement="bottom-start"
+      @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) => {
+        e.preventDefault();
+        const val = e.detail?.item?.value;
+        if (val !== undefined) {
+          params.onStatusToggle(Number(val) as TaskStatusCode);
+        }
+      }}
+    >
+      <wa-button
+        slot="trigger"
+        class="task-table-pane__filter-trigger"
+        variant="neutral"
+        appearance="outlined"
+        size="s"
+        with-caret
+        aria-label="状態フィルタ"
+        title=${titleText}
+      >
+        ${renderStatusFilterTriggerContent(statusCodes)}
+      </wa-button>
+      ${TASK_STATUS_LIST.map((s) => renderStatusFilterOption(s, statusCodes))}
+    </wa-dropdown>
+  `;
+}
+
+function renderDueFilterSelect(
+  params: TaskTableTemplatesParams,
+): HTMLTemplateResult {
+  return html`
+    <wa-select
+      class="task-table-pane__filter-select task-table-pane__filter-due"
+      size="s"
+      .value=${params.filter.dueFilter}
+      aria-label="期限状況フィルタ"
+      @change=${params.onDueSelectChange}
+    >
+      <wa-option value="all">
+        <wa-icon
+          slot="start"
+          library="my-icons"
+          name="calendar-solid-full"
+          class="task-table-pane__due-icon task-table-pane__due-icon--default"
+        ></wa-icon>
+        期限: すべて
+      </wa-option>
+      <wa-option value="overdue">
+        <wa-icon
+          slot="start"
+          library="my-icons"
+          name="fire-solid-full"
+          class="task-table-pane__due-icon task-table-pane__due-icon--overdue"
+        ></wa-icon>
+        期限切れ
+      </wa-option>
+      <wa-option value="asap">
+        <wa-icon
+          slot="start"
+          library="my-icons"
+          name="triangle-exclamation-solid-full"
+          class="task-table-pane__due-icon task-table-pane__due-icon--asap"
+        ></wa-icon>
+        期限当日
+      </wa-option>
+      <wa-option value="upcoming">
+        <wa-icon
+          slot="start"
+          library="my-icons"
+          name="calendar-solid-full"
+          class="task-table-pane__due-icon task-table-pane__due-icon--upcoming"
+        ></wa-icon>
+        期限間近
+      </wa-option>
+    </wa-select>
+  `;
+}
+
+function renderYearStatusDueFilters(
   params: TaskTableTemplatesParams,
 ): HTMLTemplateResult {
   return html`
@@ -126,23 +276,11 @@ function renderYearAndStatusFilters(
       )}
     </wa-select>
 
-    <wa-select
-      class="task-table-pane__filter-select task-table-pane__filter-status"
-      size="s"
-      .value=${String(params.filter.statusCode)}
-      aria-label="状態フィルタ"
-      @change=${params.onStatusSelectChange}
-    >
-      <wa-option value="all">状態: すべて</wa-option>
-      ${TASK_STATUS_LIST.map(
-        (s) =>
-          html`<wa-option value=${String(s.code)}>${s.labelJa}</wa-option>`,
-      )}
-    </wa-select>
+    ${renderStatusFilterDropdown(params)} ${renderDueFilterSelect(params)}
   `;
 }
 
-function renderLabelTagDueFilters(
+function renderLabelAndTagFilters(
   params: TaskTableTemplatesParams,
 ): HTMLTemplateResult {
   return html`
@@ -172,19 +310,6 @@ function renderLabelTagDueFilters(
         (t) => html`<wa-option value=${String(t.id)}>${t.name}</wa-option>`,
       )}
     </wa-select>
-
-    <wa-select
-      class="task-table-pane__filter-select task-table-pane__filter-due"
-      size="s"
-      .value=${params.filter.dueFilter}
-      aria-label="期限状況フィルタ"
-      @change=${params.onDueSelectChange}
-    >
-      <wa-option value="all">期限: すべて</wa-option>
-      <wa-option value="overdue">期限切れ</wa-option>
-      <wa-option value="asap">期限当日</wa-option>
-      <wa-option value="upcoming">期限間近</wa-option>
-    </wa-select>
   `;
 }
 
@@ -202,7 +327,7 @@ export function renderTaskTableFilters(
         placeholder="キーワード検索 (#タグ名 可)..."
         @search-input=${params.onKeywordInput}
       ></search-input>
-      ${renderYearAndStatusFilters(params)} ${renderLabelTagDueFilters(params)}
+      ${renderYearStatusDueFilters(params)} ${renderLabelAndTagFilters(params)}
       <wa-button
         class="task-table-pane__filter-reset"
         variant="neutral"
