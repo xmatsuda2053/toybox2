@@ -2,17 +2,23 @@
 @use "../../styles/mixins.scss" as *;
 @use "./pane-common.scss" as *;
 
+@mixin settings-pane-flex-fill($direction: row) {
+  display: flex;
+  flex-direction: $direction;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 @include pane-host-layout;
 
 .settings-pane {
   @include theme-transition;
-  background-color: var(--wa-color-surface-default);
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  @include settings-pane-flex-fill(column);
   width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
+  background-color: var(--wa-color-surface-default);
 }
 
 .settings-pane__header {
@@ -24,39 +30,22 @@
 }
 
 .settings-pane__content {
+  @include settings-pane-flex-fill(column);
   padding: var(--wa-space-m, 16px) var(--wa-space-l, 24px);
-  box-sizing: border-box;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .settings-pane__tab-group {
-  box-sizing: border-box;
-  height: 100%;
-  min-height: 0;
-  flex: 1;
-  display: flex;
+  @include settings-pane-flex-fill(row);
   width: 100%;
 
   &::part(tab-group),
   &::part(base) {
-    height: 100%;
-    min-height: 0;
-    flex: 1;
-    display: flex;
+    @include settings-pane-flex-fill(row);
     width: 100%;
   }
 
   &::part(body) {
-    overflow: hidden;
-    height: 100%;
-    min-height: 0;
-    flex: 1;
-    flex-direction: column;
-    display: flex;
+    @include settings-pane-flex-fill(column);
     width: 100%;
   }
 }
@@ -65,24 +54,12 @@
   display: none;
 
   &[active] {
+    @include settings-pane-flex-fill(column);
     --padding: 0;
     padding: 0 0 0 var(--wa-space-l, 24px);
-    box-sizing: border-box;
-    overflow: hidden;
-    height: 100%;
-    min-height: 0;
-    flex: 1;
-    flex-direction: column;
-    display: flex;
   }
 
   &[active]::part(base) {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    height: 100%;
-    min-height: 0;
-    box-sizing: border-box;
-    overflow: hidden;
+    @include settings-pane-flex-fill(column);
   }
 }

@@ -1,0 +1,415 @@
+@use "../../styles/tokens.scss";
+@use "../../styles/mixins.scss" as *;
+
+/* ==========================================================================
+   StepNote Settings 共通スタイル Mixin (settings-common.scss)
+   設定画面（SettingsPane 配下サブビュー群）で再利用する共通レイアウト・UI定義
+   ========================================================================== */
+
+/**
+ * 設定サブビュー共通 :host レイアウト・box-sizing リセット Mixin
+ */
+@mixin settings-view-host {
+  :host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    @include theme-transition;
+  }
+
+  @include box-sizing-reset;
+}
+
+/**
+ * 設定画面マスタ・ディテール 2カラムレイアウト Mixin
+ */
+@mixin settings-master-detail($with-text-color: false) {
+  display: flex;
+  flex-direction: row;
+  gap: var(--wa-space-l, 24px);
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+
+  @if $with-text-color {
+    color: var(--wa-color-text-normal);
+  }
+
+  @include theme-transition;
+}
+
+/**
+ * 設定画面マスタペイン（左側一覧コンテナ） Mixin
+ */
+@mixin settings-master-pane(
+  $width: 300px,
+  $min-width: 240px,
+  $border-color: var(--wa-color-surface-border),
+  $padding-right: var(--wa-space-m, 16px),
+  $full-height: true
+) {
+  width: $width;
+  min-width: $min-width;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid $border-color;
+  padding-right: $padding-right;
+  box-sizing: border-box;
+
+  @if $full-height {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+/**
+ * 設定画面マスタペイン ヘッダー Mixin
+ */
+@mixin settings-master-header(
+  $border-color: var(--wa-color-surface-border),
+  $margin-bottom: var(--wa-space-s, 12px)
+) {
+  @include flex-between;
+  margin-bottom: $margin-bottom;
+  padding-bottom: var(--wa-space-xs, 8px);
+  padding-inline-start: var(--wa-space-xs, 8px);
+  padding-inline-end: calc(var(--wa-space-xs, 8px) * 1.5);
+  scrollbar-gutter: stable;
+  overflow: hidden;
+  border-bottom: 1px solid $border-color;
+}
+
+/**
+ * 設定画面マスタペイン タイトル Mixin
+ */
+@mixin settings-master-title {
+  font-size: var(--wa-font-size-s, 14px);
+  font-weight: 600;
+  color: var(--wa-color-text-normal);
+}
+
+/**
+ * 設定画面 ボタンホバー・不透明度共通トランジション Mixin
+ */
+@mixin settings-btn-transition {
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/**
+ * 設定画面 アイコンアクションボタン（新規追加・時刻追加・Issue追加等） Mixin
+ */
+@mixin settings-icon-action-btn($color: var(--wa-color-neutral-on-quiet, inherit)) {
+  @include flex-center;
+  color: $color;
+  border-radius: var(--wa-border-radius-s, 4px);
+  @include settings-btn-transition;
+
+  wa-icon {
+    font-size: var(--wa-font-size-m, 14px);
+    color: inherit;
+  }
+
+  &:hover {
+    color: var(--wa-color-text-normal);
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+/**
+ * 設定画面マスタスクロールリスト Mixin
+ */
+@mixin settings-master-list($padding-end: var(--wa-space-2xs, 4px)) {
+  @include custom-scrollbar;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs, 6px);
+  padding-inline-end: $padding-end;
+}
+
+/**
+ * 設定画面マスタリストアイテム フォーカスリング Mixin
+ */
+@mixin settings-master-item-focus {
+  width: 100%;
+  outline: none;
+
+  &:focus-visible {
+    outline: var(--wa-focus-ring, 2px solid var(--wa-color-brand-60));
+    outline-offset: 1px;
+  }
+}
+
+/**
+ * 設定画面マスタリストアイテム Mixin
+ */
+@mixin settings-master-item(
+  $padding: var(--wa-space-xs, 8px) var(--wa-space-s, 12px),
+  $border-color: var(--wa-color-surface-border),
+  $font-size: var(--wa-font-size-m, 14px),
+  $color: inherit,
+  $focus-ring: false
+) {
+  @include flex-between;
+  @include theme-transition;
+  gap: var(--wa-space-xs, 8px);
+  padding: $padding;
+  border-radius: var(--wa-border-radius-m, 4px);
+  background-color: var(--wa-color-surface-raised);
+  border: 1px solid $border-color;
+  color: $color;
+  font-family: inherit;
+  font-size: $font-size;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+
+  @if $focus-ring {
+    @include settings-master-item-focus;
+  }
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+/**
+ * 設定画面マスタリストアイテム 選択状態 Mixin
+ */
+@mixin settings-master-item-selected(
+  $border-color: var(--wa-color-brand-60),
+  $bold: false
+) {
+  background-color: var(--wa-color-neutral-fill-normal);
+  border-color: $border-color;
+  transition: none;
+
+  @if $bold {
+    font-weight: 600;
+    color: var(--wa-color-neutral-on-normal);
+  }
+
+  &:hover {
+    background-color: var(--wa-color-neutral-fill-normal);
+  }
+}
+
+/**
+ * 設定画面アイテム本文コンテナ Mixin
+ */
+@mixin settings-item-main($direction: column, $gap: var(--wa-space-3xs, 4px)) {
+  display: flex;
+  flex-direction: $direction;
+  min-width: 0;
+  flex: 1;
+
+  @if $direction == column {
+    gap: $gap;
+  } @else {
+    align-items: center;
+  }
+}
+
+/**
+ * 設定画面アイテムタイトル（1行省略） Mixin
+ */
+@mixin settings-item-title($font-size: null, $font-weight: null, $color: null) {
+  @include text-ellipsis;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+
+  @if $font-size != null {
+    font-size: $font-size;
+  }
+  @if $font-weight != null {
+    font-weight: $font-weight;
+  }
+  @if $color != null {
+    color: $color;
+  }
+}
+
+/**
+ * 設定画面アイテム説明文（1行省略） Mixin
+ */
+@mixin settings-item-desc {
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+  @include text-ellipsis;
+}
+
+/**
+ * 設定画面アイテム内ドロップダウンコンテナ Mixin
+ */
+@mixin settings-item-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--wa-space-3xs, 2px);
+}
+
+/**
+ * 設定画面メニューボタン Mixin
+ */
+@mixin settings-btn-menu {
+  opacity: 0.8;
+  @include theme-transition;
+  border-radius: var(--wa-border-radius-s, 4px);
+  color: inherit;
+
+  &:hover {
+    opacity: 1;
+    background-color: var(--wa-color-neutral-fill-quiet);
+  }
+}
+
+/**
+ * 設定画面ディテールペイン（右側詳細コンテナ） Mixin
+ */
+@mixin settings-detail-pane(
+  $padding: var(--wa-space-xs, 8px) var(--wa-space-m, 16px)
+    var(--wa-space-s, 12px) var(--wa-space-xs, 8px),
+  $scrollable: true
+) {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: $padding;
+  box-sizing: border-box;
+
+  @if $scrollable {
+    overflow-y: auto;
+    @include custom-scrollbar;
+  } @else {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+/**
+ * 設定画面空状態・プレースホルダー表示 Mixin
+ */
+@mixin settings-empty-state($padding: var(--wa-space-xl, 24px), $center-flex: true) {
+  @if $center-flex {
+    @include flex-center;
+  }
+  padding: $padding;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s, 14px);
+  text-align: center;
+}
+
+/**
+ * 設定画面セクションタイトル Mixin
+ */
+@mixin settings-section-title($reset-margin: false) {
+  @if $reset-margin {
+    margin: 0;
+  }
+  font-size: var(--wa-font-size-m, 14px);
+  font-weight: var(--wa-font-weight-semibold, 600);
+  color: var(--wa-color-text-normal);
+}
+
+/**
+ * 設定画面セクション説明テキスト Mixin
+ */
+@mixin settings-section-desc($reset-margin: false) {
+  @if $reset-margin {
+    margin: 0;
+  }
+  font-size: var(--wa-font-size-s, 12px);
+  color: var(--wa-color-text-quiet);
+  line-height: var(--wa-line-height-normal, 1.5);
+}
+
+/**
+ * 設定画面カード風サーフェス Mixin
+ */
+@mixin settings-raised-card($padding, $radius: var(--wa-border-radius-m, 8px)) {
+  @include flex-between;
+  padding: $padding;
+  background-color: var(--wa-color-surface-raised);
+  border-radius: $radius;
+  border: 1px solid var(--wa-color-border-subtle);
+  @include theme-transition;
+}
+
+/**
+ * 設定画面フォーム基盤 Mixin
+ */
+@mixin settings-form-base($max-width: 520px) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-m, 16px);
+
+  @if $max-width != null {
+    max-width: $max-width;
+  }
+}
+
+/**
+ * 設定画面フォームヘッダー Mixin
+ */
+@mixin settings-form-header {
+  @include flex-between;
+  padding-bottom: var(--wa-space-xs, 8px);
+  border-bottom: 1px solid var(--wa-color-surface-border);
+}
+
+/**
+ * 設定画面フォームタイトル Mixin
+ */
+@mixin settings-form-title {
+  font-size: var(--wa-font-size-m);
+  font-weight: 600;
+  color: var(--wa-color-text-normal);
+}
+
+/**
+ * 設定画面フォームアクションフッター Mixin
+ */
+@mixin settings-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-s, 12px);
+}
+
+/**
+ * 設定画面フォームエラーメッセージ Mixin
+ */
+@mixin settings-form-error {
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-danger-60);
+}
+
+/**
+ * 設定画面ダイアログ本文 Mixin
+ */
+@mixin settings-dialog-body {
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-normal);
+  line-height: var(--wa-line-height-normal);
+}
+
+/**
+ * 設定画面ダイアログフッター Mixin
+ */
+@mixin settings-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wa-space-s, 12px);
+}

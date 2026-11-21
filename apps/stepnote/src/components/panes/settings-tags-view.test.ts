@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import type { TagRecord } from "@/db/models/tag.model";
@@ -252,8 +253,8 @@ describe("SettingsTagsView Component", () => {
     });
 
     it("4-5. 詳細ペイン（.settings-tags-view__detail）にフォーカスアウトラインが途切れない十分な padding が定義されていること", () => {
-      const scssContent = fs.readFileSync(scssPath, "utf-8");
-      expect(scssContent).toMatch(/\.settings-tags-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(/\.settings-tags-view__detail\s*\{[^}]*padding:\s*var\(--wa-space-xs/);
     });
 
     it("4-6. wa-tag が appearance='filled' と stepnote-tag クラスを持ち、SCSS に @include stepnote-tag-styles が適用されていること", () => {

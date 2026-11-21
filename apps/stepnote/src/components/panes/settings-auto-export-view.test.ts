@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { SettingsAutoExportView } from "./settings-auto-export-view.js";
@@ -180,19 +181,19 @@ describe("SettingsAutoExportView Component", () => {
     });
 
     it("2-2. __schedule-list に overflow-y: auto が定義されていること", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
-        /\.settings-auto-export-view__schedule-list\s*\{[\s\S]*?overflow-y:\s*auto\b/,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.settings-auto-export-view__schedule-list\s*\{[^}]*?overflow-y:\s*auto\b/,
       );
     });
 
     it("2-3. __schedule-item および __export-status に background-color: var(--wa-color-surface-raised) が指定されていること", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
-        /\.settings-auto-export-view__schedule-item\s*\{[\s\S]*?background-color:\s*var\(--wa-color-surface-raised\)/,
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
+        /\.settings-auto-export-view__schedule-item\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\)/,
       );
-      expect(scss).toMatch(
-        /\.settings-auto-export-view__export-status\s*\{[\s\S]*?background-color:\s*var\(--wa-color-surface-raised\)/,
+      expect(compiledCss).toMatch(
+        /\.settings-auto-export-view__export-status\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\)/,
       );
     });
   });

@@ -1,17 +1,8 @@
 @use "../../styles/tokens.scss";
 @use "../../styles/mixins.scss" as *;
+@use "./settings-common.scss" as *;
 
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  width: 100%;
-  @include theme-transition;
-}
-
-@include box-sizing-reset;
+@include settings-view-host;
 
 .settings-auto-export-view__layout {
   display: flex;
@@ -73,15 +64,11 @@
 }
 
 .settings-auto-export-view__section-title {
-  font-size: var(--wa-font-size-m, 14px);
-  font-weight: var(--wa-font-weight-semibold, 600);
-  color: var(--wa-color-text-normal);
+  @include settings-section-title;
 }
 
 .settings-auto-export-view__desc {
-  font-size: var(--wa-font-size-s, 12px);
-  color: var(--wa-color-text-quiet);
-  line-height: var(--wa-line-height-normal, 1.5);
+  @include settings-section-desc;
 }
 
 .settings-auto-export-view__switch {
@@ -100,13 +87,11 @@
 }
 
 .settings-auto-export-view__schedule-item {
-  @include flex-between;
-  padding: var(--wa-space-xs, 4px) var(--wa-space-s, 8px);
-  background-color: var(--wa-color-surface-raised);
-  border-radius: var(--wa-border-radius-s, 4px);
-  border: 1px solid var(--wa-color-border-subtle);
+  @include settings-raised-card(
+    var(--wa-space-xs, 4px) var(--wa-space-s, 8px),
+    var(--wa-border-radius-s, 4px)
+  );
   flex-shrink: 0;
-  @include theme-transition;
 }
 
 .settings-auto-export-view__schedule-time {
@@ -124,22 +109,7 @@
 }
 
 .settings-auto-export-view__btn-add-time {
-  @include flex-center;
-  color: var(--wa-color-neutral-on-quiet, inherit);
-  border-radius: var(--wa-border-radius-s, 4px);
-  transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
-
-  wa-icon {
-    font-size: var(--wa-font-size-m, 14px);
-    color: inherit;
-  }
-
-  &:hover {
-    background-color: var(--wa-color-neutral-fill-quiet);
-  }
+  @include settings-icon-action-btn;
 }
 
 .settings-auto-export-view__btn-add-time--active {
@@ -151,12 +121,7 @@
 }
 
 .settings-auto-export-view__export-status {
-  @include flex-between;
-  padding: var(--wa-space-m, 16px);
-  background-color: var(--wa-color-surface-raised);
-  border-radius: var(--wa-border-radius-m, 8px);
-  border: 1px solid var(--wa-color-border-subtle);
-  @include theme-transition;
+  @include settings-raised-card(var(--wa-space-m, 16px));
 }
 
 .settings-auto-export-view__export-status-info {
@@ -176,8 +141,5 @@
 }
 
 .settings-auto-export-view__placeholder {
-  color: var(--wa-color-text-quiet);
-  font-size: var(--wa-font-size-s, 14px);
-  padding: var(--wa-space-l, 24px) 0;
-  text-align: center;
+  @include settings-empty-state($padding: var(--wa-space-l, 24px) 0, $center-flex: false);
 }

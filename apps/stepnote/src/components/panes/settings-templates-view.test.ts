@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as sass from "sass-embedded";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { flattenTemplate } from "@shared/utils";
 import { SettingsTemplatesView } from "./settings-templates-view.js";
@@ -462,66 +463,66 @@ describe("SettingsTemplatesView Component", () => {
     });
 
     it("2-3. __master-header / __master-list / __form-name / __btn-save / __form-body のスタイル仕様が維持されていること", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-header\s*\{[^}]*?padding-inline-end:\s*calc\(var\(--wa-space-xs,\s*8px\)\s*\*\s*1\.5\)/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-header\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-list\s*\{[^}]*?(?:padding-inline-end|padding-right):\s*var\(--wa-space-(?:xs|s)\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-list\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
       );
-      expect(scss).toMatch(
-        /\.settings-templates-view__form-name\s*\{[\s\S]*?(?:grid-template-columns|flex-direction)/,
+      expect(compiledCss).toMatch(
+        /\.settings-templates-view__form-name\s*\{[^}]*?(?:grid-template-columns|flex-direction)/,
       );
-      expect(scss).toMatch(
-        /\.settings-templates-view__form-name[^{]*\{[\s\S]*?&::part\(form-control-label\)/,
+      expect(compiledCss).toMatch(
+        /\.settings-templates-view__form-name::part\(form-control-label\)/,
       );
-      expect(scss).toMatch(
-        /\.settings-templates-view__btn-save\s*\{[\s\S]*?wa-icon\s*\{[^}]*?font-size:\s*var\(--wa-font-size-l\b/,
+      expect(compiledCss).toMatch(
+        /\.settings-templates-view__btn-save\s+wa-icon\s*\{[^}]*?font-size:\s*var\(--wa-font-size-l\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__name-row\s*\{[^}]*?flex-shrink:\s*0\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__form-body\s*\{[^}]*?overflow-y:\s*auto\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__form-body\s*\{[^}]*?scrollbar-gutter:\s*stable\b/,
       );
     });
 
     it("2-4. __master-item / __issue-item / __issue-offset-row / __issue-section / __desc-container のスタイル仕様が維持されていること", () => {
-      const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
+      const compiledCss = sass.compile(scssPath).css;
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-item\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__issue-item\s*\{[^}]*?background-color:\s*var\(--wa-color-surface-raised\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-list\s*\{[^}]*?gap:\s*var\(--wa-space-xs,\s*6px\)/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__issue-list\s*\{[^}]*?gap:\s*var\(--wa-space-xs,\s*6px\)/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__master-item--selected\s*\{[^}]*?transition:\s*none\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__issue-item--selected\s*\{[^}]*?transition:\s*none\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__issue-offset-row\s*\{[^}]*?(?:padding-block|padding):\s*(?:var\(--wa-space-[^,)]+,\s*\d+px\)|\d+px)/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__issue-section\s*\{[^}]*?flex:\s*1\b/,
       );
-      expect(scss).toMatch(
+      expect(compiledCss).toMatch(
         /\.settings-templates-view__desc-container\s*\{[^}]*?height:\s*clamp\(/,
       );
     });
