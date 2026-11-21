@@ -31,6 +31,9 @@ import { TaskTablePane } from "./task-table-pane.js";
  *
  * 5. SCSS 品質規約検証
  *    - 5-1. task-table-pane.scss に !important、@extend、ハードコードカラー直値が含まれず、theme-transition が適用されていること
+ *    - 5-2. ラベル列幅が 160px であり、トリガーボタン内ラベルの左寄せ・省略表示（text-ellipsis）・はみ出し防止ルールが定義されていること
+ *    - 5-3. 状態列幅が「開始待ち」を省略せず表示できる 140px であること
+ *    - 5-4. 期限日列幅が「yyyy-MM-dd (EEE)」を途切れず表示できる 180px であること
  */
 
 const createMockRow = (
@@ -316,6 +319,42 @@ describe("TaskTablePane Component", () => {
 
       const compiled = sass.compile(scssPath).css;
       expect(compiled.length).toBeGreaterThan(0);
+    });
+
+    it("5-2. ラベル列幅が 160px であり、トリガーボタン内ラベルの左寄せ・省略表示（text-ellipsis）・はみ出し防止ルールが定義されていること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__th--label\s*\{[^}]*width:\s*160px/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__cell-trigger\s*\{[^}]*min-width:\s*0/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__cell-trigger::part\(button\)\s*\{[^}]*overflow:\s*hidden/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__cell-trigger::part\(label\)\s*\{[^}]*text-align:\s*start/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__cell-trigger::part\(label\)\s*\{[^}]*text-overflow:\s*ellipsis/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__cell-trigger::part\(caret\)\s*\{[^}]*flex-shrink:\s*0/,
+      );
+    });
+
+    it("5-3. 状態列幅が「開始待ち」を省略せず表示できる 140px であること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__th--status\s*\{[^}]*width:\s*140px/,
+      );
+    });
+
+    it("5-4. 期限日列幅が「yyyy-MM-dd (EEE)」を途切れず表示できる 180px であること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__th--due\s*\{[^}]*width:\s*180px/,
+      );
     });
   });
 
