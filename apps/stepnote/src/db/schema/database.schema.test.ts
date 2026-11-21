@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "fake-indexeddb/auto";
-import { db } from "./database.schema";
+import { db, Database } from "./database.schema";
 import {
   TaskRecord,
   LogRecord,
@@ -240,7 +240,10 @@ describe("StepNote Database Schema Tests", () => {
           .toCollection()
           .modify((scratch) => {
             if (!scratch.title) {
-              scratch.title = extractMarkdownTitle(scratch.value, "(無題のメモ)");
+              scratch.title = extractMarkdownTitle(
+                scratch.value,
+                "(無題のメモ)",
+              );
             }
           });
       });
@@ -330,9 +333,73 @@ describe("StepNote Database Schema Tests", () => {
     const saved = await db.table("tagSets").get(setId1);
     expect(saved?.name).toBe("障害対応セット");
 
-    const matched = await db.table("tagSets").where("tagIds").equals(20).toArray();
+    const matched = await db
+      .table("tagSets")
+      .where("tagIds")
+      .equals(20)
+      .toArray();
     expect(matched).toHaveLength(1);
     expect(matched[0]?.id).toBe(setId1);
   });
-});
 
+  it('version(6)からversion(7)へのアップグレード時に文字列型statusCode（"0"等）が数値型へ自動修復されること', async () => {
+    const testDbName = "StepNote_V7_StatusCode_Migration_Test";
+    await Dexie.delete(testDbName);
+
+    const legacyDb = new Dexie(testDbName);
+    legacyDb.version(6).stores({
+      tasks: "++id, statusCode, name, dueDate, fiscalYear, selected, *tagIds",
+      issues: "++id, taskId, [taskId+id]",
+    });
+    await legacyDb.open();
+
+    const taskId1 = await legacyDb.table("tasks").add({
+      statusCode: "0",
+      name: "文字列0タスク",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 1,
+      bookmark: false,
+      selected: false,
+      tagIds: [],
+    });
+    const taskId2 = await legacyDb.table("tasks").add({
+      statusCode: "5",
+      name: "文字列5タスク",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 1,
+      bookmark: false,
+      selected: false,
+      tagIds: [],
+    });
+    const issueId1 = await legacyDb.table("issues").add({
+      taskId: taskId1,
+      statusCode: "0",
+      title: "文字列0課題",
+      value: "",
+    });
+    legacyDb.close();
+
+    const upgradedDb = new Database(testDbName);
+    await upgradedDb.open();
+
+    const migratedTask1 = await upgradedDb.tasks.get(Number(taskId1));
+    const migratedTask2 = await upgradedDb.tasks.get(Number(taskId2));
+    const migratedIssue1 = await upgradedDb.issues.get(Number(issueId1));
+
+    expect(migratedTask1?.statusCode).toBe(0);
+    expect(typeof migratedTask1?.statusCode).toBe("number");
+    expect(migratedTask2?.statusCode).toBe(5);
+    expect(typeof migratedTask2?.statusCode).toBe("number");
+    expect(migratedIssue1?.statusCode).toBe(0);
+    expect(typeof migratedIssue1?.statusCode).toBe("number");
+
+    upgradedDb.close();
+    await Dexie.delete(testDbName);
+  });
+});

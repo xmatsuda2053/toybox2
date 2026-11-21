@@ -11,7 +11,47 @@ import {
   TagSetRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
-import { extractMarkdownTitle } from "@shared/utils";
+import { extractMarkdownTitle, normalizeAllowedNumber } from "@shared/utils";
+
+const VALID_STATUS_CODES = [0, 5, 9] as const;
+
+type StatusCodeTableSource = {
+  table: <T>(name: string) => Table<T, number>;
+  tables?: ReadonlyArray<{ name: string }>;
+};
+
+async function normalizeStatusCodeInTable(
+  table: Table<{ statusCode?: unknown }, number>,
+): Promise<void> {
+  await table.toCollection().modify((record) => {
+    const normalized = normalizeAllowedNumber(
+      record.statusCode,
+      VALID_STATUS_CODES,
+      0,
+    );
+    if (record.statusCode !== normalized) {
+      record.statusCode = normalized;
+    }
+  });
+}
+
+/**
+ * 指定された Dexie インスタンスまたはトランザクション配下の tasks / issues テーブルについて、
+ * 文字列型など非数値の statusCode を数値（0 | 5 | 9）へ正規化する。
+ */
+export async function normalizeDatabaseStatusCodes(
+  source: StatusCodeTableSource,
+): Promise<void> {
+  const existingNames = source.tables
+    ? new Set(source.tables.map((t) => t.name))
+    : null;
+  for (const tableName of ["tasks", "issues"] as const) {
+    if (existingNames && !existingNames.has(tableName)) continue;
+    await normalizeStatusCodeInTable(
+      source.table<{ statusCode?: unknown }>(tableName),
+    );
+  }
+}
 
 /**
  * StepNote アプリケーションの IndexedDB データベーススキーマ定義
@@ -105,10 +145,10 @@ export class Database extends Dexie {
    * Creates an instance of Database.
    * @memberof Database
    */
-  constructor() {
-    super("StepNote");
+  constructor(dbName: string = "StepNote") {
+    super(dbName);
     this.defineV1ToV3();
-    this.defineV4ToV6();
+    this.defineV4ToV7();
   }
 
   /** バージョン 1〜3 のスキーマ定義 */
@@ -157,8 +197,8 @@ export class Database extends Dexie {
     }
   }
 
-  /** バージョン 4〜6 のスキーマ定義 */
-  private defineV4ToV6(): void {
+  /** バージョン 4〜7 のスキーマ定義 */
+  private defineV4ToV7(): void {
     this.version(4).stores({
       taskTemplates: "++id, name, createdAt",
     });
@@ -180,6 +220,11 @@ export class Database extends Dexie {
     this.version(6).stores({
       tagSets: "++id, &name, *tagIds",
     });
+    this.version(7)
+      .stores({})
+      .upgrade(async (tx) => {
+        await normalizeDatabaseStatusCodes(tx);
+      });
   }
 }
 

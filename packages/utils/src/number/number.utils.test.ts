@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { padZero, clamp } from "./number.utils";
+import { padZero, clamp, normalizeAllowedNumber } from "./number.utils";
 
 /** *
  * - [x] 仕様 1: 指定した桁数のゼロパディングが正しく行われること。
@@ -9,6 +9,7 @@ import { padZero, clamp } from "./number.utils";
  * - [x] 仕様 5: 最小値未満の値は最小値に丸められること。
  * - [x] 仕様 6: 最大値を超える値は最大値に丸められること。
  * - [x] 仕様 7: 最小値が最大値より大きく指定された場合は RangeError をスローすること。
+ * - [x] 仕様 8: normalizeAllowedNumber で文字列・数値が許可候補の数値へ正規化され、不正値はフォールバックされること。
  */
 describe("number.utils.padZero", () => {
   it("指定した桁数のゼロパディングが正しく行われること", () => {
@@ -46,5 +47,28 @@ describe("number.utils.clamp", () => {
 
   it("最小値が最大値より大きく指定された場合は RangeError をスローすること", () => {
     expect(() => clamp(5, 10, 0)).toThrow(RangeError);
+  });
+});
+
+describe("number.utils.normalizeAllowedNumber", () => {
+  const STATUS_CODES = [0, 5, 9] as const;
+
+  it("許可された数値または数値文字列が対応する数値へ正規化されること", () => {
+    expect(normalizeAllowedNumber(0, STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber(5, STATUS_CODES, 0)).toBe(5);
+    expect(normalizeAllowedNumber(9, STATUS_CODES, 0)).toBe(9);
+    expect(normalizeAllowedNumber("0", STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber("5", STATUS_CODES, 0)).toBe(5);
+    expect(normalizeAllowedNumber(" 9 ", STATUS_CODES, 0)).toBe(9);
+  });
+
+  it("候補外の数値や空文字・null・undefined などはフォールバック値へ変換されること", () => {
+    expect(normalizeAllowedNumber(1, STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber("99", STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber("", STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber("  ", STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber(null, STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber(undefined, STATUS_CODES, 0)).toBe(0);
+    expect(normalizeAllowedNumber("abc", STATUS_CODES, 5)).toBe(5);
   });
 });
