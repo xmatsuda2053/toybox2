@@ -7,6 +7,7 @@ import type { TaskRepository } from "@/repositories/task.repository";
 import type { IssuesRepository } from "@/repositories/issues.repository";
 import type { LabelsRepository } from "@/repositories/labels.repository";
 import type { TagsRepository } from "@/repositories/tags.repository";
+import type { SystemLogService } from "@/services/system-log.service";
 import type { TaskStatusCode } from "@/types/domain/task-status.type";
 import type {
   TaskTableDueFilter,
@@ -15,6 +16,7 @@ import type {
   TaskTableSortKey,
   TaskTableSortState,
 } from "@/types/view/task-table-view.type";
+import { normalizeTagIds } from "@/utils/tag.utils.js";
 import {
   buildTaskTableRows,
   DEFAULT_TASK_TABLE_SORT,
@@ -42,6 +44,8 @@ export interface TaskTableControllerDeps {
   storage?: TaskTableStorage;
   fiscalYearStorageKey?: string;
   sortStorageKey?: string;
+  systemLogService?: SystemLogService;
+  onTaskMutated?: (taskId: number) => Promise<void> | void;
 }
 
 const DEFAULT_FISCAL_YEAR_STORAGE_KEY = "stepnote_task_table_fiscal_year";
@@ -246,9 +250,7 @@ export class TaskTableController extends BaseReactiveController<void> {
     this.applyFilterChange({ statusCode });
   };
 
-  public setLabelFilter = (
-    labelId: number | "all" | "uncategorized",
-  ): void => {
+  public setLabelFilter = (labelId: number | "all" | "uncategorized"): void => {
     if (this._filter.labelId === labelId) return;
     this.applyFilterChange({ labelId });
   };
@@ -329,6 +331,30 @@ export class TaskTableController extends BaseReactiveController<void> {
     this.notify();
   };
 
+  private resolveLabelName(labelId: number): string {
+    const found = this._labels.find((l) => l.id === labelId);
+    return found?.name ?? `ラベル ${labelId}`;
+  }
+
+  private async applyTaskMutation(
+    taskId: number,
+    partial: Partial<Omit<TaskRecord, "id">>,
+    recordLog?: (before: TaskRecord) => Promise<void>,
+  ): Promise<void> {
+    const before = this._allTasks.find((t) => t.id === taskId);
+    if (!before) return;
+
+    await this.deps.taskRepository.update(taskId, {
+      ...partial,
+      updatedAt: partial.updatedAt ?? new Date(),
+    });
+    if (recordLog) {
+      await recordLog(before);
+    }
+    await this.refresh();
+    await this.deps.onTaskMutated?.(taskId);
+  }
+
   /**
    * 指定タスクのブックマーク状態を反転し、一覧を最新化する。
    */
@@ -339,5 +365,95 @@ export class TaskTableController extends BaseReactiveController<void> {
       bookmark: !target.bookmark,
     });
     await this.refresh();
+    await this.deps.onTaskMutated?.(taskId);
+  };
+
+  /**
+   * 指定タスクのステータスを更新する（未完了 Issue がある場合の完了をガード）。
+   */
+  public updateTaskStatus = async (
+    taskId: number,
+    statusCode: TaskStatusCode,
+  ): Promise<void> => {
+    const target = this._allTasks.find((t) => t.id === taskId);
+    if (!target || target.statusCode === statusCode) return;
+
+    if (statusCode === 9) {
+      const issues = await this.deps.issuesRepository.getByTaskId(taskId);
+      if (issues.some((issue) => issue.statusCode !== 9)) return;
+    }
+
+    await this.applyTaskMutation(taskId, { statusCode }, async (before) => {
+      await this.deps.systemLogService?.logTaskStatusChanged(
+        taskId,
+        before.statusCode,
+        statusCode,
+      );
+    });
+  };
+
+  /**
+   * 指定タスクの所属ラベルを更新する。
+   */
+  public updateTaskLabel = async (
+    taskId: number,
+    labelId: number,
+  ): Promise<void> => {
+    const target = this._allTasks.find((t) => t.id === taskId);
+    if (!target || target.labelId === labelId) return;
+
+    await this.applyTaskMutation(taskId, { labelId }, async (before) => {
+      const beforeLabel = this.resolveLabelName(before.labelId);
+      const afterLabel = this.resolveLabelName(labelId);
+      await this.deps.systemLogService?.logTaskLabelChanged(
+        taskId,
+        beforeLabel,
+        afterLabel,
+        before.labelId,
+        labelId,
+      );
+    });
+  };
+
+  /**
+   * 指定タスクの期限日を更新する。
+   */
+  public updateTaskDueDate = async (
+    taskId: number,
+    dueDate: Date,
+  ): Promise<void> => {
+    const target = this._allTasks.find((t) => t.id === taskId);
+    if (!target) return;
+
+    const beforeTime = new Date(target.dueDate).getTime();
+    if (beforeTime === dueDate.getTime()) return;
+
+    await this.applyTaskMutation(taskId, { dueDate }, async (before) => {
+      await this.deps.systemLogService?.logTaskDueDateChanged(
+        taskId,
+        new Date(before.dueDate),
+        dueDate,
+      );
+    });
+  };
+
+  /**
+   * 指定タスクのタグID一覧を更新する。
+   */
+  public updateTaskTags = async (
+    taskId: number,
+    tagIds: readonly number[],
+  ): Promise<void> => {
+    const target = this._allTasks.find((t) => t.id === taskId);
+    if (!target) return;
+
+    const prevIds = normalizeTagIds(target.tagIds);
+    const nextIds = normalizeTagIds(tagIds);
+    const isUnchanged =
+      prevIds.length === nextIds.length &&
+      prevIds.every((id, idx) => id === nextIds[idx]);
+    if (isUnchanged) return;
+
+    await this.applyTaskMutation(taskId, { tagIds: nextIds });
   };
 }

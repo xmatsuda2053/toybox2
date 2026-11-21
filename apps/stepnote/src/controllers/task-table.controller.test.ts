@@ -37,6 +37,13 @@ import { TaskTableController } from "./task-table.controller.js";
  *
  * 6. ブックマークトグル
  *    - 6-1. toggleBookmark 実行時に taskRepository.update が呼ばれ、一覧が最新化されること
+ *
+ * 7. 一覧からの直接更新（状態・ラベル・期限日・タグ）と業務ルール連携
+ *    - 7-1. updateTaskStatus で状態更新・システムログ記録・再読込・onTaskMutated が呼ばれること
+ *    - 7-2. 未完了 Issue があるタスクに対する updateTaskStatus(taskId, 9) が抑止されること
+ *    - 7-3. updateTaskLabel でラベル更新・システムログ記録・再読込・onTaskMutated が呼ばれること
+ *    - 7-4. updateTaskDueDate で期限日更新・システムログ記録・再読込・onTaskMutated が呼ばれること
+ *    - 7-5. updateTaskTags でタグ更新・再読込・onTaskMutated が呼ばれること
  */
 
 const createMockHost = () => {
@@ -69,7 +76,10 @@ describe("TaskTableController", () => {
     getAll: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
-  let issuesRepoMock: { getAll: ReturnType<typeof vi.fn> };
+  let issuesRepoMock: {
+    getAll: ReturnType<typeof vi.fn>;
+    getByTaskId: ReturnType<typeof vi.fn>;
+  };
   let labelsRepoMock: { getAll: ReturnType<typeof vi.fn> };
   let tagsRepoMock: { getAll: ReturnType<typeof vi.fn> };
   let queryMock: { searchTaskIds: ReturnType<typeof vi.fn> };
@@ -129,7 +139,14 @@ describe("TaskTableController", () => {
           },
         ),
     };
-    issuesRepoMock = { getAll: vi.fn().mockResolvedValue(issues) };
+    issuesRepoMock = {
+      getAll: vi.fn().mockImplementation(async () => issues),
+      getByTaskId: vi
+        .fn()
+        .mockImplementation(async (taskId: number) =>
+          issues.filter((i) => i.taskId === taskId),
+        ),
+    };
     labelsRepoMock = { getAll: vi.fn().mockResolvedValue(labels) };
     tagsRepoMock = { getAll: vi.fn().mockResolvedValue(tags) };
     queryMock = { searchTaskIds: vi.fn().mockResolvedValue(new Set([1])) };
@@ -321,6 +338,152 @@ describe("TaskTableController", () => {
       expect(taskRepoMock.update).toHaveBeenCalledWith(1, { bookmark: true });
       const updated = controller.rows.find((r) => r.task.id === 1);
       expect(updated?.task.bookmark).toBe(true);
+    });
+  });
+
+  describe("7. 一覧からの直接更新（状態・ラベル・期限日・タグ）と業務ルール連携", () => {
+    const createRichController = () => {
+      const { host, requestUpdateMock } = createMockHost();
+      const systemLogServiceMock = {
+        logTaskStatusChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskLabelChanged: vi.fn().mockResolvedValue(undefined),
+        logTaskDueDateChanged: vi.fn().mockResolvedValue(undefined),
+      };
+      const onTaskMutated = vi.fn().mockResolvedValue(undefined);
+      const controller = new TaskTableController(host, {
+        taskRepository: taskRepoMock as unknown as TaskRepository,
+        issuesRepository: issuesRepoMock as unknown as IssuesRepository,
+        labelsRepository: labelsRepoMock as unknown as LabelsRepository,
+        tagsRepository: tagsRepoMock as unknown as TagsRepository,
+        taskListQuery: queryMock as unknown as TaskListQuery,
+        storage: createMockStorage({
+          stepnote_task_table_fiscal_year: "all",
+        }),
+        systemLogService: systemLogServiceMock as unknown as never,
+        onTaskMutated,
+      });
+      return {
+        controller,
+        systemLogServiceMock,
+        onTaskMutated,
+        requestUpdateMock,
+      };
+    };
+
+    it("7-1. updateTaskStatus で状態更新・システムログ記録・再読込・onTaskMutated が呼ばれること", async () => {
+      const { controller, systemLogServiceMock, onTaskMutated } =
+        createRichController();
+      await controller.refresh();
+
+      await (
+        controller as unknown as {
+          updateTaskStatus: (id: number, status: 0 | 5 | 9) => Promise<void>;
+        }
+      ).updateTaskStatus(1, 5);
+
+      expect(taskRepoMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ statusCode: 5 }),
+      );
+      expect(systemLogServiceMock.logTaskStatusChanged).toHaveBeenCalledWith(
+        1,
+        0,
+        5,
+      );
+      expect(onTaskMutated).toHaveBeenCalledWith(1);
+    });
+
+    it("7-2. 未完了 Issue があるタスクに対する updateTaskStatus(taskId, 9) が抑止されること", async () => {
+      const { controller, systemLogServiceMock, onTaskMutated } =
+        createRichController();
+      await controller.refresh();
+
+      await (
+        controller as unknown as {
+          updateTaskStatus: (id: number, status: 0 | 5 | 9) => Promise<void>;
+        }
+      ).updateTaskStatus(1, 9);
+
+      expect(taskRepoMock.update).not.toHaveBeenCalled();
+      expect(systemLogServiceMock.logTaskStatusChanged).not.toHaveBeenCalled();
+      expect(onTaskMutated).not.toHaveBeenCalled();
+
+      // Issue が存在しないタスク 2 は完了可能
+      await (
+        controller as unknown as {
+          updateTaskStatus: (id: number, status: 0 | 5 | 9) => Promise<void>;
+        }
+      ).updateTaskStatus(2, 9);
+      expect(taskRepoMock.update).toHaveBeenCalledWith(
+        2,
+        expect.objectContaining({ statusCode: 9 }),
+      );
+    });
+
+    it("7-3. updateTaskLabel でラベル更新・システムログ記録・再読込・onTaskMutated が呼ばれること", async () => {
+      const { controller, systemLogServiceMock, onTaskMutated } =
+        createRichController();
+      await controller.refresh();
+
+      await (
+        controller as unknown as {
+          updateTaskLabel: (id: number, labelId: number) => Promise<void>;
+        }
+      ).updateTaskLabel(1, 20);
+
+      expect(taskRepoMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ labelId: 20 }),
+      );
+      expect(systemLogServiceMock.logTaskLabelChanged).toHaveBeenCalledWith(
+        1,
+        "開発",
+        "運用",
+        10,
+        20,
+      );
+      expect(onTaskMutated).toHaveBeenCalledWith(1);
+    });
+
+    it("7-4. updateTaskDueDate で期限日更新・システムログ記録・再読込・onTaskMutated が呼ばれること", async () => {
+      const { controller, systemLogServiceMock, onTaskMutated } =
+        createRichController();
+      await controller.refresh();
+      const nextDate = new Date("2026-07-01T00:00:00.000Z");
+
+      await (
+        controller as unknown as {
+          updateTaskDueDate: (id: number, dueDate: Date) => Promise<void>;
+        }
+      ).updateTaskDueDate(1, nextDate);
+
+      expect(taskRepoMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ dueDate: nextDate }),
+      );
+      expect(systemLogServiceMock.logTaskDueDateChanged).toHaveBeenCalledWith(
+        1,
+        new Date("2026-06-01T00:00:00.000Z"),
+        nextDate,
+      );
+      expect(onTaskMutated).toHaveBeenCalledWith(1);
+    });
+
+    it("7-5. updateTaskTags でタグ更新・再読込・onTaskMutated が呼ばれること", async () => {
+      const { controller, onTaskMutated } = createRichController();
+      await controller.refresh();
+
+      await (
+        controller as unknown as {
+          updateTaskTags: (id: number, tagIds: number[]) => Promise<void>;
+        }
+      ).updateTaskTags(1, [100, 200, 100]);
+
+      expect(taskRepoMock.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ tagIds: [100, 200] }),
+      );
+      expect(onTaskMutated).toHaveBeenCalledWith(1);
     });
   });
 });

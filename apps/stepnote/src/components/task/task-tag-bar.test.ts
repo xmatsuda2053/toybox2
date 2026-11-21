@@ -501,4 +501,68 @@ describe("TaskTagBar Component", () => {
       );
     });
   });
+
+  describe("4. 外部対象タスク指定モード（targetTaskId / targetTagIds）", () => {
+    it("4-1. targetTaskId と targetTagIds が指定された場合、taskController ではなく targetTagIds のタグが描画されること", () => {
+      mockTaskController.state = undefined;
+      (
+        element as unknown as {
+          targetTaskId: number;
+          targetTagIds: number[];
+        }
+      ).targetTaskId = 202;
+      (
+        element as unknown as {
+          targetTaskId: number;
+          targetTagIds: number[];
+        }
+      ).targetTagIds = [2];
+
+      const htmlStr = flattenTemplate(element.render());
+      const listHtml = htmlStr.slice(htmlStr.indexOf("task-tag-bar__list"));
+      expect(listHtml).toContain("緊急");
+      expect(listHtml).not.toContain("API");
+    });
+
+    it("4-2. targetTaskId 指定時は taskController を呼ばず task-tag-ids-change イベントが発火すること", async () => {
+      const events: Array<{ taskId: number; tagIds: number[] }> = [];
+      element.addEventListener("task-tag-ids-change", (e: Event) => {
+        events.push(
+          (e as CustomEvent<{ taskId: number; tagIds: number[] }>).detail,
+        );
+      });
+
+      (
+        element as unknown as {
+          targetTaskId: number;
+          targetTagIds: number[];
+        }
+      ).targetTaskId = 202;
+      (
+        element as unknown as {
+          targetTaskId: number;
+          targetTagIds: number[];
+        }
+      ).targetTagIds = [1];
+
+      await element.handleToggleTag(2);
+      await element.handleRemoveTag(1);
+
+      element.selectedTagSetId = "100";
+      await element.handleApplyTagSet();
+
+      element.searchKeyword = "#新規タグ";
+      await element.handleCreateAndAttachTag();
+
+      expect(mockTaskController.addTag).not.toHaveBeenCalled();
+      expect(mockTaskController.removeTag).not.toHaveBeenCalled();
+      expect(mockTaskController.addTags).not.toHaveBeenCalled();
+      expect(events).toEqual([
+        { taskId: 202, tagIds: [1, 2] },
+        { taskId: 202, tagIds: [] },
+        { taskId: 202, tagIds: [1, 3] },
+        { taskId: 202, tagIds: [1, 4] },
+      ]);
+    });
+  });
 });
