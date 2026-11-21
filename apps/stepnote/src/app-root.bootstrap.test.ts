@@ -29,6 +29,24 @@ class MockReactiveHost extends EventTarget implements ReactiveControllerHost {
   public updateComplete = Promise.resolve(true);
 }
 
+const settleControllers = async (
+  bundle: ReturnType<typeof createAppControllers>,
+) => {
+  await Promise.allSettled([
+    bundle.quickAccessController.initialized,
+    bundle.labelsController.initialized,
+    bundle.taskController.initialized,
+    bundle.taskListController.initialized,
+    bundle.logsController.initialized,
+    bundle.notesController.initialized,
+    bundle.issuesController.initialized,
+    bundle.scratchController.initialized,
+    bundle.taskTemplateController.initialized,
+    bundle.tagsController.initialized,
+    bundle.tagSetsController.initialized,
+  ]);
+};
+
 describe("app-root.bootstrap", () => {
   it("1-1. createAppRepositories が必要なリポジトリ群を一括生成して返すこと", () => {
     const repos = createAppRepositories();
@@ -45,7 +63,7 @@ describe("app-root.bootstrap", () => {
     expect(repos.taskTemplateRepository).toBeDefined();
   });
 
-  it("1-2. createAppControllers が 15 種類の Controller および SystemLogService を生成すること", () => {
+  it("1-2. createAppControllers が 15 種類の Controller および SystemLogService を生成すること", async () => {
     const host = new MockReactiveHost();
     const repos = createAppRepositories();
     const bundle = createAppControllers(host, repos, {
@@ -70,9 +88,10 @@ describe("app-root.bootstrap", () => {
     expect(bundle.tagsController).toBeDefined();
     expect(bundle.tagSetsController).toBeDefined();
     expect(bundle.systemLogService).toBeDefined();
+    await settleControllers(bundle);
   });
 
-  it("2-1. provideAppContexts が 15 種類の ContextProvider を登録すること", () => {
+  it("2-1. provideAppContexts が 15 種類の ContextProvider を登録すること", async () => {
     const host = new MockReactiveHost();
     const repos = createAppRepositories();
     const bundle = createAppControllers(host, repos, {
@@ -90,6 +109,7 @@ describe("app-root.bootstrap", () => {
         .filter((controller) => controller instanceof ContextProvider),
     );
     expect(uniqueProviders.size).toBe(16);
+    await settleControllers(bundle);
   });
 
   it("2-2. bindAppControllerSubscriptions が各 Controller 間の連動購読を設定すること", async () => {
@@ -123,14 +143,30 @@ describe("app-root.bootstrap", () => {
       return () => {};
     });
 
-    const setIssuesTaskId = vi.spyOn(bundle.issuesController, "setTaskId").mockResolvedValue();
-    const setLogsTaskId = vi.spyOn(bundle.logsController, "setTaskId").mockResolvedValue();
-    const setNotesTaskId = vi.spyOn(bundle.notesController, "setTaskId").mockResolvedValue();
-    const recordHistory = vi.spyOn(bundle.taskHistoryController, "record").mockImplementation(() => {});
-    const refreshList = vi.spyOn(bundle.taskListController, "refresh").mockResolvedValue();
-    const refreshTable = vi.spyOn(bundle.taskTableController, "refresh").mockResolvedValue();
-    const refreshTask = vi.spyOn(bundle.taskController, "refresh").mockResolvedValue();
-    const refreshTagSets = vi.spyOn(bundle.tagSetsController, "refresh").mockResolvedValue();
+    const setIssuesTaskId = vi
+      .spyOn(bundle.issuesController, "setTaskId")
+      .mockResolvedValue();
+    const setLogsTaskId = vi
+      .spyOn(bundle.logsController, "setTaskId")
+      .mockResolvedValue();
+    const setNotesTaskId = vi
+      .spyOn(bundle.notesController, "setTaskId")
+      .mockResolvedValue();
+    const recordHistory = vi
+      .spyOn(bundle.taskHistoryController, "record")
+      .mockImplementation(() => {});
+    const refreshList = vi
+      .spyOn(bundle.taskListController, "refresh")
+      .mockResolvedValue();
+    const refreshTable = vi
+      .spyOn(bundle.taskTableController, "refresh")
+      .mockResolvedValue();
+    const refreshTask = vi
+      .spyOn(bundle.taskController, "refresh")
+      .mockResolvedValue();
+    const refreshTagSets = vi
+      .spyOn(bundle.tagSetsController, "refresh")
+      .mockResolvedValue();
 
     bindAppControllerSubscriptions(bundle, requestUpdate);
 
@@ -164,5 +200,42 @@ describe("app-root.bootstrap", () => {
 
     await tagListeners[0]?.();
     expect(refreshTagSets).toHaveBeenCalled();
+    await settleControllers(bundle);
+  });
+
+  it("2-3. taskTableController に systemLogService と onTaskMutated 同期が配線されていること", async () => {
+    const host = new MockReactiveHost();
+    const repos = createAppRepositories();
+    const bundle = createAppControllers(host, repos, {
+      exportCallback: vi.fn().mockResolvedValue(undefined),
+      notifyCallback: vi.fn(),
+    });
+
+    const refreshList = vi
+      .spyOn(bundle.taskListController, "refresh")
+      .mockResolvedValue();
+    const refreshTask = vi
+      .spyOn(bundle.taskController, "refresh")
+      .mockResolvedValue();
+    vi.spyOn(bundle.taskController, "state", "get").mockReturnValue({
+      id: 42,
+    } as never);
+
+    const deps = (
+      bundle.taskTableController as unknown as {
+        deps: {
+          systemLogService?: unknown;
+          onTaskMutated?: (id: number) => Promise<void>;
+        };
+      }
+    ).deps;
+
+    expect(deps.systemLogService).toBe(bundle.systemLogService);
+    expect(deps.onTaskMutated).toBeDefined();
+
+    await deps.onTaskMutated?.(42);
+    expect(refreshList).toHaveBeenCalledTimes(1);
+    expect(refreshTask).toHaveBeenCalledTimes(1);
+    await settleControllers(bundle);
   });
 });

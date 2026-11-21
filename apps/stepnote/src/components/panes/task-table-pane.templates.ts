@@ -1,6 +1,9 @@
 import { html, nothing, type HTMLTemplateResult } from "lit";
 import { format } from "@shared/utils";
-import type { SearchInputEventDetail } from "@shared/components";
+import type {
+  DatePickerChangeEventDetail,
+  SearchInputEventDetail,
+} from "@shared/components";
 import {
   TASK_STATUS_ICON_MAP,
   TASK_STATUS_LIST,
@@ -9,16 +12,13 @@ import {
 } from "@/constants/task-status.constants.js";
 import type { LabelRecord } from "@/db/models/navigation.model";
 import type { TagRecord } from "@/db/models/tag.model";
+import type { TaskStatusCode } from "@/types/domain/task-status.type";
 import type {
   TaskTableFilterState,
   TaskTableRowViewModel,
   TaskTableSortKey,
   TaskTableSortState,
 } from "@/types";
-import {
-  resolveWaTagVariant,
-  splitVisibleAndOverflowTags,
-} from "@/utils/tag.utils.js";
 import { formatContactsSummary } from "@/utils/task-table.utils.js";
 
 /** TaskTablePane テンプレート描画用パラメーター */
@@ -48,6 +48,10 @@ export interface TaskTableTemplatesParams {
   onToggleRowSelect: (taskId: number) => void;
   onBookmarkClick: (e: MouseEvent, taskId: number) => void;
   onOpenTask: (taskId: number) => void;
+  onRowStatusUpdate: (taskId: number, statusCode: TaskStatusCode) => void;
+  onRowLabelUpdate: (taskId: number, labelId: number) => void;
+  onRowDueDateUpdate: (taskId: number, date: Date | null) => void;
+  onRowTagsUpdate: (taskId: number, tagIds: number[]) => void;
 }
 
 interface SortableColumnDef {
@@ -68,10 +72,7 @@ const PREFIX_SORT_COLUMNS: readonly SortableColumnDef[] = [
  * ヘッダーバー（タイトル＋新規タスク作成ボタン）を描画する。
  */
 export function renderTaskTableHeader(
-  params: Pick<
-    TaskTableTemplatesParams,
-    "rows" | "hasLabels" | "onCreateTask"
-  >,
+  params: Pick<TaskTableTemplatesParams, "rows" | "hasLabels" | "onCreateTask">,
 ): HTMLTemplateResult {
   const createTooltip = params.hasLabels
     ? "新規タスクを作成 (Alt+N)"
@@ -134,7 +135,8 @@ function renderYearAndStatusFilters(
     >
       <wa-option value="all">状態: すべて</wa-option>
       ${TASK_STATUS_LIST.map(
-        (s) => html`<wa-option value=${String(s.code)}>${s.labelJa}</wa-option>`,
+        (s) =>
+          html`<wa-option value=${String(s.code)}>${s.labelJa}</wa-option>`,
       )}
     </wa-select>
   `;
@@ -200,8 +202,7 @@ export function renderTaskTableFilters(
         placeholder="キーワード検索 (#タグ名 可)..."
         @search-input=${params.onKeywordInput}
       ></search-input>
-      ${renderYearAndStatusFilters(params)}
-      ${renderLabelTagDueFilters(params)}
+      ${renderYearAndStatusFilters(params)} ${renderLabelTagDueFilters(params)}
       <wa-button
         class="task-table-pane__filter-reset"
         variant="neutral"
@@ -266,9 +267,9 @@ function renderSortHeaderButton(
     <th class="task-table-pane__th ${col.className}">
       <button
         type="button"
-        class="task-table-pane__sort-btn ${isSorted
-          ? "task-table-pane__sort-btn--active"
-          : ""}"
+        class="task-table-pane__sort-btn ${
+          isSorted ? "task-table-pane__sort-btn--active" : ""
+        }"
         @click=${() => onSortClick(col.key)}
       >
         <span>${col.label}</span>
@@ -341,9 +342,9 @@ function renderTaskNameCell(
       <div class="task-table-pane__name-cell">
         <button
           type="button"
-          class="task-table-pane__bookmark-btn ${isBookmarked
-            ? "task-table-pane__bookmark-btn--active"
-            : ""}"
+          class="task-table-pane__bookmark-btn ${
+            isBookmarked ? "task-table-pane__bookmark-btn--active" : ""
+          }"
           aria-label=${isBookmarked ? "ブックマーク解除" : "ブックマーク追加"}
           title=${isBookmarked ? "ブックマーク解除" : "ブックマーク追加"}
           @click=${(e: MouseEvent) => onBookmarkClick(e, taskId)}
@@ -367,85 +368,171 @@ function renderTaskNameCell(
   `;
 }
 
-function renderTagCells(tags: readonly TagRecord[]): HTMLTemplateResult {
-  const { visibleTags, hiddenCount } = splitVisibleAndOverflowTags(tags);
-  if (visibleTags.length === 0 && hiddenCount === 0) {
-    return html`<td class="task-table-pane__td task-table-pane__td--tags">
-      <span class="task-table-pane__muted">-</span>
-    </td>`;
-  }
+function renderTagCells(
+  row: TaskTableRowViewModel,
+  onRowTagsUpdate: (taskId: number, tagIds: number[]) => void,
+): HTMLTemplateResult {
+  const taskId = row.task.id ?? 0;
 
   return html`
     <td class="task-table-pane__td task-table-pane__td--tags">
-      <div class="task-table-pane__tags-cell">
-        ${visibleTags.map(
-          (tag) => html`
-            <wa-tag
-              class="task-table-pane__tag stepnote-tag stepnote-tag--${tag.variant}"
-              size="xs"
-              pill
-              appearance="filled"
-              variant=${resolveWaTagVariant(tag.variant)}
-              title=${tag.description || tag.name}
-            >
-              ${tag.name}
-            </wa-tag>
-          `,
-        )}
-        ${hiddenCount > 0
-          ? html`
-              <wa-tag
-                class="task-table-pane__tag-overflow stepnote-tag stepnote-tag--neutral"
-                size="xs"
-                pill
-                appearance="filled"
-                variant="neutral"
-              >
-                +${hiddenCount}
-              </wa-tag>
-            `
-          : null}
-      </div>
+      <task-tag-bar
+        class="task-table-pane__tag-bar"
+        .targetTaskId=${taskId}
+        .targetTagIds=${row.task.tagIds ?? []}
+        @task-tag-ids-change=${(
+          e: CustomEvent<{ taskId: number; tagIds: number[] }>,
+        ) => {
+          onRowTagsUpdate(taskId, e.detail?.tagIds ?? []);
+        }}
+      ></task-tag-bar>
     </td>
   `;
 }
 
-function renderTaskStatusCell(statusCode: keyof typeof TASK_STATUS_MAP): HTMLTemplateResult {
+function renderStatusDropdownItem(
+  s: (typeof TASK_STATUS_LIST)[number],
+  statusCode: TaskStatusCode,
+  canComplete: boolean,
+): HTMLTemplateResult {
+  const isDisabled = s.code === 9 && !canComplete;
+  return html`
+    <wa-dropdown-item
+      value=${String(s.code)}
+      type="checkbox"
+      ?checked=${s.code === statusCode}
+      ?disabled=${isDisabled}
+    >
+      <wa-icon
+        slot="icon"
+        library="my-icons"
+        name=${TASK_STATUS_ICON_MAP[s.code]}
+        class="task-table-pane__status-icon type-${TASK_STATUS_TYPE_MAP[s.code]}"
+      ></wa-icon>
+      ${s.labelJa}
+    </wa-dropdown-item>
+  `;
+}
+
+function renderTaskStatusCell(
+  row: TaskTableRowViewModel,
+  onRowStatusUpdate: (taskId: number, statusCode: TaskStatusCode) => void,
+): HTMLTemplateResult {
+  const taskId = row.task.id ?? 0;
+  const statusCode = row.task.statusCode;
   const statusDef = TASK_STATUS_MAP[statusCode];
-  const iconName = TASK_STATUS_ICON_MAP[statusCode];
-  const typeClass = TASK_STATUS_TYPE_MAP[statusCode];
+  const canComplete = row.issuesDone >= row.issuesTotal;
 
   return html`
     <td class="task-table-pane__td task-table-pane__td--status">
-      <span class="task-table-pane__status-cell">
-        <wa-icon
-          library="my-icons"
-          name=${iconName}
-          class="task-table-pane__status-icon type-${typeClass}"
-        ></wa-icon>
-        <span>${statusDef.labelJa}</span>
-      </span>
+      <wa-dropdown
+        class="task-table-pane__status-dropdown"
+        placement="bottom-start"
+        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) => {
+          const val = e.detail?.item?.value;
+          if (val !== undefined) {
+            onRowStatusUpdate(taskId, Number(val) as TaskStatusCode);
+          }
+        }}
+      >
+        <wa-button
+          slot="trigger"
+          class="task-table-pane__cell-trigger task-table-pane__status-btn"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          with-caret
+        >
+          <wa-icon
+            slot="start"
+            library="my-icons"
+            name=${TASK_STATUS_ICON_MAP[statusCode]}
+            class="task-table-pane__status-icon type-${TASK_STATUS_TYPE_MAP[statusCode]}"
+          ></wa-icon>
+          <span>${statusDef.labelJa}</span>
+        </wa-button>
+        ${TASK_STATUS_LIST.map((s) =>
+          renderStatusDropdownItem(s, statusCode, canComplete),
+        )}
+      </wa-dropdown>
     </td>
   `;
 }
 
-function renderTaskDueCell(row: TaskTableRowViewModel): HTMLTemplateResult {
-  const dueDateStr = row.task.dueDate
+function renderTaskLabelCell(
+  row: TaskTableRowViewModel,
+  labels: readonly LabelRecord[],
+  onRowLabelUpdate: (taskId: number, labelId: number) => void,
+): HTMLTemplateResult {
+  const taskId = row.task.id ?? 0;
+  const labelText = row.labelName.trim() || "未分類";
+
+  return html`
+    <td class="task-table-pane__td task-table-pane__td--label">
+      <wa-dropdown
+        class="task-table-pane__label-dropdown"
+        placement="bottom-start"
+        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) => {
+          const val = e.detail?.item?.value;
+          if (val !== undefined) {
+            const nextId = Number(val);
+            if (!Number.isNaN(nextId)) {
+              onRowLabelUpdate(taskId, nextId);
+            }
+          }
+        }}
+      >
+        <wa-button
+          slot="trigger"
+          class="task-table-pane__cell-trigger task-table-pane__label-btn"
+          variant="neutral"
+          appearance="plain"
+          size="s"
+          with-caret
+          title=${labelText}
+        >
+          <span class="task-table-pane__label-text">${labelText}</span>
+        </wa-button>
+        ${labels.map(
+          (l) => html`
+            <wa-dropdown-item
+              value=${String(l.id)}
+              type="checkbox"
+              ?checked=${l.id === row.task.labelId}
+            >
+              ${l.name}
+            </wa-dropdown-item>
+          `,
+        )}
+      </wa-dropdown>
+    </td>
+  `;
+}
+
+function renderTaskDueCell(
+  row: TaskTableRowViewModel,
+  onRowDueDateUpdate: (taskId: number, date: Date | null) => void,
+): HTMLTemplateResult {
+  const taskId = row.task.id ?? 0;
+  const formattedDueDate = row.task.dueDate
     ? format(new Date(row.task.dueDate), "yyyy-MM-dd")
-    : "-";
+    : "";
+  const iconName = row.taskDueInfo?.icon ?? "calendar-solid-full";
+  const statusClass = row.taskDueInfo
+    ? `task-table-pane__due-input--${row.taskDueInfo.status}`
+    : "";
 
   return html`
     <td class="task-table-pane__td task-table-pane__td--due">
-      <span class="task-table-pane__due-cell">
-        ${row.taskDueInfo
-          ? html`<wa-icon
-              library="my-icons"
-              name=${row.taskDueInfo.icon}
-              class="task-table-pane__due-icon task-table-pane__due-icon--${row.taskDueInfo.status}"
-            ></wa-icon>`
-          : null}
-        <span>${dueDateStr}</span>
-      </span>
+      <datepicker-input
+        class="task-table-pane__due-input ${statusClass}"
+        size="s"
+        icon=${iconName}
+        .value=${formattedDueDate}
+        @datepicker-change=${(e: CustomEvent<DatePickerChangeEventDetail>) => {
+          onRowDueDateUpdate(taskId, e.detail?.date ?? null);
+        }}
+      ></datepicker-input>
     </td>
   `;
 }
@@ -454,13 +541,15 @@ function renderIssueStatusCell(row: TaskTableRowViewModel): HTMLTemplateResult {
   return html`
     <td class="task-table-pane__td task-table-pane__td--issues">
       <span class="task-table-pane__issues-cell">
-        ${row.issuesDueInfo
-          ? html`<wa-icon
-              library="my-icons"
-              name=${row.issuesDueInfo.icon}
-              class="task-table-pane__due-icon task-table-pane__due-icon--${row.issuesDueInfo.status}"
-            ></wa-icon>`
-          : null}
+        ${
+          row.issuesDueInfo
+            ? html`<wa-icon
+                library="my-icons"
+                name=${row.issuesDueInfo.icon}
+                class="task-table-pane__due-icon task-table-pane__due-icon--${row.issuesDueInfo.status}"
+              ></wa-icon>`
+            : null
+        }
         <span>${row.issuesDone}/${row.issuesTotal}</span>
       </span>
     </td>
@@ -474,19 +563,26 @@ export function renderTaskTableRow(
   row: TaskTableRowViewModel,
   params: Pick<
     TaskTableTemplatesParams,
-    "selectedIds" | "onToggleRowSelect" | "onBookmarkClick" | "onOpenTask"
+    | "labels"
+    | "selectedIds"
+    | "onToggleRowSelect"
+    | "onBookmarkClick"
+    | "onOpenTask"
+    | "onRowStatusUpdate"
+    | "onRowLabelUpdate"
+    | "onRowDueDateUpdate"
+    | "onRowTagsUpdate"
   >,
 ): HTMLTemplateResult {
   const taskId = row.task.id ?? 0;
   const isSelected = params.selectedIds.has(taskId);
-  const labelText = row.labelName.trim() || "未分類";
   const contactText = formatContactsSummary(row.task.contacts);
 
   return html`
     <tr
-      class="task-table-pane__tr ${isSelected
-        ? "task-table-pane__tr--selected"
-        : ""}"
+      class="task-table-pane__tr ${
+        isSelected ? "task-table-pane__tr--selected" : ""
+      }"
     >
       <td class="task-table-pane__td task-table-pane__td--select">
         <wa-checkbox
@@ -497,19 +593,17 @@ export function renderTaskTableRow(
         ></wa-checkbox>
       </td>
       <td class="task-table-pane__td task-table-pane__td--id">#${taskId}</td>
-      ${renderTaskStatusCell(row.task.statusCode)}
-      <td class="task-table-pane__td task-table-pane__td--label" title=${labelText}>
-        ${labelText}
-      </td>
+      ${renderTaskStatusCell(row, params.onRowStatusUpdate)}
+      ${renderTaskLabelCell(row, params.labels, params.onRowLabelUpdate)}
       ${renderTaskNameCell(row, params.onBookmarkClick, params.onOpenTask)}
-      ${renderTaskDueCell(row)}
+      ${renderTaskDueCell(row, params.onRowDueDateUpdate)}
       <td
         class="task-table-pane__td task-table-pane__td--contacts"
         title=${contactText}
       >
         ${contactText}
       </td>
-      ${renderTagCells(row.tags)}
+      ${renderTagCells(row, params.onRowTagsUpdate)}
       ${renderIssueStatusCell(row)}
     </tr>
   `;

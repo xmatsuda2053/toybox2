@@ -10,6 +10,7 @@ import {
   WithLabelsController,
   WithTaskTableController,
 } from "@/utils/controller-consumers.mixin.js";
+import "@/components/task/task-tag-bar.js";
 import {
   renderSelectionFeedbackBar,
   renderTaskTableFilters,
@@ -132,6 +133,35 @@ export class TaskTablePane extends WithLabelsController(
     });
   };
 
+  public handleRowStatusUpdate = async (
+    taskId: number,
+    statusCode: TaskStatusCode,
+  ): Promise<void> => {
+    await this.taskTableController?.updateTaskStatus(taskId, statusCode);
+  };
+
+  public handleRowLabelUpdate = async (
+    taskId: number,
+    labelId: number,
+  ): Promise<void> => {
+    await this.taskTableController?.updateTaskLabel(taskId, labelId);
+  };
+
+  public handleRowDueDateUpdate = async (
+    taskId: number,
+    date: Date | null,
+  ): Promise<void> => {
+    if (!date) return;
+    await this.taskTableController?.updateTaskDueDate(taskId, date);
+  };
+
+  public handleRowTagsUpdate = async (
+    taskId: number,
+    tagIds: number[],
+  ): Promise<void> => {
+    await this.taskTableController?.updateTaskTags(taskId, tagIds);
+  };
+
   private readSelectValue(event: Event): string {
     const target = event.target as HTMLElement & { value?: string };
     return target?.value ?? "";
@@ -171,6 +201,18 @@ export class TaskTablePane extends WithLabelsController(
         void this.handleBookmarkClick(e, id);
       },
       onOpenTask: this.handleOpenTask,
+      onRowStatusUpdate: (id: number, statusCode: TaskStatusCode) => {
+        void this.handleRowStatusUpdate(id, statusCode);
+      },
+      onRowLabelUpdate: (id: number, labelId: number) => {
+        void this.handleRowLabelUpdate(id, labelId);
+      },
+      onRowDueDateUpdate: (id: number, date: Date | null) => {
+        void this.handleRowDueDateUpdate(id, date);
+      },
+      onRowTagsUpdate: (id: number, tagIds: number[]) => {
+        void this.handleRowTagsUpdate(id, tagIds);
+      },
     };
   }
 

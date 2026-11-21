@@ -69,7 +69,10 @@
   padding: var(--wa-space-2xs, 6px) var(--wa-space-s, 12px);
   border-bottom: var(--wa-border-width-s) var(--wa-border-style)
     var(--wa-color-brand-border-normal, var(--wa-color-surface-border));
-  background-color: var(--wa-color-brand-fill-quiet, var(--wa-color-neutral-fill-quiet));
+  background-color: var(
+    --wa-color-brand-fill-quiet,
+    var(--wa-color-neutral-fill-quiet)
+  );
   @include theme-transition;
 }
 
@@ -131,11 +134,11 @@
 }
 
 .task-table-pane__th--status {
-  width: 104px;
+  width: 140px;
 }
 
 .task-table-pane__th--label {
-  width: 120px;
+  width: 160px;
 }
 
 .task-table-pane__th--name {
@@ -144,7 +147,7 @@
 }
 
 .task-table-pane__th--due {
-  width: 124px;
+  width: 180px;
 }
 
 .task-table-pane__th--contacts {
@@ -152,7 +155,7 @@
 }
 
 .task-table-pane__th--tags {
-  width: 180px;
+  width: 220px;
 }
 
 .task-table-pane__th--issues {
@@ -198,7 +201,10 @@
 }
 
 .task-table-pane__tr--selected {
-  background-color: var(--wa-color-brand-fill-quiet, var(--wa-color-neutral-fill-quiet));
+  background-color: var(
+    --wa-color-brand-fill-quiet,
+    var(--wa-color-neutral-fill-quiet)
+  );
 }
 
 .task-table-pane__td {
@@ -212,9 +218,73 @@
   overflow: visible;
 }
 
+.task-table-pane__td--status,
+.task-table-pane__td--label,
+.task-table-pane__td--due,
+.task-table-pane__td--tags {
+  overflow: visible;
+}
+
 .task-table-pane__td--id {
   color: var(--wa-color-text-quiet);
   font-variant-numeric: tabular-nums;
+}
+
+.task-table-pane__status-dropdown,
+.task-table-pane__label-dropdown {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.task-table-pane__cell-trigger {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+
+  &::part(button) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    justify-content: space-between;
+    padding-inline: var(--wa-space-2xs, 4px);
+    height: 28px;
+    min-height: 28px;
+    font-size: var(--wa-font-size-xs);
+    color: var(--wa-color-text-normal);
+  }
+
+  &::part(label) {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: start;
+    @include text-ellipsis;
+  }
+
+  &::part(caret) {
+    flex-shrink: 0;
+  }
+}
+
+.task-table-pane__label-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  @include text-ellipsis;
+}
+
+.task-table-pane__due-input {
+  width: 100%;
+  @include task-due-icon-colors;
+}
+
+.task-table-pane__tag-bar {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 
 .task-table-pane__status-cell,

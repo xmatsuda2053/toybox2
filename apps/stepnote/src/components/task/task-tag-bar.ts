@@ -7,6 +7,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { live } from "lit/directives/live.js";
+import { dispatchCustomEvent } from "@shared/utils";
 import "@shared/components";
 import {
   TAG_VARIANT_LIST,
@@ -20,6 +21,8 @@ import {
   WithTaskController,
 } from "@/utils/controller-consumers.mixin.js";
 import {
+  mergeTagIds,
+  normalizeTagIds,
   normalizeTagName,
   normalizeTagVariant,
   resolveWaTagVariant,
@@ -50,6 +53,14 @@ export class TaskTagBar extends WithTagSetsController(
   /** 表示可能なタグ件数（undefined 時は自動計測または全件表示） */
   @property({ type: Number })
   public visibleTagCount?: number;
+
+  /** 外部タスク指定時の対象タスクID（一覧テーブル等の汎用利用向け） */
+  @property({ type: Number })
+  public targetTaskId?: number;
+
+  /** 外部タスク指定時のタグID配列 */
+  @property({ type: Array })
+  public targetTagIds?: readonly number[];
 
   /** ポップオーバー内検索／新規作成キーワード */
   @state()
@@ -95,11 +106,18 @@ export class TaskTagBar extends WithTagSetsController(
     }
   }
 
+  private get effectiveTagIds(): readonly number[] {
+    if (this.targetTaskId !== undefined) {
+      return this.targetTagIds ?? [];
+    }
+    return this.taskController?.state?.tagIds ?? [];
+  }
+
   /**
    * 現在選択中タスクに付与されたタグ一覧を取得する
    */
   public get assignedTags(): TagRecord[] {
-    const tagIds = this.taskController?.state?.tagIds;
+    const tagIds = this.effectiveTagIds;
     if (!this.tagsController || !Array.isArray(tagIds) || tagIds.length === 0) {
       return [];
     }
@@ -137,13 +155,49 @@ export class TaskTagBar extends WithTagSetsController(
     }
   };
 
+  private emitExternalTagIds(nextIds: readonly number[]): void {
+    if (this.targetTaskId === undefined) return;
+    dispatchCustomEvent(this, "task-tag-ids-change", {
+      detail: { taskId: this.targetTaskId, tagIds: normalizeTagIds(nextIds) },
+    });
+  }
+
+  private async applyAddTag(tagId: number): Promise<void> {
+    if (this.targetTaskId !== undefined) {
+      const currentIds = normalizeTagIds(this.effectiveTagIds);
+      if (!currentIds.includes(tagId)) {
+        this.emitExternalTagIds([...currentIds, tagId]);
+      }
+      return;
+    }
+    await this.taskController?.addTag(tagId);
+  }
+
+  private async applyAddTags(tagIds: readonly number[]): Promise<void> {
+    if (this.targetTaskId !== undefined) {
+      const currentIds = normalizeTagIds(this.effectiveTagIds);
+      const merged = mergeTagIds(currentIds, tagIds);
+      if (merged.length !== currentIds.length) {
+        this.emitExternalTagIds(merged);
+      }
+      return;
+    }
+    await this.taskController?.addTags(tagIds);
+  }
+
   /**
    * タスクからタグを削除するハンドラー
    */
   public handleRemoveTag = async (tagId?: number): Promise<void> => {
-    if (tagId === undefined || !this.taskController) {
+    if (tagId === undefined) return;
+    if (this.targetTaskId !== undefined) {
+      const currentIds = normalizeTagIds(this.effectiveTagIds);
+      if (currentIds.includes(tagId)) {
+        this.emitExternalTagIds(currentIds.filter((id) => id !== tagId));
+      }
       return;
     }
+    if (!this.taskController) return;
     await this.taskController.removeTag(tagId);
   };
 
@@ -151,14 +205,14 @@ export class TaskTagBar extends WithTagSetsController(
    * チェックボックス／項目操作でタグの付与・解除をトグルするハンドラー
    */
   public handleToggleTag = async (tagId?: number): Promise<void> => {
-    if (tagId === undefined || !this.taskController) {
-      return;
-    }
-    const currentIds = this.taskController.state?.tagIds ?? [];
+    if (tagId === undefined) return;
+    if (this.targetTaskId === undefined && !this.taskController) return;
+
+    const currentIds = this.effectiveTagIds;
     if (currentIds.includes(tagId)) {
-      await this.taskController.removeTag(tagId);
+      await this.handleRemoveTag(tagId);
     } else {
-      await this.taskController.addTag(tagId);
+      await this.applyAddTag(tagId);
     }
   };
 
@@ -177,7 +231,7 @@ export class TaskTagBar extends WithTagSetsController(
       variant: this.newTagVariant,
       description: this.newTagDescription.trim(),
     });
-    await this.taskController?.addTag(newTagId);
+    await this.applyAddTag(newTagId);
     this.resetCreateForm();
   };
 
@@ -207,7 +261,7 @@ export class TaskTagBar extends WithTagSetsController(
       !this.selectedTagSetId ||
       !Number.isFinite(setId) ||
       !this.tagSetsController ||
-      !this.taskController
+      (this.targetTaskId === undefined && !this.taskController)
     ) {
       return;
     }
@@ -218,7 +272,7 @@ export class TaskTagBar extends WithTagSetsController(
     const tagIdsToApply = [...tagSet.tagIds];
     this.selectedTagSetId = "";
     this.closeAddPopover();
-    await this.taskController.addTags(tagIdsToApply);
+    await this.applyAddTags(tagIdsToApply);
   };
 
   /**
@@ -377,8 +431,9 @@ export class TaskTagBar extends WithTagSetsController(
     return html`
       <wa-select
         size="s"
-        class="task-tag-bar__variant-select task-tag-bar__variant-select--${this
-          .newTagVariant}"
+        class="task-tag-bar__variant-select task-tag-bar__variant-select--${
+          this.newTagVariant
+        }"
         .value=${this.newTagVariant}
         @wa-show=${this.stopChildPopupEvent}
         @wa-after-show=${this.stopChildPopupEvent}
@@ -516,7 +571,7 @@ export class TaskTagBar extends WithTagSetsController(
    */
   private renderAddControl(): HTMLTemplateResult {
     const allTags = this.tagsController?.state ?? [];
-    const assignedIdSet = new Set(this.taskController?.state?.tagIds ?? []);
+    const assignedIdSet = new Set(this.effectiveTagIds);
     const filteredTags = filterTagsByKeyword(allTags, this.searchKeyword);
 
     return html`
@@ -587,8 +642,7 @@ export class TaskTagBar extends WithTagSetsController(
 
     return html`
       <div class="task-tag-bar">
-        ${this.renderMeasureLayer(assigned)}
-        ${this.renderAddControl()}
+        ${this.renderMeasureLayer(assigned)} ${this.renderAddControl()}
         <div class="task-tag-bar__list">
           ${visibleTags.map((tag) => this.renderTagChip(tag))}
         </div>

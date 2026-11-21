@@ -121,7 +121,10 @@ function createNavigationAndJournalControllers(
   );
   const labelsController = new LabelsController(host, repos.labelsRepository);
   const logsController = new LogsController(host, repos.logsRepository);
-  const scratchController = new ScratchController(host, repos.scratchRepository);
+  const scratchController = new ScratchController(
+    host,
+    repos.scratchRepository,
+  );
   const systemLogService = new SystemLogService(
     repos.logsRepository,
     logsController,
@@ -143,38 +146,65 @@ function createNavigationAndJournalControllers(
   };
 }
 
+function createAppTaskTableController(
+  host: ReactiveControllerHost,
+  repos: AppRepositories,
+  systemLogService: SystemLogService,
+  taskController: TaskController,
+  taskListController: TaskListController,
+): TaskTableController {
+  return new TaskTableController(host, {
+    taskRepository: repos.taskRepository,
+    issuesRepository: repos.issuesRepository,
+    labelsRepository: repos.labelsRepository,
+    tagsRepository: repos.tagsRepository,
+    taskListQuery: new TaskListQuery(db),
+    systemLogService,
+    onTaskMutated: async (taskId: number) => {
+      await taskListController.refresh();
+      if (taskController.state?.id === taskId) {
+        await taskController.refresh();
+      }
+    },
+  });
+}
+
 function createTaskAndFeatureControllers(
   host: ReactiveControllerHost,
   repos: AppRepositories,
   systemLogService: SystemLogService,
   callbacks: AutoExportCallbacks,
 ) {
+  const taskController = new TaskController(
+    host,
+    repos.taskRepository,
+    undefined,
+    repos.issuesRepository,
+    systemLogService,
+    repos.labelsRepository,
+  );
+  const taskListController = new TaskListController(
+    host,
+    repos.taskRepository,
+    getCurrentFiscalYear(),
+    new TaskListQuery(db),
+  );
+  const taskTableController = createAppTaskTableController(
+    host,
+    repos,
+    systemLogService,
+    taskController,
+    taskListController,
+  );
+
   return {
     taskTemplateController: new TaskTemplateController(
       host,
       repos.taskTemplateRepository,
     ),
-    taskController: new TaskController(
-      host,
-      repos.taskRepository,
-      undefined,
-      repos.issuesRepository,
-      systemLogService,
-      repos.labelsRepository,
-    ),
-    taskListController: new TaskListController(
-      host,
-      repos.taskRepository,
-      getCurrentFiscalYear(),
-      new TaskListQuery(db),
-    ),
-    taskTableController: new TaskTableController(host, {
-      taskRepository: repos.taskRepository,
-      issuesRepository: repos.issuesRepository,
-      labelsRepository: repos.labelsRepository,
-      tagsRepository: repos.tagsRepository,
-      taskListQuery: new TaskListQuery(db),
-    }),
+    taskController,
+    taskListController,
+    taskTableController,
     issuesController: new IssuesController(
       host,
       repos.issuesRepository,
