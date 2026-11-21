@@ -62,6 +62,10 @@ export class TaskTagBar extends WithTagSetsController(
   @property({ type: Array })
   public targetTagIds?: readonly number[];
 
+  /** 一覧テーブル等のセル向けコンパクト左寄せモード */
+  @property({ type: Boolean, reflect: true })
+  public compact: boolean = false;
+
   /** ポップオーバー内検索／新規作成キーワード */
   @state()
   public searchKeyword: string = "";

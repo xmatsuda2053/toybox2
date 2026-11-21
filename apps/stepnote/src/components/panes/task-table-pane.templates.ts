@@ -19,7 +19,10 @@ import type {
   TaskTableSortKey,
   TaskTableSortState,
 } from "@/types";
-import { formatContactsSummary } from "@/utils/task-table.utils.js";
+import {
+  formatContactsSummary,
+  formatContactsTooltip,
+} from "@/utils/task-table.utils.js";
 
 /** TaskTablePane テンプレート描画用パラメーター */
 export interface TaskTableTemplatesParams {
@@ -503,6 +506,7 @@ function renderTagCells(
     <td class="task-table-pane__td task-table-pane__td--tags">
       <task-tag-bar
         class="task-table-pane__tag-bar"
+        ?compact=${true}
         .targetTaskId=${taskId}
         .targetTagIds=${row.task.tagIds ?? []}
         @task-tag-ids-change=${(
@@ -702,6 +706,7 @@ export function renderTaskTableRow(
   const taskId = row.task.id ?? 0;
   const isSelected = params.selectedIds.has(taskId);
   const contactText = formatContactsSummary(row.task.contacts);
+  const contactTooltip = formatContactsTooltip(row.task.contacts);
 
   return html`
     <tr
@@ -724,7 +729,7 @@ export function renderTaskTableRow(
       ${renderTaskDueCell(row, params.onRowDueDateUpdate)}
       <td
         class="task-table-pane__td task-table-pane__td--contacts"
-        title=${contactText}
+        title=${contactTooltip || nothing}
       >
         ${contactText}
       </td>

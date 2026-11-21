@@ -25,7 +25,7 @@ import { TaskTablePane } from "./task-table-pane.js";
  *    - 3-2. 全選択チェックボックスおよびソート可能列のクリックハンドラーが taskTableController の対応メソッドを呼び出すこと
  *
  * 4. テーブル行セル描画・インタラクション・空状態
- *    - 4-1. 行に ID, 状態, ラベル, ブックマークボタン, タスク名ボタン, 期限日, 関係者サマリー, タグ, Issue進捗（2/5等）＋期限アイコンが描画されること
+ *    - 4-1. 行に ID, 状態, ラベル, ブックマークボタン, タスク名ボタン, 期限日, 関係者サマリー＋全件詳細ツールチップ, compact付きタグバー, Issue進捗（2/5等）＋期限アイコンが描画されること
  *    - 4-2. ブックマークボタンクリックで toggleBookmark(taskId) が呼び出されること
  *    - 4-3. タスク名クリック（handleOpenTask）で task-table-open-task イベントが発火し、clearSelection() が呼び出されること
  *    - 4-4. 行データが空の場合は空状態メッセージ「該当するタスクがありません」が表示されること
@@ -36,6 +36,8 @@ import { TaskTablePane } from "./task-table-pane.js";
  *    - 5-3. 状態列幅が「開始待ち」を省略せず表示できる 140px であること
  *    - 5-4. 期限日列幅が「yyyy-MM-dd (EEE)」を途切れず表示できる 180px であること
  *    - 5-5. 期限フィルタ幅が「期限: すべて」の折り返しを防ぐ 160px であり、調整分としてキーワード検索の最小幅が 156px へ調整されていること
+ *    - 5-6. タグ列幅が 300px へ拡張され、タスク名列（width: auto）の最小幅が 180px へ調整されていること
+ *    - 5-7. 関係者セルにツールチップ（[title]）がある場合に cursor: help が定義されていること
  */
 
 const createMockRow = (
@@ -307,7 +309,10 @@ describe("TaskTablePane Component", () => {
       expect(htmlStr).toContain("一覧表示モードの設計");
       expect(htmlStr).toContain("2026-06-15");
       expect(htmlStr).toContain("山田 太郎 +1");
+      expect(htmlStr).toContain("開発 / 山田 太郎");
+      expect(htmlStr).toContain("企画 / 佐藤 花子");
       expect(htmlStr).toContain("<task-tag-bar");
+      expect(htmlStr).toContain("compact");
       expect(htmlStr).toContain("2/5");
       expect(htmlStr).toContain("fire-solid-full");
     });
@@ -404,6 +409,23 @@ describe("TaskTablePane Component", () => {
       );
       expect(compiled).toMatch(
         /\.task-table-pane__filter-keyword\s*\{[^}]*min-width:\s*156px/,
+      );
+    });
+
+    it("5-6. タグ列幅が 300px へ拡張され、タスク名列の最小幅が 180px へ調整されていること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__th--tags\s*\{[^}]*width:\s*300px/,
+      );
+      expect(compiled).toMatch(
+        /\.task-table-pane__th--name\s*\{[^}]*min-width:\s*180px/,
+      );
+    });
+
+    it("5-7. 関係者セルにツールチップ（[title]）がある場合に cursor: help が定義されていること", () => {
+      const compiled = sass.compile(scssPath).css;
+      expect(compiled).toMatch(
+        /\.task-table-pane__td--contacts\[title\]\s*\{[^}]*cursor:\s*help/,
       );
     });
   });
