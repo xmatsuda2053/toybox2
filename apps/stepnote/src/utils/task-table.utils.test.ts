@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { getCurrentFiscalYear } from "@shared/utils";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TagRecord } from "@/db/models/tag.model";
 import type { TaskTableRowViewModel } from "@/types";
@@ -328,10 +329,11 @@ describe("task-table.utils", () => {
         direction: "desc",
       });
 
-      expect(normalizeTaskTableFiscalYear(null)).toBe("all");
+      const currentYear = getCurrentFiscalYear();
+      expect(normalizeTaskTableFiscalYear(null)).toBe(currentYear);
       expect(normalizeTaskTableFiscalYear("all")).toBe("all");
       expect(normalizeTaskTableFiscalYear("2025")).toBe(2025);
-      expect(normalizeTaskTableFiscalYear("abc")).toBe("all");
+      expect(normalizeTaskTableFiscalYear("abc")).toBe(currentYear);
     });
   });
 });

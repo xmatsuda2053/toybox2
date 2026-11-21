@@ -1,7 +1,7 @@
 import { html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import "@shared/components";
-import { dispatchCustomEvent } from "@shared/utils";
+import { dispatchCustomEvent, getCurrentFiscalYear } from "@shared/utils";
 import type { SearchInputEventDetail } from "@shared/components";
 import type { TaskStatusCode } from "@/types/domain/task-status.type";
 import type { TaskTableDueFilter, TaskTableSortKey } from "@/types";
@@ -182,7 +182,7 @@ export class TaskTablePane extends WithLabelsController(
       tags: ctrl?.tags ?? [],
       availableFiscalYears: ctrl?.availableFiscalYears ?? [],
       filter: ctrl?.filter ?? {
-        fiscalYear: "all",
+        fiscalYear: getCurrentFiscalYear(),
         keyword: "",
         statusCode: "all",
         labelId: "all",
@@ -199,7 +199,9 @@ export class TaskTablePane extends WithLabelsController(
     };
   }
 
-  private renderTableBody(params: TaskTableTemplatesParams): HTMLTemplateResult {
+  private renderTableBody(
+    params: TaskTableTemplatesParams,
+  ): HTMLTemplateResult {
     if (params.rows.length === 0) {
       return html`
         <div class="task-table-pane__empty">
@@ -224,10 +226,8 @@ export class TaskTablePane extends WithLabelsController(
     const params = this.buildTemplateParams();
     return html`
       <div class="task-table-pane">
-        ${renderTaskTableHeader(params)}
-        ${renderTaskTableFilters(params)}
-        ${renderSelectionFeedbackBar(params)}
-        ${this.renderTableBody(params)}
+        ${renderTaskTableHeader(params)} ${renderTaskTableFilters(params)}
+        ${renderSelectionFeedbackBar(params)} ${this.renderTableBody(params)}
       </div>
     `;
   }

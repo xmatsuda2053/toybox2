@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getCurrentFiscalYear } from "@shared/utils";
 import type { ReactiveControllerHost } from "lit";
 import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { LabelRecord } from "@/db/models/navigation.model";
@@ -147,10 +148,15 @@ describe("TaskTableController", () => {
     return { controller, requestUpdateMock, storage };
   };
 
+  const createAllYearController = () =>
+    createController(
+      createMockStorage({ stepnote_task_table_fiscal_year: "all" }),
+    );
+
   describe("1. 初期化・永続化復元", () => {
-    it("1-1. ストレージ未設定時はデフォルト値で初期化されること", () => {
+    it("1-1. ストレージ未設定時は当年度（標準モード準拠）およびデフォルトソートで初期化されること", () => {
       const { controller } = createController();
-      expect(controller.filter.fiscalYear).toBe("all");
+      expect(controller.filter.fiscalYear).toBe(getCurrentFiscalYear());
       expect(controller.sort).toEqual({ key: "dueDate", direction: "asc" });
       expect(controller.selectedCount).toBe(0);
     });
@@ -164,11 +170,16 @@ describe("TaskTableController", () => {
       expect(controller.filter.fiscalYear).toBe(2025);
       expect(controller.sort).toEqual({ key: "id", direction: "desc" });
     });
+
+    it("1-3. ストレージに 'all' が保存されている場合は全年度として復元されること", () => {
+      const { controller } = createAllYearController();
+      expect(controller.filter.fiscalYear).toBe("all");
+    });
   });
 
   describe("2. データロード（refresh）", () => {
     it("2-1. 全タスク・Issue集計・ラベル名・タグが結合されて rows へ格納されること", async () => {
-      const { controller, requestUpdateMock } = createController();
+      const { controller, requestUpdateMock } = createAllYearController();
       await controller.refresh();
 
       expect(controller.rows.map((r) => r.task.id)).toEqual([2, 1]);
@@ -182,7 +193,7 @@ describe("TaskTableController", () => {
 
   describe("3. フィルタ操作と永続化・選択リセット", () => {
     it("3-1. setFiscalYearFilter 実行時に年度が永続化され、rows が絞り込まれ、selectedIds がリセットされること", async () => {
-      const { controller, storage } = createController();
+      const { controller, storage } = createAllYearController();
       await controller.refresh();
       controller.toggleRowSelection(1);
       expect(controller.selectedCount).toBe(1);
@@ -198,7 +209,7 @@ describe("TaskTableController", () => {
     });
 
     it("3-2. setStatusFilter / setLabelFilter / setTagFilter / setDueFilter により絞り込まれ、selectedIds がリセットされること", async () => {
-      const { controller } = createController();
+      const { controller } = createAllYearController();
       await controller.refresh();
       controller.toggleRowSelection(2);
 
@@ -216,7 +227,7 @@ describe("TaskTableController", () => {
     });
 
     it("3-3. setKeywordFilter 時に taskListQuery.searchTaskIds が利用されて横断検索が行われること", async () => {
-      const { controller } = createController();
+      const { controller } = createAllYearController();
       await controller.refresh();
 
       await controller.setKeywordFilter("横断検索ワード");
@@ -245,7 +256,7 @@ describe("TaskTableController", () => {
 
   describe("4. 列ソート切替と永続化", () => {
     it("4-1. toggleSort で同一列なら昇順/降順反転、別列なら昇順となり永続化されること", async () => {
-      const { controller, storage } = createController();
+      const { controller, storage } = createAllYearController();
       await controller.refresh();
 
       controller.toggleSort("id");
@@ -264,7 +275,7 @@ describe("TaskTableController", () => {
 
   describe("5. チェックボックス選択管理", () => {
     it("5-1. toggleRowSelection で単一行の選択状態と集計プロパティが正しく算出されること", async () => {
-      const { controller } = createController();
+      const { controller } = createAllYearController();
       await controller.refresh();
 
       controller.toggleRowSelection(1);
@@ -279,7 +290,7 @@ describe("TaskTableController", () => {
     });
 
     it("5-2. toggleSelectAllFiltered で表示中の全行を一括選択・一括解除できること", async () => {
-      const { controller } = createController();
+      const { controller } = createAllYearController();
       await controller.refresh();
 
       controller.toggleSelectAllFiltered();
