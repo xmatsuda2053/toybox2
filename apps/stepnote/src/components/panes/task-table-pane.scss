@@ -55,13 +55,79 @@
 }
 
 .task-table-pane__filter-keyword {
-  flex: 1 1 220px;
-  min-width: 180px;
+  flex: 1 1 196px;
+  min-width: 156px;
 }
 
 .task-table-pane__filter-select {
   width: 136px;
   flex-shrink: 0;
+}
+
+.task-table-pane__filter-due {
+  width: 160px;
+}
+
+.task-table-pane__filter-dropdown {
+  display: flex;
+  width: 172px;
+  flex-shrink: 0;
+}
+
+.task-table-pane__filter-trigger {
+  display: block;
+  width: 100%;
+  min-width: 0;
+
+  &::part(button) {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    height: var(--wa-form-control-height);
+    min-height: var(--wa-form-control-height);
+    padding-inline: var(--wa-form-control-padding-inline);
+    background-color: var(--wa-form-control-background-color);
+    border: var(--wa-form-control-border-width)
+      var(--wa-form-control-border-style) var(--wa-form-control-border-color);
+    border-radius: var(--wa-form-control-border-radius);
+    color: var(--wa-form-control-value-color);
+    font-size: var(--wa-form-control-value-font-size, var(--wa-font-size-s));
+    font-weight: var(--wa-form-control-value-font-weight, 400);
+    overflow: hidden;
+    @include theme-transition;
+  }
+
+  &::part(button):hover {
+    background-color: var(--wa-form-control-background-color);
+    border-color: var(
+      --wa-color-neutral-border-loud,
+      var(--wa-color-surface-border)
+    );
+  }
+
+  &::part(label) {
+    display: flex;
+    align-items: center;
+    gap: var(--wa-space-3xs, 4px);
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: start;
+    @include text-ellipsis;
+  }
+
+  &::part(caret) {
+    flex-shrink: 0;
+    color: var(--wa-color-text-quiet);
+  }
+}
+
+.task-table-pane__filter-status-text {
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.task-table-pane__filter-status-text--empty {
+  color: var(--wa-form-control-placeholder-color, var(--wa-color-text-quiet));
 }
 
 .task-table-pane__selection-bar {
@@ -305,6 +371,10 @@
 .task-table-pane__due-icon {
   font-size: var(--wa-font-size-xs);
   flex-shrink: 0;
+}
+
+.task-table-pane__due-icon--default {
+  color: var(--wa-color-text-quiet);
 }
 
 .task-table-pane__due-icon--overdue {

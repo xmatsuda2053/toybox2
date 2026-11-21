@@ -7,12 +7,7 @@ import type { TaskDueIconInfo } from "@/utils/task-due.utils";
  * 一覧テーブルのソート対象列キー
  */
 export type TaskTableSortKey =
-  | "id"
-  | "status"
-  | "label"
-  | "name"
-  | "dueDate"
-  | "issues";
+  "id" | "status" | "label" | "name" | "dueDate" | "issues";
 
 /**
  * ソート方向
@@ -40,8 +35,8 @@ export interface TaskTableFilterState {
   fiscalYear: number | "all";
   /** 横断検索キーワード */
   keyword: string;
-  /** ステータスコード絞り込み */
-  statusCode: TaskStatusCode | "all";
+  /** ステータスコード絞り込み（複数選択） */
+  statusCodes: readonly TaskStatusCode[];
   /** 所属ラベル絞り込み（"uncategorized" は未分類） */
   labelId: number | "all" | "uncategorized";
   /** タグ絞り込み */

@@ -4,10 +4,12 @@ import type { TaskRecord, IssueRecord } from "@/db/models/task.model";
 import type { TagRecord } from "@/db/models/tag.model";
 import type { TaskTableRowViewModel } from "@/types";
 import {
+  DEFAULT_TASK_TABLE_STATUS_CODES,
   formatContactsSummary,
   buildTaskIssueCountMap,
   extractAvailableFiscalYears,
   filterTaskTableRows,
+  toggleStatusCodeFilter,
   sortTaskTableRows,
   normalizeTaskTableSortState,
   normalizeTaskTableFiscalYear,
@@ -27,10 +29,11 @@ import {
  * 3. 会計年度選択肢抽出（extractAvailableFiscalYears）
  *    - 3-1. タスクに含まれる年度と当年度を重複なく降順で返すこと
  *
- * 4. 複合フィルタリング（filterTaskTableRows）
- *    - 4-1. 会計年度・ステータス・ラベル（未分類含む）・タグ・期限状況・キーワードの複合条件で絞り込めること
+ * 4. 複合フィルタリング（filterTaskTableRows / toggleStatusCodeFilter）
+ *    - 4-1. 会計年度・複数ステータス・ラベル（未分類含む）・タグ・期限状況・キーワードの複合条件で絞り込めること
  *    - 4-2. 期限状況フィルタ適用時、完了（statusCode=9）のタスクは除外されること
  *    - 4-3. matchedKeywordTaskIds が渡された場合、そのIDセットに基づいてキーワード絞り込みが行われること
+ *    - 4-4. statusCodes が空配列の場合は該当0件となり、toggleStatusCodeFilter が定義順を保って状態をトグルすること
  *
  * 5. 列別ソート（sortTaskTableRows）
  *    - 5-1. id / status / label / name / dueDate / issues の各キーについて昇順・降順で正しく並び替えられること
@@ -187,12 +190,12 @@ describe("task-table.utils", () => {
       ),
     ];
 
-    it("4-1. 会計年度・ステータス・ラベル（未分類含む）・タグ・キーワードの複合条件で絞り込めること", () => {
+    it("4-1. 会計年度・複数ステータス・ラベル（未分類含む）・タグ・キーワードの複合条件で絞り込めること", () => {
       expect(
         filterTaskTableRows(rows, {
           fiscalYear: 2026,
           keyword: "",
-          statusCode: "all",
+          statusCodes: [0, 5, 9],
           labelId: "uncategorized",
           tagId: 200,
           dueFilter: "all",
@@ -203,19 +206,30 @@ describe("task-table.utils", () => {
         filterTaskTableRows(rows, {
           fiscalYear: "all",
           keyword: "",
-          statusCode: 0,
+          statusCodes: [0],
           labelId: 2,
           tagId: 100,
           dueFilter: "all",
         }).map((r) => r.task.id),
       ).toEqual([3]);
+
+      expect(
+        filterTaskTableRows(rows, {
+          fiscalYear: "all",
+          keyword: "",
+          statusCodes: [...DEFAULT_TASK_TABLE_STATUS_CODES],
+          labelId: "all",
+          tagId: "all",
+          dueFilter: "all",
+        }).map((r) => r.task.id),
+      ).toEqual([1, 3]);
     });
 
     it("4-2. 期限状況フィルタ適用時、完了（statusCode=9）のタスクは除外されること", () => {
       const result = filterTaskTableRows(rows, {
         fiscalYear: "all",
         keyword: "",
-        statusCode: "all",
+        statusCodes: [0, 5, 9],
         labelId: "all",
         tagId: "all",
         dueFilter: "overdue",
@@ -229,7 +243,7 @@ describe("task-table.utils", () => {
         {
           fiscalYear: "all",
           keyword: "設計メモ",
-          statusCode: "all",
+          statusCodes: [0, 5, 9],
           labelId: "all",
           tagId: "all",
           dueFilter: "all",
@@ -237,6 +251,24 @@ describe("task-table.utils", () => {
         new Set([3]),
       );
       expect(result.map((r) => r.task.id)).toEqual([3]);
+    });
+
+    it("4-4. statusCodes が空配列の場合は該当0件となり、toggleStatusCodeFilter が定義順を保ってトグルすること", () => {
+      expect(DEFAULT_TASK_TABLE_STATUS_CODES).toEqual([0, 5]);
+      expect(
+        filterTaskTableRows(rows, {
+          fiscalYear: "all",
+          keyword: "",
+          statusCodes: [],
+          labelId: "all",
+          tagId: "all",
+          dueFilter: "all",
+        }),
+      ).toEqual([]);
+
+      expect(toggleStatusCodeFilter([0, 5], 9)).toEqual([0, 5, 9]);
+      expect(toggleStatusCodeFilter([0, 5, 9], 5)).toEqual([0, 9]);
+      expect(toggleStatusCodeFilter([9], 0)).toEqual([0, 9]);
     });
   });
 
