@@ -25,6 +25,7 @@ import {
  * - 仕様11: 職員番号・職員氏名・組織名のクリックでクリップボードコピー（onCopy）が呼び出されること
  * - 仕様12: テンプレート内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  * - 仕様13: 組織カードの連絡先および職員メールのチップにコピーアイコンやテキスト文字が出力されず、種別アイコンで表示されること
+ * - 仕様14: HubAddress ブランドカラー（#036730 / wa-brand-green）がテーマ・追加ボタン・カードリンクへ適用されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -401,6 +402,53 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(staffHtml).not.toContain("メール:");
     expect(staffHtml).toContain("tanaka@example.com");
     expect(staffHtml).toContain("メールをコピー");
+  });
+
+  it("HubAddress ブランドカラー（#036730 / wa-brand-green）がテーマ・追加ボタン・カードリンクへ適用されていること", () => {
+    const htmlSource = readFileSync(
+      resolve(srcRoot, "../sidepanel.html"),
+      "utf-8",
+    );
+    expect(htmlSource).toMatch(/<html[^>]*class="[^"]*\bwa-brand-green\b/);
+
+    const bootstrapSource = readFileSync(
+      resolve(srcRoot, "bootstrap-webawesome.ts"),
+      "utf-8",
+    );
+    expect(bootstrapSource).toContain(
+      "@awesome.me/webawesome/dist/styles/color/variants/brand.css",
+    );
+    expect(bootstrapSource).toContain("./styles/theme.css");
+
+    const themePath = resolve(srcRoot, "styles/theme.css");
+    expect(existsSync(themePath)).toBe(true);
+    const themeCss = readFileSync(themePath, "utf-8");
+    expect(themeCss).toContain(
+      "--wa-color-brand-fill-loud: var(--wa-color-green-40)",
+    );
+
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    expect(cardScss).not.toContain("--wa-color-brand-text-normal");
+    expect(cardScss).toContain("--wa-color-brand-on-quiet");
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-btn\s*\{[^}]*color:\s*var\(--wa-color-text-normal\)/s,
+    );
+
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+    const staffAddMatch = appSource.match(
+      /<wa-button[^>]*id="add-staff-btn"[^>]*>/,
+    );
+    const orgAddMatch = appSource.match(
+      /<wa-button[^>]*id="add-organization-btn"[^>]*>/,
+    );
+    expect(staffAddMatch?.[0]).toContain('variant="brand"');
+    expect(orgAddMatch?.[0]).toContain('variant="brand"');
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {

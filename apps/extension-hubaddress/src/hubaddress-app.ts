@@ -148,7 +148,7 @@ export class HubAddressApp extends LitElement {
             <wa-button
               id="add-staff-btn"
               size="s"
-              variant="neutral"
+              variant="brand"
               appearance="outlined"
               aria-label="職員を追加"
               @click=${() => {
@@ -214,7 +214,7 @@ export class HubAddressApp extends LitElement {
             <wa-button
               id="add-organization-btn"
               size="s"
-              variant="neutral"
+              variant="brand"
               appearance="outlined"
               aria-label="組織を追加"
               @click=${() => {
