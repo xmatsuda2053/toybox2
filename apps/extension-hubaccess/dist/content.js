@@ -1,1 +1,0 @@
-(function(){console.log(`extension-hubaccess content script loaded`)})();
