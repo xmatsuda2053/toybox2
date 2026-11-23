@@ -13,6 +13,7 @@ import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
  * - 仕様3: manifest.json にショートカットコマンド (Alt+Shift+H) が定義され、設定ビューにも案内が含まれること
  * - 仕様4: 設定ビューのカラーテーマボタンがアイコンのみ＋ホバーツールチップ（ライト・ダーク・システム）で構成されていること
  * - 仕様5: renderSettingsView / renderEditorDialogs 関数がエクスポートされていること
+ * - 仕様6: settings-view.ts / editor-dialogs.ts 内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -126,5 +127,12 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
       }),
     );
     expect(rendered).toContain('label="フリガナ"');
+  });
+
+  it("テンプレート内で Web Awesome 非推奨の size='small' / 'medium' / 'large' が使われていないこと", () => {
+    for (const filePath of templateFiles) {
+      const content = readFileSync(filePath, "utf-8");
+      expect(content).not.toMatch(/size\s*=\s*["'](?:small|medium|large)["']/);
+    }
   });
 });

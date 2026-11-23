@@ -58,7 +58,7 @@ export class HubAddressApp extends LitElement {
       <nav class="hubaddress-shell__tabs" aria-label="表示切り替え">
         <wa-button
           class="hubaddress-shell__tab-btn hubaddress-shell__tab-btn--directory"
-          size="small"
+          size="s"
           variant=${tabVariant("staff")}
           appearance=${tabAppearance("staff")}
           @click=${() => this.controller.setActiveTab("staff")}
@@ -68,7 +68,7 @@ export class HubAddressApp extends LitElement {
         </wa-button>
         <wa-button
           class="hubaddress-shell__tab-btn hubaddress-shell__tab-btn--directory"
-          size="small"
+          size="s"
           variant=${tabVariant("organizations")}
           appearance=${tabAppearance("organizations")}
           @click=${() => this.controller.setActiveTab("organizations")}
@@ -78,7 +78,7 @@ export class HubAddressApp extends LitElement {
         </wa-button>
         <wa-button
           class="hubaddress-shell__tab-btn"
-          size="small"
+          size="s"
           variant=${tabVariant("settings")}
           appearance=${tabAppearance("settings")}
           @click=${() => this.controller.setActiveTab("settings")}
@@ -97,7 +97,7 @@ export class HubAddressApp extends LitElement {
   ): TemplateResult {
     return html`
       <wa-input
-        size="medium"
+        size="m"
         placeholder=${placeholder}
         .value=${value}
         with-clear
@@ -147,7 +147,7 @@ export class HubAddressApp extends LitElement {
             </h2>
             <wa-button
               id="add-staff-btn"
-              size="small"
+              size="s"
               variant="neutral"
               appearance="outlined"
               aria-label="職員を追加"
@@ -213,7 +213,7 @@ export class HubAddressApp extends LitElement {
             </h2>
             <wa-button
               id="add-organization-btn"
-              size="small"
+              size="s"
               variant="neutral"
               appearance="outlined"
               aria-label="組織を追加"
