@@ -110,7 +110,7 @@
 }
 
 .directory-card__name-copy-btn:hover {
-  color: var(--wa-color-brand-text-normal);
+  color: var(--wa-color-brand-on-quiet);
   text-decoration: underline;
 }
 
@@ -156,7 +156,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--wa-color-brand-text-normal);
+  color: var(--wa-color-text-normal);
   font: inherit;
   font-size: var(--wa-font-size-s);
   line-height: 1.4;

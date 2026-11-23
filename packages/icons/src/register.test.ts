@@ -108,6 +108,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       const hubAddressSvg = getIconSvg("icon-hub-address");
       expect(hubAddressSvg).toBeDefined();
       expect(hubAddressSvg).toContain("<svg");
+      expect(hubAddressSvg).toMatch(/#036730/i);
 
       const folderSvg = getIconSvg("folder-solid-full");
       expect(folderSvg).toBeDefined();

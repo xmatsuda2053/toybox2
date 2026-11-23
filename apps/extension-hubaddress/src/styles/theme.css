@@ -1,0 +1,7 @@
+/* HubAddress ブランドカラー (#036730 = --wa-color-green-40) テーマ上書き */
+:where(:root),
+.wa-light,
+.wa-dark .wa-invert {
+  --wa-color-brand-fill-loud: var(--wa-color-green-40);
+  --wa-color-brand-border-loud: var(--wa-color-green-40);
+}
