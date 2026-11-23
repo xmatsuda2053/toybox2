@@ -4,8 +4,10 @@ import type {
   ActiveTab,
   OrganizationRecord,
   StaffRecord,
+  StaffSortMode,
   ThemeMode,
 } from "../models/directory.model";
+import { loadStaffSortMode, saveStaffSortMode } from "../storage/sort-storage";
 import {
   applyThemeToRoot,
   loadTheme,
@@ -69,6 +71,7 @@ export class DirectoryController implements ReactiveController {
   expandedStaffKeys = new Set<string>();
   toastMessage: string | null = null;
   themeMode: ThemeMode = "system";
+  staffSortMode: StaffSortMode = "department";
   pendingImport: ImportPreview | null = null;
   isLoading = false;
 
@@ -117,12 +120,15 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      const [staff, organizations, themeMode] = await Promise.all([
-        directoryDb.getAllStaff(),
-        directoryDb.getAllOrganizations(),
-        loadTheme(this.deps.storage),
-      ]);
-      this.staff = sortStaff(staff);
+      const [staff, organizations, themeMode, staffSortMode] =
+        await Promise.all([
+          directoryDb.getAllStaff(),
+          directoryDb.getAllOrganizations(),
+          loadTheme(this.deps.storage),
+          loadStaffSortMode(this.deps.storage),
+        ]);
+      this.staffSortMode = staffSortMode;
+      this.staff = sortStaff(staff, staffSortMode);
       this.organizations = sortOrganizations(organizations);
       this.themeMode = themeMode;
       applyThemeToRoot(themeMode);
@@ -137,7 +143,7 @@ export class DirectoryController implements ReactiveController {
       directoryDb.getAllStaff(),
       directoryDb.getAllOrganizations(),
     ]);
-    this.staff = sortStaff(staff);
+    this.staff = sortStaff(staff, this.staffSortMode);
     this.organizations = sortOrganizations(organizations);
     this.host.requestUpdate();
   }
@@ -343,6 +349,16 @@ export class DirectoryController implements ReactiveController {
     applyThemeToRoot(mode);
     this.host.requestUpdate();
     await saveTheme(mode, this.deps.storage);
+  }
+
+  /**
+   * 職員一覧のソート順を切り替え、即時再並替とストレージ保存を行う
+   */
+  async setStaffSortMode(mode: StaffSortMode): Promise<void> {
+    this.staffSortMode = mode;
+    this.staff = sortStaff(this.staff, mode);
+    this.host.requestUpdate();
+    await saveStaffSortMode(mode, this.deps.storage);
   }
 
   /**

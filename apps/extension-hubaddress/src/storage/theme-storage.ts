@@ -15,7 +15,7 @@ export interface ThemeRootLike {
   setAttribute: (name: string, value: string) => void;
 }
 
-function resolveStorageArea(
+export function resolveStorageArea(
   injected?: StorageAreaLike,
 ): StorageAreaLike | undefined {
   if (injected) {

@@ -37,6 +37,7 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様6: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
  * - 仕様7: toggleSettingsTab で設定画面を開き、再クリックで直前の一覧画面（staff / organizations）へ戻ること
  * - 仕様8: 読み込みおよび登録後に職員（所属組織・フリガナ順）と組織（組織名・id順）がソートされて保持されること
+ * - 仕様9: staffSortMode をストレージから復元でき、setStaffSortMode での即時並替・永続化および再読み込み後のソート維持ができること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -240,6 +241,49 @@ describe("DirectoryController Tests", () => {
       "0010002",
       "0010003",
       "0010001",
+    ]);
+  });
+
+  it("setStaffSortMode で即時ソート・永続化され、再起動後やレコード更新後も選択中の並び順が維持されること", async () => {
+    const storage = createMemoryStorage();
+    const controller = new DirectoryController(createMockHost(), { storage });
+    await controller.loadInitialData();
+
+    expect(controller.staffSortMode).toBe("department");
+
+    await controller.setStaffSortMode("staffId");
+    expect(controller.staffSortMode).toBe("staffId");
+    // beforeEach データ: "0010001" < "0020001"
+    expect(controller.staff.map((s) => s.staffId)).toEqual([
+      "0010001",
+      "0020001",
+    ]);
+
+    // 別インスタンスでストレージからソート順を復元できること
+    const restoredController = new DirectoryController(createMockHost(), {
+      storage,
+    });
+    await restoredController.loadInitialData();
+    expect(restoredController.staffSortMode).toBe("staffId");
+    expect(restoredController.staff.map((s) => s.staffId)).toEqual([
+      "0010001",
+      "0020001",
+    ]);
+
+    // 名前順へ切り替え後、新規職員保存しても名前順が維持されること
+    await restoredController.setStaffSortMode("name");
+    await restoredController.saveStaff({
+      staffId: "0030001",
+      name: "青木 花子",
+      furigana: "あおき はなこ",
+      department: "総務部 総務課",
+      title: "",
+      emails: [],
+    });
+    expect(restoredController.staff.map((s) => s.staffId)).toEqual([
+      "0030001",
+      "0010001",
+      "0020001",
     ]);
   });
 });

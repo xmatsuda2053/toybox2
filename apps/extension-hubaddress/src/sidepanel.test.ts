@@ -28,6 +28,7 @@ import {
  * - 仕様14: HubAddress ブランドカラー（#036730 / wa-brand-green）がテーマ・追加ボタン・カードリンクへ適用されていること
  * - 仕様15: 設定ボタンが toggleSettingsTab を呼び出し再クリックで一覧画面へ戻れること
  * - 仕様16: 配布用 ZIP 生成スクリプト・PR 同梱ルール・hubaddress-extension.zip が整備されていること
+ * - 仕様17: 職員一覧の追加ボタン左隣にソート順切替ドロップダウンが配置され、職員・組織の追加ボタンとソートボタンのサイズが size="xs" であること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -502,5 +503,57 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {
     expect(HubAddressApp).toBeDefined();
+  });
+
+  it("職員一覧の追加ボタン左隣に size='xs' のソートドロップダウンが配置され、組織一覧の追加ボタンも size='xs' であること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+    const shellScss = readFileSync(
+      resolve(srcRoot, "hubaddress-app.scss"),
+      "utf-8",
+    );
+
+    const staffAddMatch = appSource.match(
+      /<wa-button[^>]*id="add-staff-btn"[^>]*>/,
+    );
+    const orgAddMatch = appSource.match(
+      /<wa-button[^>]*id="add-organization-btn"[^>]*>/,
+    );
+    const sortBtnMatch = appSource.match(
+      /<wa-button[^>]*id="sort-staff-btn"[^>]*>/,
+    );
+
+    expect(staffAddMatch?.[0]).toContain('size="xs"');
+    expect(staffAddMatch?.[0]).not.toContain('size="s"');
+    expect(orgAddMatch?.[0]).toContain('size="xs"');
+    expect(orgAddMatch?.[0]).not.toContain('size="s"');
+
+    expect(sortBtnMatch).not.toBeNull();
+    expect(sortBtnMatch?.[0]).toContain('size="xs"');
+    expect(sortBtnMatch?.[0]).toContain('slot="trigger"');
+    expect(sortBtnMatch?.[0]).not.toContain("with-caret");
+
+    const sortIndex = appSource.indexOf('id="sort-staff-btn"');
+    const addIndex = appSource.indexOf('id="add-staff-btn"');
+    expect(sortIndex).toBeGreaterThan(-1);
+    expect(addIndex).toBeGreaterThan(sortIndex);
+
+    expect(appSource).toContain('name="arrow-down-wide-short-solid-full"');
+    expect(appSource).toMatch(
+      /<wa-tooltip[^>]*for="sort-staff-btn"[^>]*trigger="hover"/,
+    );
+    expect(appSource).toContain("<wa-dropdown");
+    expect(appSource).toContain("wa-dropdown-item");
+    expect(appSource).toContain("value=${option.value}");
+    expect(appSource).toContain('value: "department"');
+    expect(appSource).toContain('value: "name"');
+    expect(appSource).toContain('value: "staffId"');
+    expect(appSource).toContain("所属部署・氏名");
+    expect(appSource).toContain("職員番号");
+    expect(appSource).toContain('type="checkbox"');
+    expect(appSource).toContain("hubaddress-shell__column-actions");
+    expect(shellScss).toContain(".hubaddress-shell__column-actions");
   });
 });
