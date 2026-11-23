@@ -55,4 +55,23 @@
   background-color: var(--wa-color-surface-lowered);
   font-family: monospace;
   font-size: var(--wa-font-size-s);
+  white-space: nowrap;
+}
+
+.settings-view__nowrap {
+  white-space: nowrap;
+}
+
+.settings-view__shortcut-list {
+  margin: 0;
+  padding-left: var(--wa-space-m);
+  font-size: var(--wa-font-size-s);
+  color: var(--wa-color-text-quiet);
+  line-height: 1.6;
+}
+
+.settings-view__shortcut-url {
+  font-family: monospace;
+  font-size: var(--wa-font-size-xs);
+  white-space: nowrap;
 }
