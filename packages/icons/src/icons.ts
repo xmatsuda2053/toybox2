@@ -41,10 +41,12 @@ import envelope_solid_full from "./assets/icons/envelope-solid-full.svg?raw";
 import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
+import fax_solid_full from "./assets/icons/fax-solid-full.svg?raw";
 import fire_solid_full from "./assets/icons/fire-solid-full.svg?raw";
 import floppy_disk_regular_full from "./assets/icons/floppy-disk-regular-full.svg?raw";
 import folder_solid_full from "./assets/icons/folder-solid-full.svg?raw";
 import gear_solid_full from "./assets/icons/gear-solid-full.svg?raw";
+import hashtag_solid_full from "./assets/icons/hashtag-solid-full.svg?raw";
 import heading_solid_full from "./assets/icons/heading-solid-full.svg?raw";
 import house_regular_full from "./assets/icons/house-regular-full.svg?raw";
 import house_solid_full from "./assets/icons/house-solid-full.svg?raw";
@@ -136,10 +138,12 @@ export const icons: Record<string, string> = {
   expand: expand_solid_full,
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
+  "fax-solid-full": fax_solid_full,
   "fire-solid-full": fire_solid_full,
   "floppy-disk-regular-full": floppy_disk_regular_full,
   "folder-solid-full": folder_solid_full,
   "gear-solid-full": gear_solid_full,
+  "hashtag-solid-full": hashtag_solid_full,
   "heading-solid-full": heading_solid_full,
   "house-regular-full": house_regular_full,
   "house-solid-full": house_solid_full,

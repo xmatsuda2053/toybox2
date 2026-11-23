@@ -26,6 +26,7 @@ export interface OrganizationCardCallbacks {
 
 function renderCopyChip(
   id: string,
+  iconName: string,
   label: string,
   value: string,
   onCopy: (label: string, value: string) => void,
@@ -39,10 +40,10 @@ function renderCopyChip(
       id=${id}
       type="button"
       class="directory-card__copy-btn"
+      aria-label=${`${label} ${value} をコピー`}
       @click=${() => onCopy(label, value)}
     >
-      <wa-icon name="copy-solid-full"></wa-icon>
-      <span class="directory-card__copy-label">${label}:</span>
+      <wa-icon name=${iconName}></wa-icon>
       <span class="directory-card__copy-value">${value}</span>
     </button>
     <wa-tooltip for=${id} trigger="hover">${label}をコピー</wa-tooltip>
@@ -196,6 +197,7 @@ function renderStaffEmails(
       ${emails.map((email, emailIdx) =>
         renderCopyChip(
           `staff-email-${safeKey}-${emailIdx}`,
+          "envelope-solid-full",
           "メール",
           email,
           onCopy,
@@ -214,12 +216,25 @@ function renderOrganizationContacts(
     <div class="directory-card__contacts">
       ${renderCopyChip(
         `org-ext-${safeKey}`,
+        "hashtag-solid-full",
         "内線",
         org.extensionNumber,
         onCopy,
       )}
-      ${renderCopyChip(`org-tel-${safeKey}`, "外線", org.phoneNumber, onCopy)}
-      ${renderCopyChip(`org-fax-${safeKey}`, "FAX", org.faxNumber, onCopy)}
+      ${renderCopyChip(
+        `org-tel-${safeKey}`,
+        "phone-solid-full",
+        "外線",
+        org.phoneNumber,
+        onCopy,
+      )}
+      ${renderCopyChip(
+        `org-fax-${safeKey}`,
+        "fax-solid-full",
+        "FAX",
+        org.faxNumber,
+        onCopy,
+      )}
     </div>
   `;
 }

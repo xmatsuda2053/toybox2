@@ -24,6 +24,7 @@ import {
  * - 仕様10: 職員カードにフリガナが表示されること
  * - 仕様11: 職員番号・職員氏名・組織名のクリックでクリップボードコピー（onCopy）が呼び出されること
  * - 仕様12: テンプレート内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
+ * - 仕様13: 組織カードの連絡先および職員メールのチップにコピーアイコンやテキスト文字が出力されず、種別アイコンで表示されること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -346,6 +347,60 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       const content = readFileSync(filePath, "utf-8");
       expect(content).not.toMatch(/size\s*=\s*["'](?:small|medium|large)["']/);
     }
+  });
+
+  it("組織カードの連絡先および職員メールのチップにコピーアイコン・ラベル文字がなく種別アイコンで表示されること", () => {
+    const orgHtml = flattenTemplate(
+      renderOrganizationCard(
+        {
+          id: 1,
+          department: "総務部 総務課",
+          extra: "",
+          location: "",
+          title: "",
+          extensionNumber: "2101",
+          phoneNumber: "03-1234-2101",
+          faxNumber: "03-1234-2109",
+          notes: "",
+        },
+        0,
+        { onCopy: () => {} },
+      ),
+    );
+    expect(orgHtml).not.toContain("copy-solid-full");
+    expect(orgHtml).not.toContain("内線:");
+    expect(orgHtml).not.toContain("外線:");
+    expect(orgHtml).not.toContain("FAX:");
+    expect(orgHtml).toContain("hashtag-solid-full");
+    expect(orgHtml).toContain("phone-solid-full");
+    expect(orgHtml).toContain("fax-solid-full");
+    expect(orgHtml).toContain("内線をコピー");
+    expect(orgHtml).toContain("外線をコピー");
+    expect(orgHtml).toContain("FAXをコピー");
+
+    const staffHtml = flattenTemplate(
+      renderStaffCard(
+        {
+          id: 1,
+          staffId: "0010001",
+          name: "田中 太郎",
+          department: "総務部",
+          title: "課長",
+          emails: ["tanaka@example.com"],
+        },
+        0,
+        {
+          isEmailsExpanded: true,
+          onToggleEmails: () => {},
+          onJumpToDepartment: () => {},
+          onCopy: () => {},
+        },
+      ),
+    );
+    expect(staffHtml).not.toContain("copy-solid-full");
+    expect(staffHtml).not.toContain("メール:");
+    expect(staffHtml).toContain("tanaka@example.com");
+    expect(staffHtml).toContain("メールをコピー");
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {
