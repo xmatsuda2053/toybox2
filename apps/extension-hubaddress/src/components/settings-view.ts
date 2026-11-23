@@ -194,13 +194,27 @@ function renderShortcutSection(): TemplateResult {
       <p class="settings-view__description">
         既定のショートカット
         <span class="settings-view__shortcut-code">Alt+Shift+H</span>
-        でどのタブからでも HubAddress サイドパネルを開閉できます。
+        でどのタブからでも
+        <span class="settings-view__nowrap">HubAddress</span>
+        サイドパネルを開閉できます。
       </p>
       <p class="settings-view__description">
-        キー変更や未割り当て時の確認は
-        Chrome（chrome://extensions/shortcuts）または
-        Edge（edge://extensions/shortcuts）から設定できます。
+        キー変更や未割り当て時の確認は、各ブラウザのショートカット設定画面から行えます。
       </p>
+      <ul class="settings-view__shortcut-list">
+        <li>
+          Chrome:
+          <code class="settings-view__shortcut-url"
+            >chrome://extensions/shortcuts</code
+          >
+        </li>
+        <li>
+          Edge:
+          <code class="settings-view__shortcut-url"
+            >edge://extensions/shortcuts</code
+          >
+        </li>
+      </ul>
     </section>
   `;
 }

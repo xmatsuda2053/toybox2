@@ -14,6 +14,7 @@ import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
  * - 仕様4: 設定ビューのカラーテーマボタンがアイコンのみ＋ホバーツールチップ（ライト・ダーク・システム）で構成されていること
  * - 仕様5: renderSettingsView / renderEditorDialogs 関数がエクスポートされていること
  * - 仕様6: settings-view.ts / editor-dialogs.ts 内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
+ * - 仕様7: 設定画面のショートカット説明で英単語・設定 URL に折り返し防止が設定されていること
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -134,5 +135,42 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
       const content = readFileSync(filePath, "utf-8");
       expect(content).not.toMatch(/size\s*=\s*["'](?:small|medium|large)["']/);
     }
+  });
+
+  it("設定画面のショートカット説明で英文や設定 URL が途中改行されないよう定義されていること", () => {
+    const settingsScss = readFileSync(
+      resolve(__dirname, "settings-view.scss"),
+      "utf-8",
+    );
+    expect(settingsScss).toMatch(
+      /\.settings-view__shortcut-code\s*\{[^}]*white-space:\s*nowrap/s,
+    );
+    expect(settingsScss).toMatch(
+      /\.settings-view__nowrap\s*\{[^}]*white-space:\s*nowrap/s,
+    );
+    expect(settingsScss).toMatch(
+      /\.settings-view__shortcut-url\s*\{[^}]*white-space:\s*nowrap/s,
+    );
+
+    const rendered = flattenTemplate(
+      renderSettingsView({
+        staffCount: 0,
+        organizationCount: 0,
+        themeMode: "system",
+        onChangeTheme: () => {},
+        onRequestImport: () => {},
+        onExportStaffCsv: () => {},
+        onExportOrgCsv: () => {},
+        onExportJson: () => {},
+        onRequestClearAll: () => {},
+      }),
+    );
+    expect(rendered).toContain('class="settings-view__nowrap">HubAddress<');
+    expect(rendered).toMatch(
+      /class="settings-view__shortcut-url"\s*>chrome:\/\/extensions\/shortcuts\s*<\/code\s*>/,
+    );
+    expect(rendered).toMatch(
+      /class="settings-view__shortcut-url"\s*>edge:\/\/extensions\/shortcuts\s*<\/code\s*>/,
+    );
   });
 });
