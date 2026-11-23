@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "HubAddress",
+  "version": "0.1.0",
+  "description": "職員情報・組織情報をサイドパネルで素早く検索・参照できる拡張機能",
+  "permissions": ["sidePanel", "storage"],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "HubAddress を開く"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "commands": {
+    "open-hubaddress-sidepanel": {
+      "suggested_key": {
+        "default": "Alt+Shift+H"
+      },
+      "description": "HubAddress サイドパネルを開く"
+    }
+  }
+}
