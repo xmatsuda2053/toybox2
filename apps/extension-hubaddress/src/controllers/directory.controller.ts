@@ -7,14 +7,10 @@ import type {
   ThemeMode,
 } from "../models/directory.model";
 import {
-  loadFavorites,
-  saveFavorites,
-  type StorageAreaLike,
-} from "../storage/favorites-storage";
-import {
   applyThemeToRoot,
   loadTheme,
   saveTheme,
+  type StorageAreaLike,
 } from "../storage/theme-storage";
 import {
   copyTextToClipboard,
@@ -29,8 +25,7 @@ import {
   filterOrganizations,
   filterStaff,
   findMatchingOrganization,
-  getOrganizationFavoriteKey,
-  getStaffFavoriteKey,
+  getOrganizationKey,
 } from "../utils/directory-filter.utils";
 import {
   normalizeOrganizationInput,
@@ -70,9 +65,6 @@ export class DirectoryController implements ReactiveController {
   activeTab: ActiveTab = "staff";
   searchQuery = "";
   selectedDepartment = "";
-  favoritesOnly = false;
-  favoriteStaffKeys = new Set<string>();
-  favoriteOrganizationKeys = new Set<string>();
   highlightedOrganizationKey: string | null = null;
   toastMessage: string | null = null;
   themeMode: ThemeMode = "system";
@@ -124,16 +116,13 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      const [staff, organizations, favorites, themeMode] = await Promise.all([
+      const [staff, organizations, themeMode] = await Promise.all([
         directoryDb.getAllStaff(),
         directoryDb.getAllOrganizations(),
-        loadFavorites(this.deps.storage),
         loadTheme(this.deps.storage),
       ]);
       this.staff = staff;
       this.organizations = organizations;
-      this.favoriteStaffKeys = new Set(favorites.staffKeys);
-      this.favoriteOrganizationKeys = new Set(favorites.organizationKeys);
       this.themeMode = themeMode;
       applyThemeToRoot(themeMode);
     } finally {
@@ -160,8 +149,6 @@ export class DirectoryController implements ReactiveController {
     return filterStaff(this.staff, {
       query: this.searchQuery,
       department: this.selectedDepartment,
-      favoritesOnly: this.favoritesOnly,
-      favoriteKeys: this.favoriteStaffKeys,
     });
   }
 
@@ -169,8 +156,6 @@ export class DirectoryController implements ReactiveController {
     return filterOrganizations(this.organizations, {
       query: this.searchQuery,
       department: this.selectedDepartment,
-      favoritesOnly: this.favoritesOnly,
-      favoriteKeys: this.favoriteOrganizationKeys,
     });
   }
 
@@ -189,50 +174,10 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  setFavoritesOnly(enabled: boolean): void {
-    this.favoritesOnly = enabled;
-    this.host.requestUpdate();
-  }
-
   clearFilters(): void {
     this.searchQuery = "";
     this.selectedDepartment = "";
-    this.favoritesOnly = false;
     this.host.requestUpdate();
-  }
-
-  private async toggleFavoriteKey(
-    targetSet: Set<string>,
-    key: string,
-  ): Promise<void> {
-    if (targetSet.has(key)) {
-      targetSet.delete(key);
-    } else {
-      targetSet.add(key);
-    }
-
-    await saveFavorites(
-      {
-        staffKeys: [...this.favoriteStaffKeys],
-        organizationKeys: [...this.favoriteOrganizationKeys],
-      },
-      this.deps.storage,
-    );
-    this.host.requestUpdate();
-  }
-
-  async toggleStaffFavorite(staff: StaffRecord): Promise<void> {
-    await this.toggleFavoriteKey(
-      this.favoriteStaffKeys,
-      getStaffFavoriteKey(staff),
-    );
-  }
-
-  async toggleOrganizationFavorite(org: OrganizationRecord): Promise<void> {
-    await this.toggleFavoriteKey(
-      this.favoriteOrganizationKeys,
-      getOrganizationFavoriteKey(org),
-    );
   }
 
   /**
@@ -395,8 +340,7 @@ export class DirectoryController implements ReactiveController {
     this.activeTab = "organizations";
     this.searchQuery = "";
     this.selectedDepartment = "";
-    this.favoritesOnly = false;
-    this.highlightedOrganizationKey = getOrganizationFavoriteKey(matched);
+    this.highlightedOrganizationKey = getOrganizationKey(matched);
     this.showToast(`組織「${matched.department}」を表示しました`);
     return true;
   }

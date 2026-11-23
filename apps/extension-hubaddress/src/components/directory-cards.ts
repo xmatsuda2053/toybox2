@@ -4,13 +4,11 @@ import type {
   StaffRecord,
 } from "../models/directory.model";
 import {
-  getOrganizationFavoriteKey,
-  getStaffFavoriteKey,
+  getOrganizationKey,
+  getStaffKey,
 } from "../utils/directory-filter.utils";
 
 export interface StaffCardCallbacks {
-  isFavorite: boolean;
-  onToggleFavorite: (staff: StaffRecord) => void;
   onJumpToDepartment: (department: string) => void;
   onCopy: (label: string, value: string) => void;
   onEdit?: (staff: StaffRecord) => void;
@@ -18,9 +16,7 @@ export interface StaffCardCallbacks {
 }
 
 export interface OrganizationCardCallbacks {
-  isFavorite: boolean;
   isHighlighted: boolean;
-  onToggleFavorite: (org: OrganizationRecord) => void;
   onCopy: (label: string, value: string) => void;
   onEdit?: (org: OrganizationRecord) => void;
   onDelete?: (org: OrganizationRecord) => void;
@@ -56,12 +52,10 @@ function renderActionIconButton(
   iconName: string,
   label: string,
   onClick: () => void,
-  className = "",
 ): TemplateResult {
   return html`
     <wa-button
       id=${id}
-      class=${className}
       size="small"
       appearance="plain"
       aria-label=${label}
@@ -75,25 +69,15 @@ function renderActionIconButton(
 
 function renderCardActions(
   prefix: string,
-  isFavorite: boolean,
-  onToggleFavorite: () => void,
   onEdit?: () => void,
   onDelete?: () => void,
-): TemplateResult {
-  const favLabel = isFavorite ? "お気に入りから解除" : "お気に入りに登録";
-  const favClass = isFavorite
-    ? "directory-card__fav-btn directory-card__fav-btn--active"
-    : "directory-card__fav-btn";
+): TemplateResult | typeof nothing {
+  if (!onEdit && !onDelete) {
+    return nothing;
+  }
 
   return html`
     <div class="directory-card__actions">
-      ${renderActionIconButton(
-        `${prefix}-fav`,
-        "bookmark-solid-full",
-        favLabel,
-        onToggleFavorite,
-        favClass,
-      )}
       ${
         onEdit
           ? renderActionIconButton(
@@ -194,17 +178,14 @@ export function renderStaffCard(
   index: number,
   callbacks: StaffCardCallbacks,
 ): TemplateResult {
-  const safeKey = `${getStaffFavoriteKey(staff).replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
-  const cardClass = callbacks.isFavorite
-    ? "directory-card directory-card--favorite"
-    : "directory-card";
+  const safeKey = `${getStaffKey(staff).replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
   const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(staff) : undefined;
   const onDelete = callbacks.onDelete
     ? () => callbacks.onDelete?.(staff)
     : undefined;
 
   return html`
-    <article class=${cardClass}>
+    <article class="directory-card">
       <div class="directory-card__header">
         <div class="directory-card__title-group">
           <h3 class="directory-card__name">
@@ -221,13 +202,7 @@ export function renderStaffCard(
               : nothing
           }
         </div>
-        ${renderCardActions(
-          `staff-${safeKey}`,
-          callbacks.isFavorite,
-          () => callbacks.onToggleFavorite(staff),
-          onEdit,
-          onDelete,
-        )}
+        ${renderCardActions(`staff-${safeKey}`, onEdit, onDelete)}
       </div>
       ${renderStaffDepartment(staff, safeKey, callbacks.onJumpToDepartment)}
       ${renderStaffEmails(staff.emails, safeKey, callbacks.onCopy)}
@@ -253,13 +228,7 @@ function renderOrganizationHeader(
         </h3>
         ${org.title ? html`<wa-tag size="small">${org.title}</wa-tag>` : nothing}
       </div>
-      ${renderCardActions(
-        `org-${safeKey}`,
-        callbacks.isFavorite,
-        () => callbacks.onToggleFavorite(org),
-        onEdit,
-        onDelete,
-      )}
+      ${renderCardActions(`org-${safeKey}`, onEdit, onDelete)}
     </div>
   `;
 }
@@ -272,19 +241,15 @@ export function renderOrganizationCard(
   index: number,
   callbacks: OrganizationCardCallbacks,
 ): TemplateResult {
-  const orgKey = getOrganizationFavoriteKey(org);
+  const orgKey = getOrganizationKey(org);
   const safeKey = `${orgKey.replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
-  const classes = [
-    "directory-card",
-    callbacks.isFavorite ? "directory-card--favorite" : "",
-    callbacks.isHighlighted ? "directory-card--highlighted" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const cardClass = callbacks.isHighlighted
+    ? "directory-card directory-card--highlighted"
+    : "directory-card";
   const placeInfo = [org.extra, org.location].filter(Boolean).join(" / ");
 
   return html`
-    <article class=${classes} data-org-key=${orgKey}>
+    <article class=${cardClass} data-org-key=${orgKey}>
       ${renderOrganizationHeader(org, safeKey, callbacks)}
       ${
         placeInfo

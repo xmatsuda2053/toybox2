@@ -18,10 +18,7 @@ import {
   type OrganizationFormState,
   type StaffFormState,
 } from "./components/editor-dialogs";
-import {
-  getOrganizationFavoriteKey,
-  getStaffFavoriteKey,
-} from "./utils/directory-filter.utils";
+import { getOrganizationKey } from "./utils/directory-filter.utils";
 import { parseEmailsInput } from "./utils/directory-validation.utils";
 import { triggerFileDownload } from "./utils/download.utils";
 import type { ImportKind } from "./utils/import-preview.utils";
@@ -52,29 +49,11 @@ export class HubAddressApp extends LitElement {
   @state() private pendingFileKind: ImportKind = "json";
 
   private renderHeader(): TemplateResult {
-    const { favoritesOnly } = this.controller;
-    const favLabel = favoritesOnly ? "すべて表示" : "お気に入りのみ表示";
-
     return html`
       <header class="hubaddress-shell__header">
         <div class="hubaddress-shell__brand">
           <wa-icon name="icon-hub-address"></wa-icon>
           <h1 class="hubaddress-shell__title">HubAddress</h1>
-        </div>
-        <div class="hubaddress-shell__actions">
-          <wa-button
-            id="hubaddress-fav-filter-btn"
-            size="small"
-            variant=${favoritesOnly ? "warning" : "neutral"}
-            appearance=${favoritesOnly ? "accent" : "outlined"}
-            @click=${() => this.controller.setFavoritesOnly(!favoritesOnly)}
-          >
-            <wa-icon slot="start" name="bookmark-solid-full"></wa-icon>
-            お気に入り
-          </wa-button>
-          <wa-tooltip for="hubaddress-fav-filter-btn" trigger="hover">
-            ${favLabel}
-          </wa-tooltip>
         </div>
       </header>
     `;
@@ -145,9 +124,9 @@ export class HubAddressApp extends LitElement {
   }
 
   private renderClearFilterButton(): TemplateResult | typeof nothing {
-    const { searchQuery, selectedDepartment, favoritesOnly } = this.controller;
+    const { searchQuery, selectedDepartment } = this.controller;
     const hasActiveFilter =
-      searchQuery.length > 0 || selectedDepartment.length > 0 || favoritesOnly;
+      searchQuery.length > 0 || selectedDepartment.length > 0;
     if (!hasActiveFilter) {
       return nothing;
     }
@@ -245,11 +224,6 @@ export class HubAddressApp extends LitElement {
                 <div class="directory-card-list">
                   ${items.map((staff, idx) =>
                     renderStaffCard(staff, idx, {
-                      isFavorite: this.controller.favoriteStaffKeys.has(
-                        getStaffFavoriteKey(staff),
-                      ),
-                      onToggleFavorite: (target) =>
-                        void this.controller.toggleStaffFavorite(target),
                       onJumpToDepartment: (dept) =>
                         this.controller.jumpToOrganization(dept),
                       onCopy: (label, value) =>
@@ -297,13 +271,9 @@ export class HubAddressApp extends LitElement {
             : html`
                 <div class="directory-card-list">
                   ${items.map((org, idx) => {
-                    const key = getOrganizationFavoriteKey(org);
+                    const key = getOrganizationKey(org);
                     return renderOrganizationCard(org, idx, {
-                      isFavorite:
-                        this.controller.favoriteOrganizationKeys.has(key),
                       isHighlighted: highlightKey === key,
-                      onToggleFavorite: (target) =>
-                        void this.controller.toggleOrganizationFavorite(target),
                       onCopy: (label, value) =>
                         void this.controller.copyField(label, value),
                       onEdit: (target) => {

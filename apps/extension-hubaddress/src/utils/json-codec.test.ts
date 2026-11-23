@@ -13,7 +13,7 @@ import type {
  * テスト仕様: JSON シリアライザー・パーサー (json-codec.ts)
  *
  * - 仕様1: 職員・組織レコードを version / exportedAt / staff / organizations を持つ一括 JSON にシリアライズできること
- * - 仕様2: シリアライズ結果から内部 ID (id) が除外されること（お気に入り情報も含めないこと）
+ * - 仕様2: シリアライズ結果から内部 ID (id) が除外されること
  * - 仕様3: parseDirectoryJson で正常な JSON から職員・組織配列を復元でき、ラウンドトリップが成立すること
  * - 仕様4: 不正な JSON 文字列や必須配列が欠損したオブジェクトが渡された場合に明確なエラーをスローすること
  */
@@ -52,7 +52,6 @@ describe("JSON Codec Tests", () => {
 
     expect(parsed.version).toBe(DIRECTORY_JSON_VERSION);
     expect(parsed.exportedAt).toBe("2026-11-23T00:00:00.000Z");
-    expect(parsed).not.toHaveProperty("favorites");
     expect((parsed.staff as Record<string, unknown>[])[0]).not.toHaveProperty(
       "id",
     );

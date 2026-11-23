@@ -3,7 +3,7 @@ import "fake-indexeddb/auto";
 import type { ReactiveControllerHost } from "lit";
 import { directoryDb } from "../db/directory-db";
 import { DirectoryController } from "./directory.controller";
-import type { StorageAreaLike } from "../storage/favorites-storage";
+import type { StorageAreaLike } from "../storage/theme-storage";
 
 function createMockHost(): ReactiveControllerHost & {
   requestUpdate: ReturnType<typeof vi.fn<() => void>>;

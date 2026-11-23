@@ -148,7 +148,7 @@ function renderImportExportSection(props: SettingsViewProps): TemplateResult {
       </div>
       <p class="settings-view__description">
         CSV（UTF-8 / Shift_JIS 自動判別）または一括 JSON
-        からインポート（確認後に全件洗い替え）できます。お気に入りは端末内に独立保持されます。
+        からインポート（確認後に全件洗い替え）できます。
       </p>
       ${renderImportButtons(props.onRequestImport)}
       <wa-divider></wa-divider>

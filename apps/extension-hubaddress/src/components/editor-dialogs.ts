@@ -375,7 +375,7 @@ function renderClearAllDialog(
       @wa-after-hide=${props.onCancelClearAll}
     >
       <p class="editor-dialog__summary">
-        登録されているすべての職員・組織データを削除しますか？（お気に入り設定は維持されます）
+        登録されているすべての職員・組織データを削除しますか？この操作は元に戻せません。
       </p>
       <div slot="footer" class="editor-dialog__footer">
         <wa-button size="small" @click=${props.onCancelClearAll}>

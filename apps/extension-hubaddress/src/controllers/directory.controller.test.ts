@@ -3,7 +3,7 @@ import "fake-indexeddb/auto";
 import type { ReactiveControllerHost } from "lit";
 import { directoryDb } from "../db/directory-db";
 import { DirectoryController } from "./directory.controller";
-import type { StorageAreaLike } from "../storage/favorites-storage";
+import type { StorageAreaLike } from "../storage/theme-storage";
 
 function createMockHost(): ReactiveControllerHost & {
   requestUpdate: ReturnType<typeof vi.fn<() => void>>;
@@ -29,11 +29,11 @@ function createMemoryStorage(): StorageAreaLike {
 /**
  * テスト仕様: DirectoryController (directory.controller.ts)
  *
- * - 仕様1: loadInitialData で IndexedDB の職員・組織データとお気に入りを読み込みホストへ通知すること
- * - 仕様2: 検索クエリ・所属フィルタ・お気に入りのみ絞り込みに応じて filteredStaff / filteredOrganizations が更新されること
- * - 仕様3: toggleStaffFavorite / toggleOrganizationFavorite でお気に入りがトグルされストレージに保存されること
- * - 仕様4: jumpToOrganization で該当組織があれば organizations タブへ切替・ハイライトキー設定し true を返すこと
- * - 仕様5: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
+ * - 仕様1: loadInitialData で IndexedDB の職員・組織データとテーマ設定を読み込みホストへ通知すること
+ * - 仕様2: 検索クエリ・所属フィルタに応じて filteredStaff / filteredOrganizations が更新されること
+ * - 仕様3: jumpToOrganization で該当組織があれば organizations タブへ切替・ハイライトキー設定し true を返すこと
+ * - 仕様4: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
+ * - 仕様5: お気に入り関連のプロパティやメソッドが存在しないこと
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -81,7 +81,7 @@ describe("DirectoryController Tests", () => {
     );
   });
 
-  it("loadInitialData で職員・組織とお気に入りを読み込めること", async () => {
+  it("loadInitialData で職員・組織とテーマを読み込めること", async () => {
     const host = createMockHost();
     const storage = createMemoryStorage();
     const controller = new DirectoryController(host, {
@@ -100,7 +100,7 @@ describe("DirectoryController Tests", () => {
     expect(host.requestUpdate).toHaveBeenCalled();
   });
 
-  it("検索クエリ・所属フィルタ・お気に入りで一覧を絞り込めること", async () => {
+  it("検索クエリ・所属フィルタで一覧を絞り込めること", async () => {
     const host = createMockHost();
     const storage = createMemoryStorage();
     const controller = new DirectoryController(host, { storage });
@@ -117,25 +117,6 @@ describe("DirectoryController Tests", () => {
     ]);
   });
 
-  it("お気に入りトグルで状態が保存され、お気に入りのみ表示に反映されること", async () => {
-    const host = createMockHost();
-    const storage = createMemoryStorage();
-    const controller = new DirectoryController(host, { storage });
-    await controller.loadInitialData();
-
-    await controller.toggleStaffFavorite(controller.staff[1]);
-    expect(storage.set).toHaveBeenCalledTimes(1);
-
-    controller.setFavoritesOnly(true);
-    expect(controller.filteredStaff.map((s) => s.staffId)).toEqual(["0020001"]);
-    expect(controller.filteredOrganizations).toHaveLength(0);
-
-    await controller.toggleOrganizationFavorite(controller.organizations[0]);
-    expect(controller.filteredOrganizations.map((o) => o.department)).toEqual([
-      "総務部 総務課",
-    ]);
-  });
-
   it("jumpToOrganization で対象組織タブへ遷移しハイライトキーを設定すること", async () => {
     const host = createMockHost();
     const storage = createMemoryStorage();
@@ -143,13 +124,13 @@ describe("DirectoryController Tests", () => {
     await controller.loadInitialData();
 
     controller.setSearchQuery("田中");
-    controller.setFavoritesOnly(true);
+    controller.setSelectedDepartment("営業推進部 第一営業課");
 
     const jumped = controller.jumpToOrganization("総務部 総務課");
     expect(jumped).toBe(true);
     expect(controller.activeTab).toBe("organizations");
     expect(controller.searchQuery).toBe("");
-    expect(controller.favoritesOnly).toBe(false);
+    expect(controller.selectedDepartment).toBe("");
     expect(controller.highlightedOrganizationKey).toBe(
       "org:総務部 総務課::課長席",
     );
@@ -172,5 +153,16 @@ describe("DirectoryController Tests", () => {
     expect(writeText).toHaveBeenCalledWith("2101");
     expect(controller.toastMessage).toContain("内線番号");
     expect(controller.toastMessage).toContain("2101");
+  });
+
+  it("お気に入り関連のプロパティやメソッドが除去されていること", () => {
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+    });
+    expect("favoritesOnly" in controller).toBe(false);
+    expect("favoriteStaffKeys" in controller).toBe(false);
+    expect("favoriteOrganizationKeys" in controller).toBe(false);
+    expect("toggleStaffFavorite" in controller).toBe(false);
+    expect("toggleOrganizationFavorite" in controller).toBe(false);
   });
 });

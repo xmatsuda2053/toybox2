@@ -17,10 +17,6 @@
     background-color 0.2s ease;
 }
 
-.directory-card--favorite {
-  border-color: var(--wa-color-brand-border-normal);
-}
-
 .directory-card--highlighted {
   border-color: var(--wa-color-brand-fill-loud);
   background-color: var(--wa-color-brand-fill-quiet);
@@ -117,8 +113,4 @@
   margin: 0;
   font-size: var(--wa-font-size-xs);
   color: var(--wa-color-text-quiet);
-}
-
-.directory-card__fav-btn--active {
-  color: var(--wa-color-warning-text-normal);
 }

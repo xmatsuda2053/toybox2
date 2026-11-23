@@ -1,7 +1,11 @@
 import type { ThemeMode } from "../models/directory.model";
-import { resolveStorageArea, type StorageAreaLike } from "./favorites-storage";
 
 export const THEME_STORAGE_KEY = "hubaddress_theme";
+
+export interface StorageAreaLike {
+  get: (keys: string) => Promise<Record<string, unknown>>;
+  set: (items: Record<string, unknown>) => Promise<void>;
+}
 
 export interface ThemeRootLike {
   classList: {
@@ -9,6 +13,40 @@ export interface ThemeRootLike {
     remove: (token: string) => void;
   };
   setAttribute: (name: string, value: string) => void;
+}
+
+function resolveStorageArea(
+  injected?: StorageAreaLike,
+): StorageAreaLike | undefined {
+  if (injected) {
+    return injected;
+  }
+
+  const chromeStorage = (
+    globalThis as {
+      chrome?: { storage?: { local?: StorageAreaLike } };
+    }
+  ).chrome?.storage?.local;
+
+  if (chromeStorage) {
+    return chromeStorage;
+  }
+
+  if (typeof globalThis.localStorage !== "undefined") {
+    return {
+      get: async (key: string) => {
+        const raw = globalThis.localStorage.getItem(key);
+        return raw ? { [key]: JSON.parse(raw) as unknown } : {};
+      },
+      set: async (items: Record<string, unknown>) => {
+        for (const [k, v] of Object.entries(items)) {
+          globalThis.localStorage.setItem(k, JSON.stringify(v));
+        }
+      },
+    };
+  }
+
+  return undefined;
 }
 
 function isThemeMode(value: unknown): value is ThemeMode {
