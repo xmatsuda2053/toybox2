@@ -33,6 +33,13 @@
   gap: var(--wa-space-xs);
 }
 
+.directory-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-3xs);
+  flex-shrink: 0;
+}
+
 .directory-card__title-group {
   display: flex;
   flex-wrap: wrap;

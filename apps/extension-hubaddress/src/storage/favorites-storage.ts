@@ -15,7 +15,7 @@ const EMPTY_FAVORITES: FavoritesState = {
   organizationKeys: [],
 };
 
-function resolveStorageArea(
+export function resolveStorageArea(
   injected?: StorageAreaLike,
 ): StorageAreaLike | undefined {
   if (injected) {

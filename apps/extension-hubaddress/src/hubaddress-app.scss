@@ -99,6 +99,18 @@
   color: var(--wa-color-text-quiet);
 }
 
+.hubaddress-shell__column-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-xs);
+  margin-bottom: var(--wa-space-xs);
+}
+
+.hubaddress-shell__hidden-input {
+  display: none;
+}
+
 .hubaddress-shell__empty {
   padding: var(--wa-space-m);
   text-align: center;

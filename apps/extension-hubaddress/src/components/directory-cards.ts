@@ -13,6 +13,8 @@ export interface StaffCardCallbacks {
   onToggleFavorite: (staff: StaffRecord) => void;
   onJumpToDepartment: (department: string) => void;
   onCopy: (label: string, value: string) => void;
+  onEdit?: (staff: StaffRecord) => void;
+  onDelete?: (staff: StaffRecord) => void;
 }
 
 export interface OrganizationCardCallbacks {
@@ -20,6 +22,8 @@ export interface OrganizationCardCallbacks {
   isHighlighted: boolean;
   onToggleFavorite: (org: OrganizationRecord) => void;
   onCopy: (label: string, value: string) => void;
+  onEdit?: (org: OrganizationRecord) => void;
+  onDelete?: (org: OrganizationRecord) => void;
 }
 
 function renderCopyChip(
@@ -47,28 +51,70 @@ function renderCopyChip(
   `;
 }
 
-function renderFavoriteButton(
+function renderActionIconButton(
   id: string,
-  isFavorite: boolean,
+  iconName: string,
+  label: string,
   onClick: () => void,
+  className = "",
 ): TemplateResult {
-  const label = isFavorite ? "お気に入りから解除" : "お気に入りに登録";
-  const btnClass = isFavorite
-    ? "directory-card__fav-btn directory-card__fav-btn--active"
-    : "directory-card__fav-btn";
-
   return html`
     <wa-button
       id=${id}
-      class=${btnClass}
+      class=${className}
       size="small"
       appearance="plain"
       aria-label=${label}
       @click=${onClick}
     >
-      <wa-icon name="bookmark-solid-full"></wa-icon>
+      <wa-icon name=${iconName}></wa-icon>
     </wa-button>
     <wa-tooltip for=${id} trigger="hover">${label}</wa-tooltip>
+  `;
+}
+
+function renderCardActions(
+  prefix: string,
+  isFavorite: boolean,
+  onToggleFavorite: () => void,
+  onEdit?: () => void,
+  onDelete?: () => void,
+): TemplateResult {
+  const favLabel = isFavorite ? "お気に入りから解除" : "お気に入りに登録";
+  const favClass = isFavorite
+    ? "directory-card__fav-btn directory-card__fav-btn--active"
+    : "directory-card__fav-btn";
+
+  return html`
+    <div class="directory-card__actions">
+      ${renderActionIconButton(
+        `${prefix}-fav`,
+        "bookmark-solid-full",
+        favLabel,
+        onToggleFavorite,
+        favClass,
+      )}
+      ${
+        onEdit
+          ? renderActionIconButton(
+              `${prefix}-edit`,
+              "pen-to-square-solid-full",
+              "編集",
+              onEdit,
+            )
+          : nothing
+      }
+      ${
+        onDelete
+          ? renderActionIconButton(
+              `${prefix}-delete`,
+              "trash-solid-full",
+              "削除",
+              onDelete,
+            )
+          : nothing
+      }
+    </div>
   `;
 }
 
@@ -152,6 +198,10 @@ export function renderStaffCard(
   const cardClass = callbacks.isFavorite
     ? "directory-card directory-card--favorite"
     : "directory-card";
+  const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(staff) : undefined;
+  const onDelete = callbacks.onDelete
+    ? () => callbacks.onDelete?.(staff)
+    : undefined;
 
   return html`
     <article class=${cardClass}>
@@ -171,15 +221,46 @@ export function renderStaffCard(
               : nothing
           }
         </div>
-        ${renderFavoriteButton(
-          `staff-fav-${safeKey}`,
+        ${renderCardActions(
+          `staff-${safeKey}`,
           callbacks.isFavorite,
           () => callbacks.onToggleFavorite(staff),
+          onEdit,
+          onDelete,
         )}
       </div>
       ${renderStaffDepartment(staff, safeKey, callbacks.onJumpToDepartment)}
       ${renderStaffEmails(staff.emails, safeKey, callbacks.onCopy)}
     </article>
+  `;
+}
+
+function renderOrganizationHeader(
+  org: OrganizationRecord,
+  safeKey: string,
+  callbacks: OrganizationCardCallbacks,
+): TemplateResult {
+  const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(org) : undefined;
+  const onDelete = callbacks.onDelete
+    ? () => callbacks.onDelete?.(org)
+    : undefined;
+
+  return html`
+    <div class="directory-card__header">
+      <div class="directory-card__title-group">
+        <h3 class="directory-card__name">
+          ${org.department || "（所属未設定）"}
+        </h3>
+        ${org.title ? html`<wa-tag size="small">${org.title}</wa-tag>` : nothing}
+      </div>
+      ${renderCardActions(
+        `org-${safeKey}`,
+        callbacks.isFavorite,
+        () => callbacks.onToggleFavorite(org),
+        onEdit,
+        onDelete,
+      )}
+    </div>
   `;
 }
 
@@ -204,21 +285,7 @@ export function renderOrganizationCard(
 
   return html`
     <article class=${classes} data-org-key=${orgKey}>
-      <div class="directory-card__header">
-        <div class="directory-card__title-group">
-          <h3 class="directory-card__name">
-            ${org.department || "（所属未設定）"}
-          </h3>
-          ${
-            org.title
-              ? html`<wa-tag size="small">${org.title}</wa-tag>`
-              : nothing
-          }
-        </div>
-        ${renderFavoriteButton(`org-fav-${safeKey}`, callbacks.isFavorite, () =>
-          callbacks.onToggleFavorite(org),
-        )}
-      </div>
+      ${renderOrganizationHeader(org, safeKey, callbacks)}
       ${
         placeInfo
           ? html`<div class="directory-card__sub">${placeInfo}</div>`
