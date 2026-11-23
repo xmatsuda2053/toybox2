@@ -37,6 +37,7 @@ import display_solid_full from "./assets/icons/display-solid-full.svg?raw";
 import download_solid_full from "./assets/icons/download-solid-full.svg?raw";
 import ellipsis_solid_full from "./assets/icons/ellipsis-solid-full.svg?raw";
 import ellipsis_vertical_solid_full from "./assets/icons/ellipsis-vertical-solid-full.svg?raw";
+import envelope_solid_full from "./assets/icons/envelope-solid-full.svg?raw";
 import expand_solid_full from "./assets/icons/expand-solid-full.svg?raw";
 import eye_slash_solid_full from "./assets/icons/eye-slash-solid-full.svg?raw";
 import eye_solid_full from "./assets/icons/eye-solid-full.svg?raw";
@@ -122,7 +123,7 @@ export const icons: Record<string, string> = {
   "code-branch-solid-full": code_branch_solid_full,
   "code-solid-full": code_solid_full,
   "compress-solid-full": compress_solid_full,
-  "compress": compress_solid_full,
+  compress: compress_solid_full,
   "copy-solid-full": copy_solid_full,
   "cubes-stacked-solid-full": cubes_stacked_solid_full,
   "database-solid-full": database_solid_full,
@@ -130,8 +131,9 @@ export const icons: Record<string, string> = {
   "download-solid-full": download_solid_full,
   "ellipsis-solid-full": ellipsis_solid_full,
   "ellipsis-vertical-solid-full": ellipsis_vertical_solid_full,
+  "envelope-solid-full": envelope_solid_full,
   "expand-solid-full": expand_solid_full,
-  "expand": expand_solid_full,
+  expand: expand_solid_full,
   "eye-slash-solid-full": eye_slash_solid_full,
   "eye-solid-full": eye_solid_full,
   "fire-solid-full": fire_solid_full,

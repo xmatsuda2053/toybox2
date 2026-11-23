@@ -3,9 +3,21 @@ import type {
   StaffRecord,
 } from "../models/directory.model";
 
-export interface DirectoryFilterOptions {
-  query: string;
-  department: string;
+/**
+ * 職員番号を表示用の5桁文字列へ整形する（5桁未満は0埋め、6桁以上は下5桁）
+ */
+export function formatStaffIdFiveDigits(staffId: string): string {
+  const trimmed = staffId.trim();
+  if (trimmed.length === 0) {
+    return "";
+  }
+  if (trimmed.length < 5) {
+    return trimmed.padStart(5, "0");
+  }
+  if (trimmed.length > 5) {
+    return trimmed.slice(-5);
+  }
+  return trimmed;
 }
 
 /**
@@ -30,29 +42,6 @@ export function getOrganizationKey(
   return `org:${org.department.trim()}::${org.title.trim()}`;
 }
 
-/**
- * 職員・組織一覧から重複排除・昇順ソートされた所属リストを抽出する
- */
-export function extractUniqueDepartments(
-  staff: StaffRecord[],
-  organizations: OrganizationRecord[],
-): string[] {
-  const set = new Set<string>();
-  for (const item of staff) {
-    const dept = item.department.trim();
-    if (dept.length > 0) {
-      set.add(dept);
-    }
-  }
-  for (const item of organizations) {
-    const dept = item.department.trim();
-    if (dept.length > 0) {
-      set.add(dept);
-    }
-  }
-  return [...set].sort((a, b) => a.localeCompare(b, "ja"));
-}
-
 function splitSearchTokens(query: string): string[] {
   return query
     .trim()
@@ -69,71 +58,58 @@ function matchesAllTokens(fields: string[], tokens: string[]): boolean {
   return tokens.every((token) => haystack.includes(token));
 }
 
-function applyDirectoryFilter<T extends { department: string }>(
-  records: T[],
-  options: DirectoryFilterOptions,
-  getSearchFields: (record: T) => string[],
-): T[] {
-  const tokens = splitSearchTokens(options.query);
-  const deptFilter = options.department.trim();
-
-  return records.filter((record) => {
-    if (deptFilter.length > 0 && record.department.trim() !== deptFilter) {
-      return false;
-    }
-    return matchesAllTokens(getSearchFields(record), tokens);
-  });
-}
-
 /**
- * 職員レコードを検索条件・所属で絞り込む
+ * 職員レコードをフリーワード AND 検索で絞り込む
  */
 export function filterStaff(
   records: StaffRecord[],
-  options: DirectoryFilterOptions,
+  query: string,
 ): StaffRecord[] {
-  return applyDirectoryFilter(records, options, (staff) => [
-    staff.staffId,
-    staff.name,
-    staff.department,
-    staff.title,
-    ...staff.emails,
-  ]);
+  const tokens = splitSearchTokens(query);
+  if (tokens.length === 0) {
+    return records;
+  }
+
+  return records.filter((staff) =>
+    matchesAllTokens(
+      [
+        staff.staffId,
+        formatStaffIdFiveDigits(staff.staffId),
+        staff.name,
+        staff.department,
+        staff.title,
+        ...staff.emails,
+      ],
+      tokens,
+    ),
+  );
 }
 
 /**
- * 組織レコードを検索条件・所属で絞り込む
+ * 組織レコードをフリーワード AND 検索で絞り込む
  */
 export function filterOrganizations(
   records: OrganizationRecord[],
-  options: DirectoryFilterOptions,
+  query: string,
 ): OrganizationRecord[] {
-  return applyDirectoryFilter(records, options, (org) => [
-    org.department,
-    org.extra,
-    org.location,
-    org.title,
-    org.extensionNumber,
-    org.phoneNumber,
-    org.faxNumber,
-    org.notes,
-  ]);
-}
-
-/**
- * 指定された所属名に一致する組織レコードを検索する
- */
-export function findMatchingOrganization(
-  organizations: OrganizationRecord[],
-  department: string,
-): OrganizationRecord | undefined {
-  const target = department.trim();
-  if (target.length === 0) {
-    return undefined;
+  const tokens = splitSearchTokens(query);
+  if (tokens.length === 0) {
+    return records;
   }
 
-  return (
-    organizations.find((org) => org.department.trim() === target) ??
-    organizations.find((org) => org.department.trim().includes(target))
+  return records.filter((org) =>
+    matchesAllTokens(
+      [
+        org.department,
+        org.extra,
+        org.location,
+        org.title,
+        org.extensionNumber,
+        org.phoneNumber,
+        org.faxNumber,
+        org.notes,
+      ],
+      tokens,
+    ),
   );
 }

@@ -30,10 +30,11 @@ function createMemoryStorage(): StorageAreaLike {
  * テスト仕様: DirectoryController (directory.controller.ts)
  *
  * - 仕様1: loadInitialData で IndexedDB の職員・組織データとテーマ設定を読み込みホストへ通知すること
- * - 仕様2: 検索クエリ・所属フィルタに応じて filteredStaff / filteredOrganizations が更新されること
- * - 仕様3: jumpToOrganization で該当組織があれば organizations タブへ切替・ハイライトキー設定し true を返すこと
- * - 仕様4: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
- * - 仕様5: お気に入り関連のプロパティやメソッドが存在しないこと
+ * - 仕様2: 職員と組織それぞれ独立した検索語（staffSearchQuery / organizationSearchQuery）で絞り込めること
+ * - 仕様3: jumpToOrganization で組織タブへ遷移し、クリックした所属を organizationSearchQuery にセットすること（staffSearchQuery は維持）
+ * - 仕様4: toggleStaffEmails / isStaffEmailsExpanded で職員メールアドレス欄の開閉状態を切り替えられること
+ * - 仕様5: setThemeMode でストレージ保存完了を待たず同期的に requestUpdate が呼ばれること（点滅防止）
+ * - 仕様6: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -93,51 +94,75 @@ describe("DirectoryController Tests", () => {
 
     expect(controller.staff).toHaveLength(2);
     expect(controller.organizations).toHaveLength(2);
-    expect(controller.departments).toEqual([
-      "営業推進部 第一営業課",
-      "総務部 総務課",
-    ]);
     expect(host.requestUpdate).toHaveBeenCalled();
   });
 
-  it("検索クエリ・所属フィルタで一覧を絞り込めること", async () => {
+  it("職員と組織それぞれ独立した検索語で一覧を絞り込めること", async () => {
     const host = createMockHost();
-    const storage = createMemoryStorage();
-    const controller = new DirectoryController(host, { storage });
+    const controller = new DirectoryController(host, {
+      storage: createMemoryStorage(),
+    });
     await controller.loadInitialData();
 
-    controller.setSearchQuery("鈴木");
+    controller.setStaffSearchQuery("鈴木");
     expect(controller.filteredStaff.map((s) => s.staffId)).toEqual(["0020001"]);
+    expect(controller.filteredOrganizations).toHaveLength(2);
 
-    controller.setSearchQuery("");
-    controller.setSelectedDepartment("総務部 総務課");
-    expect(controller.filteredStaff.map((s) => s.staffId)).toEqual(["0010001"]);
+    controller.setOrganizationSearchQuery("2101");
+    expect(controller.filteredOrganizations.map((o) => o.department)).toEqual([
+      "総務部 総務課",
+    ]);
+    expect(controller.filteredStaff.map((s) => s.staffId)).toEqual(["0020001"]);
+  });
+
+  it("jumpToOrganization で組織タブへ遷移し、組織の検索欄へ所属文字列をセットすること", async () => {
+    const host = createMockHost();
+    const controller = new DirectoryController(host, {
+      storage: createMemoryStorage(),
+    });
+    await controller.loadInitialData();
+
+    controller.setStaffSearchQuery("田中");
+    controller.jumpToOrganization("総務部 総務課");
+
+    expect(controller.activeTab).toBe("organizations");
+    expect(controller.organizationSearchQuery).toBe("総務部 総務課");
+    expect(controller.staffSearchQuery).toBe("田中");
     expect(controller.filteredOrganizations.map((o) => o.department)).toEqual([
       "総務部 総務課",
     ]);
   });
 
-  it("jumpToOrganization で対象組織タブへ遷移しハイライトキーを設定すること", async () => {
+  it("toggleStaffEmails / isStaffEmailsExpanded でメール表示の開閉を制御できること", async () => {
     const host = createMockHost();
-    const storage = createMemoryStorage();
-    const controller = new DirectoryController(host, { storage });
+    const controller = new DirectoryController(host, {
+      storage: createMemoryStorage(),
+    });
     await controller.loadInitialData();
 
-    controller.setSearchQuery("田中");
-    controller.setSelectedDepartment("営業推進部 第一営業課");
+    const target = controller.staff[0];
+    expect(controller.isStaffEmailsExpanded(target)).toBe(false);
 
-    const jumped = controller.jumpToOrganization("総務部 総務課");
-    expect(jumped).toBe(true);
-    expect(controller.activeTab).toBe("organizations");
-    expect(controller.searchQuery).toBe("");
-    expect(controller.selectedDepartment).toBe("");
-    expect(controller.highlightedOrganizationKey).toBe(
-      "org:総務部 総務課::課長席",
-    );
+    controller.toggleStaffEmails(target);
+    expect(controller.isStaffEmailsExpanded(target)).toBe(true);
 
-    const missing = controller.jumpToOrganization("未登録部署");
-    expect(missing).toBe(false);
-    expect(controller.toastMessage).toContain("見つかりませんでした");
+    controller.toggleStaffEmails(target);
+    expect(controller.isStaffEmailsExpanded(target)).toBe(false);
+  });
+
+  it("setThemeMode で保存完了を待たず同期的にホスト更新を呼ぶこと", () => {
+    const host = createMockHost();
+    const pendingStorage: StorageAreaLike = {
+      get: vi.fn().mockResolvedValue({}),
+      set: vi.fn(() => new Promise<void>(() => {})),
+    };
+    const controller = new DirectoryController(host, {
+      storage: pendingStorage,
+    });
+
+    void controller.setThemeMode("dark");
+    expect(controller.themeMode).toBe("dark");
+    expect(host.requestUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("copyField でコピー成功時に通知メッセージを設定すること", async () => {
@@ -153,16 +178,5 @@ describe("DirectoryController Tests", () => {
     expect(writeText).toHaveBeenCalledWith("2101");
     expect(controller.toastMessage).toContain("内線番号");
     expect(controller.toastMessage).toContain("2101");
-  });
-
-  it("お気に入り関連のプロパティやメソッドが除去されていること", () => {
-    const controller = new DirectoryController(createMockHost(), {
-      storage: createMemoryStorage(),
-    });
-    expect("favoritesOnly" in controller).toBe(false);
-    expect("favoriteStaffKeys" in controller).toBe(false);
-    expect("favoriteOrganizationKeys" in controller).toBe(false);
-    expect("toggleStaffFavorite" in controller).toBe(false);
-    expect("toggleOrganizationFavorite" in controller).toBe(false);
   });
 });

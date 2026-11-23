@@ -58,6 +58,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("xmark-solid-full")).toBe(true);
       expect(hasIcon("circle-plus")).toBe(true);
       expect(hasIcon("expand-solid-full")).toBe(true);
+      expect(hasIcon("envelope-solid-full")).toBe(true);
       expect(hasIcon("note-sticky-solid-full")).toBe(true);
       expect(hasIcon("compress-solid-full")).toBe(true);
       expect(hasIcon("building-solid-full")).toBe(true);
@@ -135,7 +136,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
   describe("リゾルバ関数仕様 (createIconResolver)", () => {
     const dummyIcons: Record<string, string> = {
       test: '<svg viewBox="0 0 10 10"><path d="M0 0"/></svg>',
-      special: '<svg><text>hello & world</text></svg>',
+      special: "<svg><text>hello & world</text></svg>",
     };
 
     it("登録済みのアイコン名に対して data:image/svg+xml;utf8 形式の Data URL を返すこと", () => {

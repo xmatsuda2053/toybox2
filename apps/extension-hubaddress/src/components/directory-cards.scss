@@ -1,32 +1,30 @@
 .directory-card-list {
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-xs);
+  gap: var(--wa-space-s);
 }
 
 .directory-card {
   display: flex;
   flex-direction: column;
-  gap: var(--wa-space-2xs);
-  padding: var(--wa-space-s);
+  gap: var(--wa-space-xs);
+  padding: var(--wa-space-s) var(--wa-space-m);
   border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
   border-radius: var(--wa-border-radius-m);
   background-color: var(--wa-color-surface-default);
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
 }
 
-.directory-card--highlighted {
-  border-color: var(--wa-color-brand-fill-loud);
-  background-color: var(--wa-color-brand-fill-quiet);
+.directory-card:hover {
+  background-color: var(--wa-color-surface-lowered);
+  border-color: var(--wa-color-brand-border-normal);
 }
 
 .directory-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--wa-space-xs);
+  min-height: 28px;
 }
 
 .directory-card__actions {
@@ -36,24 +34,59 @@
   flex-shrink: 0;
 }
 
+.directory-card__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--wa-border-radius-s);
+  background: transparent;
+  color: var(--wa-color-text-quiet);
+  font-size: var(--wa-font-size-s);
+  cursor: pointer;
+}
+
+.directory-card__action-btn:hover {
+  background-color: var(--wa-color-neutral-fill-quiet);
+  color: var(--wa-color-text-normal);
+}
+
 .directory-card__title-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--wa-space-2xs);
+  gap: var(--wa-space-xs);
   min-width: 0;
 }
 
 .directory-card__name {
   margin: 0;
-  font-size: var(--wa-font-size-s);
+  font-size: var(--wa-font-size-m);
+  line-height: 1.4;
   font-weight: var(--wa-font-weight-semibold);
   color: var(--wa-color-text-normal);
 }
 
+.directory-card__staff-id {
+  font-size: var(--wa-font-size-s);
+  font-variant-numeric: tabular-nums;
+}
+
 .directory-card__sub {
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
+  line-height: 1.4;
   color: var(--wa-color-text-quiet);
+}
+
+.directory-card__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-xs);
 }
 
 .directory-card__dept-btn {
@@ -65,7 +98,8 @@
   background: transparent;
   color: var(--wa-color-brand-text-normal);
   font: inherit;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
+  line-height: 1.4;
   text-align: left;
   cursor: pointer;
 }
@@ -74,23 +108,43 @@
   text-decoration: underline;
 }
 
+.directory-card__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-3xs);
+  padding: var(--wa-space-2xs) var(--wa-space-xs);
+  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
+  border-radius: var(--wa-border-radius-s);
+  background-color: var(--wa-color-surface-raised);
+  color: var(--wa-color-text-quiet);
+  font: inherit;
+  font-size: var(--wa-font-size-s);
+  cursor: pointer;
+}
+
+.directory-card__toggle-btn:hover {
+  border-color: var(--wa-color-brand-border-normal);
+  color: var(--wa-color-text-normal);
+}
+
 .directory-card__contacts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--wa-space-2xs);
+  gap: var(--wa-space-xs);
 }
 
 .directory-card__copy-btn {
   display: inline-flex;
   align-items: center;
   gap: var(--wa-space-2xs);
-  padding: var(--wa-space-3xs) var(--wa-space-xs);
+  padding: var(--wa-space-2xs) var(--wa-space-xs);
   border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
   border-radius: var(--wa-border-radius-s);
   background-color: var(--wa-color-surface-raised);
   color: var(--wa-color-text-normal);
   font: inherit;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
+  line-height: 1.4;
   cursor: pointer;
   max-width: 100%;
 }
@@ -109,8 +163,18 @@
   white-space: nowrap;
 }
 
+.directory-card__place {
+  display: flex;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  font-size: var(--wa-font-size-s);
+  line-height: 1.4;
+  color: var(--wa-color-text-quiet);
+}
+
 .directory-card__notes {
   margin: 0;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
+  line-height: 1.4;
   color: var(--wa-color-text-quiet);
 }

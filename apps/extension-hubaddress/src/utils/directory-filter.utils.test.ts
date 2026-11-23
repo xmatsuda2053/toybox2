@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
-  extractUniqueDepartments,
   filterOrganizations,
   filterStaff,
-  findMatchingOrganization,
+  formatStaffIdFiveDigits,
   getOrganizationKey,
   getStaffKey,
 } from "./directory-filter.utils";
@@ -23,7 +22,7 @@ const SAMPLE_STAFF: StaffRecord[] = [
   },
   {
     id: 2,
-    staffId: "0010002",
+    staffId: "123",
     name: "佐藤 花子",
     department: "総務部 人事課",
     title: "主査",
@@ -76,84 +75,47 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
 ];
 
 /**
- * テスト仕様: 一覧フィルタリング・検索・所属マッチング純粋関数 (directory-filter.utils.ts)
+ * テスト仕様: 一覧フィルタリング・検索・職員番号フォーマット純粋関数 (directory-filter.utils.ts)
  *
- * - 仕様1: extractUniqueDepartments で職員と組織の所属を重複排除・ソートして取得できること
- * - 仕様2: filterStaff でスペース区切り AND 検索・所属絞り込みができること
- * - 仕様3: filterOrganizations で内線/外線/場所/備考などを含めた検索・絞り込みができること
- * - 仕様4: findMatchingOrganization で職員の所属に一致する組織レコードを検索できること
- * - 仕様5: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
+ * - 仕様1: formatStaffIdFiveDigits で 5桁未満は0埋め、6桁以上は下5桁へ整形できること
+ * - 仕様2: filterStaff でフリーワード AND 検索ができ、5桁表示値でも検索ヒットすること
+ * - 仕様3: filterOrganizations で所属・内線・場所・備考などを含めたフリーワード AND 検索ができること
+ * - 仕様4: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
  */
 describe("Directory Filter Utils Tests", () => {
-  it("extractUniqueDepartments で職員と組織から重複なしの所属一覧を取得できること", () => {
-    const departments = extractUniqueDepartments(
-      [
-        ...SAMPLE_STAFF,
-        {
-          id: 4,
-          staffId: "009",
-          name: "追加 職員",
-          department: "開発部",
-          title: "",
-          emails: [],
-        },
-      ],
-      SAMPLE_ORGS,
-    );
-
-    expect(departments).toHaveLength(4);
-    expect(departments).toContain("総務部 総務課");
-    expect(departments).toContain("総務部 人事課");
-    expect(departments).toContain("営業推進部 第一営業課");
-    expect(departments).toContain("開発部");
+  it("formatStaffIdFiveDigits で 5桁表示（5桁未満0埋め・6桁以上は下5桁）へ整形できること", () => {
+    expect(formatStaffIdFiveDigits("")).toBe("");
+    expect(formatStaffIdFiveDigits("   ")).toBe("");
+    expect(formatStaffIdFiveDigits("123")).toBe("00123");
+    expect(formatStaffIdFiveDigits("12345")).toBe("12345");
+    expect(formatStaffIdFiveDigits("0010001")).toBe("10001");
+    expect(formatStaffIdFiveDigits(" 99 ")).toBe("00099");
   });
 
-  it("filterStaff でフリーワード AND 検索および所属フィルタができること", () => {
-    const all = filterStaff(SAMPLE_STAFF, {
-      query: "",
-      department: "",
-    });
-    expect(all.map((s) => s.staffId)).toEqual([
+  it("filterStaff でフリーワード AND 検索（5桁/元職員番号両方含む）ができること", () => {
+    expect(filterStaff(SAMPLE_STAFF, "").map((s) => s.staffId)).toEqual([
       "0010001",
-      "0010002",
+      "123",
       "0020001",
     ]);
 
-    const searched = filterStaff(SAMPLE_STAFF, {
-      query: "tanaka 課長",
-      department: "",
-    });
-    expect(searched.map((s) => s.staffId)).toEqual(["0010001"]);
+    expect(
+      filterStaff(SAMPLE_STAFF, "tanaka 課長").map((s) => s.staffId),
+    ).toEqual(["0010001"]);
 
-    const byDept = filterStaff(SAMPLE_STAFF, {
-      query: "",
-      department: "総務部 人事課",
-    });
-    expect(byDept.map((s) => s.staffId)).toEqual(["0010002"]);
+    expect(filterStaff(SAMPLE_STAFF, "00123").map((s) => s.staffId)).toEqual([
+      "123",
+    ]);
   });
 
-  it("filterOrganizations で内線・場所・備考検索および所属フィルタができること", () => {
-    const byExtension = filterOrganizations(SAMPLE_ORGS, {
-      query: "3201 東日本",
-      department: "",
-    });
+  it("filterOrganizations で所属・内線・場所・備考検索ができること", () => {
+    const byExtension = filterOrganizations(SAMPLE_ORGS, "3201 東日本");
     expect(byExtension).toHaveLength(1);
     expect(byExtension[0].department).toBe("営業推進部 第一営業課");
 
-    const byDept = filterOrganizations(SAMPLE_ORGS, {
-      query: "",
-      department: "総務部 人事課",
-    });
+    const byDept = filterOrganizations(SAMPLE_ORGS, "総務部 人事課");
     expect(byDept).toHaveLength(1);
     expect(byDept[0].extensionNumber).toBe("2102");
-  });
-
-  it("findMatchingOrganization で職員の所属文字列から該当組織を検索できること", () => {
-    const matched = findMatchingOrganization(SAMPLE_ORGS, " 総務部 総務課 ");
-    expect(matched?.extensionNumber).toBe("2101");
-
-    const missing = findMatchingOrganization(SAMPLE_ORGS, "存在しない部署");
-    expect(missing).toBeUndefined();
   });
 
   it("getStaffKey / getOrganizationKey が安定したキーを生成すること", () => {

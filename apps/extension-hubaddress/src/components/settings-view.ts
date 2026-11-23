@@ -14,47 +14,77 @@ export interface SettingsViewProps {
   onRequestClearAll: () => void;
 }
 
+interface ThemeOption {
+  readonly value: ThemeMode;
+  readonly id: string;
+  readonly label: string;
+  readonly icon: string;
+}
+
+const THEME_OPTIONS: readonly ThemeOption[] = [
+  {
+    value: "light",
+    id: "theme-btn-light",
+    label: "ライト",
+    icon: "sun-solid-full",
+  },
+  {
+    value: "dark",
+    id: "theme-btn-dark",
+    label: "ダーク",
+    icon: "moon-solid-full",
+  },
+  {
+    value: "system",
+    id: "theme-btn-system",
+    label: "システム",
+    icon: "display-solid-full",
+  },
+] as const;
+
+function renderThemeButton(
+  option: ThemeOption,
+  currentTheme: ThemeMode,
+  onChangeTheme: (mode: ThemeMode) => void,
+): TemplateResult {
+  const isActive = currentTheme === option.value;
+
+  return html`
+    <wa-button
+      id=${option.id}
+      size="small"
+      variant="neutral"
+      appearance=${isActive ? "filled" : "plain"}
+      aria-label=${option.label}
+      aria-pressed=${isActive ? "true" : "false"}
+      @click=${() => onChangeTheme(option.value)}
+    >
+      <wa-icon name=${option.icon}></wa-icon>
+    </wa-button>
+  `;
+}
+
 function renderThemeSection(
   themeMode: ThemeMode,
   onChangeTheme: (mode: ThemeMode) => void,
 ): TemplateResult {
-  const isSelected = (mode: ThemeMode) => themeMode === mode;
-
   return html`
     <section class="settings-view__section">
-      <h2 class="settings-view__heading">カラーテーマ</h2>
-      <p class="settings-view__description">
-        Side Panel の外観テーマを切り替えます。
-      </p>
-      <wa-button-group label="テーマ設定">
-        <wa-button
-          size="small"
-          variant=${isSelected("light") ? "brand" : "neutral"}
-          appearance=${isSelected("light") ? "filled" : "outlined"}
-          @click=${() => onChangeTheme("light")}
-        >
-          <wa-icon slot="start" name="sun-solid-full"></wa-icon>
-          ライト
-        </wa-button>
-        <wa-button
-          size="small"
-          variant=${isSelected("dark") ? "brand" : "neutral"}
-          appearance=${isSelected("dark") ? "filled" : "outlined"}
-          @click=${() => onChangeTheme("dark")}
-        >
-          <wa-icon slot="start" name="moon-solid-full"></wa-icon>
-          ダーク
-        </wa-button>
-        <wa-button
-          size="small"
-          variant=${isSelected("system") ? "brand" : "neutral"}
-          appearance=${isSelected("system") ? "filled" : "outlined"}
-          @click=${() => onChangeTheme("system")}
-        >
-          <wa-icon slot="start" name="display-solid-full"></wa-icon>
-          システム連動
-        </wa-button>
-      </wa-button-group>
+      <div class="settings-view__theme-row">
+        <h2 class="settings-view__heading">カラーテーマ</h2>
+        <wa-button-group label="テーマ切り替え">
+          ${THEME_OPTIONS.map((option) =>
+            renderThemeButton(option, themeMode, onChangeTheme),
+          )}
+        </wa-button-group>
+      </div>
+      ${THEME_OPTIONS.map(
+        (option) => html`
+          <wa-tooltip for=${option.id} trigger="hover">
+            ${option.label}
+          </wa-tooltip>
+        `,
+      )}
     </section>
   `;
 }
@@ -164,10 +194,11 @@ function renderShortcutSection(): TemplateResult {
       <p class="settings-view__description">
         既定のショートカット
         <span class="settings-view__shortcut-code">Alt+Shift+H</span>
-        でどのタブからでも HubAddress サイドパネルを開けます。
+        でどのタブからでも HubAddress サイドパネルを開閉できます。
       </p>
       <p class="settings-view__description">
-        キー変更は Chrome（chrome://extensions/shortcuts）または
+        キー変更や未割り当て時の確認は
+        Chrome（chrome://extensions/shortcuts）または
         Edge（edge://extensions/shortcuts）から設定できます。
       </p>
     </section>

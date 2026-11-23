@@ -4,11 +4,14 @@ import type {
   StaffRecord,
 } from "../models/directory.model";
 import {
+  formatStaffIdFiveDigits,
   getOrganizationKey,
   getStaffKey,
 } from "../utils/directory-filter.utils";
 
 export interface StaffCardCallbacks {
+  isEmailsExpanded: boolean;
+  onToggleEmails: (staff: StaffRecord) => void;
   onJumpToDepartment: (department: string) => void;
   onCopy: (label: string, value: string) => void;
   onEdit?: (staff: StaffRecord) => void;
@@ -16,7 +19,6 @@ export interface StaffCardCallbacks {
 }
 
 export interface OrganizationCardCallbacks {
-  isHighlighted: boolean;
   onCopy: (label: string, value: string) => void;
   onEdit?: (org: OrganizationRecord) => void;
   onDelete?: (org: OrganizationRecord) => void;
@@ -54,15 +56,15 @@ function renderActionIconButton(
   onClick: () => void,
 ): TemplateResult {
   return html`
-    <wa-button
+    <button
       id=${id}
-      size="small"
-      appearance="plain"
+      type="button"
+      class="directory-card__action-btn"
       aria-label=${label}
       @click=${onClick}
     >
       <wa-icon name=${iconName}></wa-icon>
-    </wa-button>
+    </button>
     <wa-tooltip for=${id} trigger="hover">${label}</wa-tooltip>
   `;
 }
@@ -102,28 +104,79 @@ function renderCardActions(
   `;
 }
 
-function renderStaffDepartment(
+function renderEmailToggleButton(
   staff: StaffRecord,
   safeKey: string,
-  onJumpToDepartment: (department: string) => void,
+  callbacks: StaffCardCallbacks,
 ): TemplateResult | typeof nothing {
-  if (!staff.department) {
+  if (staff.emails.length === 0) {
+    return nothing;
+  }
+
+  const toggleId = `staff-mail-toggle-${safeKey}`;
+  const toggleLabel = callbacks.isEmailsExpanded
+    ? "メールを隠す"
+    : `メールを表示 (${staff.emails.length})`;
+
+  return html`
+    <div>
+      <button
+        id=${toggleId}
+        type="button"
+        class="directory-card__toggle-btn"
+        aria-label=${toggleLabel}
+        aria-expanded=${String(callbacks.isEmailsExpanded)}
+        @click=${() => callbacks.onToggleEmails(staff)}
+      >
+        <wa-icon name="envelope-solid-full"></wa-icon>
+        <wa-icon
+          name=${
+            callbacks.isEmailsExpanded
+              ? "angle-up-solid-full"
+              : "angle-down-solid-full"
+          }
+        ></wa-icon>
+      </button>
+      <wa-tooltip for=${toggleId} trigger="hover">${toggleLabel}</wa-tooltip>
+    </div>
+  `;
+}
+
+function renderStaffMetaRow(
+  staff: StaffRecord,
+  safeKey: string,
+  callbacks: StaffCardCallbacks,
+): TemplateResult | typeof nothing {
+  const hasDepartment = staff.department.trim().length > 0;
+  if (!hasDepartment && staff.emails.length === 0) {
     return nothing;
   }
 
   const deptBtnId = `staff-dept-${safeKey}`;
+
   return html`
-    <div>
-      <button
-        id=${deptBtnId}
-        type="button"
-        class="directory-card__dept-btn"
-        @click=${() => onJumpToDepartment(staff.department)}
-      >
-        <wa-icon name="building-solid-full"></wa-icon>
-        <span>${staff.department}</span>
-      </button>
-      <wa-tooltip for=${deptBtnId} trigger="hover">組織情報を表示</wa-tooltip>
+    <div class="directory-card__meta-row">
+      ${
+        hasDepartment
+          ? html`
+              <div>
+                <button
+                  id=${deptBtnId}
+                  type="button"
+                  class="directory-card__dept-btn"
+                  @click=${() => callbacks.onJumpToDepartment(staff.department)}
+                >
+                  <wa-icon name="building-solid-full"></wa-icon>
+                  <span>${staff.department}</span>
+                </button>
+                <wa-tooltip for=${deptBtnId} trigger="hover">
+                  組織を検索
+                </wa-tooltip>
+              </div>
+            `
+          : html`<span></span>`
+      }
+      ${renderEmailToggleButton(staff, safeKey, callbacks)}
     </div>
   `;
 }
@@ -131,9 +184,10 @@ function renderStaffDepartment(
 function renderStaffEmails(
   emails: string[],
   safeKey: string,
+  isExpanded: boolean,
   onCopy: (label: string, value: string) => void,
 ): TemplateResult | typeof nothing {
-  if (emails.length === 0) {
+  if (!isExpanded || emails.length === 0) {
     return nothing;
   }
 
@@ -179,6 +233,7 @@ export function renderStaffCard(
   callbacks: StaffCardCallbacks,
 ): TemplateResult {
   const safeKey = `${getStaffKey(staff).replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
+  const formattedId = formatStaffIdFiveDigits(staff.staffId);
   const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(staff) : undefined;
   const onDelete = callbacks.onDelete
     ? () => callbacks.onDelete?.(staff)
@@ -188,14 +243,18 @@ export function renderStaffCard(
     <article class="directory-card">
       <div class="directory-card__header">
         <div class="directory-card__title-group">
+          ${
+            formattedId
+              ? html`<wa-badge
+                  class="directory-card__staff-id"
+                  variant="neutral"
+                  >${formattedId}</wa-badge
+                >`
+              : nothing
+          }
           <h3 class="directory-card__name">
             ${staff.name || "（氏名未設定）"}
           </h3>
-          ${
-            staff.staffId
-              ? html`<wa-badge variant="neutral">${staff.staffId}</wa-badge>`
-              : nothing
-          }
           ${
             staff.title
               ? html`<span class="directory-card__sub">${staff.title}</span>`
@@ -204,8 +263,13 @@ export function renderStaffCard(
         </div>
         ${renderCardActions(`staff-${safeKey}`, onEdit, onDelete)}
       </div>
-      ${renderStaffDepartment(staff, safeKey, callbacks.onJumpToDepartment)}
-      ${renderStaffEmails(staff.emails, safeKey, callbacks.onCopy)}
+      ${renderStaffMetaRow(staff, safeKey, callbacks)}
+      ${renderStaffEmails(
+        staff.emails,
+        safeKey,
+        callbacks.isEmailsExpanded,
+        callbacks.onCopy,
+      )}
     </article>
   `;
 }
@@ -243,20 +307,22 @@ export function renderOrganizationCard(
 ): TemplateResult {
   const orgKey = getOrganizationKey(org);
   const safeKey = `${orgKey.replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
-  const cardClass = callbacks.isHighlighted
-    ? "directory-card directory-card--highlighted"
-    : "directory-card";
   const placeInfo = [org.extra, org.location].filter(Boolean).join(" / ");
 
   return html`
-    <article class=${cardClass} data-org-key=${orgKey}>
+    <article class="directory-card" data-org-key=${orgKey}>
       ${renderOrganizationHeader(org, safeKey, callbacks)}
+      ${renderOrganizationContacts(org, safeKey, callbacks.onCopy)}
       ${
         placeInfo
-          ? html`<div class="directory-card__sub">${placeInfo}</div>`
+          ? html`
+              <div class="directory-card__place">
+                <wa-icon name="location-dot-solid-full"></wa-icon>
+                <span>${placeInfo}</span>
+              </div>
+            `
           : nothing
       }
-      ${renderOrganizationContacts(org, safeKey, callbacks.onCopy)}
       ${
         org.notes
           ? html`<p class="directory-card__notes">${org.notes}</p>`
