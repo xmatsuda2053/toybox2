@@ -18,7 +18,8 @@ import {
  * - 仕様5: 組織カードは「場所」が連絡先の下に配置されていること
  * - 仕様6: テンプレート内の全 wa-tooltip に trigger="hover" が明示指定されていること
  * - 仕様7: manifest.json に icons / action.default_icon (16/32/48/128) が設定され、PNG 実体が存在すること
- * - 仕様8: sidepanel.ts が ./hubaddress-app より先に ./bootstrap-webawesome をインポートし、ブランドアイコンのサイズが指定されていること
+ * - 仕様8: sidepanel.ts が ./hubaddress-app より先に ./bootstrap-webawesome をインポートし、アプリ内重複ヘッダーが削除されていること
+ * - 仕様9: 職員・組織の追加ボタンがプラスアイコンのみで構成され、aria-label とホバーツールチップで説明が表示されること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -176,7 +177,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     }
   });
 
-  it("sidepanel.ts が hubaddress-app より先にアイコン登録ブートストラップを読み込み、ブランドアイコンにサイズが設定されていること", () => {
+  it("sidepanel.ts が hubaddress-app より先にアイコン登録ブートストラップを読み込み、アプリ内重複ヘッダーが削除されていること", () => {
     const bootstrapPath = resolve(srcRoot, "bootstrap-webawesome.ts");
     expect(existsSync(bootstrapPath)).toBe(true);
     const bootstrapSource = readFileSync(bootstrapPath, "utf-8");
@@ -197,16 +198,46 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       resolve(srcRoot, "hubaddress-app.ts"),
       "utf-8",
     );
-    expect(appSource).toMatch(
-      /<wa-icon\s+class="hubaddress-shell__brand-icon"\s+name="icon-hub-address"\s*>/,
-    );
+    expect(appSource).not.toContain("hubaddress-shell__header");
+    expect(appSource).not.toContain("hubaddress-shell__brand");
+    expect(appSource).not.toContain("hubaddress-shell__title");
+    expect(appSource).not.toContain("renderHeader");
 
     const shellScss = readFileSync(
       resolve(srcRoot, "hubaddress-app.scss"),
       "utf-8",
     );
-    expect(shellScss).toMatch(
-      /\.hubaddress-shell__brand-icon\s*\{[^}]*font-size:/s,
+    expect(shellScss).not.toContain(".hubaddress-shell__header");
+    expect(shellScss).not.toContain(".hubaddress-shell__brand");
+    expect(shellScss).not.toContain(".hubaddress-shell__title");
+  });
+
+  it("職員・組織の追加ボタンがプラスアイコンのみで、ホバーツールチップにより説明が表示されること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+
+    const staffBtnMatch = appSource.match(
+      /<wa-button[^>]*id="add-staff-btn"[^>]*>([\s\S]*?)<\/wa-button>/,
+    );
+    expect(staffBtnMatch).not.toBeNull();
+    expect(staffBtnMatch?.[0]).toContain('aria-label="職員を追加"');
+    expect(staffBtnMatch?.[1]).toContain('name="plus-solid-full"');
+    expect(staffBtnMatch?.[1]).not.toContain("職員を追加");
+    expect(appSource).toMatch(
+      /<wa-tooltip\s+for="add-staff-btn"\s+trigger="hover"\s*>\s*職員を追加\s*<\/wa-tooltip\s*>/,
+    );
+
+    const orgBtnMatch = appSource.match(
+      /<wa-button[^>]*id="add-organization-btn"[^>]*>([\s\S]*?)<\/wa-button>/,
+    );
+    expect(orgBtnMatch).not.toBeNull();
+    expect(orgBtnMatch?.[0]).toContain('aria-label="組織を追加"');
+    expect(orgBtnMatch?.[1]).toContain('name="plus-solid-full"');
+    expect(orgBtnMatch?.[1]).not.toContain("組織を追加");
+    expect(appSource).toMatch(
+      /<wa-tooltip\s+for="add-organization-btn"\s+trigger="hover"\s*>\s*組織を追加\s*<\/wa-tooltip\s*>/,
     );
   });
 

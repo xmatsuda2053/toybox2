@@ -7,32 +7,6 @@
   color: var(--wa-color-text-normal);
 }
 
-.hubaddress-shell__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--wa-space-xs);
-  padding: var(--wa-space-s) var(--wa-space-m);
-  border-bottom: var(--wa-border-width-s) solid var(--wa-color-surface-border);
-}
-
-.hubaddress-shell__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--wa-space-xs);
-}
-
-.hubaddress-shell__brand-icon {
-  font-size: 1.35rem;
-  flex-shrink: 0;
-}
-
-.hubaddress-shell__title {
-  margin: 0;
-  font-size: var(--wa-font-size-l);
-  font-weight: var(--wa-font-weight-semibold);
-}
-
 .hubaddress-shell__tabs {
   display: flex;
   gap: var(--wa-space-xs);
