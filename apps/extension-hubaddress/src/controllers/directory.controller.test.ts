@@ -36,6 +36,7 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様5: setThemeMode でストレージ保存完了を待たず同期的に requestUpdate が呼ばれること（点滅防止）
  * - 仕様6: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
  * - 仕様7: toggleSettingsTab で設定画面を開き、再クリックで直前の一覧画面（staff / organizations）へ戻ること
+ * - 仕様8: 読み込みおよび登録後に職員（所属組織・フリガナ順）と組織（組織名・id順）がソートされて保持されること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -200,5 +201,45 @@ describe("DirectoryController Tests", () => {
 
     controller.toggleSettingsTab();
     expect(controller.activeTab).toBe("organizations");
+  });
+
+  it("loadInitialData と save 後に職員は所属・フリガナ五十音昇順、組織は組織名・id昇順で保持されること", async () => {
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+    });
+    await controller.loadInitialData();
+
+    // beforeEach では 0010001(総務部 総務課) が先、0020001(営業推進部 第一営業課) が後で登録されている
+    expect(controller.staff.map((s) => s.staffId)).toEqual([
+      "0020001",
+      "0010001",
+    ]);
+    expect(controller.organizations.map((o) => o.department)).toEqual([
+      "営業推進部 第一営業課",
+      "総務部 総務課",
+    ]);
+
+    await controller.saveStaff({
+      staffId: "0010002",
+      name: "青木 次郎",
+      furigana: "あおき じろう",
+      department: "総務部 総務課",
+      title: "",
+      emails: [],
+    });
+    await controller.saveStaff({
+      staffId: "0010003",
+      name: "田中 花子",
+      furigana: "たなか はなこ",
+      department: "総務部 総務課",
+      title: "",
+      emails: [],
+    });
+    expect(controller.staff.map((s) => s.staffId)).toEqual([
+      "0020001",
+      "0010002",
+      "0010003",
+      "0010001",
+    ]);
   });
 });

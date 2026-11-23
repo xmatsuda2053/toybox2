@@ -5,6 +5,8 @@ import {
   formatStaffIdFiveDigits,
   getOrganizationKey,
   getStaffKey,
+  sortOrganizations,
+  sortStaff,
 } from "./directory-filter.utils";
 import type {
   OrganizationRecord,
@@ -84,6 +86,8 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
  * - 仕様2: filterStaff でフリーワード AND 検索ができ、5桁表示値でも検索ヒットすること
  * - 仕様3: filterOrganizations で所属・内線・場所・備考などを含めたフリーワード AND 検索ができること
  * - 仕様4: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
+ * - 仕様5: sortStaff で所属組織→フリガナ五十音昇順にソートできること（空文字は末尾）
+ * - 仕様6: sortOrganizations で組織名→id昇順にソートできること（空文字は末尾）
  */
 describe("Directory Filter Utils Tests", () => {
   it("formatStaffIdFiveDigits で 5桁表示（5桁未満0埋め・6桁以上は下5桁）へ整形できること", () => {
@@ -145,5 +149,135 @@ describe("Directory Filter Utils Tests", () => {
     expect(getOrganizationKey(SAMPLE_ORGS[0])).toBe(
       "org:総務部 総務課::課長席",
     );
+  });
+
+  it("sortStaff で所属組織・フリガナの五十音昇順に並び替えできること（未設定は末尾）", () => {
+    const records: StaffRecord[] = [
+      {
+        id: 1,
+        staffId: "001",
+        name: "田中 太郎",
+        furigana: "たなか たろう",
+        department: "総務部 総務課",
+        title: "課長",
+        emails: [],
+      },
+      {
+        id: 2,
+        staffId: "002",
+        name: "未所属 職員",
+        furigana: "あおき",
+        department: "",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 3,
+        staffId: "003",
+        name: "伊藤 花子",
+        furigana: "",
+        department: "総務部 総務課",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 4,
+        staffId: "004",
+        name: "鈴木 一郎",
+        furigana: "すずき いちろう",
+        department: "営業推進部",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 5,
+        staffId: "005",
+        name: "佐藤 次郎",
+        furigana: "サトウ ジロウ",
+        department: "総務部 総務課",
+        title: "",
+        emails: [],
+      },
+    ];
+
+    const sorted = sortStaff(records);
+    expect(sorted.map((r) => r.staffId)).toEqual([
+      "004",
+      "005",
+      "001",
+      "003",
+      "002",
+    ]);
+    expect(records.map((r) => r.staffId)).toEqual([
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+    ]);
+  });
+
+  it("sortOrganizations で組織名・id の昇順に並び替えできること（未設定は末尾）", () => {
+    const orgs: OrganizationRecord[] = [
+      {
+        id: 10,
+        department: "総務部 総務課",
+        extra: "",
+        location: "",
+        title: "代表",
+        extensionNumber: "2100",
+        phoneNumber: "",
+        faxNumber: "",
+        notes: "",
+      },
+      {
+        id: 2,
+        department: "営業推進部 第10課",
+        extra: "",
+        location: "",
+        title: "",
+        extensionNumber: "",
+        phoneNumber: "",
+        faxNumber: "",
+        notes: "",
+      },
+      {
+        id: 3,
+        department: "総務部 総務課",
+        extra: "",
+        location: "",
+        title: "窓口",
+        extensionNumber: "2101",
+        phoneNumber: "",
+        faxNumber: "",
+        notes: "",
+      },
+      {
+        id: 4,
+        department: "営業推進部 第2課",
+        extra: "",
+        location: "",
+        title: "",
+        extensionNumber: "",
+        phoneNumber: "",
+        faxNumber: "",
+        notes: "",
+      },
+      {
+        id: 1,
+        department: "",
+        extra: "",
+        location: "",
+        title: "",
+        extensionNumber: "",
+        phoneNumber: "",
+        faxNumber: "",
+        notes: "",
+      },
+    ];
+
+    const sorted = sortOrganizations(orgs);
+    expect(sorted.map((o) => o.id)).toEqual([4, 2, 3, 10, 1]);
+    expect(orgs.map((o) => o.id)).toEqual([10, 2, 3, 4, 1]);
   });
 });
