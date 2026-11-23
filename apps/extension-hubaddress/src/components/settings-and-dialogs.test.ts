@@ -15,6 +15,7 @@ import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
  * - 仕様5: renderSettingsView / renderEditorDialogs 関数がエクスポートされていること
  * - 仕様6: settings-view.ts / editor-dialogs.ts 内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  * - 仕様7: 設定画面のショートカット説明で英単語・設定 URL に折り返し防止が設定されていること
+ * - 仕様8: データ管理セクションに冗長な文字コード自動判別・インポート説明文が含まれないこと
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -172,5 +173,27 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
     expect(rendered).toMatch(
       /class="settings-view__shortcut-url"\s*>edge:\/\/extensions\/shortcuts\s*<\/code\s*>/,
     );
+  });
+
+  it("データ管理セクションに冗長な文字コード自動判別・インポート説明文が含まれないこと", () => {
+    const rendered = flattenTemplate(
+      renderSettingsView({
+        staffCount: 0,
+        organizationCount: 0,
+        themeMode: "system",
+        onChangeTheme: () => {},
+        onRequestImport: () => {},
+        onExportStaffCsv: () => {},
+        onExportOrgCsv: () => {},
+        onExportJson: () => {},
+        onRequestClearAll: () => {},
+      }),
+    );
+    expect(rendered).not.toContain("UTF-8 / Shift_JIS 自動判別");
+    expect(rendered).not.toContain("確認後に全件洗い替え");
+    expect(rendered).toContain("データ管理（CSV / JSON）");
+    expect(rendered).toContain("職員 CSV をインポート");
+    expect(rendered).toContain("組織 CSV をインポート");
+    expect(rendered).toContain("一括 JSON をインポート");
   });
 });

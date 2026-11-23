@@ -4702,10 +4702,6 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         <wa-tag size="s">職員: ${e.staffCount} 件</wa-tag>
         <wa-tag size="s">組織: ${e.organizationCount} 件</wa-tag>
       </div>
-      <p class="settings-view__description">
-        CSV（UTF-8 / Shift_JIS 自動判別）または一括 JSON
-        からインポート（確認後に全件洗い替え）できます。
-      </p>
       ${Tc(e.onRequestImport)}
       <wa-divider></wa-divider>
       ${Ec(e)}

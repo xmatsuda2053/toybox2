@@ -176,10 +176,6 @@ function renderImportExportSection(props: SettingsViewProps): TemplateResult {
         <wa-tag size="s">職員: ${props.staffCount} 件</wa-tag>
         <wa-tag size="s">組織: ${props.organizationCount} 件</wa-tag>
       </div>
-      <p class="settings-view__description">
-        CSV（UTF-8 / Shift_JIS 自動判別）または一括 JSON
-        からインポート（確認後に全件洗い替え）できます。
-      </p>
       ${renderImportButtons(props.onRequestImport)}
       <wa-divider></wa-divider>
       ${renderExportButtons(props)}
