@@ -27,6 +27,7 @@ export function normalizeStaffInput(
   return {
     staffId: input.staffId.trim(),
     name: input.name.trim(),
+    furigana: (input.furigana ?? "").trim(),
     department: input.department.trim(),
     title: input.title.trim(),
     emails: input.emails

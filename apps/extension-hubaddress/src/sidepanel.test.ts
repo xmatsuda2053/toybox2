@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { flattenTemplate } from "@shared/utils";
+import type { TemplateResult } from "lit";
 import { HubAddressApp } from "./hubaddress-app";
 import {
   renderOrganizationCard,
@@ -20,6 +21,8 @@ import {
  * - 仕様7: manifest.json に icons / action.default_icon (16/32/48/128) が設定され、PNG 実体が存在すること
  * - 仕様8: sidepanel.ts が ./hubaddress-app より先に ./bootstrap-webawesome をインポートし、アプリ内重複ヘッダーが削除されていること
  * - 仕様9: 職員・組織の追加ボタンがプラスアイコンのみで構成され、aria-label とホバーツールチップで説明が表示されること
+ * - 仕様10: 職員カードにフリガナが表示されること
+ * - 仕様11: 職員番号・職員氏名・組織名のクリックでクリップボードコピー（onCopy）が呼び出されること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -239,6 +242,102 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(appSource).toMatch(
       /<wa-tooltip\s+for="add-organization-btn"\s+trigger="hover"\s*>\s*組織を追加\s*<\/wa-tooltip\s*>/,
     );
+  });
+
+  it("職員カードにフリガナが表示され、職員番号・氏名・組織名クリックでコピーできること", () => {
+    function collectClickHandlers(
+      value: unknown,
+      handlers: (() => void)[],
+    ): void {
+      if (typeof value === "function") {
+        handlers.push(value as () => void);
+        return;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          collectClickHandlers(item, handlers);
+        }
+        return;
+      }
+      if (value && typeof value === "object" && "values" in value) {
+        for (const inner of (value as TemplateResult).values) {
+          collectClickHandlers(inner, handlers);
+        }
+      }
+    }
+
+    const onStaffCopy = vi.fn();
+    const staff = {
+      id: 1,
+      staffId: "0010001",
+      name: "田中 太郎",
+      furigana: "たなか たろう",
+      department: "総務部 総務課",
+      title: "課長",
+      emails: ["tanaka@example.com"],
+    };
+
+    const staffTemplate = renderStaffCard(staff, 0, {
+      isEmailsExpanded: false,
+      onToggleEmails: () => {},
+      onJumpToDepartment: () => {},
+      onCopy: onStaffCopy,
+    });
+    const staffHtml = flattenTemplate(staffTemplate);
+    expect(staffHtml).toContain('class="directory-card__furigana"');
+    expect(staffHtml).toContain('class="directory-card__name-row"');
+    expect(staffHtml).toContain("たなか たろう");
+    expect(staffHtml).toContain("氏名をコピー");
+    expect(staffHtml.indexOf("たなか たろう")).toBeLessThan(
+      staffHtml.indexOf("田中 太郎"),
+    );
+    expect(
+      staffHtml.indexOf('class="directory-card__name-row"'),
+    ).toBeGreaterThan(staffHtml.indexOf("たなか たろう"));
+    expect(staffHtml.indexOf("課長")).toBeGreaterThan(
+      staffHtml.indexOf('class="directory-card__name-row"'),
+    );
+
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__title-group--staff\s*\{[^}]*align-items:\s*stretch/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__staff-id\s*\{[^}]*height:\s*100%/s,
+    );
+
+    const staffHandlers: (() => void)[] = [];
+    collectClickHandlers(staffTemplate, staffHandlers);
+    for (const fn of staffHandlers) {
+      fn();
+    }
+    expect(onStaffCopy).toHaveBeenCalledWith("職員番号", "10001");
+    expect(onStaffCopy).toHaveBeenCalledWith("氏名", "田中 太郎");
+
+    const onOrgCopy = vi.fn();
+    const org = {
+      id: 1,
+      department: "総務部 総務課",
+      extra: "本庁舎 3階",
+      location: "3F-A",
+      title: "課長席",
+      extensionNumber: "2101",
+      phoneNumber: "03-1234-2101",
+      faxNumber: "03-1234-2109",
+      notes: "代表窓口",
+    };
+    const orgTemplate = renderOrganizationCard(org, 0, {
+      onCopy: onOrgCopy,
+    });
+    const orgHandlers: (() => void)[] = [];
+    collectClickHandlers(orgTemplate, orgHandlers);
+    for (const fn of orgHandlers) {
+      fn();
+    }
+    expect(onOrgCopy).toHaveBeenCalledWith("組織名", "総務部 総務課");
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {

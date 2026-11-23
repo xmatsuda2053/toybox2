@@ -7,6 +7,7 @@ import type {
 export const STAFF_CSV_HEADERS = [
   "職員番号",
   "氏名",
+  "フリガナ",
   "所属",
   "役職",
   "メールアドレス",
@@ -63,6 +64,7 @@ export function parseStaffCsv(csvText: string): Omit<StaffRecord, "id">[] {
   return parseCsvRows(csvText).map((row) => ({
     staffId: normalizeCell(row["職員番号"]),
     name: normalizeCell(row["氏名"]),
+    furigana: normalizeCell(row["フリガナ"] ?? row["ふりがな"]),
     department: normalizeCell(row["所属"]),
     title: normalizeCell(row["役職"]),
     emails: splitEmails(row["メールアドレス"]),
@@ -94,6 +96,7 @@ export function serializeStaffCsv(records: StaffRecord[]): string {
   const rows = records.map((record) => [
     record.staffId,
     record.name,
+    record.furigana ?? "",
     record.department,
     record.title,
     record.emails.join(", "),

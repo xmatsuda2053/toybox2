@@ -33,6 +33,7 @@ describe("CSV Codec Tests", () => {
       expect(result[0]).toEqual({
         staffId: "0012345",
         name: "田中 太郎",
+        furigana: "",
         department: "営業一部",
         title: "課長",
         emails: ["tanaka@example.com"],
@@ -40,10 +41,28 @@ describe("CSV Codec Tests", () => {
       expect(result[1]).toEqual({
         staffId: "0012346",
         name: "佐藤 花子",
+        furigana: "",
         department: "人事部",
         title: "主査",
         emails: ["sato@example.com", "sub-sato@example.com"],
       });
+    });
+
+    it("フリガナ列を含む職員CSVテキストを正しくパースできること", () => {
+      const csv = `職員番号,氏名,フリガナ,所属,役職,メールアドレス
+0012345,田中 太郎,たなか たろう,営業一部,課長,tanaka@example.com`;
+
+      const result = parseStaffCsv(csv);
+      expect(result).toEqual([
+        {
+          staffId: "0012345",
+          name: "田中 太郎",
+          furigana: "たなか たろう",
+          department: "営業一部",
+          title: "課長",
+          emails: ["tanaka@example.com"],
+        },
+      ]);
     });
 
     it("複数メールアドレスの区切り（カンマ・セミコロン・空白）と空文字を正規化できること", () => {
@@ -116,6 +135,7 @@ describe("CSV Codec Tests", () => {
           id: 1,
           staffId: "0010001",
           name: "田中 太郎",
+          furigana: "たなか たろう",
           department: "総務部 総務課",
           title: "課長",
           emails: ["tanaka@example.com", "t-tanaka@sub.example.com"],
@@ -131,15 +151,16 @@ describe("CSV Codec Tests", () => {
       ];
 
       const csv = serializeStaffCsv(staff);
-      expect(csv.startsWith("職員番号,氏名,所属,役職,メールアドレス")).toBe(
-        true,
-      );
+      expect(
+        csv.startsWith("職員番号,氏名,フリガナ,所属,役職,メールアドレス"),
+      ).toBe(true);
 
       const restored = parseStaffCsv(csv);
       expect(restored).toEqual([
         {
           staffId: "0010001",
           name: "田中 太郎",
+          furigana: "たなか たろう",
           department: "総務部 総務課",
           title: "課長",
           emails: ["tanaka@example.com", "t-tanaka@sub.example.com"],
@@ -147,6 +168,7 @@ describe("CSV Codec Tests", () => {
         {
           staffId: "0010002",
           name: "佐藤 花子",
+          furigana: "",
           department: "人事部, 第一課",
           title: "",
           emails: [],

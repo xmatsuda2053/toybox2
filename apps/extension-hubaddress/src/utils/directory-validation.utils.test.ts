@@ -78,6 +78,7 @@ describe("Directory Validation Utils Tests", () => {
       normalizeStaffInput({
         staffId: " 001 ",
         name: " 田中 太郎 ",
+        furigana: " たなか たろう ",
         department: " 総務課 ",
         title: " 課長 ",
         emails: [" a@example.com ", ""],
@@ -85,9 +86,27 @@ describe("Directory Validation Utils Tests", () => {
     ).toEqual({
       staffId: "001",
       name: "田中 太郎",
+      furigana: "たなか たろう",
       department: "総務課",
       title: "課長",
       emails: ["a@example.com"],
+    });
+
+    expect(
+      normalizeStaffInput({
+        staffId: " 002 ",
+        name: " 佐藤 花子 ",
+        department: " 人事課 ",
+        title: "",
+        emails: [],
+      }),
+    ).toEqual({
+      staffId: "002",
+      name: "佐藤 花子",
+      furigana: "",
+      department: "人事課",
+      title: "",
+      emails: [],
     });
 
     expect(

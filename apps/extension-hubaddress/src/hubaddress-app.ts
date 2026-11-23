@@ -304,6 +304,7 @@ export class HubAddressApp extends LitElement {
         {
           staffId: form.staffId,
           name: form.name,
+          furigana: form.furigana,
           department: form.department,
           title: form.title,
           emails: parseEmailsInput(form.emailsText),
