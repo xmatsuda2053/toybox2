@@ -13,6 +13,7 @@ import { ViewModeSwitcher } from "./view-mode-switcher.js";
  *    - 1-2. ボタングループ内に標準（#btn-view-mode-standard）・一覧（#btn-view-mode-list）の切り替えボタンがレンダリングされること
  *    - 1-3. 各ボタンに対応する trigger="hover" 指定のツールチップ（wa-tooltip[for]）がレンダリングされること
  *    - 1-4. 各ボタンに適切なアイコン（table-columns-solid-full, table-solid-full）が表示されること
+ *    - 1-5. wa-button-group の内部には wa-button のみが配置され、wa-tooltip は wa-button-group の外側に配置されること
  *
  * 2. 状態連動とアクティブ表示・無効化・アクセシビリティ
  *    - 2-1. viewMode が "standard" のとき、標準ボタンに appearance="filled" / aria-pressed="true"、一覧ボタンに appearance="plain" / aria-pressed="false" が付与されること
@@ -80,6 +81,28 @@ describe("ViewModeSwitcher Component", () => {
       const htmlStr = flattenTemplate(switcher.render());
       expect(htmlStr).toContain('name="table-columns-solid-full"');
       expect(htmlStr).toContain('name="table-solid-full"');
+    });
+
+    it("1-5. wa-button-group の内部には wa-button のみが配置され、wa-tooltip は wa-button-group の外側に配置されること", () => {
+      const htmlStr = flattenTemplate(switcher.render());
+      const groupMatch = htmlStr.match(
+        /<wa-button-group[^>]*>([\s\S]*?)<\/wa-button-group>/,
+      );
+      expect(groupMatch).not.toBeNull();
+
+      const groupInner = groupMatch?.[1] ?? "";
+      expect(groupInner).toContain('id="btn-view-mode-standard"');
+      expect(groupInner).toContain('id="btn-view-mode-list"');
+      expect(groupInner).not.toContain("<wa-tooltip");
+      expect(groupInner.trim()).toMatch(/<\/wa-button>$/);
+
+      const afterGroup = htmlStr.slice(
+        htmlStr.indexOf("</wa-button-group>") + "</wa-button-group>".length,
+      );
+      expect(afterGroup).toMatch(
+        /<wa-tooltip[^>]*for="btn-view-mode-standard"/,
+      );
+      expect(afterGroup).toMatch(/<wa-tooltip[^>]*for="btn-view-mode-list"/);
     });
   });
 

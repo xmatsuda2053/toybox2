@@ -35,7 +35,9 @@ const VIEW_MODE_OPTIONS: readonly ViewModeOption[] = [
  * ヘッダーに配置され、標準モード（5ペイン）と一覧モードの切り替えUIを提供する。
  */
 @customElement("view-mode-switcher")
-export class ViewModeSwitcher extends WithLayoutUIController(SubscriberElement) {
+export class ViewModeSwitcher extends WithLayoutUIController(
+  SubscriberElement,
+) {
   public static override styles = unsafeCSS(viewModeSwitcherStyles);
 
   /** Scratch / Settings 等による操作無効化フラグ */
@@ -84,10 +86,19 @@ export class ViewModeSwitcher extends WithLayoutUIController(SubscriberElement) 
           label="${option.label}"
         ></wa-icon>
       </wa-button>
-      <wa-tooltip for="${option.id}" trigger="hover">
-        ${option.label}
-      </wa-tooltip>
     `;
+  }
+
+  /**
+   * 各ボタンに対応するツールチップ群を描画する。
+   */
+  private renderTooltips(): HTMLTemplateResult[] {
+    return VIEW_MODE_OPTIONS.map(
+      (option) =>
+        html`<wa-tooltip for="${option.id}" trigger="hover">
+          ${option.label}
+        </wa-tooltip>`,
+    );
   }
 
   public override render(): HTMLTemplateResult {
@@ -95,14 +106,12 @@ export class ViewModeSwitcher extends WithLayoutUIController(SubscriberElement) 
       this.layoutUIController?.state.viewMode ?? "standard";
 
     return html`
-      <wa-button-group
-        class="view-mode-switcher"
-        label="表示モード切り替え"
-      >
+      <wa-button-group class="view-mode-switcher" label="表示モード切り替え">
         ${VIEW_MODE_OPTIONS.map((opt) =>
           this.renderModeButton(opt, currentMode),
         )}
       </wa-button-group>
+      ${this.renderTooltips()}
     `;
   }
 }
