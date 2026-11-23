@@ -129,6 +129,13 @@ trigger: always_on
 - **独立リリースタグ運用**:
   - アプリケーションごとの独立したリリースサイクルを担保するため、Git タグは単一の `v1.0.0` ではなく `<scope>@v<version>`（例: `stepnote@v1.2.0`, `ext-clipper@v0.1.0`）形式を採用する。
 
+### 4.3 ブラウザ拡張機能ワークスペース（`apps/extension-*`）の配布用 ZIP 同梱規約
+- **ビルド成果物（`dist/`）と配布用 ZIP の同時更新・Git 管理**:
+  - ブラウザ拡張機能（`apps/extension-hubaddress` 等）のコード・設定・依存パッケージを修正した際は、PR 作成前（品質検証・コミット前）に必ず `npm run package:ext-hubaddress` 等を実行し、ビルド済みの `dist/` に加えて配布用 ZIP アーカイブ（`apps/extension-hubaddress/dist-zip/hubaddress-extension.zip`）を再生成すること。
+  - 更新された `dist/` と配布用 ZIP（`dist-zip/hubaddress-extension.zip`）は漏れなく同一コミット／同一 PR に含めてプッシュし、リポジトリ上で常に最新バイナリおよび配布 ZIP が一致した状態を維持すること。
+- **ZIP 構造の厳守（二重フォルダ防止）**:
+  - Chrome / Edge の開発者モード（「パッケージ化されていない拡張機能を読み込む」）で展開後のフォルダをそのまま読み込めるよう、ZIP 内には `dist/` フォルダ自体を含めず **`dist/*` の中身（`manifest.json` 等）をルート直下に格納** すること。
+
 ---
 
 ## 5. 静的解析ツールによる定量的品質ゲート

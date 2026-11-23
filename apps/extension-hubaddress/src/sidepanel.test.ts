@@ -27,6 +27,7 @@ import {
  * - 仕様13: 組織カードの連絡先および職員メールのチップにコピーアイコンやテキスト文字が出力されず、種別アイコンで表示されること
  * - 仕様14: HubAddress ブランドカラー（#036730 / wa-brand-green）がテーマ・追加ボタン・カードリンクへ適用されていること
  * - 仕様15: 設定ボタンが toggleSettingsTab を呼び出し再クリックで一覧画面へ戻れること
+ * - 仕様16: 配布用 ZIP 生成スクリプト・PR 同梱ルール・hubaddress-extension.zip が整備されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -461,6 +462,42 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(appSource).toContain(
       'aria-pressed=${String(activeTab === "settings")}',
     );
+  });
+
+  it("配布用 ZIP 生成スクリプトと PR 同梱ルールが整備され、hubaddress-extension.zip 直下に manifest.json が含まれること", () => {
+    const extRoot = resolve(srcRoot, "..");
+    const repoRoot = resolve(extRoot, "../..");
+
+    const extPkg = JSON.parse(
+      readFileSync(resolve(extRoot, "package.json"), "utf-8"),
+    ) as { scripts?: Record<string, string> };
+    expect(extPkg.scripts?.package).toBeTruthy();
+    expect(extPkg.scripts?.package).toContain(
+      "dist-zip/hubaddress-extension.zip",
+    );
+
+    const rootPkg = JSON.parse(
+      readFileSync(resolve(repoRoot, "package.json"), "utf-8"),
+    ) as { scripts?: Record<string, string> };
+    expect(rootPkg.scripts?.["package:ext-hubaddress"]).toBeTruthy();
+
+    const commonRule = readFileSync(
+      resolve(repoRoot, ".agents/rules/code-style-common.md"),
+      "utf-8",
+    );
+    expect(commonRule).toContain("dist-zip/hubaddress-extension.zip");
+    expect(commonRule).toContain("package:ext-hubaddress");
+
+    expect(existsSync(resolve(extRoot, "hubaddress-extension.zip"))).toBe(
+      false,
+    );
+    const zipPath = resolve(extRoot, "dist-zip/hubaddress-extension.zip");
+    expect(existsSync(zipPath)).toBe(true);
+    const zipBuf = readFileSync(zipPath);
+    expect(Array.from(zipBuf.subarray(0, 4))).toEqual([0x50, 0x4b, 0x03, 0x04]);
+    expect(zipBuf.includes(Buffer.from("manifest.json"))).toBe(true);
+    expect(zipBuf.includes(Buffer.from("dist/manifest.json"))).toBe(false);
+    expect(zipBuf.includes(Buffer.from("dist\\manifest.json"))).toBe(false);
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {

@@ -12,6 +12,7 @@
     "build:stepnote": "npm run build --workspace=apps/stepnote",
     "build:migrator": "npm run build --workspace=apps/stepnote-migrator",
     "build:ext-hubaddress": "npm run build --workspace=apps/extension-hubaddress",
+    "package:ext-hubaddress": "npm run build:ext-hubaddress && npm run package --workspace=apps/extension-hubaddress",
     "build:all": "npm run build --workspaces",
     "type-check": "npm exec --workspaces -- tsc --noEmit",
     "lint": "eslint apps packages",
