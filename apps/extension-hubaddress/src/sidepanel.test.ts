@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { flattenTemplate } from "@shared/utils";
 import { HubAddressApp } from "./hubaddress-app";
@@ -17,6 +17,8 @@ import {
  * - 仕様4: 職員カードは先頭に5桁職員番号が表示され、メール欄は初期非表示・展開操作時のみ表示されること
  * - 仕様5: 組織カードは「場所」が連絡先の下に配置されていること
  * - 仕様6: テンプレート内の全 wa-tooltip に trigger="hover" が明示指定されていること
+ * - 仕様7: manifest.json に icons / action.default_icon (16/32/48/128) が設定され、PNG 実体が存在すること
+ * - 仕様8: sidepanel.ts が ./hubaddress-app より先に ./bootstrap-webawesome をインポートし、ブランドアイコンのサイズが指定されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -147,6 +149,65 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       }
     }
     expect(tooltipCount).toBeGreaterThan(0);
+  });
+
+  it("manifest.json にツールバー・拡張機能アイコン (16/32/48/128) が設定され、PNG ファイルが存在すること", () => {
+    const publicDir = resolve(srcRoot, "../public");
+    const manifest = JSON.parse(
+      readFileSync(resolve(publicDir, "manifest.json"), "utf-8"),
+    ) as {
+      icons?: Record<string, string>;
+      action?: { default_icon?: Record<string, string> };
+    };
+
+    const requiredSizes = ["16", "32", "48", "128"];
+    const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+    for (const size of requiredSizes) {
+      const iconPath = manifest.icons?.[size];
+      const actionIconPath = manifest.action?.default_icon?.[size];
+      expect(iconPath).toBeTruthy();
+      expect(actionIconPath).toBe(iconPath);
+
+      const fullPath = resolve(publicDir, iconPath!);
+      expect(existsSync(fullPath)).toBe(true);
+      const header = Array.from(readFileSync(fullPath).subarray(0, 8));
+      expect(header).toEqual(pngSignature);
+    }
+  });
+
+  it("sidepanel.ts が hubaddress-app より先にアイコン登録ブートストラップを読み込み、ブランドアイコンにサイズが設定されていること", () => {
+    const bootstrapPath = resolve(srcRoot, "bootstrap-webawesome.ts");
+    expect(existsSync(bootstrapPath)).toBe(true);
+    const bootstrapSource = readFileSync(bootstrapPath, "utf-8");
+    expect(bootstrapSource).toContain("registerWebAwesome()");
+
+    const sidepanelSource = readFileSync(
+      resolve(srcRoot, "sidepanel.ts"),
+      "utf-8",
+    );
+    const bootstrapImportIdx = sidepanelSource.indexOf(
+      'import "./bootstrap-webawesome"',
+    );
+    const appImportIdx = sidepanelSource.indexOf('import "./hubaddress-app"');
+    expect(bootstrapImportIdx).toBeGreaterThan(-1);
+    expect(appImportIdx).toBeGreaterThan(bootstrapImportIdx);
+
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+    expect(appSource).toMatch(
+      /<wa-icon\s+class="hubaddress-shell__brand-icon"\s+name="icon-hub-address"\s*>/,
+    );
+
+    const shellScss = readFileSync(
+      resolve(srcRoot, "hubaddress-app.scss"),
+      "utf-8",
+    );
+    expect(shellScss).toMatch(
+      /\.hubaddress-shell__brand-icon\s*\{[^}]*font-size:/s,
+    );
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {
