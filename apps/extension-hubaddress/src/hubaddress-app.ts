@@ -51,7 +51,10 @@ export class HubAddressApp extends LitElement {
     return html`
       <header class="hubaddress-shell__header">
         <div class="hubaddress-shell__brand">
-          <wa-icon name="icon-hub-address"></wa-icon>
+          <wa-icon
+            class="hubaddress-shell__brand-icon"
+            name="icon-hub-address"
+          ></wa-icon>
           <h1 class="hubaddress-shell__title">HubAddress</h1>
         </div>
       </header>
