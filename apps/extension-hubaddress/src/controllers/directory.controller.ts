@@ -24,6 +24,8 @@ import {
   filterOrganizations,
   filterStaff,
   getStaffKey,
+  sortOrganizations,
+  sortStaff,
 } from "../utils/directory-filter.utils";
 import {
   normalizeOrganizationInput,
@@ -120,8 +122,8 @@ export class DirectoryController implements ReactiveController {
         directoryDb.getAllOrganizations(),
         loadTheme(this.deps.storage),
       ]);
-      this.staff = staff;
-      this.organizations = organizations;
+      this.staff = sortStaff(staff);
+      this.organizations = sortOrganizations(organizations);
       this.themeMode = themeMode;
       applyThemeToRoot(themeMode);
     } finally {
@@ -135,8 +137,8 @@ export class DirectoryController implements ReactiveController {
       directoryDb.getAllStaff(),
       directoryDb.getAllOrganizations(),
     ]);
-    this.staff = staff;
-    this.organizations = organizations;
+    this.staff = sortStaff(staff);
+    this.organizations = sortOrganizations(organizations);
     this.host.requestUpdate();
   }
 

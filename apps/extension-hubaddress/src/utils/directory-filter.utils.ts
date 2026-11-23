@@ -121,3 +121,53 @@ export function filterOrganizations(
     ),
   );
 }
+
+const JA_COLLATOR = new Intl.Collator("ja", { numeric: true });
+
+function compareTextEmptyLast(a: string, b: string): number {
+  const left = a.trim();
+  const right = b.trim();
+  if (left.length === 0 && right.length === 0) {
+    return 0;
+  }
+  if (left.length === 0) {
+    return 1;
+  }
+  if (right.length === 0) {
+    return -1;
+  }
+  return JA_COLLATOR.compare(left, right);
+}
+
+function compareIdAsc(aId?: number, bId?: number): number {
+  return (aId ?? Number.MAX_SAFE_INTEGER) - (bId ?? Number.MAX_SAFE_INTEGER);
+}
+
+/**
+ * 職員レコードを「所属組織 → フリガナ五十音昇順 → 氏名 → id」でソートする
+ */
+export function sortStaff(records: StaffRecord[]): StaffRecord[] {
+  return [...records].sort(
+    (a, b) =>
+      compareTextEmptyLast(a.department, b.department) ||
+      compareTextEmptyLast(
+        normalizeSearchText(a.furigana ?? ""),
+        normalizeSearchText(b.furigana ?? ""),
+      ) ||
+      compareTextEmptyLast(a.name, b.name) ||
+      compareIdAsc(a.id, b.id),
+  );
+}
+
+/**
+ * 組織レコードを「組織名 → id昇順」でソートする
+ */
+export function sortOrganizations(
+  records: OrganizationRecord[],
+): OrganizationRecord[] {
+  return [...records].sort(
+    (a, b) =>
+      compareTextEmptyLast(a.department, b.department) ||
+      compareIdAsc(a.id, b.id),
+  );
+}
