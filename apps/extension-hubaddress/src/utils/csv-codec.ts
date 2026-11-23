@@ -15,8 +15,8 @@ export const STAFF_CSV_HEADERS = [
 
 export const ORGANIZATION_CSV_HEADERS = [
   "所属",
-  "その他",
   "場所",
+  "その他",
   "役職",
   "内線番号",
   "外線番号",
@@ -79,8 +79,8 @@ export function parseOrganizationCsv(
 ): Omit<OrganizationRecord, "id">[] {
   return parseCsvRows(csvText).map((row) => ({
     department: normalizeCell(row["所属"]),
-    extra: normalizeCell(row["その他"]),
     location: normalizeCell(row["場所"]),
+    extra: normalizeCell(row["その他"]),
     title: normalizeCell(row["役職"]),
     extensionNumber: normalizeCell(row["内線番号"]),
     phoneNumber: normalizeCell(row["外線番号"]),
@@ -116,8 +116,8 @@ export function serializeOrganizationCsv(
 ): string {
   const rows = records.map((record) => [
     record.department,
-    record.extra,
     record.location,
+    record.extra,
     record.title,
     record.extensionNumber,
     record.phoneNumber,

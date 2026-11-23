@@ -184,16 +184,16 @@ function renderOrgBasicFields(
         onUpdate({ department: readInputValue(e), error: null })}
     ></wa-input>
     <wa-input
-      label="その他（建物・階など）"
-      size="s"
-      .value=${form.extra}
-      @input=${(e: Event) => onUpdate({ extra: readInputValue(e) })}
-    ></wa-input>
-    <wa-input
-      label="場所"
+      label="場所（建物・施設など）"
       size="s"
       .value=${form.location}
       @input=${(e: Event) => onUpdate({ location: readInputValue(e) })}
+    ></wa-input>
+    <wa-input
+      label="その他（階・部屋など）"
+      size="s"
+      .value=${form.extra}
+      @input=${(e: Event) => onUpdate({ extra: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="役職・席"
