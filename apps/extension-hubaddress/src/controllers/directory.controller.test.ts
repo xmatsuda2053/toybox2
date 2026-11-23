@@ -35,6 +35,7 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様4: toggleStaffEmails / isStaffEmailsExpanded で職員メールアドレス欄の開閉状態を切り替えられること
  * - 仕様5: setThemeMode でストレージ保存完了を待たず同期的に requestUpdate が呼ばれること（点滅防止）
  * - 仕様6: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
+ * - 仕様7: toggleSettingsTab で設定画面を開き、再クリックで直前の一覧画面（staff / organizations）へ戻ること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -178,5 +179,26 @@ describe("DirectoryController Tests", () => {
     expect(writeText).toHaveBeenCalledWith("2101");
     expect(controller.toastMessage).toContain("内線番号");
     expect(controller.toastMessage).toContain("2101");
+  });
+
+  it("toggleSettingsTab で設定画面を開閉し、再クリック時に直前の一覧タブへ戻ること", () => {
+    const host = createMockHost();
+    const controller = new DirectoryController(host, {
+      storage: createMemoryStorage(),
+    });
+
+    expect(controller.activeTab).toBe("staff");
+    controller.toggleSettingsTab();
+    expect(controller.activeTab).toBe("settings");
+
+    controller.toggleSettingsTab();
+    expect(controller.activeTab).toBe("staff");
+
+    controller.setActiveTab("organizations");
+    controller.toggleSettingsTab();
+    expect(controller.activeTab).toBe("settings");
+
+    controller.toggleSettingsTab();
+    expect(controller.activeTab).toBe("organizations");
   });
 });
