@@ -61,6 +61,7 @@ export class DirectoryController implements ReactiveController {
   staff: StaffRecord[] = [];
   organizations: OrganizationRecord[] = [];
   activeTab: ActiveTab = "staff";
+  private lastDirectoryTab: "staff" | "organizations" = "staff";
   staffSearchQuery = "";
   organizationSearchQuery = "";
   expandedStaffKeys = new Set<string>();
@@ -151,7 +152,20 @@ export class DirectoryController implements ReactiveController {
   }
 
   setActiveTab(tab: ActiveTab): void {
+    if (tab !== "settings") {
+      this.lastDirectoryTab = tab;
+    }
     this.activeTab = tab;
+    this.host.requestUpdate();
+  }
+
+  toggleSettingsTab(): void {
+    if (this.activeTab === "settings") {
+      this.activeTab = this.lastDirectoryTab;
+    } else {
+      this.lastDirectoryTab = this.activeTab;
+      this.activeTab = "settings";
+    }
     this.host.requestUpdate();
   }
 
@@ -338,6 +352,7 @@ export class DirectoryController implements ReactiveController {
       return;
     }
 
+    this.lastDirectoryTab = "organizations";
     this.activeTab = "organizations";
     this.organizationSearchQuery = trimmed;
     this.host.requestUpdate();

@@ -81,7 +81,8 @@ export class HubAddressApp extends LitElement {
           size="s"
           variant=${tabVariant("settings")}
           appearance=${tabAppearance("settings")}
-          @click=${() => this.controller.setActiveTab("settings")}
+          aria-pressed=${String(activeTab === "settings")}
+          @click=${() => this.controller.toggleSettingsTab()}
         >
           <wa-icon slot="start" name="gear-solid-full"></wa-icon>
           設定

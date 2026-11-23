@@ -26,6 +26,7 @@ import {
  * - 仕様12: テンプレート内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  * - 仕様13: 組織カードの連絡先および職員メールのチップにコピーアイコンやテキスト文字が出力されず、種別アイコンで表示されること
  * - 仕様14: HubAddress ブランドカラー（#036730 / wa-brand-green）がテーマ・追加ボタン・カードリンクへ適用されていること
+ * - 仕様15: 設定ボタンが toggleSettingsTab を呼び出し再クリックで一覧画面へ戻れること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -449,6 +450,17 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     );
     expect(staffAddMatch?.[0]).toContain('variant="brand"');
     expect(orgAddMatch?.[0]).toContain('variant="brand"');
+  });
+
+  it("設定ボタンクリックで toggleSettingsTab が呼ばれ、再クリックで元の画面へ戻れること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+    expect(appSource).toContain("this.controller.toggleSettingsTab()");
+    expect(appSource).toContain(
+      'aria-pressed=${String(activeTab === "settings")}',
+    );
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {
