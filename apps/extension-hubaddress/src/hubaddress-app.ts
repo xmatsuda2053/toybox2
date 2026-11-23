@@ -18,7 +18,6 @@ import {
   type OrganizationFormState,
   type StaffFormState,
 } from "./components/editor-dialogs";
-import { getOrganizationKey } from "./utils/directory-filter.utils";
 import { parseEmailsInput } from "./utils/directory-validation.utils";
 import { triggerFileDownload } from "./utils/download.utils";
 import type { ImportKind } from "./utils/import-preview.utils";
@@ -75,6 +74,7 @@ export class HubAddressApp extends LitElement {
           appearance=${tabAppearance("staff")}
           @click=${() => this.controller.setActiveTab("staff")}
         >
+          <wa-icon slot="start" name="user-solid-full"></wa-icon>
           職員 (${filteredStaff.length})
         </wa-button>
         <wa-button
@@ -84,6 +84,7 @@ export class HubAddressApp extends LitElement {
           appearance=${tabAppearance("organizations")}
           @click=${() => this.controller.setActiveTab("organizations")}
         >
+          <wa-icon slot="start" name="building-solid-full"></wa-icon>
           組織 (${filteredOrganizations.length})
         </wa-button>
         <wa-button
@@ -100,75 +101,25 @@ export class HubAddressApp extends LitElement {
     `;
   }
 
-  private renderDepartmentSelect(): TemplateResult {
-    const { selectedDepartment, departments } = this.controller;
-
+  private renderSearchInput(
+    placeholder: string,
+    value: string,
+    onChange: (nextValue: string) => void,
+  ): TemplateResult {
     return html`
-      <wa-select
-        class="hubaddress-shell__filter-select"
-        size="small"
-        placeholder="すべての所属"
-        .value=${selectedDepartment}
-        clearable
-        @change=${(e: Event) => {
-          const target = e.target as HTMLSelectElement;
-          this.controller.setSelectedDepartment(target.value);
+      <wa-input
+        size="medium"
+        placeholder=${placeholder}
+        .value=${value}
+        with-clear
+        @input=${(e: Event) => {
+          const target = e.target as HTMLInputElement;
+          onChange(target.value);
         }}
+        @wa-clear=${() => onChange("")}
       >
-        <wa-option value="">すべての所属</wa-option>
-        ${departments.map(
-          (dept) => html`<wa-option value=${dept}>${dept}</wa-option>`,
-        )}
-      </wa-select>
-    `;
-  }
-
-  private renderClearFilterButton(): TemplateResult | typeof nothing {
-    const { searchQuery, selectedDepartment } = this.controller;
-    const hasActiveFilter =
-      searchQuery.length > 0 || selectedDepartment.length > 0;
-    if (!hasActiveFilter) {
-      return nothing;
-    }
-
-    return html`
-      <wa-button
-        id="hubaddress-clear-filter-btn"
-        size="small"
-        appearance="plain"
-        @click=${() => this.controller.clearFilters()}
-      >
-        <wa-icon name="xmark-solid-full"></wa-icon>
-      </wa-button>
-      <wa-tooltip for="hubaddress-clear-filter-btn" trigger="hover">
-        絞り込みをクリア
-      </wa-tooltip>
-    `;
-  }
-
-  private renderFilterBar(): TemplateResult | typeof nothing {
-    if (this.controller.activeTab === "settings") {
-      return nothing;
-    }
-
-    return html`
-      <section class="hubaddress-shell__filters" aria-label="検索・絞り込み">
-        <wa-input
-          size="small"
-          placeholder="氏名・職員番号・所属・内線・メールを検索..."
-          .value=${this.controller.searchQuery}
-          clearable
-          @input=${(e: Event) => {
-            const target = e.target as HTMLInputElement;
-            this.controller.setSearchQuery(target.value);
-          }}
-        >
-          <wa-icon slot="start" name="magnifying-glass-solid-full"></wa-icon>
-        </wa-input>
-        <div class="hubaddress-shell__filter-row">
-          ${this.renderDepartmentSelect()} ${this.renderClearFilterButton()}
-        </div>
-      </section>
+        <wa-icon slot="start" name="magnifying-glass-solid-full"></wa-icon>
+      </wa-input>
     `;
   }
 
@@ -200,92 +151,114 @@ export class HubAddressApp extends LitElement {
 
     return html`
       <section class="hubaddress-shell__column" data-active=${String(isActive)}>
-        <div class="hubaddress-shell__column-bar">
-          <h2 class="hubaddress-shell__column-heading">
-            職員一覧 (${items.length})
-          </h2>
-          <wa-button
-            size="small"
-            appearance="outlined"
-            @click=${() => {
-              this.staffForm = createStaffFormState();
-            }}
-          >
-            <wa-icon slot="start" name="plus-solid-full"></wa-icon>
-            職員を追加
-          </wa-button>
+        <div class="hubaddress-shell__column-toolbar">
+          <div class="hubaddress-shell__column-bar">
+            <h2 class="hubaddress-shell__column-heading">
+              職員一覧 (${items.length})
+            </h2>
+            <wa-button
+              size="small"
+              appearance="outlined"
+              @click=${() => {
+                this.staffForm = createStaffFormState();
+              }}
+            >
+              <wa-icon slot="start" name="plus-solid-full"></wa-icon>
+              職員を追加
+            </wa-button>
+          </div>
+          ${this.renderSearchInput(
+            "職員番号・氏名・所属・役職を検索...",
+            this.controller.staffSearchQuery,
+            (val) => this.controller.setStaffSearchQuery(val),
+          )}
         </div>
-        ${
-          items.length === 0
-            ? html`<p class="hubaddress-shell__empty">
-                該当する職員データがありません。
-              </p>`
-            : html`
-                <div class="directory-card-list">
-                  ${items.map((staff, idx) =>
-                    renderStaffCard(staff, idx, {
-                      onJumpToDepartment: (dept) =>
-                        this.controller.jumpToOrganization(dept),
-                      onCopy: (label, value) =>
-                        void this.controller.copyField(label, value),
-                      onEdit: (target) => {
-                        this.staffForm = createStaffFormState(target);
-                      },
-                      onDelete: (target) => this.openDeleteStaff(target),
-                    }),
-                  )}
-                </div>
-              `
-        }
+        ${this.renderStaffList(items)}
       </section>
+    `;
+  }
+
+  private renderStaffList(items: StaffRecord[]): TemplateResult {
+    if (items.length === 0) {
+      return html`<p class="hubaddress-shell__empty">
+        該当する職員データがありません。
+      </p>`;
+    }
+
+    return html`
+      <div class="directory-card-list">
+        ${items.map((staff, idx) =>
+          renderStaffCard(staff, idx, {
+            isEmailsExpanded: this.controller.isStaffEmailsExpanded(staff),
+            onToggleEmails: (target) =>
+              this.controller.toggleStaffEmails(target),
+            onJumpToDepartment: (dept) =>
+              this.controller.jumpToOrganization(dept),
+            onCopy: (label, value) =>
+              void this.controller.copyField(label, value),
+            onEdit: (target) => {
+              this.staffForm = createStaffFormState(target);
+            },
+            onDelete: (target) => this.openDeleteStaff(target),
+          }),
+        )}
+      </div>
     `;
   }
 
   private renderOrganizationColumn(): TemplateResult {
     const items = this.controller.filteredOrganizations;
     const isActive = this.controller.activeTab === "organizations";
-    const highlightKey = this.controller.highlightedOrganizationKey;
 
     return html`
       <section class="hubaddress-shell__column" data-active=${String(isActive)}>
-        <div class="hubaddress-shell__column-bar">
-          <h2 class="hubaddress-shell__column-heading">
-            組織一覧 (${items.length})
-          </h2>
-          <wa-button
-            size="small"
-            appearance="outlined"
-            @click=${() => {
-              this.orgForm = createOrganizationFormState();
-            }}
-          >
-            <wa-icon slot="start" name="plus-solid-full"></wa-icon>
-            組織を追加
-          </wa-button>
+        <div class="hubaddress-shell__column-toolbar">
+          <div class="hubaddress-shell__column-bar">
+            <h2 class="hubaddress-shell__column-heading">
+              組織一覧 (${items.length})
+            </h2>
+            <wa-button
+              size="small"
+              appearance="outlined"
+              @click=${() => {
+                this.orgForm = createOrganizationFormState();
+              }}
+            >
+              <wa-icon slot="start" name="plus-solid-full"></wa-icon>
+              組織を追加
+            </wa-button>
+          </div>
+          ${this.renderSearchInput(
+            "所属・内線・外線・場所・備考を検索...",
+            this.controller.organizationSearchQuery,
+            (val) => this.controller.setOrganizationSearchQuery(val),
+          )}
         </div>
-        ${
-          items.length === 0
-            ? html`<p class="hubaddress-shell__empty">
-                該当する組織データがありません。
-              </p>`
-            : html`
-                <div class="directory-card-list">
-                  ${items.map((org, idx) => {
-                    const key = getOrganizationKey(org);
-                    return renderOrganizationCard(org, idx, {
-                      isHighlighted: highlightKey === key,
-                      onCopy: (label, value) =>
-                        void this.controller.copyField(label, value),
-                      onEdit: (target) => {
-                        this.orgForm = createOrganizationFormState(target);
-                      },
-                      onDelete: (target) => this.openDeleteOrganization(target),
-                    });
-                  })}
-                </div>
-              `
-        }
+        ${this.renderOrganizationList(items)}
       </section>
+    `;
+  }
+
+  private renderOrganizationList(items: OrganizationRecord[]): TemplateResult {
+    if (items.length === 0) {
+      return html`<p class="hubaddress-shell__empty">
+        該当する組織データがありません。
+      </p>`;
+    }
+
+    return html`
+      <div class="directory-card-list">
+        ${items.map((org, idx) =>
+          renderOrganizationCard(org, idx, {
+            onCopy: (label, value) =>
+              void this.controller.copyField(label, value),
+            onEdit: (target) => {
+              this.orgForm = createOrganizationFormState(target);
+            },
+            onDelete: (target) => this.openDeleteOrganization(target),
+          }),
+        )}
+      </div>
     `;
   }
 
@@ -486,8 +459,8 @@ export class HubAddressApp extends LitElement {
         type="file"
         @change=${(e: Event) => void this.handleFileSelected(e)}
       />
-      ${this.renderHeader()} ${this.renderTabButtons()}
-      ${this.renderFilterBar()} ${this.renderBody()} ${this.renderDialogs()}
+      ${this.renderHeader()} ${this.renderTabButtons()} ${this.renderBody()}
+      ${this.renderDialogs()}
       ${
         toastMessage
           ? html`<div class="hubaddress-shell__toast" role="status">

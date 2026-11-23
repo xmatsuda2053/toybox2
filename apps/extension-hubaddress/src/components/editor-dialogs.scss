@@ -6,20 +6,20 @@
 
 .editor-dialog__error {
   margin: 0;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
   color: var(--wa-color-danger-text-normal);
 }
 
 .editor-dialog__summary {
   margin: 0;
-  font-size: var(--wa-font-size-s);
+  font-size: var(--wa-font-size-m);
   color: var(--wa-color-text-normal);
   line-height: 1.5;
 }
 
 .editor-dialog__meta {
   margin: 0;
-  font-size: var(--wa-font-size-xs);
+  font-size: var(--wa-font-size-s);
   color: var(--wa-color-text-quiet);
   line-height: 1.5;
 }

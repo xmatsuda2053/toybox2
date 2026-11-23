@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { flattenTemplate } from "@shared/utils";
 import { renderSettingsView } from "./settings-view";
 import { renderEditorDialogs } from "./editor-dialogs";
 
@@ -10,7 +11,8 @@ import { renderEditorDialogs } from "./editor-dialogs";
  * - 仕様1: settings-view.scss および editor-dialogs.scss にカラー直値・!important・@extend が含まれないこと
  * - 仕様2: settings-view.ts および editor-dialogs.ts 内の wa-tooltip に trigger="hover" が明示指定されていること
  * - 仕様3: manifest.json にショートカットコマンド (Alt+Shift+H) が定義され、設定ビューにも案内が含まれること
- * - 仕様4: renderSettingsView / renderEditorDialogs 関数がエクスポートされていること
+ * - 仕様4: 設定ビューのカラーテーマボタンがアイコンのみ＋ホバーツールチップ（ライト・ダーク・システム）で構成されていること
+ * - 仕様5: renderSettingsView / renderEditorDialogs 関数がエクスポートされていること
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -60,6 +62,29 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
       "utf-8",
     );
     expect(settingsSource).toContain("Alt+Shift+H");
+  });
+
+  it("設定ビューのテーマ切替がアイコンボタン＋ホバーツールチップで構成されていること", () => {
+    const rendered = flattenTemplate(
+      renderSettingsView({
+        staffCount: 1,
+        organizationCount: 1,
+        themeMode: "system",
+        onChangeTheme: () => {},
+        onRequestImport: () => {},
+        onExportStaffCsv: () => {},
+        onExportOrgCsv: () => {},
+        onExportJson: () => {},
+        onRequestClearAll: () => {},
+      }),
+    );
+    expect(rendered).toContain("<wa-button-group");
+    expect(rendered).toContain("sun-solid-full");
+    expect(rendered).toContain("moon-solid-full");
+    expect(rendered).toContain("display-solid-full");
+    expect(rendered).toMatch(/for="?theme-btn-light"?\s+trigger="hover"/);
+    expect(rendered).toMatch(/for="?theme-btn-dark"?\s+trigger="hover"/);
+    expect(rendered).toMatch(/for="?theme-btn-system"?\s+trigger="hover"/);
   });
 
   it("renderSettingsView と renderEditorDialogs が定義されていること", () => {

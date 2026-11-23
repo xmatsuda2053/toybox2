@@ -21,11 +21,9 @@ import {
   serializeStaffCsv,
 } from "../utils/csv-codec";
 import {
-  extractUniqueDepartments,
   filterOrganizations,
   filterStaff,
-  findMatchingOrganization,
-  getOrganizationKey,
+  getStaffKey,
 } from "../utils/directory-filter.utils";
 import {
   normalizeOrganizationInput,
@@ -63,9 +61,9 @@ export class DirectoryController implements ReactiveController {
   staff: StaffRecord[] = [];
   organizations: OrganizationRecord[] = [];
   activeTab: ActiveTab = "staff";
-  searchQuery = "";
-  selectedDepartment = "";
-  highlightedOrganizationKey: string | null = null;
+  staffSearchQuery = "";
+  organizationSearchQuery = "";
+  expandedStaffKeys = new Set<string>();
   toastMessage: string | null = null;
   themeMode: ThemeMode = "system";
   pendingImport: ImportPreview | null = null;
@@ -141,22 +139,15 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  get departments(): string[] {
-    return extractUniqueDepartments(this.staff, this.organizations);
-  }
-
   get filteredStaff(): StaffRecord[] {
-    return filterStaff(this.staff, {
-      query: this.searchQuery,
-      department: this.selectedDepartment,
-    });
+    return filterStaff(this.staff, this.staffSearchQuery);
   }
 
   get filteredOrganizations(): OrganizationRecord[] {
-    return filterOrganizations(this.organizations, {
-      query: this.searchQuery,
-      department: this.selectedDepartment,
-    });
+    return filterOrganizations(
+      this.organizations,
+      this.organizationSearchQuery,
+    );
   }
 
   setActiveTab(tab: ActiveTab): void {
@@ -164,19 +155,27 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  setSearchQuery(query: string): void {
-    this.searchQuery = query;
+  setStaffSearchQuery(query: string): void {
+    this.staffSearchQuery = query;
     this.host.requestUpdate();
   }
 
-  setSelectedDepartment(department: string): void {
-    this.selectedDepartment = department;
+  setOrganizationSearchQuery(query: string): void {
+    this.organizationSearchQuery = query;
     this.host.requestUpdate();
   }
 
-  clearFilters(): void {
-    this.searchQuery = "";
-    this.selectedDepartment = "";
+  isStaffEmailsExpanded(staff: StaffRecord): boolean {
+    return this.expandedStaffKeys.has(getStaffKey(staff));
+  }
+
+  toggleStaffEmails(staff: StaffRecord): void {
+    const key = getStaffKey(staff);
+    if (this.expandedStaffKeys.has(key)) {
+      this.expandedStaffKeys.delete(key);
+    } else {
+      this.expandedStaffKeys.add(key);
+    }
     this.host.requestUpdate();
   }
 
@@ -320,33 +319,27 @@ export class DirectoryController implements ReactiveController {
     this.showToast("すべての職員・組織データを削除しました");
   }
 
+  /**
+   * テーマ変更を即時適用・再描画し、ストレージへ永続化する（2フレーム点滅防止）
+   */
   async setThemeMode(mode: ThemeMode): Promise<void> {
     this.themeMode = mode;
     applyThemeToRoot(mode);
-    await saveTheme(mode, this.deps.storage);
     this.host.requestUpdate();
+    await saveTheme(mode, this.deps.storage);
   }
 
   /**
-   * 職員の所属から一致する組織を検索し、組織ビューへジャンプ・ハイライトする
+   * 職員カードでクリックされた所属文字列を組織タブの検索欄にセットして遷移する
    */
-  jumpToOrganization(department: string): boolean {
-    const matched = findMatchingOrganization(this.organizations, department);
-    if (!matched) {
-      this.showToast(`「${department}」に該当する組織が見つかりませんでした。`);
-      return false;
+  jumpToOrganization(department: string): void {
+    const trimmed = department.trim();
+    if (trimmed.length === 0) {
+      return;
     }
 
     this.activeTab = "organizations";
-    this.searchQuery = "";
-    this.selectedDepartment = "";
-    this.highlightedOrganizationKey = getOrganizationKey(matched);
-    this.showToast(`組織「${matched.department}」を表示しました`);
-    return true;
-  }
-
-  clearHighlight(): void {
-    this.highlightedOrganizationKey = null;
+    this.organizationSearchQuery = trimmed;
     this.host.requestUpdate();
   }
 
