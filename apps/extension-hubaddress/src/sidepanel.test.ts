@@ -23,6 +23,7 @@ import {
  * - 仕様9: 職員・組織の追加ボタンがプラスアイコンのみで構成され、aria-label とホバーツールチップで説明が表示されること
  * - 仕様10: 職員カードにフリガナが表示されること
  * - 仕様11: 職員番号・職員氏名・組織名のクリックでクリップボードコピー（onCopy）が呼び出されること
+ * - 仕様12: テンプレート内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -338,6 +339,13 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       fn();
     }
     expect(onOrgCopy).toHaveBeenCalledWith("組織名", "総務部 総務課");
+  });
+
+  it("テンプレート内で Web Awesome 非推奨の size='small' / 'medium' / 'large' が使われていないこと", () => {
+    for (const filePath of templateFiles) {
+      const content = readFileSync(filePath, "utf-8");
+      expect(content).not.toMatch(/size\s*=\s*["'](?:small|medium|large)["']/);
+    }
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {

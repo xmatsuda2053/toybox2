@@ -96,37 +96,37 @@ function renderStaffDialogFields(
   return html`
     <wa-input
       label="氏名 *"
-      size="small"
+      size="s"
       .value=${form.name}
       @input=${(e: Event) => onUpdate({ name: readInputValue(e), error: null })}
     ></wa-input>
     <wa-input
       label="フリガナ"
-      size="small"
+      size="s"
       .value=${form.furigana}
       @input=${(e: Event) => onUpdate({ furigana: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="職員番号"
-      size="small"
+      size="s"
       .value=${form.staffId}
       @input=${(e: Event) => onUpdate({ staffId: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="所属"
-      size="small"
+      size="s"
       .value=${form.department}
       @input=${(e: Event) => onUpdate({ department: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="役職"
-      size="small"
+      size="s"
       .value=${form.title}
       @input=${(e: Event) => onUpdate({ title: readInputValue(e) })}
     ></wa-input>
     <wa-textarea
       label="メールアドレス（カンマ区切りで複数入力可）"
-      size="small"
+      size="s"
       rows="2"
       .value=${form.emailsText}
       @input=${(e: Event) => onUpdate({ emailsText: readInputValue(e) })}
@@ -160,10 +160,10 @@ function renderStaffDialog(
         }
       </div>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${props.onCloseStaffForm}>
+        <wa-button size="s" @click=${props.onCloseStaffForm}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${props.onSaveStaffForm}>
+        <wa-button size="s" variant="brand" @click=${props.onSaveStaffForm}>
           保存
         </wa-button>
       </div>
@@ -178,26 +178,26 @@ function renderOrgBasicFields(
   return html`
     <wa-input
       label="所属 *"
-      size="small"
+      size="s"
       .value=${form.department}
       @input=${(e: Event) =>
         onUpdate({ department: readInputValue(e), error: null })}
     ></wa-input>
     <wa-input
       label="その他（建物・階など）"
-      size="small"
+      size="s"
       .value=${form.extra}
       @input=${(e: Event) => onUpdate({ extra: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="場所"
-      size="small"
+      size="s"
       .value=${form.location}
       @input=${(e: Event) => onUpdate({ location: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="役職・席"
-      size="small"
+      size="s"
       .value=${form.title}
       @input=${(e: Event) => onUpdate({ title: readInputValue(e) })}
     ></wa-input>
@@ -211,25 +211,25 @@ function renderOrgContactFields(
   return html`
     <wa-input
       label="内線番号"
-      size="small"
+      size="s"
       .value=${form.extensionNumber}
       @input=${(e: Event) => onUpdate({ extensionNumber: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="外線番号"
-      size="small"
+      size="s"
       .value=${form.phoneNumber}
       @input=${(e: Event) => onUpdate({ phoneNumber: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="FAX番号"
-      size="small"
+      size="s"
       .value=${form.faxNumber}
       @input=${(e: Event) => onUpdate({ faxNumber: readInputValue(e) })}
     ></wa-input>
     <wa-textarea
       label="備考"
-      size="small"
+      size="s"
       rows="2"
       .value=${form.notes}
       @input=${(e: Event) => onUpdate({ notes: readInputValue(e) })}
@@ -269,10 +269,10 @@ function renderOrgDialog(
         }
       </div>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${props.onCloseOrgForm}>
+        <wa-button size="s" @click=${props.onCloseOrgForm}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${props.onSaveOrgForm}>
+        <wa-button size="s" variant="brand" @click=${props.onSaveOrgForm}>
           保存
         </wa-button>
       </div>
@@ -294,14 +294,10 @@ function renderDeleteDialog(
         「${target.label}」を削除しますか？この操作は元に戻せません。
       </p>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${props.onCancelDelete}>
+        <wa-button size="s" @click=${props.onCancelDelete}>
           キャンセル
         </wa-button>
-        <wa-button
-          size="small"
-          variant="danger"
-          @click=${props.onConfirmDelete}
-        >
+        <wa-button size="s" variant="danger" @click=${props.onConfirmDelete}>
           削除する
         </wa-button>
       </div>
@@ -358,10 +354,10 @@ function renderImportConfirmDialog(
     >
       ${renderImportPreviewBody(preview)}
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${props.onCancelImport}>
+        <wa-button size="s" @click=${props.onCancelImport}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${props.onConfirmImport}>
+        <wa-button size="s" variant="brand" @click=${props.onConfirmImport}>
           インポートを実行
         </wa-button>
       </div>
@@ -386,14 +382,10 @@ function renderClearAllDialog(
         登録されているすべての職員・組織データを削除しますか？この操作は元に戻せません。
       </p>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${props.onCancelClearAll}>
+        <wa-button size="s" @click=${props.onCancelClearAll}>
           キャンセル
         </wa-button>
-        <wa-button
-          size="small"
-          variant="danger"
-          @click=${props.onConfirmClearAll}
-        >
+        <wa-button size="s" variant="danger" @click=${props.onConfirmClearAll}>
           すべて削除
         </wa-button>
       </div>

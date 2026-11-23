@@ -52,7 +52,7 @@ function renderThemeButton(
   return html`
     <wa-button
       id=${option.id}
-      size="small"
+      size="s"
       variant="neutral"
       appearance=${isActive ? "filled" : "plain"}
       aria-label=${option.label}
@@ -95,7 +95,7 @@ function renderImportButtons(
   return html`
     <div class="settings-view__btn-grid">
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${() => onRequestImport("staff-csv")}
@@ -104,7 +104,7 @@ function renderImportButtons(
         職員 CSV をインポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${() => onRequestImport("org-csv")}
@@ -113,7 +113,7 @@ function renderImportButtons(
         組織 CSV をインポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="brand"
         appearance="outlined"
         @click=${() => onRequestImport("json")}
@@ -129,7 +129,7 @@ function renderExportButtons(props: SettingsViewProps): TemplateResult {
   return html`
     <div class="settings-view__btn-grid">
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${props.onExportStaffCsv}
@@ -138,7 +138,7 @@ function renderExportButtons(props: SettingsViewProps): TemplateResult {
         職員 CSV をエクスポート（BOM付 UTF-8）
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${props.onExportOrgCsv}
@@ -147,7 +147,7 @@ function renderExportButtons(props: SettingsViewProps): TemplateResult {
         組織 CSV をエクスポート（BOM付 UTF-8）
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${props.onExportJson}
@@ -156,7 +156,7 @@ function renderExportButtons(props: SettingsViewProps): TemplateResult {
         一括 JSON をエクスポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="danger"
         appearance="outlined"
         @click=${props.onRequestClearAll}
@@ -173,8 +173,8 @@ function renderImportExportSection(props: SettingsViewProps): TemplateResult {
     <section class="settings-view__section">
       <h2 class="settings-view__heading">データ管理（CSV / JSON）</h2>
       <div class="settings-view__stats">
-        <wa-tag size="small">職員: ${props.staffCount} 件</wa-tag>
-        <wa-tag size="small">組織: ${props.organizationCount} 件</wa-tag>
+        <wa-tag size="s">職員: ${props.staffCount} 件</wa-tag>
+        <wa-tag size="s">組織: ${props.organizationCount} 件</wa-tag>
       </div>
       <p class="settings-view__description">
         CSV（UTF-8 / Shift_JIS 自動判別）または一括 JSON

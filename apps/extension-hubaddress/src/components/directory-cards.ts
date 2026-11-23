@@ -385,7 +385,7 @@ function renderOrganizationHeader(
     <div class="directory-card__header">
       <div class="directory-card__title-group">
         ${renderOrganizationName(org.department, safeKey, callbacks.onCopy)}
-        ${org.title ? html`<wa-tag size="small">${org.title}</wa-tag>` : nothing}
+        ${org.title ? html`<wa-tag size="s">${org.title}</wa-tag>` : nothing}
       </div>
       ${renderCardActions(`org-${safeKey}`, onEdit, onDelete)}
     </div>

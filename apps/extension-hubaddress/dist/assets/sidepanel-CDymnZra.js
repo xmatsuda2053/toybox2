@@ -4582,7 +4582,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
     <div class="directory-card__header">
       <div class="directory-card__title-group">
         ${mc(e.department,t,n.onCopy)}
-        ${e.title?j`<wa-tag size="small">${e.title}</wa-tag>`:M}
+        ${e.title?j`<wa-tag size="s">${e.title}</wa-tag>`:M}
       </div>
       ${ac(`org-${t}`,r,i)}
     </div>
@@ -4601,7 +4601,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
   `}var _c=[{value:`light`,id:`theme-btn-light`,label:`ライト`,icon:`sun-solid-full`},{value:`dark`,id:`theme-btn-dark`,label:`ダーク`,icon:`moon-solid-full`},{value:`system`,id:`theme-btn-system`,label:`システム`,icon:`display-solid-full`}];function vc(e,t,n){let r=t===e.value;return j`
     <wa-button
       id=${e.id}
-      size="small"
+      size="s"
       variant="neutral"
       appearance=${r?`filled`:`plain`}
       aria-label=${e.label}
@@ -4627,7 +4627,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
   `}function bc(e){return j`
     <div class="settings-view__btn-grid">
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${()=>e(`staff-csv`)}
@@ -4636,7 +4636,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         職員 CSV をインポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${()=>e(`org-csv`)}
@@ -4645,7 +4645,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         組織 CSV をインポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="brand"
         appearance="outlined"
         @click=${()=>e(`json`)}
@@ -4657,7 +4657,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
   `}function xc(e){return j`
     <div class="settings-view__btn-grid">
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${e.onExportStaffCsv}
@@ -4666,7 +4666,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         職員 CSV をエクスポート（BOM付 UTF-8）
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${e.onExportOrgCsv}
@@ -4675,7 +4675,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         組織 CSV をエクスポート（BOM付 UTF-8）
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="neutral"
         appearance="outlined"
         @click=${e.onExportJson}
@@ -4684,7 +4684,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         一括 JSON をエクスポート
       </wa-button>
       <wa-button
-        size="small"
+        size="s"
         variant="danger"
         appearance="outlined"
         @click=${e.onRequestClearAll}
@@ -4697,8 +4697,8 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
     <section class="settings-view__section">
       <h2 class="settings-view__heading">データ管理（CSV / JSON）</h2>
       <div class="settings-view__stats">
-        <wa-tag size="small">職員: ${e.staffCount} 件</wa-tag>
-        <wa-tag size="small">組織: ${e.organizationCount} 件</wa-tag>
+        <wa-tag size="s">職員: ${e.staffCount} 件</wa-tag>
+        <wa-tag size="s">組織: ${e.organizationCount} 件</wa-tag>
       </div>
       <p class="settings-view__description">
         CSV（UTF-8 / Shift_JIS 自動判別）または一括 JSON
@@ -4730,37 +4730,37 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
   `}function Tc(e){return{editingId:e?.id,staffId:e?.staffId??``,name:e?.name??``,furigana:e?.furigana??``,department:e?.department??``,title:e?.title??``,emailsText:e?e.emails.join(`, `):``,error:null}}function Ec(e){return{editingId:e?.id,department:e?.department??``,extra:e?.extra??``,location:e?.location??``,title:e?.title??``,extensionNumber:e?.extensionNumber??``,phoneNumber:e?.phoneNumber??``,faxNumber:e?.faxNumber??``,notes:e?.notes??``,error:null}}function Dc(e){return e.target.value??``}function Oc(e,t){return j`
     <wa-input
       label="氏名 *"
-      size="small"
+      size="s"
       .value=${e.name}
       @input=${e=>t({name:Dc(e),error:null})}
     ></wa-input>
     <wa-input
       label="フリガナ"
-      size="small"
+      size="s"
       .value=${e.furigana}
       @input=${e=>t({furigana:Dc(e)})}
     ></wa-input>
     <wa-input
       label="職員番号"
-      size="small"
+      size="s"
       .value=${e.staffId}
       @input=${e=>t({staffId:Dc(e)})}
     ></wa-input>
     <wa-input
       label="所属"
-      size="small"
+      size="s"
       .value=${e.department}
       @input=${e=>t({department:Dc(e)})}
     ></wa-input>
     <wa-input
       label="役職"
-      size="small"
+      size="s"
       .value=${e.title}
       @input=${e=>t({title:Dc(e)})}
     ></wa-input>
     <wa-textarea
       label="メールアドレス（カンマ区切りで複数入力可）"
-      size="small"
+      size="s"
       rows="2"
       .value=${e.emailsText}
       @input=${e=>t({emailsText:Dc(e)})}
@@ -4776,10 +4776,10 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         ${t.error?j`<p class="editor-dialog__error">${t.error}</p>`:M}
       </div>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${e.onCloseStaffForm}>
+        <wa-button size="s" @click=${e.onCloseStaffForm}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${e.onSaveStaffForm}>
+        <wa-button size="s" variant="brand" @click=${e.onSaveStaffForm}>
           保存
         </wa-button>
       </div>
@@ -4787,50 +4787,50 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
   `:M}function Ac(e,t){return j`
     <wa-input
       label="所属 *"
-      size="small"
+      size="s"
       .value=${e.department}
       @input=${e=>t({department:Dc(e),error:null})}
     ></wa-input>
     <wa-input
       label="その他（建物・階など）"
-      size="small"
+      size="s"
       .value=${e.extra}
       @input=${e=>t({extra:Dc(e)})}
     ></wa-input>
     <wa-input
       label="場所"
-      size="small"
+      size="s"
       .value=${e.location}
       @input=${e=>t({location:Dc(e)})}
     ></wa-input>
     <wa-input
       label="役職・席"
-      size="small"
+      size="s"
       .value=${e.title}
       @input=${e=>t({title:Dc(e)})}
     ></wa-input>
   `}function jc(e,t){return j`
     <wa-input
       label="内線番号"
-      size="small"
+      size="s"
       .value=${e.extensionNumber}
       @input=${e=>t({extensionNumber:Dc(e)})}
     ></wa-input>
     <wa-input
       label="外線番号"
-      size="small"
+      size="s"
       .value=${e.phoneNumber}
       @input=${e=>t({phoneNumber:Dc(e)})}
     ></wa-input>
     <wa-input
       label="FAX番号"
-      size="small"
+      size="s"
       .value=${e.faxNumber}
       @input=${e=>t({faxNumber:Dc(e)})}
     ></wa-input>
     <wa-textarea
       label="備考"
-      size="small"
+      size="s"
       rows="2"
       .value=${e.notes}
       @input=${e=>t({notes:Dc(e)})}
@@ -4845,10 +4845,10 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         ${t.error?j`<p class="editor-dialog__error">${t.error}</p>`:M}
       </div>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${e.onCloseOrgForm}>
+        <wa-button size="s" @click=${e.onCloseOrgForm}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${e.onSaveOrgForm}>
+        <wa-button size="s" variant="brand" @click=${e.onSaveOrgForm}>
           保存
         </wa-button>
       </div>
@@ -4859,14 +4859,10 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         「${t.label}」を削除しますか？この操作は元に戻せません。
       </p>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${e.onCancelDelete}>
+        <wa-button size="s" @click=${e.onCancelDelete}>
           キャンセル
         </wa-button>
-        <wa-button
-          size="small"
-          variant="danger"
-          @click=${e.onConfirmDelete}
-        >
+        <wa-button size="s" variant="danger" @click=${e.onConfirmDelete}>
           削除する
         </wa-button>
       </div>
@@ -4896,10 +4892,10 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
     >
       ${Fc(t)}
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${e.onCancelImport}>
+        <wa-button size="s" @click=${e.onCancelImport}>
           キャンセル
         </wa-button>
-        <wa-button size="small" variant="brand" @click=${e.onConfirmImport}>
+        <wa-button size="s" variant="brand" @click=${e.onConfirmImport}>
           インポートを実行
         </wa-button>
       </div>
@@ -4914,14 +4910,10 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         登録されているすべての職員・組織データを削除しますか？この操作は元に戻せません。
       </p>
       <div slot="footer" class="editor-dialog__footer">
-        <wa-button size="small" @click=${e.onCancelClearAll}>
+        <wa-button size="s" @click=${e.onCancelClearAll}>
           キャンセル
         </wa-button>
-        <wa-button
-          size="small"
-          variant="danger"
-          @click=${e.onConfirmClearAll}
-        >
+        <wa-button size="s" variant="danger" @click=${e.onConfirmClearAll}>
           すべて削除
         </wa-button>
       </div>
@@ -4934,7 +4926,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
       <nav class="hubaddress-shell__tabs" aria-label="表示切り替え">
         <wa-button
           class="hubaddress-shell__tab-btn hubaddress-shell__tab-btn--directory"
-          size="small"
+          size="s"
           variant=${r(`staff`)}
           appearance=${i(`staff`)}
           @click=${()=>this.controller.setActiveTab(`staff`)}
@@ -4944,7 +4936,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         </wa-button>
         <wa-button
           class="hubaddress-shell__tab-btn hubaddress-shell__tab-btn--directory"
-          size="small"
+          size="s"
           variant=${r(`organizations`)}
           appearance=${i(`organizations`)}
           @click=${()=>this.controller.setActiveTab(`organizations`)}
@@ -4954,7 +4946,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
         </wa-button>
         <wa-button
           class="hubaddress-shell__tab-btn"
-          size="small"
+          size="s"
           variant=${r(`settings`)}
           appearance=${i(`settings`)}
           @click=${()=>this.controller.setActiveTab(`settings`)}
@@ -4965,7 +4957,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
       </nav>
     `}renderSearchInput(e,t,n){return j`
       <wa-input
-        size="medium"
+        size="m"
         placeholder=${e}
         .value=${t}
         with-clear
@@ -4983,7 +4975,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
             </h2>
             <wa-button
               id="add-staff-btn"
-              size="small"
+              size="s"
               variant="neutral"
               appearance="outlined"
               aria-label="職員を追加"
@@ -5014,7 +5006,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
             </h2>
             <wa-button
               id="add-organization-btn"
-              size="small"
+              size="s"
               variant="neutral"
               appearance="outlined"
               aria-label="組織を追加"
