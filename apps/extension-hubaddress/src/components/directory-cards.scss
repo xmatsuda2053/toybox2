@@ -1,0 +1,117 @@
+.directory-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-xs);
+}
+
+.directory-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wa-space-2xs);
+  padding: var(--wa-space-s);
+  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
+  border-radius: var(--wa-border-radius-m);
+  background-color: var(--wa-color-surface-default);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.directory-card--favorite {
+  border-color: var(--wa-color-brand-border-normal);
+}
+
+.directory-card--highlighted {
+  border-color: var(--wa-color-brand-fill-loud);
+  background-color: var(--wa-color-brand-fill-quiet);
+}
+
+.directory-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--wa-space-xs);
+}
+
+.directory-card__title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  min-width: 0;
+}
+
+.directory-card__name {
+  margin: 0;
+  font-size: var(--wa-font-size-s);
+  font-weight: var(--wa-font-weight-semibold);
+  color: var(--wa-color-text-normal);
+}
+
+.directory-card__sub {
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+}
+
+.directory-card__dept-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--wa-color-brand-text-normal);
+  font: inherit;
+  font-size: var(--wa-font-size-xs);
+  text-align: left;
+  cursor: pointer;
+}
+
+.directory-card__dept-btn:hover {
+  text-decoration: underline;
+}
+
+.directory-card__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wa-space-2xs);
+}
+
+.directory-card__copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-2xs);
+  padding: var(--wa-space-3xs) var(--wa-space-xs);
+  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
+  border-radius: var(--wa-border-radius-s);
+  background-color: var(--wa-color-surface-raised);
+  color: var(--wa-color-text-normal);
+  font: inherit;
+  font-size: var(--wa-font-size-xs);
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.directory-card__copy-btn:hover {
+  border-color: var(--wa-color-brand-border-normal);
+}
+
+.directory-card__copy-label {
+  color: var(--wa-color-text-quiet);
+}
+
+.directory-card__copy-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.directory-card__notes {
+  margin: 0;
+  font-size: var(--wa-font-size-xs);
+  color: var(--wa-color-text-quiet);
+}
+
+.directory-card__fav-btn--active {
+  color: var(--wa-color-warning-text-normal);
+}
