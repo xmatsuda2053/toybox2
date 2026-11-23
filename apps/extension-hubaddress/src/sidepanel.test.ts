@@ -533,14 +533,14 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(sortBtnMatch).not.toBeNull();
     expect(sortBtnMatch?.[0]).toContain('size="xs"');
     expect(sortBtnMatch?.[0]).toContain('slot="trigger"');
-    expect(sortBtnMatch?.[0]).toContain("with-caret");
+    expect(sortBtnMatch?.[0]).not.toContain("with-caret");
 
     const sortIndex = appSource.indexOf('id="sort-staff-btn"');
     const addIndex = appSource.indexOf('id="add-staff-btn"');
     expect(sortIndex).toBeGreaterThan(-1);
     expect(addIndex).toBeGreaterThan(sortIndex);
 
-    expect(appSource).toContain('name="arrows-up-down-solid-full"');
+    expect(appSource).toContain('name="arrow-down-wide-short-solid-full"');
     expect(appSource).toMatch(
       /<wa-tooltip[^>]*for="sort-staff-btn"[^>]*trigger="hover"/,
     );

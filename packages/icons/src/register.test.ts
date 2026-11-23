@@ -82,6 +82,7 @@ describe("Web Awesome ローカル SVG アイコン登録基盤", () => {
       expect(hasIcon("tags-solid-full")).toBe(true);
       expect(hasIcon("arrow-down-a-z-solid-full")).toBe(true);
       expect(hasIcon("arrow-down-1-9-solid-full")).toBe(true);
+      expect(hasIcon("arrow-down-wide-short-solid-full")).toBe(true);
       for (let i = 0; i <= 9; i++) {
         expect(hasIcon(`number-${i}-solid-full`)).toBe(true);
       }

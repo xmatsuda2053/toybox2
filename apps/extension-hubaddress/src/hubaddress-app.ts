@@ -180,9 +180,8 @@ export class HubAddressApp extends LitElement {
           variant="neutral"
           appearance="outlined"
           aria-label="職員一覧の並び順を切り替え"
-          with-caret
         >
-          <wa-icon name="arrows-up-down-solid-full"></wa-icon>
+          <wa-icon name="arrow-down-wide-short-solid-full"></wa-icon>
         </wa-button>
         ${STAFF_SORT_OPTIONS.map(
           (option) => html`
