@@ -88,6 +88,7 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
  * - 仕様4: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
  * - 仕様5: sortStaff で所属組織→フリガナ五十音昇順にソートできること（空文字は末尾）
  * - 仕様6: sortOrganizations で組織名→id昇順にソートできること（空文字は末尾）
+ * - 仕様7: sortStaff に sortMode（"department" / "name" / "staffId"）を指定して昇順ソートできること
  */
 describe("Directory Filter Utils Tests", () => {
   it("formatStaffIdFiveDigits で 5桁表示（5桁未満0埋め・6桁以上は下5桁）へ整形できること", () => {
@@ -279,5 +280,58 @@ describe("Directory Filter Utils Tests", () => {
     const sorted = sortOrganizations(orgs);
     expect(sorted.map((o) => o.id)).toEqual([4, 2, 3, 10, 1]);
     expect(orgs.map((o) => o.id)).toEqual([10, 2, 3, 4, 1]);
+  });
+
+  it("sortStaff に sortMode（department / name / staffId）を指定して昇順ソートできること", () => {
+    const records: StaffRecord[] = [
+      {
+        id: 1,
+        staffId: "10",
+        name: "田中 太郎",
+        furigana: "たなか たろう",
+        department: "総務課",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 2,
+        staffId: "2",
+        name: "あおき 次郎",
+        furigana: "",
+        department: "営業課",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 3,
+        staffId: "",
+        name: "佐藤 花子",
+        furigana: "サトウ ハナコ",
+        department: "人事課",
+        title: "",
+        emails: [],
+      },
+      {
+        id: 4,
+        staffId: "1",
+        name: "高橋 一郎",
+        furigana: "たかはし いちろう",
+        department: "総務課",
+        title: "",
+        emails: [],
+      },
+    ];
+
+    expect(sortStaff(records, "department").map((r) => r.id)).toEqual([
+      2, 3, 4, 1,
+    ]);
+
+    // 氏名順: あおき(未入力は氏名補完で「あおき」) -> サトウ(さとう) -> たかはし -> たなか
+    expect(sortStaff(records, "name").map((r) => r.id)).toEqual([2, 3, 4, 1]);
+
+    // 職員番号順: "1" -> "2" -> "10" -> ""(末尾)
+    expect(sortStaff(records, "staffId").map((r) => r.id)).toEqual([
+      4, 2, 1, 3,
+    ]);
   });
 });

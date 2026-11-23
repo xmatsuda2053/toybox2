@@ -61,6 +61,13 @@
   color: var(--wa-color-text-normal);
 }
 
+.hubaddress-shell__column-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wa-space-xs);
+  flex-shrink: 0;
+}
+
 .hubaddress-shell__hidden-input {
   display: none;
 }

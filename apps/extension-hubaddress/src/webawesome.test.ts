@@ -35,6 +35,8 @@ describe("Web Awesome 基盤登録テスト (webawesome.ts)", () => {
     expect(WEB_AWESOME_COMPONENTS).toContain("button-group");
     expect(WEB_AWESOME_COMPONENTS).toContain("callout");
     expect(WEB_AWESOME_COMPONENTS).toContain("dialog");
+    expect(WEB_AWESOME_COMPONENTS).toContain("dropdown");
+    expect(WEB_AWESOME_COMPONENTS).toContain("dropdown-item");
     expect(WEB_AWESOME_COMPONENTS).toContain("icon");
     expect(WEB_AWESOME_COMPONENTS).toContain("input");
     expect(WEB_AWESOME_COMPONENTS).toContain("select");

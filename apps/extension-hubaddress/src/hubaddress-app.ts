@@ -25,7 +25,19 @@ import type {
   ActiveTab,
   OrganizationRecord,
   StaffRecord,
+  StaffSortMode,
 } from "./models/directory.model";
+
+interface StaffSortOption {
+  readonly value: StaffSortMode;
+  readonly label: string;
+}
+
+const STAFF_SORT_OPTIONS: readonly StaffSortOption[] = [
+  { value: "department", label: "所属部署・氏名" },
+  { value: "name", label: "氏名" },
+  { value: "staffId", label: "職員番号" },
+] as const;
 
 /**
  * HubAddress Side Panel アプリケーションルートコンポーネント
@@ -135,6 +147,61 @@ export class HubAddressApp extends LitElement {
     };
   }
 
+  private getStaffSortLabel(mode: StaffSortMode): string {
+    return (
+      STAFF_SORT_OPTIONS.find((option) => option.value === mode)?.label ??
+      "所属部署・氏名"
+    );
+  }
+
+  private handleStaffSortSelect(
+    event: CustomEvent<{ item?: { value?: string } }>,
+  ): void {
+    const value = event.detail?.item?.value;
+    if (value === "department" || value === "name" || value === "staffId") {
+      void this.controller.setStaffSortMode(value);
+    }
+  }
+
+  private renderStaffSortDropdown(): TemplateResult {
+    const currentMode = this.controller.staffSortMode;
+    const currentLabel = this.getStaffSortLabel(currentMode);
+
+    return html`
+      <wa-dropdown
+        placement="bottom-end"
+        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
+          this.handleStaffSortSelect(e)}
+      >
+        <wa-button
+          id="sort-staff-btn"
+          slot="trigger"
+          size="xs"
+          variant="neutral"
+          appearance="outlined"
+          aria-label="職員一覧の並び順を切り替え"
+          with-caret
+        >
+          <wa-icon name="arrows-up-down-solid-full"></wa-icon>
+        </wa-button>
+        ${STAFF_SORT_OPTIONS.map(
+          (option) => html`
+            <wa-dropdown-item
+              type="checkbox"
+              value=${option.value}
+              ?checked=${currentMode === option.value}
+            >
+              ${option.label}
+            </wa-dropdown-item>
+          `,
+        )}
+      </wa-dropdown>
+      <wa-tooltip for="sort-staff-btn" trigger="hover"
+        >並び順: ${currentLabel}</wa-tooltip
+      >
+    `;
+  }
+
   private renderStaffColumn(): TemplateResult {
     const items = this.controller.filteredStaff;
     const isActive = this.controller.activeTab === "staff";
@@ -146,21 +213,24 @@ export class HubAddressApp extends LitElement {
             <h2 class="hubaddress-shell__column-heading">
               職員一覧 (${items.length})
             </h2>
-            <wa-button
-              id="add-staff-btn"
-              size="s"
-              variant="brand"
-              appearance="outlined"
-              aria-label="職員を追加"
-              @click=${() => {
-                this.staffForm = createStaffFormState();
-              }}
-            >
-              <wa-icon name="plus-solid-full"></wa-icon>
-            </wa-button>
-            <wa-tooltip for="add-staff-btn" trigger="hover"
-              >職員を追加</wa-tooltip
-            >
+            <div class="hubaddress-shell__column-actions">
+              ${this.renderStaffSortDropdown()}
+              <wa-button
+                id="add-staff-btn"
+                size="xs"
+                variant="brand"
+                appearance="outlined"
+                aria-label="職員を追加"
+                @click=${() => {
+                  this.staffForm = createStaffFormState();
+                }}
+              >
+                <wa-icon name="plus-solid-full"></wa-icon>
+              </wa-button>
+              <wa-tooltip for="add-staff-btn" trigger="hover"
+                >職員を追加</wa-tooltip
+              >
+            </div>
           </div>
           ${this.renderSearchInput(
             "職員番号・氏名・所属・役職を検索...",
@@ -212,21 +282,23 @@ export class HubAddressApp extends LitElement {
             <h2 class="hubaddress-shell__column-heading">
               組織一覧 (${items.length})
             </h2>
-            <wa-button
-              id="add-organization-btn"
-              size="s"
-              variant="brand"
-              appearance="outlined"
-              aria-label="組織を追加"
-              @click=${() => {
-                this.orgForm = createOrganizationFormState();
-              }}
-            >
-              <wa-icon name="plus-solid-full"></wa-icon>
-            </wa-button>
-            <wa-tooltip for="add-organization-btn" trigger="hover"
-              >組織を追加</wa-tooltip
-            >
+            <div class="hubaddress-shell__column-actions">
+              <wa-button
+                id="add-organization-btn"
+                size="xs"
+                variant="brand"
+                appearance="outlined"
+                aria-label="組織を追加"
+                @click=${() => {
+                  this.orgForm = createOrganizationFormState();
+                }}
+              >
+                <wa-icon name="plus-solid-full"></wa-icon>
+              </wa-button>
+              <wa-tooltip for="add-organization-btn" trigger="hover"
+                >組織を追加</wa-tooltip
+              >
+            </div>
           </div>
           ${this.renderSearchInput(
             "所属・内線・外線・場所・備考を検索...",

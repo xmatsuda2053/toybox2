@@ -1,6 +1,7 @@
 import type {
   OrganizationRecord,
   StaffRecord,
+  StaffSortMode,
 } from "../models/directory.model";
 
 /**
@@ -143,20 +144,58 @@ function compareIdAsc(aId?: number, bId?: number): number {
   return (aId ?? Number.MAX_SAFE_INTEGER) - (bId ?? Number.MAX_SAFE_INTEGER);
 }
 
-/**
- * 職員レコードを「所属組織 → フリガナ五十音昇順 → 氏名 → id」でソートする
- */
-export function sortStaff(records: StaffRecord[]): StaffRecord[] {
-  return [...records].sort(
-    (a, b) =>
-      compareTextEmptyLast(a.department, b.department) ||
-      compareTextEmptyLast(
-        normalizeSearchText(a.furigana ?? ""),
-        normalizeSearchText(b.furigana ?? ""),
-      ) ||
-      compareTextEmptyLast(a.name, b.name) ||
-      compareIdAsc(a.id, b.id),
+function getStaffNameSortKey(staff: StaffRecord): string {
+  const furigana = (staff.furigana ?? "").trim();
+  return normalizeSearchText(furigana.length > 0 ? furigana : staff.name);
+}
+
+function compareStaffByDepartment(a: StaffRecord, b: StaffRecord): number {
+  return (
+    compareTextEmptyLast(a.department, b.department) ||
+    compareTextEmptyLast(
+      normalizeSearchText(a.furigana ?? ""),
+      normalizeSearchText(b.furigana ?? ""),
+    ) ||
+    compareTextEmptyLast(a.name, b.name) ||
+    compareIdAsc(a.id, b.id)
   );
+}
+
+function compareStaffByName(a: StaffRecord, b: StaffRecord): number {
+  return (
+    compareTextEmptyLast(getStaffNameSortKey(a), getStaffNameSortKey(b)) ||
+    compareTextEmptyLast(a.name, b.name) ||
+    compareTextEmptyLast(a.department, b.department) ||
+    compareIdAsc(a.id, b.id)
+  );
+}
+
+function compareStaffByStaffId(a: StaffRecord, b: StaffRecord): number {
+  return (
+    compareTextEmptyLast(a.staffId, b.staffId) ||
+    compareTextEmptyLast(a.name, b.name) ||
+    compareIdAsc(a.id, b.id)
+  );
+}
+
+const STAFF_SORT_COMPARATORS: Record<
+  StaffSortMode,
+  (a: StaffRecord, b: StaffRecord) => number
+> = {
+  department: compareStaffByDepartment,
+  name: compareStaffByName,
+  staffId: compareStaffByStaffId,
+};
+
+/**
+ * 職員レコードを指定されたソート順（昇順）でソートする
+ */
+export function sortStaff(
+  records: StaffRecord[],
+  sortMode: StaffSortMode = "department",
+): StaffRecord[] {
+  const comparator = STAFF_SORT_COMPARATORS[sortMode];
+  return [...records].sort(comparator);
 }
 
 /**
