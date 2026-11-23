@@ -62,6 +62,11 @@
   min-width: 0;
 }
 
+.directory-card__title-group--staff {
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
 .directory-card__name {
   margin: 0;
   font-size: var(--wa-font-size-m);
@@ -71,8 +76,63 @@
 }
 
 .directory-card__staff-id {
+  height: 100%;
+  box-sizing: border-box;
   font-size: var(--wa-font-size-s);
   font-variant-numeric: tabular-nums;
+}
+
+.directory-card__inline-copy-btn {
+  display: inline-flex;
+  align-items: stretch;
+  align-self: stretch;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--wa-border-radius-s);
+  background: transparent;
+  cursor: pointer;
+}
+
+.directory-card__inline-copy-btn:hover {
+  box-shadow: 0 0 0 var(--wa-border-width-s) var(--wa-color-brand-border-normal);
+}
+
+.directory-card__name-copy-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.directory-card__name-copy-btn:hover {
+  color: var(--wa-color-brand-text-normal);
+  text-decoration: underline;
+}
+
+.directory-card__name-stack {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.directory-card__furigana {
+  font-size: var(--wa-font-size-xs);
+  line-height: 1.2;
+  color: var(--wa-color-text-quiet);
+}
+
+.directory-card__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--wa-space-xs);
+  min-width: 0;
 }
 
 .directory-card__sub {

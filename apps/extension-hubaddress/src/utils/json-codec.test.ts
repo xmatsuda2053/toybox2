@@ -66,6 +66,7 @@ describe("JSON Codec Tests", () => {
         id: 1,
         staffId: "001",
         name: " 佐藤 花子 ",
+        furigana: " さとう はなこ ",
         department: "人事課",
         title: "主査",
         emails: [" sato@example.com ", ""],
@@ -92,6 +93,7 @@ describe("JSON Codec Tests", () => {
       {
         staffId: "001",
         name: "佐藤 花子",
+        furigana: "さとう はなこ",
         department: "人事課",
         title: "主査",
         emails: ["sato@example.com"],

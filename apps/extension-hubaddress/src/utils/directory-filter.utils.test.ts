@@ -16,6 +16,7 @@ const SAMPLE_STAFF: StaffRecord[] = [
     id: 1,
     staffId: "0010001",
     name: "田中 太郎",
+    furigana: "たなか たろう",
     department: "総務部 総務課",
     title: "課長",
     emails: ["tanaka.taro@example.com", "t-tanaka@sub.example.com"],
@@ -24,6 +25,7 @@ const SAMPLE_STAFF: StaffRecord[] = [
     id: 2,
     staffId: "123",
     name: "佐藤 花子",
+    furigana: "サトウ ハナコ",
     department: "総務部 人事課",
     title: "主査",
     emails: ["sato.hanako@example.com"],
@@ -32,6 +34,7 @@ const SAMPLE_STAFF: StaffRecord[] = [
     id: 3,
     staffId: "0020001",
     name: "鈴木 一郎",
+    furigana: "すずき いちろう",
     department: "営業推進部 第一営業課",
     title: "課長補佐",
     emails: ["suzuki.ichiro@example.com"],
@@ -104,6 +107,18 @@ describe("Directory Filter Utils Tests", () => {
     ).toEqual(["0010001"]);
 
     expect(filterStaff(SAMPLE_STAFF, "00123").map((s) => s.staffId)).toEqual([
+      "123",
+    ]);
+
+    expect(filterStaff(SAMPLE_STAFF, "たなか").map((s) => s.staffId)).toEqual([
+      "0010001",
+    ]);
+
+    expect(filterStaff(SAMPLE_STAFF, "タロウ").map((s) => s.staffId)).toEqual([
+      "0010001",
+    ]);
+
+    expect(filterStaff(SAMPLE_STAFF, "さとう").map((s) => s.staffId)).toEqual([
       "123",
     ]);
   });

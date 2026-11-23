@@ -224,6 +224,88 @@ function renderOrganizationContacts(
   `;
 }
 
+function renderStaffIdBadge(
+  formattedId: string,
+  safeKey: string,
+  onCopy: (label: string, value: string) => void,
+): TemplateResult | typeof nothing {
+  if (!formattedId) {
+    return nothing;
+  }
+
+  const staffIdBtnId = `staff-id-${safeKey}`;
+  return html`
+    <button
+      id=${staffIdBtnId}
+      type="button"
+      class="directory-card__inline-copy-btn"
+      aria-label=${`職員番号 ${formattedId} をコピー`}
+      @click=${() => onCopy("職員番号", formattedId)}
+    >
+      <wa-badge class="directory-card__staff-id" variant="neutral"
+        >${formattedId}</wa-badge
+      >
+    </button>
+    <wa-tooltip for=${staffIdBtnId} trigger="hover">
+      職員番号をコピー
+    </wa-tooltip>
+  `;
+}
+
+function renderStaffNameHeading(
+  trimmedName: string,
+  safeKey: string,
+  onCopy: (label: string, value: string) => void,
+): TemplateResult {
+  if (!trimmedName) {
+    return html`<h3 class="directory-card__name">（氏名未設定）</h3>`;
+  }
+
+  const nameBtnId = `staff-name-${safeKey}`;
+  return html`
+    <h3 class="directory-card__name">
+      <button
+        id=${nameBtnId}
+        type="button"
+        class="directory-card__name-copy-btn"
+        @click=${() => onCopy("氏名", trimmedName)}
+      >
+        ${trimmedName}
+      </button>
+      <wa-tooltip for=${nameBtnId} trigger="hover">氏名をコピー</wa-tooltip>
+    </h3>
+  `;
+}
+
+function renderStaffName(
+  staff: StaffRecord,
+  safeKey: string,
+  onCopy: (label: string, value: string) => void,
+): TemplateResult {
+  const trimmedName = staff.name.trim();
+  const trimmedFurigana = (staff.furigana ?? "").trim();
+
+  return html`
+    <div class="directory-card__name-stack">
+      ${
+        trimmedFurigana
+          ? html`<span class="directory-card__furigana"
+              >${trimmedFurigana}</span
+            >`
+          : nothing
+      }
+      <div class="directory-card__name-row">
+        ${renderStaffNameHeading(trimmedName, safeKey, onCopy)}
+        ${
+          staff.title
+            ? html`<span class="directory-card__sub">${staff.title}</span>`
+            : nothing
+        }
+      </div>
+    </div>
+  `;
+}
+
 /**
  * 職員カードのテンプレートをレンダリングする
  */
@@ -242,24 +324,11 @@ export function renderStaffCard(
   return html`
     <article class="directory-card">
       <div class="directory-card__header">
-        <div class="directory-card__title-group">
-          ${
-            formattedId
-              ? html`<wa-badge
-                  class="directory-card__staff-id"
-                  variant="neutral"
-                  >${formattedId}</wa-badge
-                >`
-              : nothing
-          }
-          <h3 class="directory-card__name">
-            ${staff.name || "（氏名未設定）"}
-          </h3>
-          ${
-            staff.title
-              ? html`<span class="directory-card__sub">${staff.title}</span>`
-              : nothing
-          }
+        <div
+          class="directory-card__title-group directory-card__title-group--staff"
+        >
+          ${renderStaffIdBadge(formattedId, safeKey, callbacks.onCopy)}
+          ${renderStaffName(staff, safeKey, callbacks.onCopy)}
         </div>
         ${renderCardActions(`staff-${safeKey}`, onEdit, onDelete)}
       </div>
@@ -271,6 +340,34 @@ export function renderStaffCard(
         callbacks.onCopy,
       )}
     </article>
+  `;
+}
+
+function renderOrganizationName(
+  department: string,
+  safeKey: string,
+  onCopy: (label: string, value: string) => void,
+): TemplateResult {
+  const trimmedDepartment = department.trim();
+  if (!trimmedDepartment) {
+    return html`<h3 class="directory-card__name">（所属未設定）</h3>`;
+  }
+
+  const orgNameBtnId = `org-name-${safeKey}`;
+  return html`
+    <h3 class="directory-card__name">
+      <button
+        id=${orgNameBtnId}
+        type="button"
+        class="directory-card__name-copy-btn"
+        @click=${() => onCopy("組織名", trimmedDepartment)}
+      >
+        ${trimmedDepartment}
+      </button>
+      <wa-tooltip for=${orgNameBtnId} trigger="hover">
+        組織名をコピー
+      </wa-tooltip>
+    </h3>
   `;
 }
 
@@ -287,9 +384,7 @@ function renderOrganizationHeader(
   return html`
     <div class="directory-card__header">
       <div class="directory-card__title-group">
-        <h3 class="directory-card__name">
-          ${org.department || "（所属未設定）"}
-        </h3>
+        ${renderOrganizationName(org.department, safeKey, callbacks.onCopy)}
         ${org.title ? html`<wa-tag size="small">${org.title}</wa-tag>` : nothing}
       </div>
       ${renderCardActions(`org-${safeKey}`, onEdit, onDelete)}

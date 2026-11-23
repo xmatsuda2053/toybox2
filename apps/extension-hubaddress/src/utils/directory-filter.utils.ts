@@ -42,10 +42,17 @@ export function getOrganizationKey(
   return `org:${org.department.trim()}::${org.title.trim()}`;
 }
 
-function splitSearchTokens(query: string): string[] {
-  return query
-    .trim()
+function normalizeSearchText(text: string): string {
+  return text
     .toLowerCase()
+    .replace(/[\u30a1-\u30f6]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0x60),
+    );
+}
+
+function splitSearchTokens(query: string): string[] {
+  return normalizeSearchText(query)
+    .trim()
     .split(/\s+/)
     .filter((token) => token.length > 0);
 }
@@ -54,7 +61,7 @@ function matchesAllTokens(fields: string[], tokens: string[]): boolean {
   if (tokens.length === 0) {
     return true;
   }
-  const haystack = fields.join(" ").toLowerCase();
+  const haystack = normalizeSearchText(fields.join(" "));
   return tokens.every((token) => haystack.includes(token));
 }
 
@@ -76,6 +83,7 @@ export function filterStaff(
         staff.staffId,
         formatStaffIdFiveDigits(staff.staffId),
         staff.name,
+        staff.furigana ?? "",
         staff.department,
         staff.title,
         ...staff.emails,

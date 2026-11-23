@@ -8,6 +8,8 @@ export interface StaffRecord {
   staffId: string;
   /** 氏名 */
   name: string;
+  /** フリガナ */
+  furigana?: string;
   /** 所属 */
   department: string;
   /** 役職 */

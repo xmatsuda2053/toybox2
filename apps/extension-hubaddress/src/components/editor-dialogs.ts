@@ -9,6 +9,7 @@ export interface StaffFormState {
   editingId?: number;
   staffId: string;
   name: string;
+  furigana: string;
   department: string;
   title: string;
   emailsText: string;
@@ -59,6 +60,7 @@ export function createStaffFormState(staff?: StaffRecord): StaffFormState {
     editingId: staff?.id,
     staffId: staff?.staffId ?? "",
     name: staff?.name ?? "",
+    furigana: staff?.furigana ?? "",
     department: staff?.department ?? "",
     title: staff?.title ?? "",
     emailsText: staff ? staff.emails.join(", ") : "",
@@ -97,6 +99,12 @@ function renderStaffDialogFields(
       size="small"
       .value=${form.name}
       @input=${(e: Event) => onUpdate({ name: readInputValue(e), error: null })}
+    ></wa-input>
+    <wa-input
+      label="フリガナ"
+      size="small"
+      .value=${form.furigana}
+      @input=${(e: Event) => onUpdate({ furigana: readInputValue(e) })}
     ></wa-input>
     <wa-input
       label="職員番号"

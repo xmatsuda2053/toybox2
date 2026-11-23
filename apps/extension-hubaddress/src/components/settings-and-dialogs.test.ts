@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { flattenTemplate } from "@shared/utils";
 import { renderSettingsView } from "./settings-view";
-import { renderEditorDialogs } from "./editor-dialogs";
+import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
 
 /**
  * テスト仕様: 設定ビュー・編集ダイアログの UI / SCSS 規約検証 (settings-and-dialogs.test.ts)
@@ -90,5 +90,41 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
   it("renderSettingsView と renderEditorDialogs が定義されていること", () => {
     expect(renderSettingsView).toBeTypeOf("function");
     expect(renderEditorDialogs).toBeTypeOf("function");
+  });
+
+  it("職員編集ダイアログにフリガナ入力欄が含まれ、createStaffFormState で初期値を受け継ぐこと", () => {
+    const form = createStaffFormState({
+      id: 1,
+      staffId: "0010001",
+      name: "田中 太郎",
+      furigana: "たなか たろう",
+      department: "総務課",
+      title: "課長",
+      emails: [],
+    });
+    expect(form.furigana).toBe("たなか たろう");
+
+    const rendered = flattenTemplate(
+      renderEditorDialogs({
+        staffForm: form,
+        orgForm: null,
+        deleteTarget: null,
+        pendingImport: null,
+        isClearAllConfirmOpen: false,
+        onUpdateStaffForm: () => {},
+        onSaveStaffForm: () => {},
+        onCloseStaffForm: () => {},
+        onUpdateOrgForm: () => {},
+        onSaveOrgForm: () => {},
+        onCloseOrgForm: () => {},
+        onConfirmDelete: () => {},
+        onCancelDelete: () => {},
+        onConfirmImport: () => {},
+        onCancelImport: () => {},
+        onConfirmClearAll: () => {},
+        onCancelClearAll: () => {},
+      }),
+    );
+    expect(rendered).toContain('label="フリガナ"');
   });
 });

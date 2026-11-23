@@ -31,6 +31,7 @@ function toCleanStaffRecord(record: StaffRecord): Omit<StaffRecord, "id"> {
   return {
     staffId: record.staffId.trim(),
     name: record.name.trim(),
+    furigana: (record.furigana ?? "").trim(),
     department: record.department.trim(),
     title: record.title.trim(),
     emails: record.emails
@@ -62,6 +63,7 @@ function parseStaffItem(item: unknown, index: number): Omit<StaffRecord, "id"> {
   return {
     staffId: readTrimmedString(item, "staffId"),
     name: readTrimmedString(item, "name"),
+    furigana: readTrimmedString(item, "furigana"),
     department: readTrimmedString(item, "department"),
     title: readTrimmedString(item, "title"),
     emails: readEmails(item),
