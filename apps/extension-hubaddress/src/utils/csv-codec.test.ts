@@ -90,16 +90,16 @@ describe("CSV Codec Tests", () => {
 
   describe("parseOrganizationCsv", () => {
     it("組織CSVテキストを正しく組織レコード配列に変換できること", () => {
-      const csv = `所属,その他,場所,役職,内線番号,外線番号,FAX番号,備考
-総務部 総務課,本庁舎 3階,3F-A,課長席,2101,03-1234-5678,03-1234-5679,代表窓口
-営業推進部,新館 2階,2F-B,,3205,03-1234-2222,,特記なし`;
+      const csv = `所属,場所,その他,役職,内線番号,外線番号,FAX番号,備考
+総務部 総務課,本庁舎,3階 3F-A,課長席,2101,03-1234-5678,03-1234-5679,代表窓口
+営業推進部,新館,2階 2F-B,,3205,03-1234-2222,,特記なし`;
 
       const result = parseOrganizationCsv(csv);
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         department: "総務部 総務課",
-        extra: "本庁舎 3階",
-        location: "3F-A",
+        location: "本庁舎",
+        extra: "3階 3F-A",
         title: "課長席",
         extensionNumber: "2101",
         phoneNumber: "03-1234-5678",
@@ -108,8 +108,8 @@ describe("CSV Codec Tests", () => {
       });
       expect(result[1]).toEqual({
         department: "営業推進部",
-        extra: "新館 2階",
-        location: "2F-B",
+        location: "新館",
+        extra: "2階 2F-B",
         title: "",
         extensionNumber: "3205",
         phoneNumber: "03-1234-2222",
@@ -122,7 +122,7 @@ describe("CSV Codec Tests", () => {
       expect(parseOrganizationCsv("")).toEqual([]);
       expect(
         parseOrganizationCsv(
-          "所属,その他,場所,役職,内線番号,外線番号,FAX番号,備考\n",
+          "所属,場所,その他,役職,内線番号,外線番号,FAX番号,備考\n",
         ),
       ).toEqual([]);
     });
@@ -181,8 +181,8 @@ describe("CSV Codec Tests", () => {
         {
           id: 10,
           department: "総務部 総務課",
-          extra: "本庁舎 3階",
-          location: "3F-A",
+          location: "本庁舎",
+          extra: "3階 3F-A",
           title: "課長席",
           extensionNumber: "2101",
           phoneNumber: "03-1234-2101",
@@ -193,15 +193,15 @@ describe("CSV Codec Tests", () => {
 
       const csv = serializeOrganizationCsv(organizations);
       expect(
-        csv.startsWith("所属,その他,場所,役職,内線番号,外線番号,FAX番号,備考"),
+        csv.startsWith("所属,場所,その他,役職,内線番号,外線番号,FAX番号,備考"),
       ).toBe(true);
 
       const restored = parseOrganizationCsv(csv);
       expect(restored).toEqual([
         {
           department: "総務部 総務課",
-          extra: "本庁舎 3階",
-          location: "3F-A",
+          location: "本庁舎",
+          extra: "3階 3F-A",
           title: "課長席",
           extensionNumber: "2101",
           phoneNumber: "03-1234-2101",
@@ -232,10 +232,17 @@ describe("CSV Codec Tests", () => {
         "../../test-data/sample-organizations.csv",
       );
       const csvText = readFileSync(csvPath, "utf-8");
+      expect(
+        csvText.startsWith(
+          "所属,場所,その他,役職,内線番号,外線番号,FAX番号,備考",
+        ),
+      ).toBe(true);
       const result = parseOrganizationCsv(csvText);
 
       expect(result).toHaveLength(8);
       expect(result[0].department).toBe("総務部 総務課");
+      expect(result[0].location).toBe("本庁舎");
+      expect(result[0].extra).toBe("3階 3F-A");
       expect(result[0].extensionNumber).toBe("2101");
     });
   });

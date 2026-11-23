@@ -124,12 +124,12 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(expandedHtml).toContain("tanaka@example.com");
   });
 
-  it("組織カードでは場所が連絡先の下に配置されていること", () => {
+  it("組織カードでは場所が連絡先の下に配置され、場所 / その他の順で表示されること", () => {
     const org = {
       id: 1,
       department: "総務部 総務課",
-      extra: "本庁舎 3階",
-      location: "3F-A",
+      location: "本庁舎",
+      extra: "3階 3F-A",
       title: "課長席",
       extensionNumber: "2101",
       phoneNumber: "03-1234-2101",
@@ -143,7 +143,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       }),
     );
     const contactsIdx = htmlStr.indexOf("2101");
-    const placeIdx = htmlStr.indexOf("本庁舎 3階");
+    const placeIdx = htmlStr.indexOf("本庁舎 / 3階 3F-A");
     expect(contactsIdx).toBeGreaterThan(-1);
     expect(placeIdx).toBeGreaterThan(contactsIdx);
   });

@@ -417,7 +417,7 @@ export function renderOrganizationCard(
 ): TemplateResult {
   const orgKey = getOrganizationKey(org);
   const safeKey = `${orgKey.replace(/[^a-zA-Z0-9_-]/g, "_")}-${index}`;
-  const placeInfo = [org.extra, org.location].filter(Boolean).join(" / ");
+  const placeInfo = [org.location, org.extra].filter(Boolean).join(" / ");
 
   return html`
     <article class="directory-card" data-org-key=${orgKey}>

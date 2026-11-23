@@ -28,7 +28,7 @@ describe("Import Preview Utils Tests", () => {
   });
 
   it("組織 CSV からプレビュー情報を生成できること", () => {
-    const csv = `所属,その他,場所,役職,内線番号,外線番号,FAX番号,備考\n総務課,本庁舎,3F,,2101,,,`;
+    const csv = `所属,場所,その他,役職,内線番号,外線番号,FAX番号,備考\n総務課,本庁舎,3階,,2101,,,`;
     const bytes = new TextEncoder().encode(csv);
 
     const preview = prepareImportPreview("orgs.csv", bytes, "org-csv", {

@@ -26,10 +26,10 @@ export interface OrganizationRecord {
   id?: number;
   /** 所属 (部局・課・係などの組織名) */
   department: string;
-  /** その他 (建物名・部屋名など) */
-  extra: string;
-  /** 場所 */
+  /** 場所 (建物名・施設名など) */
   location: string;
+  /** その他 (階数・部屋名など) */
+  extra: string;
   /** 役職 (係長席など特殊ケース) */
   title: string;
   /** 内線番号 */

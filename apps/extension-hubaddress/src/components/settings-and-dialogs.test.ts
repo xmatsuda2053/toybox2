@@ -3,7 +3,11 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { flattenTemplate } from "@shared/utils";
 import { renderSettingsView } from "./settings-view";
-import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
+import {
+  createOrganizationFormState,
+  createStaffFormState,
+  renderEditorDialogs,
+} from "./editor-dialogs";
 
 /**
  * テスト仕様: 設定ビュー・編集ダイアログの UI / SCSS 規約検証 (settings-and-dialogs.test.ts)
@@ -16,6 +20,7 @@ import { createStaffFormState, renderEditorDialogs } from "./editor-dialogs";
  * - 仕様6: settings-view.ts / editor-dialogs.ts 内で Web Awesome 非推奨の size 属性値（small / medium / large）が使われていないこと
  * - 仕様7: 設定画面のショートカット説明で英単語・設定 URL に折り返し防止が設定されていること
  * - 仕様8: データ管理セクションに冗長な文字コード自動判別・インポート説明文が含まれないこと
+ * - 仕様9: 組織追加・編集ダイアログで「場所（建物・施設など）」が「その他（階・部屋など）」より先に配置されていること
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -195,5 +200,46 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
     expect(rendered).toContain("職員 CSV をインポート");
     expect(rendered).toContain("組織 CSV をインポート");
     expect(rendered).toContain("一括 JSON をインポート");
+  });
+
+  it("組織編集ダイアログで「場所（建物・施設など）」が「その他（階・部屋など）」より先に配置されていること", () => {
+    const form = createOrganizationFormState({
+      id: 1,
+      department: "総務部 総務課",
+      location: "本庁舎",
+      extra: "3階 3F-A",
+      title: "課長席",
+      extensionNumber: "2101",
+      phoneNumber: "03-1234-2101",
+      faxNumber: "03-1234-2109",
+      notes: "代表窓口",
+    });
+
+    const rendered = flattenTemplate(
+      renderEditorDialogs({
+        staffForm: null,
+        orgForm: form,
+        deleteTarget: null,
+        pendingImport: null,
+        isClearAllConfirmOpen: false,
+        onUpdateStaffForm: () => {},
+        onSaveStaffForm: () => {},
+        onCloseStaffForm: () => {},
+        onUpdateOrgForm: () => {},
+        onSaveOrgForm: () => {},
+        onCloseOrgForm: () => {},
+        onConfirmDelete: () => {},
+        onCancelDelete: () => {},
+        onConfirmImport: () => {},
+        onCancelImport: () => {},
+        onConfirmClearAll: () => {},
+        onCancelClearAll: () => {},
+      }),
+    );
+
+    const locationIdx = rendered.indexOf('label="場所（建物・施設など）"');
+    const extraIdx = rendered.indexOf('label="その他（階・部屋など）"');
+    expect(locationIdx).toBeGreaterThan(-1);
+    expect(extraIdx).toBeGreaterThan(locationIdx);
   });
 });
