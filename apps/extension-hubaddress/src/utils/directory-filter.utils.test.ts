@@ -4,8 +4,8 @@ import {
   filterOrganizations,
   filterStaff,
   findMatchingOrganization,
-  getOrganizationFavoriteKey,
-  getStaffFavoriteKey,
+  getOrganizationKey,
+  getStaffKey,
 } from "./directory-filter.utils";
 import type {
   OrganizationRecord,
@@ -79,10 +79,10 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
  * テスト仕様: 一覧フィルタリング・検索・所属マッチング純粋関数 (directory-filter.utils.ts)
  *
  * - 仕様1: extractUniqueDepartments で職員と組織の所属を重複排除・ソートして取得できること
- * - 仕様2: filterStaff でスペース区切り AND 検索・所属絞り込み・お気に入り絞り込み・お気に入り優先ソートができること
- * - 仕様3: filterOrganizations で内線/外線/場所/備考などを含めた検索・絞り込み・お気に入り優先ソートができること
+ * - 仕様2: filterStaff でスペース区切り AND 検索・所属絞り込みができること
+ * - 仕様3: filterOrganizations で内線/外線/場所/備考などを含めた検索・絞り込みができること
  * - 仕様4: findMatchingOrganization で職員の所属に一致する組織レコードを検索できること
- * - 仕様5: getStaffFavoriteKey / getOrganizationFavoriteKey が一意かつ安定したキー文字列を生成すること
+ * - 仕様5: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
  */
 describe("Directory Filter Utils Tests", () => {
   it("extractUniqueDepartments で職員と組織から重複なしの所属一覧を取得できること", () => {
@@ -108,76 +108,44 @@ describe("Directory Filter Utils Tests", () => {
     expect(departments).toContain("開発部");
   });
 
-  it("filterStaff でフリーワード AND 検索・所属フィルタ・お気に入り絞り込みおよび優先表示ができること", () => {
-    const favKey = getStaffFavoriteKey(SAMPLE_STAFF[2]);
-    const favoriteKeys = new Set([favKey]);
-
-    // クエリなし：お気に入りが先頭に並ぶこと
-    const allSorted = filterStaff(SAMPLE_STAFF, {
+  it("filterStaff でフリーワード AND 検索および所属フィルタができること", () => {
+    const all = filterStaff(SAMPLE_STAFF, {
       query: "",
       department: "",
-      favoritesOnly: false,
-      favoriteKeys,
     });
-    expect(allSorted[0].staffId).toBe("0020001");
+    expect(all.map((s) => s.staffId)).toEqual([
+      "0010001",
+      "0010002",
+      "0020001",
+    ]);
 
-    // スペース区切り AND 検索（メールアドレス＋役職など横断）
     const searched = filterStaff(SAMPLE_STAFF, {
       query: "tanaka 課長",
       department: "",
-      favoritesOnly: false,
-      favoriteKeys,
     });
     expect(searched.map((s) => s.staffId)).toEqual(["0010001"]);
 
-    // 所属フィルタ
     const byDept = filterStaff(SAMPLE_STAFF, {
       query: "",
       department: "総務部 人事課",
-      favoritesOnly: false,
-      favoriteKeys,
     });
     expect(byDept.map((s) => s.staffId)).toEqual(["0010002"]);
-
-    // お気に入りのみ
-    const favOnly = filterStaff(SAMPLE_STAFF, {
-      query: "",
-      department: "",
-      favoritesOnly: true,
-      favoriteKeys,
-    });
-    expect(favOnly.map((s) => s.staffId)).toEqual(["0020001"]);
   });
 
-  it("filterOrganizations で内線・場所・備考検索およびお気に入り優先ソートができること", () => {
-    const favKey = getOrganizationFavoriteKey(SAMPLE_ORGS[1]);
-    const favoriteKeys = new Set([favKey]);
-
-    const sorted = filterOrganizations(SAMPLE_ORGS, {
-      query: "",
-      department: "",
-      favoritesOnly: false,
-      favoriteKeys,
-    });
-    expect(sorted[0].department).toBe("総務部 人事課");
-
+  it("filterOrganizations で内線・場所・備考検索および所属フィルタができること", () => {
     const byExtension = filterOrganizations(SAMPLE_ORGS, {
       query: "3201 東日本",
       department: "",
-      favoritesOnly: false,
-      favoriteKeys,
     });
     expect(byExtension).toHaveLength(1);
     expect(byExtension[0].department).toBe("営業推進部 第一営業課");
 
-    const favOnly = filterOrganizations(SAMPLE_ORGS, {
+    const byDept = filterOrganizations(SAMPLE_ORGS, {
       query: "",
-      department: "",
-      favoritesOnly: true,
-      favoriteKeys,
+      department: "総務部 人事課",
     });
-    expect(favOnly).toHaveLength(1);
-    expect(favOnly[0].department).toBe("総務部 人事課");
+    expect(byDept).toHaveLength(1);
+    expect(byDept[0].extensionNumber).toBe("2102");
   });
 
   it("findMatchingOrganization で職員の所属文字列から該当組織を検索できること", () => {
@@ -188,16 +156,16 @@ describe("Directory Filter Utils Tests", () => {
     expect(missing).toBeUndefined();
   });
 
-  it("getStaffFavoriteKey / getOrganizationFavoriteKey が安定したキーを生成すること", () => {
-    expect(getStaffFavoriteKey(SAMPLE_STAFF[0])).toBe("staff:0010001");
+  it("getStaffKey / getOrganizationKey が安定したキーを生成すること", () => {
+    expect(getStaffKey(SAMPLE_STAFF[0])).toBe("staff:0010001");
     expect(
-      getStaffFavoriteKey({
+      getStaffKey({
         staffId: "",
         name: "名前のみ",
         department: "総務課",
       }),
     ).toBe("staff:名前のみ::総務課");
-    expect(getOrganizationFavoriteKey(SAMPLE_ORGS[0])).toBe(
+    expect(getOrganizationKey(SAMPLE_ORGS[0])).toBe(
       "org:総務部 総務課::課長席",
     );
   });

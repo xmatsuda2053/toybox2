@@ -9,7 +9,8 @@ import { HubAddressApp } from "./hubaddress-app";
  * - 仕様1: hubaddress-app.scss および directory-cards.scss にカラー直値（Hex / RGB / RGBA）・!important・@extend が含まれないこと
  * - 仕様2: hubaddress-app.scss に幅広時（min-width: 680px）の並列レイアウト用メディアクエリが定義されていること
  * - 仕様3: hubaddress-app.ts / カードテンプレート内の wa-tooltip に trigger="hover" が明示指定されていること
- * - 仕様4: HubAddressApp カスタム要素クラスが定義されていること
+ * - 仕様4: お気に入り機能関連の UI / スタイル / 文言が含まれていないこと
+ * - 仕様5: HubAddressApp カスタム要素クラスが定義されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -49,6 +50,22 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
       }
     }
     expect(tooltipCount).toBeGreaterThan(0);
+  });
+
+  it("お気に入り関連の UI やクラス・文言が存在しないこと", () => {
+    const checkTargets = [
+      ...scssFiles,
+      ...templateFiles,
+      resolve(srcRoot, "components/settings-view.ts"),
+      resolve(srcRoot, "components/editor-dialogs.ts"),
+    ];
+    for (const filePath of checkTargets) {
+      const content = readFileSync(filePath, "utf-8");
+      expect(content).not.toContain("お気に入り");
+      expect(content).not.toContain("directory-card--favorite");
+      expect(content).not.toContain("directory-card__fav-btn");
+      expect(content).not.toContain("hubaddress-fav-filter-btn");
+    }
   });
 
   it("HubAddressApp カスタム要素クラスが定義されていること", () => {

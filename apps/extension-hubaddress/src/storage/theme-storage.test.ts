@@ -5,8 +5,8 @@ import {
   saveTheme,
   resolveEffectiveTheme,
   applyThemeToRoot,
+  type StorageAreaLike,
 } from "./theme-storage";
-import type { StorageAreaLike } from "./favorites-storage";
 
 /**
  * テスト仕様: テーマ設定永続化・適用ユーティリティ (theme-storage.ts)

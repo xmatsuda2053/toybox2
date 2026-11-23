@@ -6,14 +6,12 @@ import type {
 export interface DirectoryFilterOptions {
   query: string;
   department: string;
-  favoritesOnly: boolean;
-  favoriteKeys: ReadonlySet<string>;
 }
 
 /**
- * 職員レコード用の一意なお気に入りキーを生成する
+ * 職員レコード用の一意な識別キーを生成する
  */
-export function getStaffFavoriteKey(
+export function getStaffKey(
   staff: Pick<StaffRecord, "staffId" | "name" | "department">,
 ): string {
   const id = staff.staffId.trim();
@@ -24,9 +22,9 @@ export function getStaffFavoriteKey(
 }
 
 /**
- * 組織レコード用の一意なお気に入りキーを生成する
+ * 組織レコード用の一意な識別キーを生成する
  */
-export function getOrganizationFavoriteKey(
+export function getOrganizationKey(
   org: Pick<OrganizationRecord, "department" | "title">,
 ): string {
   return `org:${org.department.trim()}::${org.title.trim()}`;
@@ -74,72 +72,52 @@ function matchesAllTokens(fields: string[], tokens: string[]): boolean {
 function applyDirectoryFilter<T extends { department: string }>(
   records: T[],
   options: DirectoryFilterOptions,
-  getKey: (record: T) => string,
   getSearchFields: (record: T) => string[],
 ): T[] {
   const tokens = splitSearchTokens(options.query);
   const deptFilter = options.department.trim();
 
-  const filtered = records.filter((record) => {
+  return records.filter((record) => {
     if (deptFilter.length > 0 && record.department.trim() !== deptFilter) {
-      return false;
-    }
-    if (options.favoritesOnly && !options.favoriteKeys.has(getKey(record))) {
       return false;
     }
     return matchesAllTokens(getSearchFields(record), tokens);
   });
-
-  return [...filtered].sort((a, b) => {
-    const aFav = options.favoriteKeys.has(getKey(a)) ? 0 : 1;
-    const bFav = options.favoriteKeys.has(getKey(b)) ? 0 : 1;
-    return aFav - bFav;
-  });
 }
 
 /**
- * 職員レコードを検索条件・所属・お気に入りで絞り込み、お気に入り優先でソートする
+ * 職員レコードを検索条件・所属で絞り込む
  */
 export function filterStaff(
   records: StaffRecord[],
   options: DirectoryFilterOptions,
 ): StaffRecord[] {
-  return applyDirectoryFilter(
-    records,
-    options,
-    getStaffFavoriteKey,
-    (staff) => [
-      staff.staffId,
-      staff.name,
-      staff.department,
-      staff.title,
-      ...staff.emails,
-    ],
-  );
+  return applyDirectoryFilter(records, options, (staff) => [
+    staff.staffId,
+    staff.name,
+    staff.department,
+    staff.title,
+    ...staff.emails,
+  ]);
 }
 
 /**
- * 組織レコードを検索条件・所属・お気に入りで絞り込み、お気に入り優先でソートする
+ * 組織レコードを検索条件・所属で絞り込む
  */
 export function filterOrganizations(
   records: OrganizationRecord[],
   options: DirectoryFilterOptions,
 ): OrganizationRecord[] {
-  return applyDirectoryFilter(
-    records,
-    options,
-    getOrganizationFavoriteKey,
-    (org) => [
-      org.department,
-      org.extra,
-      org.location,
-      org.title,
-      org.extensionNumber,
-      org.phoneNumber,
-      org.faxNumber,
-      org.notes,
-    ],
-  );
+  return applyDirectoryFilter(records, options, (org) => [
+    org.department,
+    org.extra,
+    org.location,
+    org.title,
+    org.extensionNumber,
+    org.phoneNumber,
+    org.faxNumber,
+    org.notes,
+  ]);
 }
 
 /**

@@ -89,7 +89,7 @@ function parseOrganizationItem(
 }
 
 /**
- * 職員・組織データを一括 JSON 文字列へシリアライズする（内部 ID およびお気に入りは除外）
+ * 職員・組織データを一括 JSON 文字列へシリアライズする（内部 ID は除外）
  */
 export function serializeDirectoryJson(
   staff: StaffRecord[],
