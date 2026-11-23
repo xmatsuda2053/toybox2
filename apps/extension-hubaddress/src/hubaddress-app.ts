@@ -47,20 +47,6 @@ export class HubAddressApp extends LitElement {
   @state() private isClearAllConfirmOpen = false;
   @state() private pendingFileKind: ImportKind = "json";
 
-  private renderHeader(): TemplateResult {
-    return html`
-      <header class="hubaddress-shell__header">
-        <div class="hubaddress-shell__brand">
-          <wa-icon
-            class="hubaddress-shell__brand-icon"
-            name="icon-hub-address"
-          ></wa-icon>
-          <h1 class="hubaddress-shell__title">HubAddress</h1>
-        </div>
-      </header>
-    `;
-  }
-
   private renderTabButtons(): TemplateResult {
     const { activeTab, filteredStaff, filteredOrganizations } = this.controller;
     const tabVariant = (tab: ActiveTab) =>
@@ -160,15 +146,20 @@ export class HubAddressApp extends LitElement {
               職員一覧 (${items.length})
             </h2>
             <wa-button
+              id="add-staff-btn"
               size="small"
+              variant="neutral"
               appearance="outlined"
+              aria-label="職員を追加"
               @click=${() => {
                 this.staffForm = createStaffFormState();
               }}
             >
-              <wa-icon slot="start" name="plus-solid-full"></wa-icon>
-              職員を追加
+              <wa-icon name="plus-solid-full"></wa-icon>
             </wa-button>
+            <wa-tooltip for="add-staff-btn" trigger="hover"
+              >職員を追加</wa-tooltip
+            >
           </div>
           ${this.renderSearchInput(
             "職員番号・氏名・所属・役職を検索...",
@@ -221,15 +212,20 @@ export class HubAddressApp extends LitElement {
               組織一覧 (${items.length})
             </h2>
             <wa-button
+              id="add-organization-btn"
               size="small"
+              variant="neutral"
               appearance="outlined"
+              aria-label="組織を追加"
               @click=${() => {
                 this.orgForm = createOrganizationFormState();
               }}
             >
-              <wa-icon slot="start" name="plus-solid-full"></wa-icon>
-              組織を追加
+              <wa-icon name="plus-solid-full"></wa-icon>
             </wa-button>
+            <wa-tooltip for="add-organization-btn" trigger="hover"
+              >組織を追加</wa-tooltip
+            >
           </div>
           ${this.renderSearchInput(
             "所属・内線・外線・場所・備考を検索...",
@@ -462,8 +458,7 @@ export class HubAddressApp extends LitElement {
         type="file"
         @change=${(e: Event) => void this.handleFileSelected(e)}
       />
-      ${this.renderHeader()} ${this.renderTabButtons()} ${this.renderBody()}
-      ${this.renderDialogs()}
+      ${this.renderTabButtons()} ${this.renderBody()} ${this.renderDialogs()}
       ${
         toastMessage
           ? html`<div class="hubaddress-shell__toast" role="status">
