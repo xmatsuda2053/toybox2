@@ -19,7 +19,9 @@ import {
   MarkdownEditor,
   type MarkdownActionType,
 } from "../editor/markdown-editor.js";
+import type { MarkdownPreview } from "../preview/markdown-preview.js";
 import "../preview/markdown-preview.js";
+import type { EditorScrollPosition } from "../utils/scroll-sync.utils.js";
 import { formatMarkdown } from "../formatter/markdown-formatter.js";
 import { customBadgeExtension } from "../extensions/custom-badge.extension.js";
 import { colorExtension } from "../extensions/color.extension.js";
@@ -87,12 +89,8 @@ const BASIC_MARKDOWN_HELP_ROWS = [
 /**
  * MarkdownEditorPreview の標準拡張機能リスト
  */
-export const DEFAULT_MARKDOWN_EXTENSIONS: readonly MarkdownFeatureExtension[] = [
-  customBadgeExtension,
-  colorExtension,
-  calloutExtension,
-  idLinkExtension,
-];
+export const DEFAULT_MARKDOWN_EXTENSIONS: readonly MarkdownFeatureExtension[] =
+  [customBadgeExtension, colorExtension, calloutExtension, idLinkExtension];
 
 /**
  * 拡張機能設定をマージした MarkdownProcessorOptions を生成する純粋関数
@@ -157,7 +155,19 @@ export class MarkdownEditorPreview extends LitElement {
 
   /** 内部エディタ要素への参照を取得する */
   public get editorElement(): MarkdownEditor | null {
-    return (this.renderRoot?.querySelector?.("markdown-editor") as MarkdownEditor) ?? null;
+    return (
+      (this.renderRoot?.querySelector?.("markdown-editor") as MarkdownEditor) ??
+      null
+    );
+  }
+
+  /** 内部プレビュー要素への参照を取得する */
+  public get previewElement(): MarkdownPreview | null {
+    return (
+      (this.renderRoot?.querySelector?.(
+        "markdown-preview",
+      ) as MarkdownPreview) ?? null
+    );
   }
 
   /**
@@ -270,7 +280,9 @@ export class MarkdownEditorPreview extends LitElement {
 
   /** 拡張機能パッケージ (DI) */
   @property({ attribute: false })
-  public extensions: MarkdownFeatureExtension[] = [...DEFAULT_MARKDOWN_EXTENSIONS];
+  public extensions: MarkdownFeatureExtension[] = [
+    ...DEFAULT_MARKDOWN_EXTENSIONS,
+  ];
 
   /** CodeMirror 拡張機能 (DI) */
   @property({ attribute: false })
@@ -295,7 +307,6 @@ export class MarkdownEditorPreview extends LitElement {
   /** エディタ操作メニュー（右端ドロップダウン）の開閉状態 */
   @state()
   public isActionMenuOpen = false;
-
 
   private cachedProcessorOptions?: MarkdownProcessorOptions;
   private lastProcessorOptionsSource?: MarkdownProcessorOptions;
@@ -345,6 +356,7 @@ export class MarkdownEditorPreview extends LitElement {
   }
 
   private disconnectThemeObserver?: () => void;
+  private pendingSyncPosition: EditorScrollPosition | null = null;
 
   private debouncedUpdatePreview = debounce((val: string) => {
     this.previewValue = val;
@@ -474,6 +486,9 @@ export class MarkdownEditorPreview extends LitElement {
       this.debouncedUpdatePreview.flush();
       this.previewValue = this.value;
     }
+    if (newMode !== "split") {
+      this.pendingSyncPosition = null;
+    }
     if (this._mode === newMode) return;
     this.mode = newMode;
     this.dispatchEvent(
@@ -516,6 +531,56 @@ export class MarkdownEditorPreview extends LitElement {
     const customEvt = e as CustomEvent<{ value: string }>;
     this.handleEditorChange(customEvt.detail.value);
   };
+
+  private onEditorPositionChange = (e: Event): void => {
+    const customEvt = e as CustomEvent<EditorScrollPosition>;
+    this.handleEditorPositionChange(customEvt.detail);
+  };
+
+  private onPreviewRendered = (): void => {
+    void this.handlePreviewRendered();
+  };
+
+  /**
+   * エディタの編集位置・スクロール位置変更を受信し、スプリットモード時のプレビュー追従を制御する。
+   */
+  public handleEditorPositionChange(position: EditorScrollPosition): void {
+    if (this.mode !== "split") return;
+
+    const preview = this.previewElement;
+    const isPreviewPending =
+      this.previewValue !== this.value || Boolean(preview?.isLoading);
+
+    if (position.source === "cursor" && isPreviewPending) {
+      this.pendingSyncPosition = position;
+      return;
+    }
+
+    if (
+      position.source === "scroll" &&
+      (isPreviewPending || this.pendingSyncPosition !== null)
+    ) {
+      return;
+    }
+
+    this.pendingSyncPosition = null;
+    preview?.scrollToSourceLine(position);
+  }
+
+  /**
+   * プレビュー再描画完了時に保留中の編集位置へスクロール追従させる。
+   */
+  public async handlePreviewRendered(): Promise<void> {
+    if (this.mode !== "split" || !this.pendingSyncPosition) return;
+
+    const position = this.pendingSyncPosition;
+    this.pendingSyncPosition = null;
+    const preview = this.previewElement;
+    if (!preview) return;
+
+    await preview.updateComplete;
+    preview.scrollToSourceLine(position);
+  }
 
   /**
    * Markdown 書式ツールバーのアクションを実行する。
@@ -824,7 +889,9 @@ export class MarkdownEditorPreview extends LitElement {
       <div
         class="markdown-editor-preview__menu-section markdown-editor-preview__menu-section--secondary"
       >
-        <h3 class="markdown-editor-preview__extension-menu-title">追加の書式</h3>
+        <h3 class="markdown-editor-preview__extension-menu-title">
+          追加の書式
+        </h3>
         ${SECONDARY_TOOLBAR_BUTTONS.map(
           (btn) => html`
             <wa-dropdown-item value="action:${btn.action}">
@@ -860,10 +927,7 @@ export class MarkdownEditorPreview extends LitElement {
           ${ext.label}
           ${ext.subItems.map(
             (sub) => html`
-              <wa-dropdown-item
-                slot="submenu"
-                value="sub:${ext.id}:${sub.id}"
-              >
+              <wa-dropdown-item slot="submenu" value="sub:${ext.id}:${sub.id}">
                 <wa-icon
                   slot="icon"
                   library="my-icons"
@@ -897,7 +961,9 @@ export class MarkdownEditorPreview extends LitElement {
   private renderMenuExtensions() {
     if (this.extensions.length === 0) return "";
     return html`
-      <h3 class="markdown-editor-preview__extension-menu-title">独自記法・拡張機能</h3>
+      <h3 class="markdown-editor-preview__extension-menu-title">
+        独自記法・拡張機能
+      </h3>
       ${this.extensions.map((ext) => this.renderExtensionMenuItem(ext))}
     `;
   }
@@ -934,8 +1000,7 @@ export class MarkdownEditorPreview extends LitElement {
               label="拡張機能"
             ></wa-icon>
           </button>
-          ${this.renderMenuSecondaryActions()}
-          ${this.renderMenuExtensions()}
+          ${this.renderMenuSecondaryActions()} ${this.renderMenuExtensions()}
         </wa-dropdown>
       </div>
     `;
@@ -1034,9 +1099,11 @@ export class MarkdownEditorPreview extends LitElement {
           (tab) => html`
             <button
               type="button"
-              class="markdown-editor-preview__mode-btn ${this.mode === tab.mode
-                ? "markdown-editor-preview__mode-btn--active"
-                : ""}"
+              class="markdown-editor-preview__mode-btn ${
+                this.mode === tab.mode
+                  ? "markdown-editor-preview__mode-btn--active"
+                  : ""
+              }"
               role="tab"
               aria-selected=${this.mode === tab.mode}
               title="${tab.label}"
@@ -1073,10 +1140,7 @@ export class MarkdownEditorPreview extends LitElement {
         コマンド
         ${activeCommands.map(
           (cmd, index) => html`
-            <wa-dropdown-item
-              slot="submenu"
-              value="command:${index}"
-            >
+            <wa-dropdown-item slot="submenu" value="command:${index}">
               <wa-icon
                 slot="icon"
                 library="my-icons"
@@ -1119,19 +1183,21 @@ export class MarkdownEditorPreview extends LitElement {
       </wa-dropdown-item>
       ${hasExtendedActions ? html`<wa-divider></wa-divider>` : nothing}
       ${this.renderCommandSubmenu()}
-      ${this.showDeleteButton
-        ? html`
-            <wa-dropdown-item variant="danger" value="delete">
-              <wa-icon
-                slot="icon"
-                library="my-icons"
-                name="trash-solid-full"
-                class="markdown-editor-preview__action-menu-item-icon"
-              ></wa-icon>
-              削除
-            </wa-dropdown-item>
-          `
-        : nothing}
+      ${
+        this.showDeleteButton
+          ? html`
+              <wa-dropdown-item variant="danger" value="delete">
+                <wa-icon
+                  slot="icon"
+                  library="my-icons"
+                  name="trash-solid-full"
+                  class="markdown-editor-preview__action-menu-item-icon"
+                ></wa-icon>
+                削除
+              </wa-dropdown-item>
+            `
+          : nothing
+      }
     `;
   }
 
@@ -1175,10 +1241,7 @@ export class MarkdownEditorPreview extends LitElement {
     }
 
     return html`
-      <span
-        class="markdown-editor-preview__title"
-        title="${this.titleText}"
-      >
+      <span class="markdown-editor-preview__title" title="${this.titleText}">
         ${this.titleText}
       </span>
     `;
@@ -1218,6 +1281,7 @@ export class MarkdownEditorPreview extends LitElement {
             .value=${this.value}
             .customExtensions=${this.effectiveEditorExtensions}
             @markdown-change=${this.onEditorInput}
+            @editor-position-change=${this.onEditorPositionChange}
           ></markdown-editor>
         </div>
         <div
@@ -1229,7 +1293,9 @@ export class MarkdownEditorPreview extends LitElement {
             .darkTheme=${this.darkTheme}
             .lightTheme=${this.lightTheme}
             .content=${this.previewValue}
+            .includeSourceLines=${this.mode === "split"}
             .processorOptions=${this.effectiveProcessorOptions}
+            @markdown-rendered=${this.onPreviewRendered}
           ></markdown-preview>
         </div>
       </div>
@@ -1339,9 +1405,9 @@ export class MarkdownEditorPreview extends LitElement {
   private renderHelpModal() {
     return html`
       <div
-        class="markdown-editor-preview__help-modal ${this.isHelpOpen
-          ? "markdown-editor-preview__help-modal--open"
-          : ""}"
+        class="markdown-editor-preview__help-modal ${
+          this.isHelpOpen ? "markdown-editor-preview__help-modal--open" : ""
+        }"
         role="dialog"
         aria-modal="true"
         aria-label="構文ヘルプ"

@@ -331,7 +331,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     it("未指定時の初期値として標準拡張機能（DEFAULT_MARKDOWN_EXTENSIONS: custom-badge, color, callout, id-link）が登録されていること", () => {
       const defaultPreview = new MarkdownEditorPreview();
       expect(defaultPreview.extensions).toHaveLength(4);
-      expect(defaultPreview.extensions).toEqual([...DEFAULT_MARKDOWN_EXTENSIONS]);
+      expect(defaultPreview.extensions).toEqual([
+        ...DEFAULT_MARKDOWN_EXTENSIONS,
+      ]);
       expect(defaultPreview.extensions).toContain(customBadgeExtension);
       expect(defaultPreview.extensions).toContain(colorExtension);
       expect(defaultPreview.extensions).toContain(calloutExtension);
@@ -431,7 +433,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect(htmlStr).toContain("<wa-dropdown");
       expect(htmlStr).toContain('placement="bottom-start"');
-      expect(htmlStr).toContain("markdown-editor-preview__extension-menu-dropdown");
+      expect(htmlStr).toContain(
+        "markdown-editor-preview__extension-menu-dropdown",
+      );
     });
 
     it("拡張メニュー内のセクションラベルが wa-dropdown 仕様に準拠し h3 見出しタグとしてレンダリングされること", () => {
@@ -520,7 +524,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.value = "既存テキスト";
       element.extensions = [calloutExtension];
 
-      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+      (
+        element as {
+          handleExtensionMenuSelect?: (
+            e: CustomEvent<{ item: { value: string } }>,
+          ) => void;
+        }
+      ).handleExtensionMenuSelect?.(
         new CustomEvent("wa-select", {
           detail: { item: { value: "sub:callout:check" } },
         }),
@@ -534,7 +544,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.value = "既存テキスト";
       element.extensions = [customBadgeExtension];
 
-      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+      (
+        element as {
+          handleExtensionMenuSelect?: (
+            e: CustomEvent<{ item: { value: string } }>,
+          ) => void;
+        }
+      ).handleExtensionMenuSelect?.(
         new CustomEvent("wa-select", {
           detail: { item: { value: "ext:custom-badge" } },
         }),
@@ -547,7 +563,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       element.setMode("edit");
       element.value = "";
 
-      (element as { handleExtensionMenuSelect?: (e: CustomEvent<{ item: { value: string } }>) => void }).handleExtensionMenuSelect?.(
+      (
+        element as {
+          handleExtensionMenuSelect?: (
+            e: CustomEvent<{ item: { value: string } }>,
+          ) => void;
+        }
+      ).handleExtensionMenuSelect?.(
         new CustomEvent("wa-select", {
           detail: { item: { value: "action:bold" } },
         }),
@@ -662,7 +684,9 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       expect(htmlStr).toContain("独自記法・拡張機能");
       expect(htmlStr).toContain("ステータスバッジ");
-      expect(htmlStr).not.toContain("markdown-editor-preview__extension-menu-item-syntax");
+      expect(htmlStr).not.toContain(
+        "markdown-editor-preview__extension-menu-item-syntax",
+      );
 
       // ドロップダウンメニュー内に構文サンプル（:badge[）が含まれないこと
       const dropdownMatch = htmlStr.match(
@@ -768,8 +792,6 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-
-
   describe("固定高さ（height）プロパティ仕様", () => {
     it("height プロパティが未指定の場合、デフォルトで undefined であり、render() に固定高さスタイルが含まれないこと", () => {
       expect((element as any).height).toBeUndefined();
@@ -796,8 +818,6 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain("height: 600px");
       expect((element as any).effectiveHeight).toBe("600px");
     });
-
-
   });
 
   describe("アクセシビリティ（prefers-reduced-motion）仕様", () => {
@@ -843,8 +863,6 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       );
       expect(htmlStr).toContain("markdown-editor-preview__extension-menu");
     });
-
-
 
     it("renderActionMenu() によりエディタ操作メニューが描画され、構文ヘルプ項目が含まれること", () => {
       const result = (element as any).renderActionMenu();
@@ -1012,12 +1030,16 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     const scssContent = fs.readFileSync(scssPath, "utf-8");
 
     it("SCSS において .markdown-editor-preview--auto-height や :host([auto-height]) が存在しないこと", () => {
-      expect(scssContent).not.toContain(".markdown-editor-preview--auto-height");
+      expect(scssContent).not.toContain(
+        ".markdown-editor-preview--auto-height",
+      );
       expect(scssContent).not.toContain(":host([auto-height])");
     });
 
     it("SCSS において .markdown-editor-preview__auto-height-btn が存在しないこと", () => {
-      expect(scssContent).not.toContain("markdown-editor-preview__auto-height-btn");
+      expect(scssContent).not.toContain(
+        "markdown-editor-preview__auto-height-btn",
+      );
     });
 
     it("SCSS において .markdown-editor-preview--animating が存在しないこと", () => {
@@ -1164,7 +1186,8 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
     it("メニュー内の「コピー」実行時、editorElement が存在する場合は getValue() から取得した生テキストがクリップボードへコピーされること", async () => {
       element.value = "古いキャッシュ値";
-      const rawDocText = "C:\\Program Files (x86)\\My App\\test.exe & [リンク](url)";
+      const rawDocText =
+        "C:\\Program Files (x86)\\My App\\test.exe & [リンク](url)";
       const mockGetValue = vi.fn().mockReturnValue(rawDocText);
       const mockEditor = {
         getValue: mockGetValue,
@@ -1284,9 +1307,15 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
 
     it("SCSS において soft ダーク用のスタイルが定義され、StepNote 調のソフトダーク配色が指定されていること", () => {
-      expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
-      expect(scssContent).toMatch(/--stepnote-bg-surface:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
-      expect(scssContent).toMatch(/--stepnote-border-subtle:\s*var\(--wa-color-surface-border,\s*#434857\)/);
+      expect(scssContent).toMatch(
+        /:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/,
+      );
+      expect(scssContent).toMatch(
+        /--stepnote-bg-surface:\s*var\(--wa-color-surface-default,\s*#2f323f\)/,
+      );
+      expect(scssContent).toMatch(
+        /--stepnote-border-subtle:\s*var\(--wa-color-surface-border,\s*#434857\)/,
+      );
     });
   });
 
@@ -1461,11 +1490,11 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
   });
 
   describe("プレビューモード時のヘッダータイトル表示仕様", () => {
-    it("titleText の初期値が空文字（\"\"）であること", () => {
+    it('titleText の初期値が空文字（""）であること', () => {
       expect(element.titleText).toBe("");
     });
 
-    it("mode=\"preview\" かつ titleText が設定されている場合、ヘッダー左側にタイトル要素がレンダリングされること", () => {
+    it('mode="preview" かつ titleText が設定されている場合、ヘッダー左側にタイトル要素がレンダリングされること', () => {
       element.mode = "preview";
       element.titleText = "タスクの概要と課題一覧";
       const htmlStr = flattenTemplate(element.render());
@@ -1474,7 +1503,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).toContain("タスクの概要と課題一覧");
     });
 
-    it("mode=\"preview\" かつ titleText が未設定（空文字）の場合、タイトル要素がレンダリングされないこと", () => {
+    it('mode="preview" かつ titleText が未設定（空文字）の場合、タイトル要素がレンダリングされないこと', () => {
       element.mode = "preview";
       element.titleText = "";
       const htmlStr = flattenTemplate(element.render());
@@ -1482,7 +1511,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).not.toContain("markdown-editor-preview__title");
     });
 
-    it("mode=\"preview\" かつ titleText が空白のみの場合、タイトル要素がレンダリングされないこと", () => {
+    it('mode="preview" かつ titleText が空白のみの場合、タイトル要素がレンダリングされないこと', () => {
       element.mode = "preview";
       element.titleText = "   ";
       const htmlStr = flattenTemplate(element.render());
@@ -1490,7 +1519,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(htmlStr).not.toContain("markdown-editor-preview__title");
     });
 
-    it("mode=\"edit\" または mode=\"split\" の場合、titleText が設定されていてもタイトル要素がレンダリングされず、書式ツールバーがレンダリングされること", () => {
+    it('mode="edit" または mode="split" の場合、titleText が設定されていてもタイトル要素がレンダリングされず、書式ツールバーがレンダリングされること', () => {
       element.mode = "edit";
       element.titleText = "タスクの概要と課題一覧";
       const editHtml = flattenTemplate(element.render());
@@ -1505,10 +1534,13 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
     it("タイトル要素に title 属性として titleText の値が設定されていること", () => {
       element.mode = "preview";
-      element.titleText = "非常に長いタイトルのためホバーで全文確認したいタスク名称";
+      element.titleText =
+        "非常に長いタイトルのためホバーで全文確認したいタスク名称";
       const htmlStr = flattenTemplate(element.render());
 
-      expect(htmlStr).toContain('title="非常に長いタイトルのためホバーで全文確認したいタスク名称"');
+      expect(htmlStr).toContain(
+        'title="非常に長いタイトルのためホバーで全文確認したいタスク名称"',
+      );
     });
 
     it("SCSS において .markdown-editor-preview__title に対し省略表示スタイル（overflow, text-overflow, white-space）が定義されていること", () => {
@@ -1553,6 +1585,133 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
 
       element.refreshEditor();
       expect(mockRefresh).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("23. スプリットモード時の編集位置・スクロール位置同期（Issue #557）", () => {
+    it("mode='split' の場合はプレビューへ .includeSourceLines=true が渡され、edit/preview モードでは false が渡されること", () => {
+      element.value = "# テスト";
+      element.mode = "split";
+      const splitHtml = flattenTemplate(element.render());
+      expect(splitHtml).toMatch(
+        /<markdown-preview[^>]*\.includeSourceLines=["']?true["']?/,
+      );
+
+      element.mode = "preview";
+      const previewHtml = flattenTemplate(element.render());
+      expect(previewHtml).toMatch(
+        /<markdown-preview[^>]*\.includeSourceLines=["']?false["']?/,
+      );
+    });
+
+    it("mode='split' 時に editor-position-change（source: 'scroll'）を受信すると即座にプレビューの scrollToSourceLine が呼ばれること", () => {
+      element.mode = "split";
+      const mockScrollToSourceLine = vi.fn().mockReturnValue(true);
+      const mockPreview = {
+        scrollToSourceLine: mockScrollToSourceLine,
+        isLoading: false,
+        updateComplete: Promise.resolve(true),
+      };
+      vi.spyOn(element, "previewElement", "get").mockReturnValue(
+        mockPreview as never,
+      );
+
+      const pos = {
+        source: "scroll" as const,
+        lineNumber: 8,
+        viewportRatio: 0,
+        scrollRatio: 0.2,
+        totalLines: 40,
+      };
+      element.handleEditorPositionChange(pos);
+
+      expect(mockScrollToSourceLine).toHaveBeenCalledWith(pos);
+    });
+
+    it("mode='split' 時にドキュメント変更に伴う入力位置（source: 'cursor'）を受信した場合、markdown-rendered 完了後に scrollToSourceLine が呼ばれること", async () => {
+      element.mode = "split";
+      element.value = "# 1行目";
+      element.previewValue = "# 1行目";
+
+      const mockScrollToSourceLine = vi.fn().mockReturnValue(true);
+      const mockPreview = {
+        scrollToSourceLine: mockScrollToSourceLine,
+        isLoading: false,
+        updateComplete: Promise.resolve(true),
+      };
+      vi.spyOn(element, "previewElement", "get").mockReturnValue(
+        mockPreview as never,
+      );
+
+      // エディタでテキスト変更（デバウンス中は value !== previewValue）
+      element.handleEditorChange("# 1行目\n\n新しい段落");
+      const cursorPos = {
+        source: "cursor" as const,
+        lineNumber: 3,
+        viewportRatio: 0.4,
+        scrollRatio: 0.2,
+        totalLines: 3,
+      };
+      element.handleEditorPositionChange(cursorPos);
+
+      // まだ再レンダリング完了前なので呼ばれない
+      expect(mockScrollToSourceLine).not.toHaveBeenCalled();
+
+      // デバウンスフラッシュ後、プレビュー側の描画完了イベントを模擬
+      element.previewValue = element.value;
+      await element.handlePreviewRendered();
+
+      expect(mockScrollToSourceLine).toHaveBeenCalledWith(cursorPos);
+    });
+
+    it("mode='split' 時にテキスト変更を伴わないカーソル移動（value === previewValue）を受信した場合、即座に scrollToSourceLine が呼ばれること", () => {
+      element.mode = "split";
+      element.value = "# 1行目\n\n2行目";
+      element.previewValue = "# 1行目\n\n2行目";
+
+      const mockScrollToSourceLine = vi.fn().mockReturnValue(true);
+      const mockPreview = {
+        scrollToSourceLine: mockScrollToSourceLine,
+        isLoading: false,
+        updateComplete: Promise.resolve(true),
+      };
+      vi.spyOn(element, "previewElement", "get").mockReturnValue(
+        mockPreview as never,
+      );
+
+      const cursorPos = {
+        source: "cursor" as const,
+        lineNumber: 3,
+        viewportRatio: 0.5,
+        scrollRatio: 0.1,
+        totalLines: 3,
+      };
+      element.handleEditorPositionChange(cursorPos);
+
+      expect(mockScrollToSourceLine).toHaveBeenCalledWith(cursorPos);
+    });
+
+    it("mode='edit' または mode='preview' の場合、editor-position-change を受信しても scrollToSourceLine が呼ばれないこと", () => {
+      element.mode = "edit";
+      const mockScrollToSourceLine = vi.fn().mockReturnValue(true);
+      const mockPreview = {
+        scrollToSourceLine: mockScrollToSourceLine,
+        isLoading: false,
+        updateComplete: Promise.resolve(true),
+      };
+      vi.spyOn(element, "previewElement", "get").mockReturnValue(
+        mockPreview as never,
+      );
+
+      element.handleEditorPositionChange({
+        source: "scroll",
+        lineNumber: 5,
+        viewportRatio: 0,
+        scrollRatio: 0.5,
+        totalLines: 20,
+      });
+
+      expect(mockScrollToSourceLine).not.toHaveBeenCalled();
     });
   });
 });

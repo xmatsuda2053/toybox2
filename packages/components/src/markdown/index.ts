@@ -8,4 +8,4 @@ export * from "./extensions/color.extension.js";
 export * from "./extensions/callout.extension.js";
 export * from "./extensions/id-link.extension.js";
 export * from "./formatter/markdown-formatter.js";
-
+export * from "./utils/scroll-sync.utils.js";

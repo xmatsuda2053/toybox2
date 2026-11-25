@@ -16,6 +16,39 @@ import {
   resolveThemeMode,
   applyHostThemeSync,
 } from "../utils/theme-sync.js";
+import {
+  computeTargetPreviewScrollTop,
+  type EditorScrollPosition,
+  type SourceLineOffset,
+} from "../utils/scroll-sync.utils.js";
+
+/**
+ * プレビューコンテナ内の [data-source-line] 要素から行番号とコンテナ先頭からの Y 座標を収集する
+ */
+function collectSourceLineOffsets(container: HTMLElement): SourceLineOffset[] {
+  const elements = container.querySelectorAll("[data-source-line]");
+  const hasRect = typeof container.getBoundingClientRect === "function";
+  const containerTop = hasRect ? container.getBoundingClientRect().top : 0;
+  const offsets: SourceLineOffset[] = [];
+
+  for (const node of elements) {
+    const el = node as HTMLElement;
+    const rawLine = el.getAttribute("data-source-line");
+    if (!rawLine) continue;
+    const line = Number.parseInt(rawLine, 10);
+    if (!Number.isFinite(line) || line < 1) continue;
+
+    const offsetTop =
+      hasRect && typeof el.getBoundingClientRect === "function"
+        ? el.getBoundingClientRect().top - containerTop + container.scrollTop
+        : el.offsetTop;
+
+    offsets.push({ line, offsetTop });
+  }
+
+  offsets.sort((a, b) => a.line - b.line);
+  return offsets;
+}
 
 /**
  * Markdown プレビューコンポーネント (<markdown-preview>)
@@ -46,6 +79,10 @@ export class MarkdownPreview extends LitElement {
   /** プラグインやサニタイズのカスタマイズ設定 (DI) */
   @property({ type: Object })
   public processorOptions?: MarkdownProcessorOptions;
+
+  /** スプリット同期用にブロック要素へ data-source-line 属性を出力するか */
+  @property({ type: Boolean, attribute: "include-source-lines" })
+  public includeSourceLines = false;
 
   /** 変換済みの HTML 文字列 */
   @state()
@@ -99,7 +136,10 @@ export class MarkdownPreview extends LitElement {
     let needRebuildProcessor = false;
     let needReRender = false;
 
-    if (changedProperties.has("processorOptions")) {
+    if (
+      changedProperties.has("processorOptions") ||
+      changedProperties.has("includeSourceLines")
+    ) {
       needRebuildProcessor = true;
       needReRender = true;
     }
@@ -121,7 +161,33 @@ export class MarkdownPreview extends LitElement {
    * プロセッサインスタンスを初期化・再構築する。
    */
   private initProcessor(): void {
-    this.processor = createMarkdownProcessor(this.processorOptions);
+    this.processor = createMarkdownProcessor({
+      ...(this.processorOptions || {}),
+      includeSourceLines: this.includeSourceLines,
+    });
+  }
+
+  /**
+   * エディタ側のソース行・スクロール位置に合わせてプレビュー領域をスクロール同期する。
+   * 内部スクロールが発生しないサイズ可変表示時や未描画時は false を返す。
+   */
+  public scrollToSourceLine(position: EditorScrollPosition): boolean {
+    const container = this.renderRoot?.querySelector(
+      ".markdown-preview",
+    ) as HTMLElement | null;
+    if (!container) return false;
+
+    const anchors = collectSourceLineOffsets(container);
+    const targetTop = computeTargetPreviewScrollTop({
+      position,
+      anchors,
+      previewScrollHeight: container.scrollHeight,
+      previewClientHeight: container.clientHeight,
+    });
+    if (targetTop === null) return false;
+
+    container.scrollTop = targetTop;
+    return true;
   }
 
   /**
@@ -206,17 +272,19 @@ export class MarkdownPreview extends LitElement {
       <div
         class="markdown-preview ${this.isLoading ? "markdown-preview--loading" : ""}"
       >
-        ${this.renderedHtml
-          ? html`<div
-              class="markdown-preview__body markdown-body"
-              data-theme="${currentTheme}"
-              @click=${this.handleContentClick}
-            >
-              ${unsafeHTML(this.renderedHtml)}
-            </div>`
-          : html`<div class="markdown-preview__empty">
-              プレビューする内容がありません
-            </div>`}
+        ${
+          this.renderedHtml
+            ? html`<div
+                class="markdown-preview__body markdown-body"
+                data-theme="${currentTheme}"
+                @click=${this.handleContentClick}
+              >
+                ${unsafeHTML(this.renderedHtml)}
+              </div>`
+            : html`<div class="markdown-preview__empty">
+                プレビューする内容がありません
+              </div>`
+        }
       </div>
     `;
   }

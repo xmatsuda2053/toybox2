@@ -151,14 +151,13 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
   });
 
   describe("テーマ別文字色・CSS変数の定義および SCSS 設計標準化", () => {
-    const scssPath = path.resolve(
-      __dirname,
-      "markdown-preview.scss",
-    );
+    const scssPath = path.resolve(__dirname, "markdown-preview.scss");
     const scssContent = fs.readFileSync(scssPath, "utf-8");
 
     it("SCSS でプレビュー本文文字色および --fgColor-default がセマンティックトークンを参照していること", () => {
-      expect(scssContent).toMatch(/--fgColor-default:\s*var\(--stepnote-markdown-text\)/);
+      expect(scssContent).toMatch(
+        /--fgColor-default:\s*var\(--stepnote-markdown-text\)/,
+      );
       expect(scssContent).toMatch(/color:\s*var\(--stepnote-markdown-text\)/);
     });
 
@@ -187,50 +186,70 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
 
     it("Table 偶数行背景および境界線がセマンティックトークンを参照していること", () => {
       // テーブル偶数行の背景色（--bgColor-muted）がセマンティックトークンを参照していること
-      expect(scssContent).toMatch(/--bgColor-muted:\s*var\(--stepnote-markdown-table-row-bg-even\)/);
+      expect(scssContent).toMatch(
+        /--bgColor-muted:\s*var\(--stepnote-markdown-table-row-bg-even\)/,
+      );
       // テーブル境界線（--borderColor-default / --borderColor-muted）がセマンティックトークンを参照していること
-      expect(scssContent).toMatch(/--borderColor-default:\s*var\(--stepnote-markdown-table-border\)/);
-      expect(scssContent).toMatch(/--borderColor-muted:\s*var\(--stepnote-markdown-table-border\)/);
+      expect(scssContent).toMatch(
+        /--borderColor-default:\s*var\(--stepnote-markdown-table-border\)/,
+      );
+      expect(scssContent).toMatch(
+        /--borderColor-muted:\s*var\(--stepnote-markdown-table-border\)/,
+      );
     });
 
     it("コードブロック（pre / code）の背景色がセマンティックトークンを参照していること", () => {
-      expect(scssContent).toMatch(/pre[\s\S]*?background-color:\s*var\(--stepnote-markdown-pre-bg\)/);
-      expect(scssContent).toMatch(/code[\s\S]*?background-color:\s*var\(--stepnote-markdown-code-bg\)/);
+      expect(scssContent).toMatch(
+        /pre[\s\S]*?background-color:\s*var\(--stepnote-markdown-pre-bg\)/,
+      );
+      expect(scssContent).toMatch(
+        /code[\s\S]*?background-color:\s*var\(--stepnote-markdown-code-bg\)/,
+      );
     });
 
     it("コードブロック（pre / code）に折り返し用プロパティ（white-space: pre-wrap, word-break: break-word, overflow-wrap: anywhere）が設定されていること", () => {
-      expect(scssContent).toMatch(
-        /pre\s*\{[\s\S]*?white-space:\s*pre-wrap;/,
-      );
-      expect(scssContent).toMatch(
-        /pre\s*\{[\s\S]*?word-break:\s*break-word;/,
-      );
-      expect(scssContent).toMatch(
-        /pre\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/,
-      );
+      expect(scssContent).toMatch(/pre\s*\{[\s\S]*?white-space:\s*pre-wrap;/);
+      expect(scssContent).toMatch(/pre\s*\{[\s\S]*?word-break:\s*break-word;/);
+      expect(scssContent).toMatch(/pre\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
       expect(scssContent).toMatch(
         /pre[\s\S]*?code\s*\{[\s\S]*?white-space:\s*pre-wrap;/,
       );
     });
 
     it("Table セル（th / td）および行のボーダーが明示的にセマンティックトークンを参照していること", () => {
-      expect(scssContent).toMatch(/th,\s*td[\s\S]*?border:\s*1px\s+solid\s+var\(--stepnote-markdown-table-border\)/);
-      expect(scssContent).toMatch(/border-top:\s*1px\s+solid\s+var\(--stepnote-markdown-table-border\)/);
+      expect(scssContent).toMatch(
+        /th,\s*td[\s\S]*?border:\s*1px\s+solid\s+var\(--stepnote-markdown-table-border\)/,
+      );
+      expect(scssContent).toMatch(
+        /border-top:\s*1px\s+solid\s+var\(--stepnote-markdown-table-border\)/,
+      );
     });
 
     it("Light/Dark モードに応じた color-scheme が明示的に定義され、OSダークモードによるチェックボックス暗化を防止していること", () => {
-      expect(scssContent).toMatch(/:host\(\[data-theme="light"\]\)[\s\S]*?color-scheme:\s*light/);
-      expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\)[\s\S]*?color-scheme:\s*dark/);
+      expect(scssContent).toMatch(
+        /:host\(\[data-theme="light"\]\)[\s\S]*?color-scheme:\s*light/,
+      );
+      expect(scssContent).toMatch(
+        /:host\(\[data-theme="dark"\]\)[\s\S]*?color-scheme:\s*dark/,
+      );
     });
 
     it("チェックボックス（input[type='checkbox']）の accent-color がセマンティックトークンを参照していること", () => {
-      expect(scssContent).toMatch(/input\[type="checkbox"\][\s\S]*?accent-color:\s*var\(--stepnote-markdown-checkbox-accent\)/);
+      expect(scssContent).toMatch(
+        /input\[type="checkbox"\][\s\S]*?accent-color:\s*var\(--stepnote-markdown-checkbox-accent\)/,
+      );
     });
 
     it("blockquote の背景色・左ボーダー・文字色がセマンティックトークンを参照していること", () => {
-      expect(scssContent).toMatch(/blockquote[\s\S]*?background-color:\s*var\(--stepnote-markdown-blockquote-bg\)/);
-      expect(scssContent).toMatch(/blockquote[\s\S]*?border-left:\s*0\.25em\s+solid\s+var\(--stepnote-markdown-blockquote-border\)/);
-      expect(scssContent).toMatch(/blockquote[\s\S]*?color:\s*var\(--stepnote-markdown-blockquote-text\)/);
+      expect(scssContent).toMatch(
+        /blockquote[\s\S]*?background-color:\s*var\(--stepnote-markdown-blockquote-bg\)/,
+      );
+      expect(scssContent).toMatch(
+        /blockquote[\s\S]*?border-left:\s*0\.25em\s+solid\s+var\(--stepnote-markdown-blockquote-border\)/,
+      );
+      expect(scssContent).toMatch(
+        /blockquote[\s\S]*?color:\s*var\(--stepnote-markdown-blockquote-text\)/,
+      );
     });
 
     it("wa-callout に下方向余白として var(--wa-space-m) が設定されていること", () => {
@@ -296,7 +315,8 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
         // リンククリックハンドラを実行
         const mockAnchor = {
           tagName: "A",
-          getAttribute: (name: string) => (name === "href" ? "https://example.com/foo%20bar" : null),
+          getAttribute: (name: string) =>
+            name === "href" ? "https://example.com/foo%20bar" : null,
           closest: (selector: string) => (selector === "a" ? mockAnchor : null),
         };
         const mockEvent = {
@@ -332,7 +352,9 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       const mockAnchor = {
         tagName: "A",
         getAttribute: (name: string) =>
-          name === "href" ? "file:///C:/Users/name/My%20Documents/test%20folder/file.txt" : null,
+          name === "href"
+            ? "file:///C:/Users/name/My%20Documents/test%20folder/file.txt"
+            : null,
         closest: (selector: string) => (selector === "a" ? mockAnchor : null),
       };
       const mockEvent = {
@@ -343,7 +365,9 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
 
       element.handleContentClick?.(mockEvent as unknown as MouseEvent);
 
-      expect(copiedText).toBe("file:///C:/Users/name/My Documents/test folder/file.txt");
+      expect(copiedText).toBe(
+        "file:///C:/Users/name/My Documents/test folder/file.txt",
+      );
     });
 
     it("Windows ローカルパス（C:\\...）のリンクをレンダリング・クリックした際、元のパス文字列がコピーされ link-copy イベントが発火すること", async () => {
@@ -361,7 +385,8 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
         eventDetail = (e as CustomEvent<{ url: string }>).detail;
       });
 
-      element.content = "[ローカルファイル](C:\\Users\\name\\My Documents\\_work\\report.pdf)";
+      element.content =
+        "[ローカルファイル](C:\\Users\\name\\My Documents\\_work\\report.pdf)";
       await element.renderMarkdown();
 
       const hrefMatch = element.renderedHtml.match(/href="([^"]+)"/);
@@ -370,7 +395,8 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       const extractedHref = hrefMatch ? hrefMatch[1] : null;
       const mockAnchor = {
         tagName: "A",
-        getAttribute: (name: string) => (name === "href" ? extractedHref : null),
+        getAttribute: (name: string) =>
+          name === "href" ? extractedHref : null,
         closest: (selector: string) => (selector === "a" ? mockAnchor : null),
       };
       const mockEvent = {
@@ -381,7 +407,9 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
 
       element.handleContentClick?.(mockEvent as unknown as MouseEvent);
 
-      expect(copiedText).toBe("C:\\Users\\name\\My Documents\\_work\\report.pdf");
+      expect(copiedText).toBe(
+        "C:\\Users\\name\\My Documents\\_work\\report.pdf",
+      );
       expect(eventDetail).toEqual({
         url: "C:\\Users\\name\\My Documents\\_work\\report.pdf",
       });
@@ -443,6 +471,79 @@ describe("MarkdownPreview (<markdown-preview>)", () => {
       expect(element.classList.contains("wa-dark")).toBe(false);
       expect(element.classList.contains("wa-light")).toBe(true);
       expect(flattenTemplate(element.render())).toContain('data-theme="light"');
+    });
+  });
+
+  describe("17. ソース行番号付与（includeSourceLines）とスクロール位置同期（scrollToSourceLine）", () => {
+    it("includeSourceLines の初期値が false であり、true にすると renderedHtml に data-source-line が含まれること", async () => {
+      expect(element.includeSourceLines).toBe(false);
+
+      element.includeSourceLines = true;
+      element.updated(new Map([["includeSourceLines", false]]));
+      element.content = "# 見出し\n\n本文";
+      await element.renderMarkdown();
+
+      expect(element.renderedHtml).toContain('data-source-line="1"');
+      expect(element.renderedHtml).toContain('data-source-line="3"');
+    });
+
+    it("scrollToSourceLine() 呼び出し時、内部スクロール可能な場合は該当行のアンカー位置に基づいて scrollTop が更新されること", () => {
+      const mockAnchors = [
+        { getAttribute: () => "1", offsetTop: 0 },
+        { getAttribute: () => "10", offsetTop: 400 },
+        { getAttribute: () => "20", offsetTop: 1000 },
+      ];
+      const mockScrollContainer = {
+        scrollTop: 0,
+        scrollHeight: 1500,
+        clientHeight: 400,
+        querySelectorAll: () => mockAnchors,
+      };
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: (selector: string) =>
+            selector === ".markdown-preview" ? mockScrollContainer : null,
+        },
+        configurable: true,
+      });
+
+      const scrolled = element.scrollToSourceLine({
+        source: "scroll",
+        lineNumber: 10,
+        viewportRatio: 0,
+        scrollRatio: 0.3,
+        totalLines: 30,
+      });
+
+      expect(scrolled).toBe(true);
+      expect(mockScrollContainer.scrollTop).toBe(400);
+    });
+
+    it("scrollToSourceLine() 呼び出し時、内部スクロール不可（サイズ可変表示等）の場合は scrollTop が更新されず false を返すこと", () => {
+      const mockScrollContainer = {
+        scrollTop: 0,
+        scrollHeight: 400,
+        clientHeight: 400,
+        querySelectorAll: () => [{ getAttribute: () => "10", offsetTop: 200 }],
+      };
+      Object.defineProperty(element, "renderRoot", {
+        value: {
+          querySelector: (selector: string) =>
+            selector === ".markdown-preview" ? mockScrollContainer : null,
+        },
+        configurable: true,
+      });
+
+      const scrolled = element.scrollToSourceLine({
+        source: "cursor",
+        lineNumber: 10,
+        viewportRatio: 0.5,
+        scrollRatio: 0.5,
+        totalLines: 20,
+      });
+
+      expect(scrolled).toBe(false);
+      expect(mockScrollContainer.scrollTop).toBe(0);
     });
   });
 });

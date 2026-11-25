@@ -130,6 +130,59 @@ const rehypeEnhanceLinksPlugin: Plugin<[], HastRoot> = () => {
   };
 };
 
+const SOURCE_LINE_TARGET_TAGS = new Set([
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "pre",
+  "table",
+  "tr",
+  "hr",
+  "wa-callout",
+]);
+
+/**
+ * ブロック要素へ開始行番号（data-source-line）を付与する rehype プラグイン
+ */
+const rehypeSourceLinePlugin: Plugin<[], HastRoot> = () => {
+  return (tree) => {
+    visit(tree, "element", (node: HastElement) => {
+      if (!SOURCE_LINE_TARGET_TAGS.has(node.tagName)) return;
+      const startLine = node.position?.start?.line;
+      if (typeof startLine !== "number" || startLine < 1) return;
+
+      node.properties = {
+        ...(node.properties || {}),
+        dataSourceLine: String(startLine),
+      };
+    });
+  };
+};
+
+/**
+ * サニタイズスキーマの全要素属性へ dataSourceLine を許可する純粋関数
+ */
+function extendSanitizeSchemaWithSourceLine(
+  schema: SanitizeSchema,
+): SanitizeSchema {
+  const existingWildcard = schema.attributes?.["*"] || [];
+  return {
+    ...schema,
+    attributes: {
+      ...schema.attributes,
+      "*": [...existingWildcard, "dataSourceLine"],
+    },
+  };
+}
+
 /**
  * Markdown パイプラインプロセッサを生成するファクトリ関数
  *
@@ -143,18 +196,28 @@ export function createMarkdownProcessor(
     remarkPlugins = [],
     rehypePlugins = [],
     sanitizeSchemaModifier,
+    includeSourceLines = false,
   } = options;
 
   const baseSchema = baseMarkdownSanitizeSchema;
-  const finalSchema: SanitizeSchema = sanitizeSchemaModifier
+  const modifiedSchema: SanitizeSchema = sanitizeSchemaModifier
     ? restoreSafeHrefPattern(sanitizeSchemaModifier(baseSchema))
     : baseSchema;
+  const finalSchema = includeSourceLines
+    ? extendSanitizeSchemaWithSourceLine(modifiedSchema)
+    : modifiedSchema;
 
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkPlugins)
-    .use(remarkRehype)
+    .use(remarkRehype);
+
+  if (includeSourceLines) {
+    processor.use(rehypeSourceLinePlugin);
+  }
+
+  processor
     .use(rehypeSanitize, finalSchema)
     .use(rehypeEnhanceLinksPlugin)
     .use(rehypePlugins)

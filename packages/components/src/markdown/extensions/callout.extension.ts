@@ -1,5 +1,12 @@
 import type { Plugin } from "unified";
-import type { Root as MdastRoot, Content, Paragraph, Text, Parent, Node } from "mdast";
+import type {
+  Root as MdastRoot,
+  Content,
+  Paragraph,
+  Text,
+  Parent,
+  Node,
+} from "mdast";
 import "@awesome.me/webawesome/dist/components/callout/callout.js";
 import type {
   MarkdownFeatureExtension,
@@ -68,7 +75,11 @@ export function resolveCalloutMeta(typeStr: string): CalloutMeta {
 /**
  * wa-icon と wa-callout の MDAST ノードを構築する純粋関数
  */
-function buildCalloutAstNode(meta: CalloutMeta, contentNodes: Content[]): CalloutNode {
+function buildCalloutAstNode(
+  meta: CalloutMeta,
+  contentNodes: Content[],
+  position?: Node["position"],
+): CalloutNode {
   const iconNode: CalloutIconNode = {
     type: "calloutIcon",
     data: {
@@ -83,6 +94,7 @@ function buildCalloutAstNode(meta: CalloutMeta, contentNodes: Content[]): Callou
 
   return {
     type: "callout",
+    ...(position ? { position } : {}),
     data: {
       hName: "wa-callout",
       hProperties: {
@@ -100,6 +112,7 @@ function buildCalloutAstNode(meta: CalloutMeta, contentNodes: Content[]): Callou
 function transformSingleTextNode(
   first: Text,
   startMatch: RegExpExecArray,
+  position?: Node["position"],
 ): Content | null {
   const textWithoutStart = first.value.slice(startMatch[0].length);
   const endMatch = CALLOUT_END_REGEX.exec(textWithoutStart);
@@ -108,7 +121,7 @@ function transformSingleTextNode(
   const meta = resolveCalloutMeta(startMatch[2]);
   first.value = textWithoutStart.slice(0, endMatch.index).trim();
   const cleanChildren = first.value.length > 0 ? [first] : [];
-  return buildCalloutAstNode(meta, cleanChildren as Content[]);
+  return buildCalloutAstNode(meta, cleanChildren as Content[], position);
 }
 
 /**
@@ -119,6 +132,7 @@ function transformMultiChildParagraph(
   first: Text,
   last: Text,
   startMatch: RegExpExecArray,
+  position?: Node["position"],
 ): Content | null {
   const endMatch = CALLOUT_END_REGEX.exec(last.value);
   if (!endMatch) return null;
@@ -130,7 +144,7 @@ function transformMultiChildParagraph(
   const cleanChildren = children.filter(
     (c) => c.type !== "text" || (c as Text).value.length > 0,
   );
-  return buildCalloutAstNode(meta, cleanChildren as Content[]);
+  return buildCalloutAstNode(meta, cleanChildren as Content[], position);
 }
 
 /**
@@ -148,7 +162,7 @@ function tryTransformSingleParagraph(para: Paragraph): Content | null {
   if (!startMatch) return null;
 
   if (first === last) {
-    return transformSingleTextNode(first, startMatch);
+    return transformSingleTextNode(first, startMatch, para.position);
   }
 
   return transformMultiChildParagraph(
@@ -156,6 +170,7 @@ function tryTransformSingleParagraph(para: Paragraph): Content | null {
     first,
     last,
     startMatch,
+    para.position,
   );
 }
 
@@ -186,7 +201,9 @@ function stripCalloutEnd(node: Content): boolean {
   const endMatch = CALLOUT_END_REGEX.exec(lastText.value);
   if (!endMatch) return false;
 
-  lastText.value = lastText.value.slice(0, endMatch.index).replace(/\r?\n$/, "");
+  lastText.value = lastText.value
+    .slice(0, endMatch.index)
+    .replace(/\r?\n$/, "");
   return true;
 }
 
@@ -204,7 +221,9 @@ function isEmptyParagraph(node: Content): boolean {
 /**
  * ブロックノードがマルチブロック・コールアウトの開始かどうかを判定・初期化する純粋関数
  */
-function checkCalloutStart(node: Content): { meta: CalloutMeta; remainingNode: Content | null } | null {
+function checkCalloutStart(
+  node: Content,
+): { meta: CalloutMeta; remainingNode: Content | null } | null {
   if (node.type !== "paragraph") return null;
   const para = node as Paragraph;
   if (!para.children || para.children.length === 0) return null;
@@ -252,7 +271,11 @@ function tryConsumeMultiBlockCallout(
       }
       const processedInner = transformBlockContent(calloutContent);
       return {
-        calloutNode: buildCalloutAstNode(meta, processedInner),
+        calloutNode: buildCalloutAstNode(
+          meta,
+          processedInner,
+          children[startIndex].position,
+        ),
         nextIndex: j + 1,
       };
     }
@@ -309,7 +332,9 @@ export function transformBlockContent(children: Content[]): Content[] {
  */
 export const remarkCalloutPlugin: Plugin<[], MdastRoot> = () => {
   return (tree) => {
-    tree.children = transformBlockContent(tree.children as Content[]) as MdastRoot["children"];
+    tree.children = transformBlockContent(
+      tree.children as Content[],
+    ) as MdastRoot["children"];
   };
 };
 
@@ -367,11 +392,7 @@ export const calloutExtension: MarkdownFeatureExtension = {
     remarkPlugins: [remarkCalloutPlugin],
     sanitizeSchemaModifier: (baseSchema) => {
       const schema = JSON.parse(JSON.stringify(baseSchema));
-      schema.tagNames = [
-        ...(schema.tagNames || []),
-        "wa-callout",
-        "wa-icon",
-      ];
+      schema.tagNames = [...(schema.tagNames || []), "wa-callout", "wa-icon"];
       schema.attributes = {
         ...(schema.attributes || {}),
         "wa-callout": [

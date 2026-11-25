@@ -10,7 +10,9 @@ export type SanitizeSchema = typeof defaultSchema;
 /**
  * サニタイズスキーマをカスタマイズするための修飾関数
  */
-export type SanitizeSchemaModifier = (baseSchema: SanitizeSchema) => SanitizeSchema;
+export type SanitizeSchemaModifier = (
+  baseSchema: SanitizeSchema,
+) => SanitizeSchema;
 
 /**
  * Markdown パイプライン設定オプション (DI用)
@@ -22,6 +24,8 @@ export interface MarkdownProcessorOptions {
   rehypePlugins?: Pluggable[];
   /** サニタイズスキーマのカスタマイズ関数 */
   sanitizeSchemaModifier?: SanitizeSchemaModifier;
+  /** ブロック要素へ開始行番号（data-source-line）属性を付与するかどうか */
+  includeSourceLines?: boolean;
 }
 
 /**
@@ -118,4 +122,3 @@ export interface MarkdownEditorCommand {
   /** クリック時に発火するカスタムイベント名 */
   readonly eventName: string;
 }
-

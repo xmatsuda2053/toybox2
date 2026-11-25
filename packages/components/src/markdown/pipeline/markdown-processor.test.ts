@@ -27,6 +27,7 @@
 
 import { describe, it, expect } from "vitest";
 import { createMarkdownProcessor } from "./markdown-processor.js";
+import { calloutExtension } from "../extensions/callout.extension.js";
 import type { Plugin } from "unified";
 import type { Root as MdastRoot, Heading, Text, Node } from "mdast";
 import type { Root as HastRoot, Element } from "hast";
@@ -50,7 +51,9 @@ describe("MarkdownProcessor", () => {
 
       expect(html).toContain("<h1>見出し1</h1>");
       expect(html).toContain("<h2>見出し2</h2>");
-      expect(html).toContain("<p>これは段落です。<strong>太字</strong>と<em>斜体</em>を含みます。</p>");
+      expect(html).toContain(
+        "<p>これは段落です。<strong>太字</strong>と<em>斜体</em>を含みます。</p>",
+      );
       expect(html).toContain("<ul>");
       expect(html).toContain("<li>リスト項目1</li>");
       expect(html).toContain("<li>リスト項目2</li>");
@@ -124,18 +127,22 @@ describe("MarkdownProcessor", () => {
 
     it("Windows ローカルパス（C:\\...）のリンク記法で href 属性が保持されること", async () => {
       const processor = createMarkdownProcessor();
-      const markdown = "[設計書](C:\\Users\\name\\My Documents\\_work\\spec.xlsx)";
+      const markdown =
+        "[設計書](C:\\Users\\name\\My Documents\\_work\\spec.xlsx)";
 
       const html = await processor.process(markdown);
 
       expect(html).toContain("<a");
-      expect(html).toContain('href="C:%5CUsers%5Cname%5CMy%20Documents%5C_work%5Cspec.xlsx"');
+      expect(html).toContain(
+        'href="C:%5CUsers%5Cname%5CMy%20Documents%5C_work%5Cspec.xlsx"',
+      );
       expect(html).toContain(">設計書</a>");
     });
 
     it("カスタム URI スキーム（vscode://...）や独自参照キー（task:123）のリンク記法で href 属性が保持されること", async () => {
       const processor = createMarkdownProcessor();
-      const markdown = "[エディタで開く](vscode://file/C:/project/main.ts) と [関連タスク](task:123)";
+      const markdown =
+        "[エディタで開く](vscode://file/C:/project/main.ts) と [関連タスク](task:123)";
 
       const html = await processor.process(markdown);
 
@@ -168,8 +175,12 @@ describe("MarkdownProcessor", () => {
       const html = await processor.process(markdown);
 
       expect(html).toContain('data-link-type="path"');
-      expect(html).toContain('title="[フォルダパス] C:\\Users\\Public\\Documents"');
-      expect(html).toContain('title="[フォルダパス] \\\\server\\share\\folder"');
+      expect(html).toContain(
+        'title="[フォルダパス] C:\\Users\\Public\\Documents"',
+      );
+      expect(html).toContain(
+        'title="[フォルダパス] \\\\server\\share\\folder"',
+      );
       expect(html).toContain(
         '<wa-icon library="my-icons" name="folder-solid-full" class="markdown-link__icon"></wa-icon>ローカルフォルダ</a>',
       );
@@ -180,12 +191,15 @@ describe("MarkdownProcessor", () => {
 
     it("URL・パス以外のテキスト全般のリンクに data-link-type='text'、title='[テキスト] ...'、および copy-solid-full アイコンが付与されること", async () => {
       const processor = createMarkdownProcessor();
-      const markdown = "[定型文コピー](お疲れ様です。よろしくお願いします。) と [タスクID](TASK-999)";
+      const markdown =
+        "[定型文コピー](お疲れ様です。よろしくお願いします。) と [タスクID](TASK-999)";
 
       const html = await processor.process(markdown);
 
       expect(html).toContain('data-link-type="text"');
-      expect(html).toContain('title="[テキスト] お疲れ様です。よろしくお願いします。"');
+      expect(html).toContain(
+        'title="[テキスト] お疲れ様です。よろしくお願いします。"',
+      );
       expect(html).toContain('title="[テキスト] TASK-999"');
       expect(html).toContain(
         '<wa-icon library="my-icons" name="copy-solid-full" class="markdown-link__icon"></wa-icon>定型文コピー</a>',
@@ -247,8 +261,15 @@ describe("MarkdownProcessor", () => {
       const remarkCustomBadgePlugin: Plugin<[], MdastRoot> = () => {
         return (tree) => {
           visit(tree, "text", (node: Text, index, parent) => {
-            if (node.value.includes(":badge[重要]:") && parent && typeof index === "number") {
-              const customNode: Node & { data: Record<string, unknown>; children: unknown[] } = {
+            if (
+              node.value.includes(":badge[重要]:") &&
+              parent &&
+              typeof index === "number"
+            ) {
+              const customNode: Node & {
+                data: Record<string, unknown>;
+                children: unknown[];
+              } = {
                 type: "customBadge",
                 data: {
                   hName: "custom-badge",
@@ -278,7 +299,9 @@ describe("MarkdownProcessor", () => {
       const markdown = "タグ: :badge[重要]:";
       const html = await processor.process(markdown);
 
-      expect(html).toContain('<custom-badge type="info" variant="solid">重要</custom-badge>');
+      expect(html).toContain(
+        '<custom-badge type="info" variant="solid">重要</custom-badge>',
+      );
     });
   });
 
@@ -328,7 +351,97 @@ describe("MarkdownProcessor", () => {
       const markdown = "段落のテキストです。";
       const html = await processor.process(markdown);
 
-      expect(html).toContain('<p class="markdown-paragraph">段落のテキストです。</p>');
+      expect(html).toContain(
+        '<p class="markdown-paragraph">段落のテキストです。</p>',
+      );
+    });
+  });
+
+  describe("ソース行番号属性（data-source-line）の付与（includeSourceLines）", () => {
+    it("includeSourceLines が未指定（デフォルト）の場合、data-source-line 属性が付与されないこと", async () => {
+      const processor = createMarkdownProcessor();
+      const html = await processor.process("# 見出し\n\n段落テキスト");
+
+      expect(html).not.toContain("data-source-line");
+    });
+
+    it("includeSourceLines: true の場合、ブロック要素に開始行番号の data-source-line 属性が付与されること", async () => {
+      const processor = createMarkdownProcessor({ includeSourceLines: true });
+      const markdown = [
+        "# 見出し1",
+        "",
+        "段落テキスト",
+        "",
+        "- リスト1",
+        "- リスト2",
+        "",
+        "```ts",
+        "const x = 1;",
+        "```",
+      ].join("\n");
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('<h1 data-source-line="1">見出し1</h1>');
+      expect(html).toContain('<p data-source-line="3">段落テキスト</p>');
+      expect(html).toContain('<ul data-source-line="5">');
+      expect(html).toContain('<li data-source-line="5">リスト1</li>');
+      expect(html).toContain('<li data-source-line="6">リスト2</li>');
+      expect(html).toContain('<pre data-source-line="8">');
+    });
+
+    it("includeSourceLines: true の場合でも、危険なタグやスクリプト属性はサニタイズされること", async () => {
+      const processor = createMarkdownProcessor({ includeSourceLines: true });
+      const html = await processor.process(
+        '# 安全な見出し\n\n<script>alert("xss")</script>',
+      );
+
+      expect(html).toContain('<h1 data-source-line="1">安全な見出し</h1>');
+      expect(html).not.toContain("<script>");
+    });
+
+    it("includeSourceLines: true と calloutExtension を併用した場合、wa-callout にも開始行の data-source-line が付与されること", async () => {
+      const processor = createMarkdownProcessor({
+        includeSourceLines: true,
+        remarkPlugins: calloutExtension.processor?.remarkPlugins,
+        sanitizeSchemaModifier:
+          calloutExtension.processor?.sanitizeSchemaModifier,
+      });
+      const markdown = [
+        "# 見出し",
+        "",
+        "/// info",
+        "コールアウト本文",
+        "///",
+      ].join("\n");
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('<h1 data-source-line="1">見出し</h1>');
+      expect(html).toContain(
+        '<wa-callout variant="brand" size="m" data-source-line="3">',
+      );
+    });
+
+    it("includeSourceLines: true と calloutExtension を併用した場合、wa-callout にも開始行の data-source-line が付与されること", async () => {
+      const processor = createMarkdownProcessor({
+        includeSourceLines: true,
+        remarkPlugins: calloutExtension.processor?.remarkPlugins,
+        sanitizeSchemaModifier:
+          calloutExtension.processor?.sanitizeSchemaModifier,
+      });
+      const markdown = [
+        "# 見出し",
+        "",
+        "/// info",
+        "コールアウト本文",
+        "///",
+      ].join("\n");
+
+      const html = await processor.process(markdown);
+
+      expect(html).toContain('<h1 data-source-line="1">見出し</h1>');
+      expect(html).toContain('<wa-callout variant="brand" size="m" data-source-line="3">');
     });
   });
 });
