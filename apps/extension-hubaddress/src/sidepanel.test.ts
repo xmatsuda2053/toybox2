@@ -34,6 +34,7 @@ import {
  * - 仕様20: カード内の繰り返し要素には <wa-tooltip> を量産せず軽量なネイティブ title 属性を使用し、ツールバー固定ボタンの <wa-tooltip trigger="hover"> は維持すること
  * - 仕様21: 初期データ読み込み中（isLoading）は <wa-spinner> によるローディング表示を行い、空データ表示と区別すること
  * - 仕様22: 職員カードの役職（.directory-card__sub）が氏名の下の行に配置され、幅不足時は 1行で省略表示（text-overflow: ellipsis）されること
+ * - 仕様23: .hubaddress-shell__column に overflow: hidden が設定されず、検索フィルタ欄のフォーカスアウトラインが左右でクリップされないこと
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -670,5 +671,19 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(cardScss).toMatch(
       /\.directory-card__name-stack\s*\{[^}]*flex:\s*1/s,
     );
+  });
+
+  it("検索フィルタ欄のフォーカスアウトラインが左右で途切れないよう .hubaddress-shell__column に overflow: hidden が設定されていないこと", () => {
+    const shellScss = readFileSync(
+      resolve(srcRoot, "hubaddress-app.scss"),
+      "utf-8",
+    );
+    const columnBlockMatch = shellScss.match(
+      /\.hubaddress-shell__column\s*\{([^}]*)\}/,
+    );
+    expect(columnBlockMatch).not.toBeNull();
+    expect(columnBlockMatch?.[1]).not.toMatch(/\boverflow:\s*hidden\b/);
+    expect(columnBlockMatch?.[1]).toMatch(/\bmin-width:\s*0\b/);
+    expect(columnBlockMatch?.[1]).toMatch(/\bmin-height:\s*0\b/);
   });
 });
