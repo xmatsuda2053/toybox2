@@ -35,6 +35,7 @@ import {
  * - 仕様21: 初期データ読み込み中（isLoading）は <wa-spinner> によるローディング表示を行い、空データ表示と区別すること
  * - 仕様22: 職員カードの役職（.directory-card__sub）が氏名の下の行に配置され、幅不足時は 1行で省略表示（text-overflow: ellipsis）されること
  * - 仕様23: .hubaddress-shell__column に overflow: hidden が設定されず、検索フィルタ欄のフォーカスアウトラインが左右でクリップされないこと
+ * - 仕様24: sidepanel.ts が ResizeObserver loop エラーガードを起動時に登録・pagehide で解除し、.directory-card-list に scrollbar-gutter: stable が設定されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -685,5 +686,26 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(columnBlockMatch?.[1]).not.toMatch(/\boverflow:\s*hidden\b/);
     expect(columnBlockMatch?.[1]).toMatch(/\bmin-width:\s*0\b/);
     expect(columnBlockMatch?.[1]).toMatch(/\bmin-height:\s*0\b/);
+  });
+
+  it("sidepanel.ts が ResizeObserver loop ガードを登録・解除し、仮想リスト領域に scrollbar-gutter: stable が設定されていること", () => {
+    const sidepanelSource = readFileSync(
+      resolve(srcRoot, "sidepanel.ts"),
+      "utf-8",
+    );
+    expect(sidepanelSource).toContain("installResizeObserverErrorGuard");
+    expect(sidepanelSource).toContain("removeResizeObserverGuard()");
+
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    const listBlockMatch = cardScss.match(
+      /\.directory-card-list\s*\{([^}]*)\}/,
+    );
+    expect(listBlockMatch).not.toBeNull();
+    expect(listBlockMatch?.[1]).toMatch(/\bscrollbar-gutter:\s*stable\b/);
+    expect(listBlockMatch?.[1]).toMatch(/\boverflow-x:\s*hidden\b/);
+    expect(listBlockMatch?.[1]).toMatch(/\boverflow-y:\s*auto\b/);
   });
 });

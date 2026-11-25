@@ -1,5 +1,49 @@
 const SIDEPANEL_PORT_NAME = "hubaddress-sidepanel";
 
+const RESIZE_OBSERVER_LOOP_ERROR_MESSAGES = [
+  "ResizeObserver loop completed with undelivered notifications",
+  "ResizeObserver loop limit exceeded",
+] as const;
+
+/**
+ * ブラウザ仕様上の無害な ResizeObserver loop 通知メッセージかどうかを判定する
+ */
+export function isResizeObserverLoopErrorMessage(message: unknown): boolean {
+  if (typeof message !== "string" || message.length === 0) {
+    return false;
+  }
+  return RESIZE_OBSERVER_LOOP_ERROR_MESSAGES.some((pattern) =>
+    message.includes(pattern),
+  );
+}
+
+/**
+ * 仮想スクロールの ResizeObserver 再計測時に発火する無害な loop 通知のみを
+ * キャプチャフェーズでキャンセルし、拡張機能エラーへの誤記録を防止する
+ */
+export function installResizeObserverErrorGuard(
+  target: EventTarget | undefined = typeof globalThis.window !== "undefined"
+    ? globalThis.window
+    : undefined,
+): () => void {
+  if (!target) {
+    return () => {};
+  }
+
+  const listener = (event: Event): void => {
+    const message = (event as { message?: unknown }).message;
+    if (isResizeObserverLoopErrorMessage(message)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  };
+
+  target.addEventListener("error", listener, { capture: true });
+  return () => {
+    target.removeEventListener("error", listener, { capture: true });
+  };
+}
+
 export interface RuntimePortLike {
   postMessage: (message: unknown) => void;
   onMessage: { addListener: (cb: (message: unknown) => void) => void };
