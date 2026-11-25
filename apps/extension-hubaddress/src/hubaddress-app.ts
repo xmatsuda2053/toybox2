@@ -1,5 +1,6 @@
 import { LitElement, html, nothing, unsafeCSS, type TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import "@lit-labs/virtualizer";
 import shellStyles from "./hubaddress-app.scss?inline";
 import cardStyles from "./components/directory-cards.scss?inline";
 import settingsStyles from "./components/settings-view.scss?inline";
@@ -18,6 +19,10 @@ import {
   type OrganizationFormState,
   type StaffFormState,
 } from "./components/editor-dialogs";
+import {
+  getOrganizationKey,
+  getStaffKey,
+} from "./utils/directory-filter.utils";
 import { parseEmailsInput } from "./utils/directory-validation.utils";
 import { triggerFileDownload } from "./utils/download.utils";
 import type { ImportKind } from "./utils/import-preview.utils";
@@ -32,6 +37,8 @@ interface StaffSortOption {
   readonly value: StaffSortMode;
   readonly label: string;
 }
+
+const WIDE_LAYOUT_MEDIA_QUERY = "(min-width: 680px)";
 
 const STAFF_SORT_OPTIONS: readonly StaffSortOption[] = [
   { value: "department", label: "所属部署・氏名" },
@@ -58,6 +65,101 @@ export class HubAddressApp extends LitElement {
   @state() private deleteTarget: DeleteTargetState | null = null;
   @state() private isClearAllConfirmOpen = false;
   @state() private pendingFileKind: ImportKind = "json";
+  @state() private isWideLayout = false;
+
+  private wideMediaQuery: MediaQueryList | undefined;
+  private cachedStaffRendererVersion = -1;
+  private cachedStaffRenderer:
+    ((staff: StaffRecord, index: number) => TemplateResult) | undefined;
+
+  private readonly handleWideMediaChange = (
+    event: MediaQueryListEvent,
+  ): void => {
+    this.isWideLayout = event.matches;
+  };
+
+  private readonly staffKeyFunction = (staff: StaffRecord): string =>
+    typeof staff.id === "number" ? `id:${staff.id}` : getStaffKey(staff);
+
+  private readonly organizationKeyFunction = (
+    org: OrganizationRecord,
+  ): string =>
+    typeof org.id === "number" ? `id:${org.id}` : getOrganizationKey(org);
+
+  private readonly renderOrganizationItem = (
+    org: OrganizationRecord,
+    idx: number,
+  ): TemplateResult => html`
+    <div class="directory-card-list__item">
+      ${renderOrganizationCard(org, idx, {
+        onCopy: (label, value) => void this.controller.copyField(label, value),
+        onEdit: (target) => {
+          this.orgForm = createOrganizationFormState(target);
+        },
+        onDelete: (target) => this.openDeleteOrganization(target),
+      })}
+    </div>
+  `;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (
+      typeof globalThis.window !== "undefined" &&
+      typeof globalThis.window.matchMedia === "function"
+    ) {
+      this.wideMediaQuery = globalThis.window.matchMedia(
+        WIDE_LAYOUT_MEDIA_QUERY,
+      );
+      this.isWideLayout = this.wideMediaQuery.matches;
+      this.wideMediaQuery.addEventListener(
+        "change",
+        this.handleWideMediaChange,
+      );
+    }
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.wideMediaQuery?.removeEventListener(
+      "change",
+      this.handleWideMediaChange,
+    );
+  }
+
+  private getStaffItemRenderer(): (
+    staff: StaffRecord,
+    idx: number,
+  ) => TemplateResult {
+    const version = this.controller.expandedStaffVersion;
+    if (
+      this.cachedStaffRenderer &&
+      this.cachedStaffRendererVersion === version
+    ) {
+      return this.cachedStaffRenderer;
+    }
+
+    this.cachedStaffRendererVersion = version;
+    this.cachedStaffRenderer = (
+      staff: StaffRecord,
+      idx: number,
+    ): TemplateResult => html`
+      <div class="directory-card-list__item">
+        ${renderStaffCard(staff, idx, {
+          isEmailsExpanded: this.controller.isStaffEmailsExpanded(staff),
+          onToggleEmails: (target) => this.controller.toggleStaffEmails(target),
+          onJumpToDepartment: (dept) =>
+            this.controller.jumpToOrganization(dept),
+          onCopy: (label, value) =>
+            void this.controller.copyField(label, value),
+          onEdit: (target) => {
+            this.staffForm = createStaffFormState(target);
+          },
+          onDelete: (target) => this.openDeleteStaff(target),
+        })}
+      </div>
+    `;
+    return this.cachedStaffRenderer;
+  }
 
   private renderTabButtons(): TemplateResult {
     const { activeTab, filteredStaff, filteredOrganizations } = this.controller;
@@ -106,7 +208,8 @@ export class HubAddressApp extends LitElement {
   private renderSearchInput(
     placeholder: string,
     value: string,
-    onChange: (nextValue: string) => void,
+    onInput: (nextValue: string) => void,
+    onClear: () => void,
   ): TemplateResult {
     return html`
       <wa-input
@@ -116,12 +219,21 @@ export class HubAddressApp extends LitElement {
         with-clear
         @input=${(e: Event) => {
           const target = e.target as HTMLInputElement;
-          onChange(target.value);
+          onInput(target.value);
         }}
-        @wa-clear=${() => onChange("")}
+        @wa-clear=${onClear}
       >
         <wa-icon slot="start" name="magnifying-glass-solid-full"></wa-icon>
       </wa-input>
+    `;
+  }
+
+  private renderLoadingState(): TemplateResult {
+    return html`
+      <div class="hubaddress-shell__loading" role="status">
+        <wa-spinner></wa-spinner>
+        <span>読み込み中...</span>
+      </div>
     `;
   }
 
@@ -204,6 +316,7 @@ export class HubAddressApp extends LitElement {
   private renderStaffColumn(): TemplateResult {
     const items = this.controller.filteredStaff;
     const isActive = this.controller.activeTab === "staff";
+    const shouldRenderList = this.isWideLayout || isActive;
 
     return html`
       <section class="hubaddress-shell__column" data-active=${String(isActive)}>
@@ -234,15 +347,19 @@ export class HubAddressApp extends LitElement {
           ${this.renderSearchInput(
             "職員番号・氏名・所属・役職を検索...",
             this.controller.staffSearchQuery,
-            (val) => this.controller.setStaffSearchQuery(val),
+            (val) => this.controller.scheduleStaffSearchQuery(val),
+            () => this.controller.setStaffSearchQuery(""),
           )}
         </div>
-        ${this.renderStaffList(items)}
+        ${shouldRenderList ? this.renderStaffList(items) : nothing}
       </section>
     `;
   }
 
   private renderStaffList(items: StaffRecord[]): TemplateResult {
+    if (this.controller.isLoading) {
+      return this.renderLoadingState();
+    }
     if (items.length === 0) {
       return html`<p class="hubaddress-shell__empty">
         該当する職員データがありません。
@@ -250,29 +367,20 @@ export class HubAddressApp extends LitElement {
     }
 
     return html`
-      <div class="directory-card-list">
-        ${items.map((staff, idx) =>
-          renderStaffCard(staff, idx, {
-            isEmailsExpanded: this.controller.isStaffEmailsExpanded(staff),
-            onToggleEmails: (target) =>
-              this.controller.toggleStaffEmails(target),
-            onJumpToDepartment: (dept) =>
-              this.controller.jumpToOrganization(dept),
-            onCopy: (label, value) =>
-              void this.controller.copyField(label, value),
-            onEdit: (target) => {
-              this.staffForm = createStaffFormState(target);
-            },
-            onDelete: (target) => this.openDeleteStaff(target),
-          }),
-        )}
-      </div>
+      <lit-virtualizer
+        scroller
+        class="directory-card-list"
+        .items=${items}
+        .keyFunction=${this.staffKeyFunction}
+        .renderItem=${this.getStaffItemRenderer()}
+      ></lit-virtualizer>
     `;
   }
 
   private renderOrganizationColumn(): TemplateResult {
     const items = this.controller.filteredOrganizations;
     const isActive = this.controller.activeTab === "organizations";
+    const shouldRenderList = this.isWideLayout || isActive;
 
     return html`
       <section class="hubaddress-shell__column" data-active=${String(isActive)}>
@@ -302,15 +410,19 @@ export class HubAddressApp extends LitElement {
           ${this.renderSearchInput(
             "所属・内線・外線・場所・備考を検索...",
             this.controller.organizationSearchQuery,
-            (val) => this.controller.setOrganizationSearchQuery(val),
+            (val) => this.controller.scheduleOrganizationSearchQuery(val),
+            () => this.controller.setOrganizationSearchQuery(""),
           )}
         </div>
-        ${this.renderOrganizationList(items)}
+        ${shouldRenderList ? this.renderOrganizationList(items) : nothing}
       </section>
     `;
   }
 
   private renderOrganizationList(items: OrganizationRecord[]): TemplateResult {
+    if (this.controller.isLoading) {
+      return this.renderLoadingState();
+    }
     if (items.length === 0) {
       return html`<p class="hubaddress-shell__empty">
         該当する組織データがありません。
@@ -318,18 +430,13 @@ export class HubAddressApp extends LitElement {
     }
 
     return html`
-      <div class="directory-card-list">
-        ${items.map((org, idx) =>
-          renderOrganizationCard(org, idx, {
-            onCopy: (label, value) =>
-              void this.controller.copyField(label, value),
-            onEdit: (target) => {
-              this.orgForm = createOrganizationFormState(target);
-            },
-            onDelete: (target) => this.openDeleteOrganization(target),
-          }),
-        )}
-      </div>
+      <lit-virtualizer
+        scroller
+        class="directory-card-list"
+        .items=${items}
+        .keyFunction=${this.organizationKeyFunction}
+        .renderItem=${this.renderOrganizationItem}
+      ></lit-virtualizer>
     `;
   }
 
@@ -436,7 +543,7 @@ export class HubAddressApp extends LitElement {
   private renderBody(): TemplateResult {
     if (this.controller.activeTab === "settings") {
       return html`
-        <main class="hubaddress-shell__body">
+        <main class="hubaddress-shell__body hubaddress-shell__body--scrollable">
           ${renderSettingsView({
             staffCount: this.controller.staff.length,
             organizationCount: this.controller.organizations.length,

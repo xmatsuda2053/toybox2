@@ -218,7 +218,7 @@ describe("CSV Codec Tests", () => {
       const csvText = readFileSync(csvPath, "utf-8");
       const result = parseStaffCsv(csvText);
 
-      expect(result).toHaveLength(8);
+      expect(result).toHaveLength(1500);
       expect(result[0].staffId).toBe("0010001");
       expect(result[0].emails).toEqual([
         "tanaka.taro@example.com",
@@ -239,7 +239,7 @@ describe("CSV Codec Tests", () => {
       ).toBe(true);
       const result = parseOrganizationCsv(csvText);
 
-      expect(result).toHaveLength(8);
+      expect(result).toHaveLength(300);
       expect(result[0].department).toBe("総務部 総務課");
       expect(result[0].location).toBe("本庁舎");
       expect(result[0].extra).toBe("3階 3F-A");

@@ -5,6 +5,14 @@ import type {
 } from "../models/directory.model";
 
 /**
+ * 事前正規化済み検索インデックス要素
+ */
+export interface IndexedSearchItem<T> {
+  readonly record: T;
+  readonly haystack: string;
+}
+
+/**
  * 職員番号を表示用の5桁文字列へ整形する（5桁未満は0埋め、6桁以上は下5桁）
  */
 export function formatStaffIdFiveDigits(staffId: string): string {
@@ -58,12 +66,95 @@ function splitSearchTokens(query: string): string[] {
     .filter((token) => token.length > 0);
 }
 
-function matchesAllTokens(fields: string[], tokens: string[]): boolean {
+function buildStaffHaystack(staff: StaffRecord): string {
+  return normalizeSearchText(
+    [
+      staff.staffId,
+      formatStaffIdFiveDigits(staff.staffId),
+      staff.name,
+      staff.furigana ?? "",
+      staff.department,
+      staff.title,
+      ...staff.emails,
+    ].join(" "),
+  );
+}
+
+function buildOrganizationHaystack(org: OrganizationRecord): string {
+  return normalizeSearchText(
+    [
+      org.department,
+      org.extra,
+      org.location,
+      org.title,
+      org.extensionNumber,
+      org.phoneNumber,
+      org.faxNumber,
+      org.notes,
+    ].join(" "),
+  );
+}
+
+/**
+ * 職員レコード配列から事前正規化済み検索インデックスを構築する
+ */
+export function buildStaffSearchIndex(
+  records: readonly StaffRecord[],
+): IndexedSearchItem<StaffRecord>[] {
+  return records.map((record) => ({
+    record,
+    haystack: buildStaffHaystack(record),
+  }));
+}
+
+/**
+ * 組織レコード配列から事前正規化済み検索インデックスを構築する
+ */
+export function buildOrganizationSearchIndex(
+  records: readonly OrganizationRecord[],
+): IndexedSearchItem<OrganizationRecord>[] {
+  return records.map((record) => ({
+    record,
+    haystack: buildOrganizationHaystack(record),
+  }));
+}
+
+function filterIndexedRecords<T>(
+  indexed: readonly IndexedSearchItem<T>[],
+  query: string,
+): T[] {
+  const tokens = splitSearchTokens(query);
   if (tokens.length === 0) {
-    return true;
+    return indexed.map((item) => item.record);
   }
-  const haystack = normalizeSearchText(fields.join(" "));
-  return tokens.every((token) => haystack.includes(token));
+
+  const results: T[] = [];
+  for (const item of indexed) {
+    if (tokens.every((token) => item.haystack.includes(token))) {
+      results.push(item.record);
+    }
+  }
+  return results;
+}
+
+/**
+ * 事前正規化インデックスを用いて職員レコードをフリーワード AND 検索で絞り込む
+ */
+export function filterIndexedStaff(
+  indexed: readonly IndexedSearchItem<StaffRecord>[],
+  query: string,
+): StaffRecord[] {
+  return filterIndexedRecords(indexed, query);
+}
+
+/**
+ * 事前正規化インデックスを用いて組織レコードをフリーワード AND 検索で絞り込む
+ */
+export function filterIndexedOrganizations(
+  indexed: readonly IndexedSearchItem<OrganizationRecord>[],
+  query: string,
+): OrganizationRecord[] {
+  return filterIndexedRecords(indexed, query);
 }
 
 /**
@@ -78,20 +169,10 @@ export function filterStaff(
     return records;
   }
 
-  return records.filter((staff) =>
-    matchesAllTokens(
-      [
-        staff.staffId,
-        formatStaffIdFiveDigits(staff.staffId),
-        staff.name,
-        staff.furigana ?? "",
-        staff.department,
-        staff.title,
-        ...staff.emails,
-      ],
-      tokens,
-    ),
-  );
+  return records.filter((staff) => {
+    const haystack = buildStaffHaystack(staff);
+    return tokens.every((token) => haystack.includes(token));
+  });
 }
 
 /**
@@ -106,28 +187,15 @@ export function filterOrganizations(
     return records;
   }
 
-  return records.filter((org) =>
-    matchesAllTokens(
-      [
-        org.department,
-        org.extra,
-        org.location,
-        org.title,
-        org.extensionNumber,
-        org.phoneNumber,
-        org.faxNumber,
-        org.notes,
-      ],
-      tokens,
-    ),
-  );
+  return records.filter((org) => {
+    const haystack = buildOrganizationHaystack(org);
+    return tokens.every((token) => haystack.includes(token));
+  });
 }
 
 const JA_COLLATOR = new Intl.Collator("ja", { numeric: true });
 
-function compareTextEmptyLast(a: string, b: string): number {
-  const left = a.trim();
-  const right = b.trim();
+function compareNormalizedTextEmptyLast(left: string, right: string): number {
   if (left.length === 0 && right.length === 0) {
     return 0;
   }
@@ -144,47 +212,73 @@ function compareIdAsc(aId?: number, bId?: number): number {
   return (aId ?? Number.MAX_SAFE_INTEGER) - (bId ?? Number.MAX_SAFE_INTEGER);
 }
 
-function getStaffNameSortKey(staff: StaffRecord): string {
-  const furigana = (staff.furigana ?? "").trim();
-  return normalizeSearchText(furigana.length > 0 ? furigana : staff.name);
+interface StaffSortEntry {
+  readonly record: StaffRecord;
+  readonly department: string;
+  readonly furiganaKey: string;
+  readonly nameSortKey: string;
+  readonly name: string;
+  readonly staffId: string;
+  readonly id: number | undefined;
 }
 
-function compareStaffByDepartment(a: StaffRecord, b: StaffRecord): number {
+function buildStaffSortEntry(record: StaffRecord): StaffSortEntry {
+  const trimmedFurigana = (record.furigana ?? "").trim();
+  const trimmedName = record.name.trim();
+  const furiganaKey = normalizeSearchText(trimmedFurigana);
+  const nameSortKey =
+    trimmedFurigana.length > 0 ? furiganaKey : normalizeSearchText(trimmedName);
+
+  return {
+    record,
+    department: record.department.trim(),
+    furiganaKey,
+    nameSortKey,
+    name: trimmedName,
+    staffId: record.staffId.trim(),
+    id: record.id,
+  };
+}
+
+function compareStaffEntryByDepartment(
+  a: StaffSortEntry,
+  b: StaffSortEntry,
+): number {
   return (
-    compareTextEmptyLast(a.department, b.department) ||
-    compareTextEmptyLast(
-      normalizeSearchText(a.furigana ?? ""),
-      normalizeSearchText(b.furigana ?? ""),
-    ) ||
-    compareTextEmptyLast(a.name, b.name) ||
+    compareNormalizedTextEmptyLast(a.department, b.department) ||
+    compareNormalizedTextEmptyLast(a.furiganaKey, b.furiganaKey) ||
+    compareNormalizedTextEmptyLast(a.name, b.name) ||
     compareIdAsc(a.id, b.id)
   );
 }
 
-function compareStaffByName(a: StaffRecord, b: StaffRecord): number {
+function compareStaffEntryByName(a: StaffSortEntry, b: StaffSortEntry): number {
   return (
-    compareTextEmptyLast(getStaffNameSortKey(a), getStaffNameSortKey(b)) ||
-    compareTextEmptyLast(a.name, b.name) ||
-    compareTextEmptyLast(a.department, b.department) ||
+    compareNormalizedTextEmptyLast(a.nameSortKey, b.nameSortKey) ||
+    compareNormalizedTextEmptyLast(a.name, b.name) ||
+    compareNormalizedTextEmptyLast(a.department, b.department) ||
     compareIdAsc(a.id, b.id)
   );
 }
 
-function compareStaffByStaffId(a: StaffRecord, b: StaffRecord): number {
+function compareStaffEntryByStaffId(
+  a: StaffSortEntry,
+  b: StaffSortEntry,
+): number {
   return (
-    compareTextEmptyLast(a.staffId, b.staffId) ||
-    compareTextEmptyLast(a.name, b.name) ||
+    compareNormalizedTextEmptyLast(a.staffId, b.staffId) ||
+    compareNormalizedTextEmptyLast(a.name, b.name) ||
     compareIdAsc(a.id, b.id)
   );
 }
 
 const STAFF_SORT_COMPARATORS: Record<
   StaffSortMode,
-  (a: StaffRecord, b: StaffRecord) => number
+  (a: StaffSortEntry, b: StaffSortEntry) => number
 > = {
-  department: compareStaffByDepartment,
-  name: compareStaffByName,
-  staffId: compareStaffByStaffId,
+  department: compareStaffEntryByDepartment,
+  name: compareStaffEntryByName,
+  staffId: compareStaffEntryByStaffId,
 };
 
 /**
@@ -195,7 +289,9 @@ export function sortStaff(
   sortMode: StaffSortMode = "department",
 ): StaffRecord[] {
   const comparator = STAFF_SORT_COMPARATORS[sortMode];
-  return [...records].sort(comparator);
+  const entries = records.map(buildStaffSortEntry);
+  entries.sort(comparator);
+  return entries.map((entry) => entry.record);
 }
 
 /**
@@ -204,9 +300,15 @@ export function sortStaff(
 export function sortOrganizations(
   records: OrganizationRecord[],
 ): OrganizationRecord[] {
-  return [...records].sort(
+  const entries = records.map((record) => ({
+    record,
+    department: record.department.trim(),
+    id: record.id,
+  }));
+  entries.sort(
     (a, b) =>
-      compareTextEmptyLast(a.department, b.department) ||
+      compareNormalizedTextEmptyLast(a.department, b.department) ||
       compareIdAsc(a.id, b.id),
   );
+  return entries.map((entry) => entry.record);
 }
