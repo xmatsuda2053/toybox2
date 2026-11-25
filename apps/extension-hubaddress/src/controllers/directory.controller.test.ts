@@ -38,6 +38,9 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様7: toggleSettingsTab で設定画面を開き、再クリックで直前の一覧画面（staff / organizations）へ戻ること
  * - 仕様8: 読み込みおよび登録後に職員（所属組織・フリガナ順）と組織（組織名・id順）がソートされて保持されること
  * - 仕様9: staffSortMode をストレージから復元でき、setStaffSortMode での即時並替・永続化および再読み込み後のソート維持ができること
+ * - 仕様10: filteredStaff / filteredOrganizations がメモ化され、同一条件下では同一配列参照を返すこと
+ * - 仕様11: scheduleStaffSearchQuery / scheduleOrganizationSearchQuery で検索フィルタ適用がデバウンスされ、連続入力時に最後の入力のみ反映されること
+ * - 仕様12: saveStaff / removeStaff では組織テーブルを再取得せず、saveOrganization / removeOrganization では職員テーブルを再取得しないこと
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -285,5 +288,114 @@ describe("DirectoryController Tests", () => {
       "0010001",
       "0020001",
     ]);
+  });
+
+  it("filteredStaff / filteredOrganizations がメモ化され、同一条件では同一配列参照を返すこと", async () => {
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+    });
+    await controller.loadInitialData();
+
+    controller.setStaffSearchQuery("田中");
+    const firstStaff = controller.filteredStaff;
+    const secondStaff = controller.filteredStaff;
+    expect(firstStaff).toBe(secondStaff);
+
+    controller.setOrganizationSearchQuery("2101");
+    const firstOrgs = controller.filteredOrganizations;
+    const secondOrgs = controller.filteredOrganizations;
+    expect(firstOrgs).toBe(secondOrgs);
+
+    controller.setStaffSearchQuery("鈴木");
+    expect(controller.filteredStaff).not.toBe(firstStaff);
+    expect(controller.filteredStaff.map((s) => s.staffId)).toEqual(["0020001"]);
+  });
+
+  it("scheduleStaffSearchQuery / scheduleOrganizationSearchQuery がデバウンスされ連続入力の末尾のみ反映すること", async () => {
+    const host = createMockHost();
+    const controller = new DirectoryController(host, {
+      storage: createMemoryStorage(),
+    });
+    await controller.loadInitialData();
+    host.requestUpdate.mockClear();
+
+    vi.useFakeTimers();
+    try {
+      controller.scheduleStaffSearchQuery("田", 150);
+      controller.scheduleStaffSearchQuery("田中", 150);
+      expect(controller.staffSearchQuery).toBe("田中");
+      // デバウンス完了前はフィルタ再描画が走らないこと
+      expect(host.requestUpdate).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(150);
+      expect(host.requestUpdate).toHaveBeenCalledTimes(1);
+      expect(controller.filteredStaff.map((s) => s.staffId)).toEqual([
+        "0010001",
+      ]);
+
+      host.requestUpdate.mockClear();
+      controller.scheduleOrganizationSearchQuery("3201", 150);
+      // 即時クリア（setOrganizationSearchQuery("")）で保留タイマーがキャンセルされること
+      controller.setOrganizationSearchQuery("");
+      expect(host.requestUpdate).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(200);
+      expect(host.requestUpdate).toHaveBeenCalledTimes(1);
+      expect(controller.filteredOrganizations).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("saveStaff / removeStaff では組織を再取得せず、saveOrganization / removeOrganization では職員を再取得しないこと", async () => {
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+    });
+    await controller.loadInitialData();
+
+    const staffSpy = vi.spyOn(directoryDb, "getAllStaff");
+    const orgSpy = vi.spyOn(directoryDb, "getAllOrganizations");
+
+    await controller.saveStaff({
+      staffId: "0090001",
+      name: "新規 職員",
+      department: "総務課",
+      title: "",
+      emails: [],
+    });
+    expect(staffSpy).toHaveBeenCalledTimes(1);
+    expect(orgSpy).not.toHaveBeenCalled();
+
+    const addedStaffId = controller.staff.find(
+      (s) => s.staffId === "0090001",
+    )!.id!;
+    await controller.removeStaff(addedStaffId);
+    expect(staffSpy).toHaveBeenCalledTimes(2);
+    expect(orgSpy).not.toHaveBeenCalled();
+
+    staffSpy.mockClear();
+    orgSpy.mockClear();
+
+    await controller.saveOrganization({
+      department: "新規課",
+      extra: "",
+      location: "",
+      title: "",
+      extensionNumber: "9999",
+      phoneNumber: "",
+      faxNumber: "",
+      notes: "",
+    });
+    expect(orgSpy).toHaveBeenCalledTimes(1);
+    expect(staffSpy).not.toHaveBeenCalled();
+
+    const addedOrgId = controller.organizations.find(
+      (o) => o.department === "新規課",
+    )!.id!;
+    await controller.removeOrganization(addedOrgId);
+    expect(orgSpy).toHaveBeenCalledTimes(2);
+    expect(staffSpy).not.toHaveBeenCalled();
+
+    staffSpy.mockRestore();
+    orgSpy.mockRestore();
   });
 });

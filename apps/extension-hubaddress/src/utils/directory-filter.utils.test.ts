@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildOrganizationSearchIndex,
+  buildStaffSearchIndex,
+  filterIndexedOrganizations,
+  filterIndexedStaff,
   filterOrganizations,
   filterStaff,
   formatStaffIdFiveDigits,
@@ -89,6 +93,8 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
  * - 仕様5: sortStaff で所属組織→フリガナ五十音昇順にソートできること（空文字は末尾）
  * - 仕様6: sortOrganizations で組織名→id昇順にソートできること（空文字は末尾）
  * - 仕様7: sortStaff に sortMode（"department" / "name" / "staffId"）を指定して昇順ソートできること
+ * - 仕様8: 事前正規化インデックス（buildStaffSearchIndex / buildOrganizationSearchIndex）を用いた検索が通常検索と同一結果を返すこと
+ * - 仕様9: 1,500件規模の大量データに対しても事前正規化検索およびソートが正しく動作すること
  */
 describe("Directory Filter Utils Tests", () => {
   it("formatStaffIdFiveDigits で 5桁表示（5桁未満0埋め・6桁以上は下5桁）へ整形できること", () => {
@@ -333,5 +339,55 @@ describe("Directory Filter Utils Tests", () => {
     expect(sortStaff(records, "staffId").map((r) => r.id)).toEqual([
       4, 2, 1, 3,
     ]);
+  });
+
+  it("事前正規化インデックスを用いた職員・組織検索が通常検索と同一の結果を返すこと", () => {
+    const indexedStaff = buildStaffSearchIndex(SAMPLE_STAFF);
+    expect(filterIndexedStaff(indexedStaff, "").map((s) => s.staffId)).toEqual(
+      filterStaff(SAMPLE_STAFF, "").map((s) => s.staffId),
+    );
+    expect(
+      filterIndexedStaff(indexedStaff, "tanaka 課長").map((s) => s.staffId),
+    ).toEqual(["0010001"]);
+    expect(
+      filterIndexedStaff(indexedStaff, "00123 サトウ").map((s) => s.staffId),
+    ).toEqual(["123"]);
+    expect(
+      filterIndexedStaff(indexedStaff, "タロウ").map((s) => s.staffId),
+    ).toEqual(["0010001"]);
+
+    const indexedOrgs = buildOrganizationSearchIndex(SAMPLE_ORGS);
+    expect(
+      filterIndexedOrganizations(indexedOrgs, "3201 東日本").map(
+        (o) => o.department,
+      ),
+    ).toEqual(["営業推進部 第一営業課"]);
+    expect(
+      filterIndexedOrganizations(indexedOrgs, "総務部 人事課").map(
+        (o) => o.extensionNumber,
+      ),
+    ).toEqual(["2102"]);
+  });
+
+  it("1,500件規模の大量データに対してもソートと事前正規化検索が正しく動作すること", () => {
+    const bulkStaff: StaffRecord[] = Array.from({ length: 1500 }, (_, i) => ({
+      id: i + 1,
+      staffId: String(1500 - i),
+      name: `職員 ${i + 1}`,
+      furigana: i % 2 === 0 ? `ショクイン ${i + 1}` : `しょくいん ${i + 1}`,
+      department: `第${(i % 20) + 1}部 総務課`,
+      title: i === 1234 ? "特命担当部長" : "主査",
+      emails: [`staff${i + 1}@example.com`],
+    }));
+
+    const sortedById = sortStaff(bulkStaff, "staffId");
+    expect(sortedById).toHaveLength(1500);
+    expect(sortedById[0].staffId).toBe("1");
+    expect(sortedById[1499].staffId).toBe("1500");
+
+    const indexed = buildStaffSearchIndex(sortedById);
+    const matched = filterIndexedStaff(indexed, "特命担当部長 しょくいん");
+    expect(matched).toHaveLength(1);
+    expect(matched[0].id).toBe(1235);
   });
 });

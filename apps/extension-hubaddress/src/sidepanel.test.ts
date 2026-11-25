@@ -29,6 +29,11 @@ import {
  * - 仕様15: 設定ボタンが toggleSettingsTab を呼び出し再クリックで一覧画面へ戻れること
  * - 仕様16: 配布用 ZIP 生成スクリプト・PR 同梱ルール・hubaddress-extension.zip が整備されていること
  * - 仕様17: 職員一覧の追加ボタン左隣にソート順切替ドロップダウンが配置され、職員・組織の追加ボタンとソートボタンのサイズが size="xs" であること
+ * - 仕様18: 職員一覧・組織一覧の描画に @lit-labs/virtualizer（<lit-virtualizer scroller>）が使用され、ツールバー固定＋独立スクロール構造であること
+ * - 仕様19: 狭幅（< 680px）表示時は非アクティブなタブのリスト描画をスキップする仕組みを持つこと
+ * - 仕様20: カード内の繰り返し要素には <wa-tooltip> を量産せず軽量なネイティブ title 属性を使用し、ツールバー固定ボタンの <wa-tooltip trigger="hover"> は維持すること
+ * - 仕様21: 初期データ読み込み中（isLoading）は <wa-spinner> によるローディング表示を行い、空データ表示と区別すること
+ * - 仕様22: 職員カードの役職（.directory-card__sub）が氏名の下の行に配置され、幅不足時は 1行で省略表示（text-overflow: ellipsis）されること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -300,9 +305,13 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(
       staffHtml.indexOf('class="directory-card__name-row"'),
     ).toBeGreaterThan(staffHtml.indexOf("たなか たろう"));
-    expect(staffHtml.indexOf("課長")).toBeGreaterThan(
-      staffHtml.indexOf('class="directory-card__name-row"'),
-    );
+    // 役職（.directory-card__sub）は氏名行（.directory-card__name-row）の閉じタグより後ろ（氏名の下の行）に配置されること
+    const nameRowStart = staffHtml.indexOf('class="directory-card__name-row"');
+    const nameRowEnd = staffHtml.indexOf("</div>", nameRowStart);
+    const subIdx = staffHtml.indexOf('class="directory-card__sub"');
+    expect(nameRowEnd).toBeGreaterThan(nameRowStart);
+    expect(subIdx).toBeGreaterThan(nameRowEnd);
+    expect(staffHtml).toMatch(/title="?課長"?/);
 
     const cardScss = readFileSync(
       resolve(srcRoot, "components/directory-cards.scss"),
@@ -555,5 +564,111 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(appSource).toContain('type="checkbox"');
     expect(appSource).toContain("hubaddress-shell__column-actions");
     expect(shellScss).toContain(".hubaddress-shell__column-actions");
+  });
+
+  it("職員・組織一覧に lit-virtualizer (scroller) が導入され、ツールバー固定＋独立スクロール構造であること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+    const shellScss = readFileSync(
+      resolve(srcRoot, "hubaddress-app.scss"),
+      "utf-8",
+    );
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+
+    expect(appSource).toContain('"@lit-labs/virtualizer"');
+    const virtualizerMatches = appSource.match(/<lit-virtualizer\b/g) ?? [];
+    expect(virtualizerMatches.length).toBeGreaterThanOrEqual(2);
+    expect(appSource).toContain("scroller");
+    expect(appSource).toContain(".items=");
+    expect(appSource).toContain(".renderItem=");
+    expect(appSource).toContain(".keyFunction=");
+
+    expect(shellScss).toMatch(
+      /\.hubaddress-shell__body\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    expect(shellScss).toMatch(
+      /\.hubaddress-shell__column-toolbar\s*\{[^}]*flex-shrink:\s*0/s,
+    );
+    expect(cardScss).toContain(".directory-card-list__item");
+  });
+
+  it("狭幅表示時は非アクティブなカラムのリスト描画をスキップし、読み込み中は wa-spinner を表示すること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+
+    expect(appSource).toContain("(min-width: 680px)");
+    expect(appSource).toContain("isWideLayout");
+    expect(appSource).toContain("this.controller.isLoading");
+    expect(appSource).toContain("<wa-spinner");
+    expect(appSource).toContain("scheduleStaffSearchQuery");
+    expect(appSource).toContain("scheduleOrganizationSearchQuery");
+  });
+
+  it("カード内には wa-tooltip を生成せずネイティブ title 属性で軽量化されていること", () => {
+    const cardSource = readFileSync(
+      resolve(srcRoot, "components/directory-cards.ts"),
+      "utf-8",
+    );
+    expect(cardSource).not.toContain("<wa-tooltip");
+    expect(cardSource).toContain("title=");
+
+    const staffHtml = flattenTemplate(
+      renderStaffCard(
+        {
+          id: 1,
+          staffId: "0010001",
+          name: "田中 太郎",
+          furigana: "たなか たろう",
+          department: "総務部 総務課",
+          title: "とても長い役職名のテスト部長代理補佐",
+          emails: ["tanaka@example.com"],
+        },
+        0,
+        {
+          isEmailsExpanded: true,
+          onToggleEmails: () => {},
+          onJumpToDepartment: () => {},
+          onCopy: () => {},
+          onEdit: () => {},
+          onDelete: () => {},
+        },
+      ),
+    );
+    expect(staffHtml).not.toContain("<wa-tooltip");
+    expect(staffHtml).toMatch(/title="?職員番号をコピー"?/);
+    expect(staffHtml).toMatch(/title="?氏名をコピー"?/);
+    expect(staffHtml).toMatch(/title="?組織を検索"?/);
+    expect(staffHtml).toMatch(/title="?編集"?/);
+    expect(staffHtml).toMatch(/title="?削除"?/);
+    expect(staffHtml).toMatch(/title="?メールをコピー"?/);
+  });
+
+  it("職員カードの役職（.directory-card__sub）が幅不足時に1行で省略表示されるスタイルを持つこと", () => {
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__sub\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__sub\s*\{[^}]*text-overflow:\s*ellipsis/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__sub\s*\{[^}]*white-space:\s*nowrap/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__title-group--staff\s*\{[^}]*flex:\s*1/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__name-stack\s*\{[^}]*flex:\s*1/s,
+    );
   });
 });

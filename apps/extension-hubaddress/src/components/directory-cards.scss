@@ -1,7 +1,14 @@
 .directory-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-s);
+  display: block;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.directory-card-list__item {
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: var(--wa-space-s);
 }
 
 .directory-card {
@@ -63,8 +70,10 @@
 }
 
 .directory-card__title-group--staff {
+  flex: 1;
   flex-wrap: nowrap;
   align-items: stretch;
+  min-width: 0;
 }
 
 .directory-card__name {
@@ -115,8 +124,9 @@
 }
 
 .directory-card__name-stack {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 1px;
   min-width: 0;
 }
@@ -136,6 +146,11 @@
 }
 
 .directory-card__sub {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--wa-font-size-s);
   line-height: 1.4;
   color: var(--wa-color-text-quiet);
