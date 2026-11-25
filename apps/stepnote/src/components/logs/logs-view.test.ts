@@ -78,6 +78,7 @@ import { formatLogDate } from "./logs-view.utils";
  *    - 6-23. @keyframes logs-view-detail-expand および collapse で文字潰れを防ぐ段階的フェードイン・先行フェードアウトが設定されていること
  *    - 6-24. prefers-reduced-motion: reduce メディアクエリ内でアニメーション抑制が定義されていること
  *    - 6-25. 詳細エディタ（.logs-view__detail-editor）に展開時の高さを確保するための最小高さ（min-height: 240px）が設定され、詳細コンテナ（.logs-view__detail-container）に縦スクロール時の縮小を防ぐ flex-shrink: 0 が設定されていること
+ *    - 6-26. sticky ヘッダー追従のため通常展開時の詳細コンテナ群に overflow: visible が設定され、.logs-view__detail-editor に --markdown-editor-sticky-top: 30px、.logs-view__list-header に z-index: 30 が設定されていること
  */
 describe("LogsView Component", () => {
   let element: LogsView;
@@ -135,7 +136,9 @@ describe("LogsView Component", () => {
   describe("1. 初期描画と空状態", () => {
     it("1-1. 初期状態では expandedLogIds は空であり、複数展開モードのプロパティが存在しないこと", () => {
       expect(element.expandedLogIds.size).toBe(0);
-      expect((element as unknown as { isMultiExpand?: boolean }).isMultiExpand).toBeUndefined();
+      expect(
+        (element as unknown as { isMultiExpand?: boolean }).isMultiExpand,
+      ).toBeUndefined();
     });
 
     it("1-2. logsController.state が空配列の場合、空状態メッセージ（.logs-view__empty）が表示されること", () => {
@@ -145,10 +148,12 @@ describe("LogsView Component", () => {
       expect(htmlStr).toContain("作業ログがありません");
     });
 
-    it("1-3. ヘッダーに共通部品 search-input（.logs-view__search、size=\"s\"）および新規追加ボタン（.logs-view__btn-add）が表示され、複数展開切り替えボタンが存在しないこと", () => {
+    it('1-3. ヘッダーに共通部品 search-input（.logs-view__search、size="s"）および新規追加ボタン（.logs-view__btn-add）が表示され、複数展開切り替えボタンが存在しないこと', () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toContain("logs-view__search");
-      expect(htmlStr).toMatch(/<search-input[^>]*class="[^"]*logs-view__search[^"]*"[^>]*size="s"/);
+      expect(htmlStr).toMatch(
+        /<search-input[^>]*class="[^"]*logs-view__search[^"]*"[^>]*size="s"/,
+      );
       expect(htmlStr).toContain("logs-view__btn-add");
       expect(htmlStr).not.toContain("logs-view__btn-toggle-multi");
     });
@@ -345,7 +350,9 @@ describe("LogsView Component", () => {
       const template = element.render();
       const htmlStr = flattenTemplate(template);
 
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.showDeleteButton=["']?true["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.showDeleteButton=["']?true["']?/,
+      );
       expect(htmlStr).toContain("@markdown-delete");
       expect(htmlStr).not.toContain('deleteAction="enabled"');
       expect(htmlStr).not.toContain("@markdown-request-delete");
@@ -372,34 +379,44 @@ describe("LogsView Component", () => {
     it("4-9. markdown-editor-preview に .darkTheme='soft' および theme に応じた .themeMode が設定されていること", () => {
       element.theme = "dark";
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.darkTheme=["']?soft["']?/);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.themeMode=["']?dark["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.darkTheme=["']?soft["']?/,
+      );
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.themeMode=["']?dark["']?/,
+      );
     });
 
     it("4-10. ログ展開時の Markdown エディタに .mode がバインドされ、手動展開時はデフォルトで 'preview'、handleModeChange によりモードが更新されること", () => {
       element.handleToggleExpand(101);
       let template = element.render();
       let htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?preview["']?/,
+      );
 
       element.handleModeChange(101, "edit");
       template = element.render();
       htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?edit["']?/,
+      );
     });
 
     it("4-11. 新規追加ボタン（handleCreateLog）で作成された作業ログはエディタモード（.mode='edit'）で自動展開されること", async () => {
-      mockLogsController.createLog.mockImplementation(async (log: { value: string; createdAt: Date; updatedAt: Date }) => {
-        const id = 103;
-        mockLogsController.state.push({
-          id,
-          taskId: 1,
-          value: log.value,
-          createdAt: log.createdAt,
-          updatedAt: log.updatedAt,
-        });
-        return id;
-      });
+      mockLogsController.createLog.mockImplementation(
+        async (log: { value: string; createdAt: Date; updatedAt: Date }) => {
+          const id = 103;
+          mockLogsController.state.push({
+            id,
+            taskId: 1,
+            value: log.value,
+            createdAt: log.createdAt,
+            updatedAt: log.updatedAt,
+          });
+          return id;
+        },
+      );
 
       await element.handleCreateLog();
       expect(element.expandedLogIds.has(103)).toBe(true);
@@ -407,7 +424,9 @@ describe("LogsView Component", () => {
 
       const template = element.render();
       const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?edit["']?/,
+      );
     });
 
     it("4-12. ログ削除確定時（handleConfirmDelete）に該当ログのモード管理状態がクリーンアップされること", async () => {
@@ -428,7 +447,9 @@ describe("LogsView Component", () => {
       expect(element.logModeMap.get(101)).toBe("preview");
 
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?preview["']?/,
+      );
     });
 
     it("4-14. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべてのログのエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
@@ -514,7 +535,9 @@ describe("LogsView Component", () => {
 
       const template = element.render();
       const htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?preview["']?/,
+      );
     });
 
     it("5-4. タスク切り替え直後の初回ログロード完了時には、既存ログが自動展開されないこと", () => {
@@ -617,12 +640,8 @@ describe("LogsView Component", () => {
 
     it("6-14. リストヘッダーセルおよびデータセルの幅が 150px、行高が 36px で、データセルが中央揃えに設定されていること", () => {
       const scss = fs.readFileSync(scssPath, "utf-8");
-      expect(scss).toMatch(
-        /&--date\s*\{[\s\S]*?width:\s*150px;/,
-      );
-      expect(scss).toMatch(
-        /\.logs-view__row\s*\{[\s\S]*?min-height:\s*36px;/,
-      );
+      expect(scss).toMatch(/&--date\s*\{[\s\S]*?width:\s*150px;/);
+      expect(scss).toMatch(/\.logs-view__row\s*\{[\s\S]*?min-height:\s*36px;/);
     });
 
     it("6-15. リストヘッダー各セルの間に境界線が設定され、未定義トークンが排除されていること", () => {
@@ -659,9 +678,7 @@ describe("LogsView Component", () => {
 
     it("6-18. 詳細パネル（.logs-view__detail）の背景色が var(--wa-color-surface-default) に設定されていること", () => {
       const scss = fs.readFileSync(scssPath, "utf-8");
-      const detailBlockMatch = scss.match(
-        /\.logs-view__detail\s*\{([^}]+)\}/,
-      );
+      const detailBlockMatch = scss.match(/\.logs-view__detail\s*\{([^}]+)\}/);
       expect(detailBlockMatch).not.toBeNull();
       const detailBlock = detailBlockMatch ? detailBlockMatch[1] : "";
       expect(detailBlock).toMatch(
@@ -688,9 +705,7 @@ describe("LogsView Component", () => {
       );
       expect(editorBlockMatch).not.toBeNull();
       const editorBlock = editorBlockMatch ? editorBlockMatch[1] : "";
-      expect(editorBlock).toMatch(
-        /margin-top:\s*var\(--wa-space-xs,\s*8px\)/,
-      );
+      expect(editorBlock).toMatch(/margin-top:\s*var\(--wa-space-xs,\s*8px\)/);
     });
 
     it("6-21. タイムラインノードの拡大（transform: scale）は hover 時のみに限定され、展開中のノードは通常サイズであること", () => {
@@ -747,6 +762,36 @@ describe("LogsView Component", () => {
       expect(containerBlockMatch).not.toBeNull();
       const containerBlock = containerBlockMatch ? containerBlockMatch[1] : "";
       expect(containerBlock).toMatch(/flex-shrink:\s*0/);
+    });
+
+    it("6-26. sticky ヘッダー追従のため通常展開時の詳細コンテナ群に overflow: visible が設定され、.logs-view__detail-editor に --markdown-editor-sticky-top: 30px、.logs-view__list-header に z-index: 30 が設定されていること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+
+      const listHeaderMatch = scss.match(
+        /\.logs-view__list-header\s*\{([^}]+)\}/,
+      );
+      expect(listHeaderMatch?.[1] ?? "").toMatch(/z-index:\s*30;/);
+
+      const containerMatch = scss.match(
+        /\.logs-view__detail-container\s*\{([\s\S]*?)&--collapsing/,
+      );
+      expect(containerMatch?.[1] ?? "").toMatch(/overflow:\s*visible;/);
+      expect(scss).toMatch(/&--collapsing\s*\{[^}]*overflow:\s*hidden;/);
+
+      const detailMatch = scss.match(/\.logs-view__detail\s*\{([^}]+)\}/);
+      expect(detailMatch?.[1] ?? "").toMatch(/overflow:\s*visible;/);
+
+      const editorMatch = scss.match(
+        /\.logs-view__detail-editor\s*\{([^}]+)\}/,
+      );
+      expect(editorMatch?.[1] ?? "").toMatch(/overflow:\s*visible;/);
+      expect(editorMatch?.[1] ?? "").toMatch(
+        /--markdown-editor-sticky-top:\s*30px;/,
+      );
+
+      expect(scss).toMatch(
+        /@keyframes\s+logs-view-detail-expand\s*\{[\s\S]*?overflow:\s*hidden;[\s\S]*?overflow:\s*visible;/,
+      );
     });
   });
 });

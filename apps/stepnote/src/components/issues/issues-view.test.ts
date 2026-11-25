@@ -73,6 +73,7 @@ import { IssuesView } from "./issues-view.js";
  *    - 6-8. issues-view.scss において .issues-view__item-caret が定義され、トランジションと控えめな文字色（--wa-color-text-quiet）が設定されていること
  *    - 6-9. issues-view.scss において .issues-view__item--expanded .issues-view__item-caret に対し、下向き回転（transform: rotate(90deg)）と通常文字色（--wa-color-text-normal）が設定されていること
  *    - 6-10. issues-view.scss において .issues-view__item-due の状態別修飾クラス（--overdue, --asap, --upcoming）が定義され、デザイントークンのカラーが指定されていること
+ *    - 6-11. sticky ヘッダー追従のため通常展開時の .issues-view__detail-container / .issues-view__detail に overflow: visible が設定され、アニメーション中および --collapsing 時のみ overflow: hidden が適用されること
  *
  * 7. Issueテンプレートの部分適用 (Template Application)
  *    - 7-1. 一覧ヘッダーにテンプレート適用ボタン（#issues-view-btn-template）が表示され、wa-tooltip（trigger="hover"、「テンプレートを適用」）が紐づいていること
@@ -257,7 +258,7 @@ describe("IssuesView Component", () => {
       expect(htmlStr).toContain("未完了 (1)");
     });
 
-    it("2-6. 各Issueアイテム（.issues-view__item）の右端に開閉状態を示す Caret アイコン（.issues-view__item-caret、name=\"caret-right-solid-full\"）が描画されていること", () => {
+    it('2-6. 各Issueアイテム（.issues-view__item）の右端に開閉状態を示す Caret アイコン（.issues-view__item-caret、name="caret-right-solid-full"）が描画されていること', () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
         /<wa-icon[^>]*class=["'][^"']*issues-view__item-caret[^"']*["'][^>]*name=["']caret-right-solid-full["']/,
@@ -451,7 +452,7 @@ describe("IssuesView Component", () => {
       });
     });
 
-    it("3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger=\"hover\" が設定され、「ステータスを変更」と表示されること", () => {
+    it('3-3. ステータスボタン（.issues-view__status-btn）に対応するツールチップ（wa-tooltip）に trigger="hover" が設定され、「ステータスを変更」と表示されること', () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(
         /<wa-tooltip[^>]*for=["']issues-view-status-btn-1["'][^>]*trigger=["']hover["']/,
@@ -543,12 +544,16 @@ describe("IssuesView Component", () => {
       element.handleToggleExpand(1);
       let template = element.render();
       let htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?preview["']?/,
+      );
 
       element.handleModeChange(1, "edit");
       template = element.render();
       htmlStr = flattenTemplate(template);
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?edit["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?edit["']?/,
+      );
     });
 
     it("4-9. Issue 削除確定時（handleConfirmDelete）に該当 Issue のモード管理状態がクリーンアップされること", async () => {
@@ -570,7 +575,9 @@ describe("IssuesView Component", () => {
       expect(element.issueModeMap.get(1)).toBe("preview");
 
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/<markdown-editor-preview[^>]*\.mode=["']?preview["']?/);
+      expect(htmlStr).toMatch(
+        /<markdown-editor-preview[^>]*\.mode=["']?preview["']?/,
+      );
     });
 
     it("4-11. 親タスクが切り替わった場合（willUpdate で taskId 変更時）、すべての Issue のエディタモードがプレビューモードへリセットされ、展開状態もクリアされること", () => {
@@ -651,9 +658,11 @@ describe("IssuesView Component", () => {
 
       await element.handleConfirmAdd();
 
-      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
-        ["一括1", "一括2", "一括3"],
-      );
+      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith([
+        "一括1",
+        "一括2",
+        "一括3",
+      ]);
       expect(element.isAddDialogOpen).toBe(false);
       expect(element.addText).toBe("");
 
@@ -663,9 +672,9 @@ describe("IssuesView Component", () => {
 
       await element.handleConfirmAdd();
 
-      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith(
-        ["単体Issue"],
-      );
+      expect(mockIssuesController.createMultipleIssues).toHaveBeenCalledWith([
+        "単体Issue",
+      ]);
       expect(element.isAddDialogOpen).toBe(false);
       expect(element.addText).toBe("");
     });
@@ -764,10 +773,28 @@ describe("IssuesView Component", () => {
         /\.issues-view__item-due--upcoming\s*\{[^}]*var\(--quick-access-icon-upcoming\)/,
       );
     });
+
+    it("6-11. sticky ヘッダー追従のため通常展開時の .issues-view__detail-container / .issues-view__detail に overflow: visible が設定され、--collapsing 時および展開アニメーション中に overflow: hidden が適用されること", () => {
+      const scss = fs.readFileSync(scssPath, "utf-8");
+      const compiledCss = sass.compile(scssPath).css;
+
+      expect(compiledCss).toMatch(
+        /\.issues-view__detail-container\s*\{[^}]*overflow:\s*visible;/,
+      );
+      expect(compiledCss).toMatch(
+        /\.issues-view__detail-container--collapsing\s*\{[^}]*overflow:\s*hidden;/,
+      );
+      expect(compiledCss).toMatch(
+        /\.issues-view__detail\s*\{[^}]*overflow:\s*visible;/,
+      );
+      expect(scss).toMatch(
+        /@keyframes\s+issues-view-detail-expand\s*\{[\s\S]*?overflow:\s*hidden;[\s\S]*?overflow:\s*visible;/,
+      );
+    });
   });
 
   describe("7. Issueテンプレートの部分適用 (Template Application)", () => {
-    it("7-1. 一覧ヘッダーにテンプレート適用ボタン（#issues-view-btn-template）が表示され、wa-tooltip（trigger=\"hover\"、「テンプレートを適用」）が紐づいていること", () => {
+    it('7-1. 一覧ヘッダーにテンプレート適用ボタン（#issues-view-btn-template）が表示され、wa-tooltip（trigger="hover"、「テンプレートを適用」）が紐づいていること', () => {
       const htmlStr = flattenTemplate(element.render());
       expect(htmlStr).toMatch(/id="issues-view-btn-template"/);
       expect(htmlStr).toMatch(/for="issues-view-btn-template"/);
@@ -821,7 +848,9 @@ describe("IssuesView Component", () => {
       (element as any).handleOpenTemplateDialog();
       (element as any).selectedTemplateId = null;
       const htmlStr = flattenTemplate(element.render());
-      expect(htmlStr).toMatch(/id="issues-view-btn-confirm-apply"[^>]*disabled/);
+      expect(htmlStr).toMatch(
+        /id="issues-view-btn-confirm-apply"[^>]*disabled/,
+      );
     });
 
     it("7-7. テンプレートが1件も登録されていない場合、空メッセージ（.issues-view__template-empty-message）が表示されること", () => {
@@ -833,9 +862,11 @@ describe("IssuesView Component", () => {
 
     it("7-8. issuesController.taskId が未設定の場合、親タスクの ID を用いて setTaskId が補正呼び出しされた上で applyTemplate が実行されること", async () => {
       mockIssuesController.taskId = undefined;
-      mockIssuesController.setTaskId = vi.fn().mockImplementation(async (id: number) => {
-        mockIssuesController.taskId = id;
-      });
+      mockIssuesController.setTaskId = vi
+        .fn()
+        .mockImplementation(async (id: number) => {
+          mockIssuesController.taskId = id;
+        });
 
       (element as any).handleOpenTemplateDialog();
       (element as any).selectedTemplateId = 1;

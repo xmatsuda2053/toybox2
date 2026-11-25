@@ -77,7 +77,7 @@
  *   - autoHeight / allowAutoHeight プロパティが定義されていない（undefined）こと
  *   - ヘッダー内に全表示トグルボタン（markdown-editor-preview__auto-height-btn）が描画されないこと
  *   - ルート要素に markdown-editor-preview--auto-height クラスが付与されないこと
- * 19. SCSSにおける全表示モードおよび sticky ヘッダースタイルの完全排除
+ * 19. SCSSにおける全表示モードスタイルの完全排除
  *   - SCSS において .markdown-editor-preview--auto-height や :host([auto-height]) が存在しないこと
  *   - SCSS において .markdown-editor-preview__auto-height-btn が存在しないこと
  *   - SCSS において .markdown-editor-preview--animating が存在しないこと
@@ -730,7 +730,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(headerLeftBlock).not.toContain("overflow: hidden");
     });
 
-    it("SCSS で header に position: relative と z-index が設定され、エディタペインより前面にドロップダウンが描画されること", () => {
+    it("SCSS で header に position: sticky と z-index が設定され、エディタペインより前面にドロップダウンが描画されること", () => {
       const scssPath = new URL(
         "./markdown-editor-preview.scss",
         import.meta.url,
@@ -741,7 +741,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
         scssContent.match(
           /\.markdown-editor-preview__header\s*\{[^}]*\}/s,
         )?.[0] || "";
-      expect(headerBlock).toContain("position: relative");
+      expect(headerBlock).toContain("position: sticky");
       expect(headerBlock).toContain("z-index");
     });
 
@@ -1025,7 +1025,7 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
     });
   });
 
-  describe("19. SCSSにおける全表示モードおよび sticky ヘッダースタイルの完全排除", () => {
+  describe("19. SCSSにおける全表示モードスタイルの完全排除", () => {
     const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
     const scssContent = fs.readFileSync(scssPath, "utf-8");
 
@@ -1712,6 +1712,42 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       });
 
       expect(mockScrollToSourceLine).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("24. 可変サイズレイアウト向け sticky ヘッダーおよび overflow 制御（Issue #559）", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("ヘッダー（.markdown-editor-preview__header）に position: sticky および top: var(--markdown-editor-sticky-top, 0px) が指定されていること", () => {
+      const headerMatch = scssContent.match(
+        /\.markdown-editor-preview__header\s*\{([^}]+)\}/,
+      );
+      expect(headerMatch).not.toBeNull();
+      const headerBlock = headerMatch ? headerMatch[1] : "";
+      expect(headerBlock).toMatch(/position:\s*sticky;/);
+      expect(headerBlock).toMatch(
+        /top:\s*var\(--markdown-editor-sticky-top,\s*0px\);/,
+      );
+    });
+
+    it("ルートコンテナ（.markdown-editor-preview）が sticky を阻害しないよう overflow: visible に設定され、本体領域（.markdown-editor-preview__body）に overflow: hidden と下部角丸が設定されていること", () => {
+      const rootMatch = scssContent.match(
+        /\.markdown-editor-preview\s*\{([^}]*position:\s*relative[^}]*)\}/,
+      );
+      expect(rootMatch).not.toBeNull();
+      const rootBlock = rootMatch ? rootMatch[1] : "";
+      expect(rootBlock).toMatch(/overflow:\s*visible;/);
+      expect(rootBlock).not.toMatch(/overflow:\s*hidden;/);
+
+      const bodyMatch = scssContent.match(
+        /\.markdown-editor-preview__body\s*\{([^}]+)\}/,
+      );
+      expect(bodyMatch).not.toBeNull();
+      const bodyBlock = bodyMatch ? bodyMatch[1] : "";
+      expect(bodyBlock).toMatch(/overflow:\s*hidden;/);
+      expect(bodyBlock).toMatch(/border-bottom-left-radius:\s*5px;/);
+      expect(bodyBlock).toMatch(/border-bottom-right-radius:\s*5px;/);
     });
   });
 });

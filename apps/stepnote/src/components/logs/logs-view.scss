@@ -52,7 +52,7 @@
   user-select: none;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 30;
 }
 
 .logs-view__list-header-cell {
@@ -171,7 +171,9 @@
   border: 2px solid var(--wa-color-surface-default);
   box-sizing: border-box;
   z-index: 1;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
 }
 
 /* 詳細アコーディオン展開コンテナ */
@@ -179,11 +181,13 @@
   display: grid;
   grid-template-rows: 1fr;
   flex-shrink: 0;
-  overflow: hidden;
-  animation: logs-view-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: visible;
+  animation: logs-view-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1)
+    forwards;
   will-change: grid-template-rows, opacity;
 
   &--collapsing {
+    overflow: hidden;
     animation: logs-view-detail-collapse 0.28s cubic-bezier(0.25, 1, 0.5, 1)
       forwards;
     pointer-events: none;
@@ -193,7 +197,7 @@
 /* インライン詳細パネル */
 .logs-view__detail {
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: row;
   background-color: var(--wa-color-surface-default);
@@ -227,7 +231,8 @@
   background-color: var(--wa-color-surface-default);
   border: 1px solid var(--wa-color-surface-border);
   border-radius: var(--wa-border-radius-m, 6px);
-  overflow: hidden;
+  overflow: visible;
+  --markdown-editor-sticky-top: 30px;
 }
 
 .logs-view__detail-meta {
@@ -265,13 +270,18 @@
   0% {
     grid-template-rows: 0fr;
     opacity: 0;
+    overflow: hidden;
   }
   30% {
     opacity: 0.15;
   }
+  99% {
+    overflow: hidden;
+  }
   100% {
     grid-template-rows: 1fr;
     opacity: 1;
+    overflow: visible;
   }
 }
 

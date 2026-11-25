@@ -177,12 +177,13 @@
 .issues-view__detail-container {
   display: grid;
   grid-template-rows: 1fr;
-  overflow: hidden;
+  overflow: visible;
   animation: issues-view-detail-expand 0.35s cubic-bezier(0.16, 1, 0.3, 1)
     forwards;
   will-change: grid-template-rows, opacity;
 
   &--collapsing {
+    overflow: hidden;
     animation: issues-view-detail-collapse 0.28s cubic-bezier(0.25, 1, 0.5, 1)
       forwards;
     pointer-events: none;
@@ -191,7 +192,7 @@
 
 .issues-view__detail {
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   background-color: var(--wa-color-surface-default);
@@ -304,13 +305,18 @@
   0% {
     grid-template-rows: 0fr;
     opacity: 0;
+    overflow: hidden;
   }
   30% {
     opacity: 0.15;
   }
+  99% {
+    overflow: hidden;
+  }
   100% {
     grid-template-rows: 1fr;
     opacity: 1;
+    overflow: visible;
   }
 }
 
