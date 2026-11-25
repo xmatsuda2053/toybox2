@@ -14,11 +14,7 @@ import {
   keymap,
   type KeyBinding,
 } from "@codemirror/view";
-import {
-  EditorState,
-  Compartment,
-  type Extension,
-} from "@codemirror/state";
+import { EditorState, Compartment, type Extension } from "@codemirror/state";
 import {
   defaultKeymap,
   history,
@@ -51,6 +47,49 @@ import {
   getLinePrefixForAction,
   getSurroundingSyntax,
 } from "./markdown-syntax.utils.js";
+import {
+  canScrollContainer,
+  clampNumber,
+  type EditorPositionSource,
+  type EditorScrollPosition,
+} from "../utils/scroll-sync.utils.js";
+
+export interface EditorPositionMetrics {
+  readonly source: EditorPositionSource;
+  readonly lineNumber: number;
+  readonly totalLines: number;
+  readonly blockTop: number;
+  readonly scrollTop: number;
+  readonly scrollHeight: number;
+  readonly clientHeight: number;
+}
+
+/**
+ * CodeMirror の行・スクロール計測値から正規化された EditorScrollPosition を算出する純粋関数
+ */
+export function buildEditorPositionPayload(
+  metrics: EditorPositionMetrics,
+): EditorScrollPosition {
+  const maxScrollTop = Math.max(0, metrics.scrollHeight - metrics.clientHeight);
+  const scrollRatio =
+    maxScrollTop > 0 ? clampNumber(metrics.scrollTop / maxScrollTop, 0, 1) : 0;
+  const viewportRatio =
+    metrics.clientHeight > 0
+      ? clampNumber(
+          (metrics.blockTop - metrics.scrollTop) / metrics.clientHeight,
+          0,
+          1,
+        )
+      : 0;
+
+  return {
+    source: metrics.source,
+    lineNumber: Math.max(1, metrics.lineNumber),
+    viewportRatio,
+    scrollRatio,
+    totalLines: Math.max(1, metrics.totalLines),
+  };
+}
 
 /**
  * 拡張機能リストの浅い等価性（同一性または同等の要素並び）を検証する純粋関数
@@ -168,6 +207,9 @@ export class MarkdownEditor extends LitElement {
   private lastInternalValue: string | null = null;
   private isExternalSync = false;
   private resizeObserver?: ResizeObserver;
+  private scrollRafId: number | null = null;
+  private cursorRafId: number | null = null;
+  private cleanupScrollListener?: () => void;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -254,8 +296,7 @@ export class MarkdownEditor extends LitElement {
     if (!this.editorView) return;
 
     const prevExtensions = changedProperties.get("customExtensions") as
-      | Extension[]
-      | undefined;
+      Extension[] | undefined;
     const extensionsChanged =
       changedProperties.has("customExtensions") &&
       !areExtensionsEqual(prevExtensions, this.customExtensions);
@@ -266,12 +307,16 @@ export class MarkdownEditor extends LitElement {
       this.isDarkMode !== this.lastAppliedDarkMode;
 
     const variantChanged =
-      changedProperties.has("darkTheme") ||
-      changedProperties.has("lightTheme");
+      changedProperties.has("darkTheme") || changedProperties.has("lightTheme");
 
     const disabledChanged = changedProperties.has("disabled");
 
-    if (themeChanged || extensionsChanged || disabledChanged || variantChanged) {
+    if (
+      themeChanged ||
+      extensionsChanged ||
+      disabledChanged ||
+      variantChanged
+    ) {
       this.syncTheme(true);
     }
   }
@@ -281,6 +326,9 @@ export class MarkdownEditor extends LitElement {
     this.disconnectThemeObserver?.();
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
+    this.cleanupScrollListener?.();
+    this.cleanupScrollListener = undefined;
+    this.cancelPendingPositionFrames();
     this.editorView?.destroy();
     this.editorView = undefined;
   }
@@ -342,6 +390,9 @@ export class MarkdownEditor extends LitElement {
           const newValue = update.state.doc.toString();
           this.handleInternalDocChange(newValue);
         }
+        if (update.docChanged || update.selectionSet) {
+          this.scheduleCursorPositionEmit();
+        }
       }),
       this.disabledCompartment.of(
         this.disabled ? EditorState.readOnly.of(true) : [],
@@ -357,6 +408,8 @@ export class MarkdownEditor extends LitElement {
   private initEditor(): void {
     if (!this.containerElement) return;
 
+    this.cleanupScrollListener?.();
+    this.cleanupScrollListener = undefined;
     this.editorView?.destroy();
 
     const startState = EditorState.create({
@@ -369,6 +422,109 @@ export class MarkdownEditor extends LitElement {
       parent: this.containerElement,
       root: (this.shadowRoot as unknown as Document) ?? document,
     });
+    this.bindScrollSyncListener(this.editorView);
+  }
+
+  private cancelPendingPositionFrames(): void {
+    if (typeof cancelAnimationFrame !== "function") return;
+    if (this.scrollRafId !== null) {
+      cancelAnimationFrame(this.scrollRafId);
+      this.scrollRafId = null;
+    }
+    if (this.cursorRafId !== null) {
+      cancelAnimationFrame(this.cursorRafId);
+      this.cursorRafId = null;
+    }
+  }
+
+  private bindScrollSyncListener(view: EditorView): void {
+    const scroller = view.scrollDOM;
+    const onScroll = (): void => {
+      this.scheduleScrollPositionEmit();
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    this.cleanupScrollListener = () => {
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }
+
+  private scheduleCursorPositionEmit(): void {
+    if (typeof requestAnimationFrame !== "function") {
+      this.emitCursorPosition();
+      return;
+    }
+    if (this.cursorRafId !== null) {
+      cancelAnimationFrame(this.cursorRafId);
+    }
+    this.cursorRafId = requestAnimationFrame(() => {
+      this.cursorRafId = null;
+      this.emitCursorPosition();
+    });
+  }
+
+  private scheduleScrollPositionEmit(): void {
+    if (typeof requestAnimationFrame !== "function") {
+      this.emitScrollPosition();
+      return;
+    }
+    if (this.scrollRafId !== null) return;
+    this.scrollRafId = requestAnimationFrame(() => {
+      this.scrollRafId = null;
+      this.emitScrollPosition();
+    });
+  }
+
+  private emitCursorPosition(): void {
+    const view = this.editorView;
+    if (!view) return;
+    const scroller = view.scrollDOM;
+    if (scroller.clientHeight <= 0) {
+      return;
+    }
+
+    try {
+      const head = view.state.selection.main.head;
+      const line = view.state.doc.lineAt(head);
+      const block = view.lineBlockAt(head);
+      const payload = buildEditorPositionPayload({
+        source: "cursor",
+        lineNumber: line.number,
+        totalLines: view.state.doc.lines,
+        blockTop: block.top,
+        scrollTop: scroller.scrollTop,
+        scrollHeight: scroller.scrollHeight,
+        clientHeight: scroller.clientHeight,
+      });
+      this.notifyPositionChange(payload);
+    } catch {
+      // 未計測・非表示状態での位置取得失敗時はスキップする
+    }
+  }
+
+  private emitScrollPosition(): void {
+    const view = this.editorView;
+    if (!view) return;
+    const scroller = view.scrollDOM;
+    if (!canScrollContainer(scroller.scrollHeight, scroller.clientHeight)) {
+      return;
+    }
+
+    try {
+      const block = view.lineBlockAtHeight(scroller.scrollTop);
+      const line = view.state.doc.lineAt(block.from);
+      const payload = buildEditorPositionPayload({
+        source: "scroll",
+        lineNumber: line.number,
+        totalLines: view.state.doc.lines,
+        blockTop: block.top,
+        scrollTop: scroller.scrollTop,
+        scrollHeight: scroller.scrollHeight,
+        clientHeight: scroller.clientHeight,
+      });
+      this.notifyPositionChange(payload);
+    } catch {
+      // 未計測・非表示状態での位置取得失敗時はスキップする
+    }
   }
 
   /**
@@ -476,7 +632,11 @@ export class MarkdownEditor extends LitElement {
 
     if (startLine.number === endLine.number) {
       view.dispatch({
-        changes: { from: startLine.from, to: startLine.from, insert: linePrefix },
+        changes: {
+          from: startLine.from,
+          to: startLine.from,
+          insert: linePrefix,
+        },
         selection: { anchor: from + linePrefix.length },
       });
       view.focus();
@@ -596,7 +756,6 @@ export class MarkdownEditor extends LitElement {
     view.focus();
   }
 
-
   /**
    * テキスト変更カスタムイベントを発火する。
    */
@@ -604,6 +763,19 @@ export class MarkdownEditor extends LitElement {
     this.dispatchEvent(
       new CustomEvent("markdown-change", {
         detail: { value: newValue },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * 編集位置・スクロール位置変更カスタムイベントを発火する。
+   */
+  public notifyPositionChange(position: EditorScrollPosition): void {
+    this.dispatchEvent(
+      new CustomEvent("editor-position-change", {
+        detail: position,
         bubbles: true,
         composed: true,
       }),

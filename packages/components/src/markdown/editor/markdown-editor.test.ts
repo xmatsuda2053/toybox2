@@ -51,12 +51,20 @@
  *   - 16-1. syncExternalValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
  *   - 16-2. setValue() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
  *   - 16-3. refresh() による全置換 dispatch の際、markdown-change カスタムイベントが発火しないこと
+ * 17. 編集位置・スクロール位置の同期イベント通知（Issue #557）
+ *   - 17-1. notifyPositionChange() 呼び出し時に "editor-position-change" カスタムイベントが発火すること
+ *   - 17-2. buildEditorPositionPayload() でカーソル位置・スクロール位置メトリクスから正確な位置情報が算出されること
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { MarkdownEditor, createMarkdownKeymap } from "./markdown-editor.js";
+import {
+  MarkdownEditor,
+  createMarkdownKeymap,
+  buildEditorPositionPayload,
+} from "./markdown-editor.js";
+import type { EditorScrollPosition } from "../utils/scroll-sync.utils.js";
 import { EditorView } from "@codemirror/view";
 
 describe("MarkdownEditor (<markdown-editor>)", () => {
@@ -175,7 +183,9 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     const scssContent = fs.readFileSync(scssPath, "utf-8");
 
     it(".cm-content の背景色が透明に設定され、背面の選択レイヤーを遮蔽しないこと", () => {
-      expect(scssContent).toMatch(/\.cm-content\s*\{[^}]*background-color:\s*transparent/);
+      expect(scssContent).toMatch(
+        /\.cm-content\s*\{[^}]*background-color:\s*transparent/,
+      );
     });
 
     it("選択範囲ハイライト (.cm-selectionBackground) に明瞭なスタイルが指定されていること", () => {
@@ -227,7 +237,11 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
       const dummyExt = EditorView.theme({});
       editor.customExtensions = [dummyExt];
       const testable = editor as unknown as TestableMarkdownEditor;
-      testable.classList = { add: vi.fn(), remove: vi.fn(), contains: vi.fn() } as unknown as DOMTokenList;
+      testable.classList = {
+        add: vi.fn(),
+        remove: vi.fn(),
+        contains: vi.fn(),
+      } as unknown as DOMTokenList;
       testable.editorView = { destroy: vi.fn(), dispatch: vi.fn() };
       const reconfigureSpy = vi.spyOn(testable, "reconfigureEditor");
 
@@ -241,7 +255,11 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     it("isDarkMode が変化しない themeMode 変更時、再構成処理がスキップされること", () => {
       editor.themeMode = "light";
       const testable = editor as unknown as TestableMarkdownEditor;
-      testable.classList = { add: vi.fn(), remove: vi.fn(), contains: vi.fn() } as unknown as DOMTokenList;
+      testable.classList = {
+        add: vi.fn(),
+        remove: vi.fn(),
+        contains: vi.fn(),
+      } as unknown as DOMTokenList;
       testable.editorView = { destroy: vi.fn(), dispatch: vi.fn() };
       const reconfigureSpy = vi.spyOn(testable, "reconfigureEditor");
 
@@ -253,7 +271,6 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
   });
 
   describe("9. 複数回のテーマ切り替え時の整合性保護", () => {
-
     it("themeMode が dark -> light -> dark と切り替わった際、ホスト属性と再構成が正常に同期されること", () => {
       editor.themeMode = "dark";
       const testable = editor as unknown as TestableMarkdownEditor;
@@ -304,8 +321,12 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
     });
 
     it("SCSS において soft ダーク用のスタイルが定義され、StepNote 調のエディタ・ガター配色が指定されていること", () => {
-      expect(scssContent).toMatch(/:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/);
-      expect(scssContent).toMatch(/--stepnote-bg-primary:\s*var\(--wa-color-surface-default,\s*#2f323f\)/);
+      expect(scssContent).toMatch(
+        /:host\(\[data-theme="dark"\]\[dark-theme="soft"\]\)/,
+      );
+      expect(scssContent).toMatch(
+        /--stepnote-bg-primary:\s*var\(--wa-color-surface-default,\s*#2f323f\)/,
+      );
     });
   });
 
@@ -662,6 +683,46 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
 
       expect(eventFired).toBe(false);
       expect(testable.isExternalSync).toBe(false);
+    });
+  });
+
+  describe("17. 編集位置・スクロール位置の同期イベント通知（Issue #557）", () => {
+    it("17-1. notifyPositionChange() 呼び出し時に 'editor-position-change' カスタムイベントが詳細情報とともに発火すること", () => {
+      let received: EditorScrollPosition | null = null;
+      editor.addEventListener("editor-position-change", (e: Event) => {
+        received = (e as CustomEvent<EditorScrollPosition>).detail;
+      });
+
+      const payload: EditorScrollPosition = {
+        source: "cursor",
+        lineNumber: 12,
+        viewportRatio: 0.4,
+        scrollRatio: 0.25,
+        totalLines: 50,
+      };
+      editor.notifyPositionChange(payload);
+
+      expect(received).toEqual(payload);
+    });
+
+    it("17-2. buildEditorPositionPayload() でカーソル・スクロールのメトリクスから正規化された位置情報が算出されること", () => {
+      const payload = buildEditorPositionPayload({
+        source: "cursor",
+        lineNumber: 15,
+        totalLines: 60,
+        blockTop: 320,
+        scrollTop: 120,
+        scrollHeight: 1200,
+        clientHeight: 400,
+      });
+
+      expect(payload.source).toBe("cursor");
+      expect(payload.lineNumber).toBe(15);
+      expect(payload.totalLines).toBe(60);
+      // (320 - 120) / 400 = 0.5
+      expect(payload.viewportRatio).toBeCloseTo(0.5, 5);
+      // 120 / (1200 - 400) = 0.15
+      expect(payload.scrollRatio).toBeCloseTo(0.15, 5);
     });
   });
 });
