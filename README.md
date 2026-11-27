@@ -15,7 +15,8 @@ toybox2/
 ├── apps/                        # アプリケーション群
 │   ├── stepnote/                # タスク管理・作業記録アプリ（単一 HTML ビルド）
 │   ├── stepnote-migrator/       # Step-Note 向けデータ移行ツール（単一 HTML ビルド）
-│   └── extension-hubaddress/    # Chrome / Edge 向けブラウザ拡張機能「HubAddress」
+│   ├── extension-hubaddress/    # Chrome / Edge 向けブラウザ拡張機能「HubAddress」
+│   └── extension-huboffice/     # Chrome / Edge 向けブラウザ拡張機能「HubOffice」
 ├── packages/                    # 共有パッケージ群（@shared/*）
 │   ├── components/              # 共通 UI Web Components（@shared/components）
 │   ├── icons/                   # 共通アイコン資産・登録ユーティリティ（@shared/icons）
@@ -28,19 +29,20 @@ toybox2/
 
 ### アプリケーション（`apps/*`）
 
-| アプリ名               | ディレクトリ                | バージョン | 形態                    | 概要                                                                           | 内部依存                                               | 備考 / 成果物                                                           |
-| :--------------------- | :-------------------------- | :--------- | :---------------------- | :----------------------------------------------------------------------------- | :----------------------------------------------------- | :---------------------------------------------------------------------- |
-| `stepnote`             | `apps/stepnote`             | `1.0.1`    | 単一 HTML Web アプリ    | スタンドアロン動作するタスク管理・作業記録アプリ（StepNote）                   | `@shared/components`, `@shared/icons`, `@shared/utils` | `vite-plugin-singlefile` 出力                                           |
-| `stepnote-migrator`    | `apps/stepnote-migrator`    | `1.0.1`    | 単一 HTML Web アプリ    | Step-Note データ移行ツール（SnDB to StepNote）                                 | `@shared/components`, `@shared/utils`                  | `vite-plugin-singlefile` 出力                                           |
-| `extension-hubaddress` | `apps/extension-hubaddress` | `1.0.0`    | ブラウザ拡張機能（MV3） | 職員情報・組織情報をサイドパネルで素早く検索・参照できる拡張機能「HubAddress」 | `@shared/components`, `@shared/icons`, `@shared/utils` | 配布 ZIP: `apps/extension-hubaddress/dist-zip/hubaddress-extension.zip` |
+| アプリ名               | ディレクトリ                | バージョン | 形態                    | 概要                                                                                | 内部依存                                               | 備考 / 成果物                                                           |
+| :--------------------- | :-------------------------- | :--------- | :---------------------- | :---------------------------------------------------------------------------------- | :----------------------------------------------------- | :---------------------------------------------------------------------- |
+| `stepnote`             | `apps/stepnote`             | `1.1.0`    | 単一 HTML Web アプリ    | スタンドアロン動作するタスク管理・作業記録アプリ（StepNote）                        | `@shared/components`, `@shared/icons`, `@shared/utils` | `vite-plugin-singlefile` 出力                                           |
+| `stepnote-migrator`    | `apps/stepnote-migrator`    | `1.0.1`    | 単一 HTML Web アプリ    | Step-Note データ移行ツール（SnDB to StepNote）                                      | `@shared/components`, `@shared/utils`                  | `vite-plugin-singlefile` 出力                                           |
+| `extension-hubaddress` | `apps/extension-hubaddress` | `1.0.1`    | ブラウザ拡張機能（MV3） | 職員情報・組織情報をサイドパネルで素早く検索・参照できる拡張機能「HubAddress」      | `@shared/components`, `@shared/icons`, `@shared/utils` | 配布 ZIP: `apps/extension-hubaddress/dist-zip/hubaddress-extension.zip` |
+| `extension-huboffice`  | `apps/extension-huboffice`  | `0.1.0`    | ブラウザ拡張機能（MV3） | 事務作業で役立つオフラインツールをサイドパネルで一元利用できる拡張機能「HubOffice」 | `@shared/components`, `@shared/icons`, `@shared/utils` | 配布 ZIP: `apps/extension-huboffice/dist-zip/huboffice-extension.zip`   |
 
 ### 共有パッケージ（`packages/*`）
 
-| パッケージ名         | ディレクトリ          | バージョン | 概要                                                            | 主なモジュール構成（`src/`）                            | 内部依存                         |
-| :------------------- | :-------------------- | :--------- | :-------------------------------------------------------------- | :------------------------------------------------------ | :------------------------------- |
-| `@shared/components` | `packages/components` | `1.0.0`    | アプリ横断で利用する共通 Web Components UI 群                   | `datepicker-input`, `markdown`, `search-input`, `utils` | `@shared/icons`, `@shared/utils` |
-| `@shared/icons`      | `packages/icons`      | `1.0.0`    | 共通 SVG アイコン資産およびアイコンライブラリ登録ユーティリティ | `assets`（`register.ts`, `icons.ts`）                   | なし                             |
-| `@shared/utils`      | `packages/utils`      | `1.0.0`    | DOM 非依存の純粋関数・テスト支援ユーティリティ群                | `async`, `date`, `event`, `number`, `string`, `testing` | なし                             |
+| パッケージ名         | ディレクトリ          | バージョン | 概要                                                            | 主なモジュール構成（`src/`）                                         | 内部依存                         |
+| :------------------- | :-------------------- | :--------- | :-------------------------------------------------------------- | :------------------------------------------------------------------- | :------------------------------- |
+| `@shared/components` | `packages/components` | `1.0.0`    | アプリ横断で利用する共通 Web Components UI 群                   | `datepicker-input`, `markdown`, `search-input`, `utils`              | `@shared/icons`, `@shared/utils` |
+| `@shared/icons`      | `packages/icons`      | `1.0.0`    | 共通 SVG アイコン資産およびアイコンライブラリ登録ユーティリティ | `assets`（`register.ts`, `icons.ts`）                                | なし                             |
+| `@shared/utils`      | `packages/utils`      | `1.0.0`    | DOM 非依存の純粋関数・拡張基盤・テスト支援ユーティリティ群      | `async`, `date`, `event`, `extension`, `number`, `string`, `testing` | なし                             |
 
 ## 技術スタック（Tech Stack）
 

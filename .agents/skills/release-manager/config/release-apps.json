@@ -101,6 +101,42 @@
         "「パッケージ化されていない拡張機能を読み込む（展開して読み込み）」をクリックし、展開したフォルダを選択します。",
         "既存バージョンからの更新時は、新しい展開フォルダで上書きしたうえで拡張機能一覧の更新ボタン（再読み込み）を押してください。"
       ]
+    },
+    {
+      "id": "ext-huboffice",
+      "displayName": "HubOffice",
+      "workspaceDir": "apps/extension-huboffice",
+      "appType": "browser-extension",
+      "tagPrefix": "ext-huboffice",
+      "versionFiles": [
+        {
+          "path": "apps/extension-huboffice/package.json",
+          "type": "json"
+        },
+        {
+          "path": "apps/extension-huboffice/public/manifest.json",
+          "type": "json"
+        }
+      ],
+      "buildCommand": "npm run package:ext-huboffice",
+      "testCommand": "npm run test:ext-huboffice",
+      "artifactSource": "apps/extension-huboffice/dist-zip/huboffice-extension.zip",
+      "artifactNameTemplate": "huboffice-extension-v{{version}}.zip",
+      "changelogPath": "apps/extension-huboffice/CHANGELOG.md",
+      "wikiPage": "HubOffice",
+      "watchPaths": [
+        "apps/extension-huboffice",
+        "packages/components",
+        "packages/icons",
+        "packages/utils"
+      ],
+      "summary": "西暦・和暦変換や QR コード生成など、事務作業で役立つオフラインツールをサイドパネルで一元利用できる Chrome / Edge 向けブラウザ拡張機能（Manifest V3）",
+      "installSteps": [
+        "下記のダウンロードリンクから `huboffice-extension-v<version>.zip` をダウンロードし、任意のフォルダへ展開します（展開直下に `manifest.json` が配置されます）。",
+        "Chrome（`chrome://extensions`）または Edge（`edge://extensions`）を開き、「デベロッパー モード（開発者モード）」を有効にします。",
+        "「パッケージ化されていない拡張機能を読み込む（展開して読み込み）」をクリックし、展開したフォルダを選択します。",
+        "既存バージョンからの更新時は、新しい展開フォルダで上書きしたうえで拡張機能一覧の更新ボタン（再読み込み）を押してください。"
+      ]
     }
   ]
 }
