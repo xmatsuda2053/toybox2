@@ -13,7 +13,7 @@ import {
  * テスト仕様: Side Panel シェル UI・カードレイアウト・SCSS 規約検証 (sidepanel.test.ts)
  *
  * - 仕様1: hubaddress-app.scss および directory-cards.scss にカラー直値（Hex / RGB / RGBA）・!important・@extend が含まれないこと
- * - 仕様2: テーマ切替時の点滅を防ぐため :host に背景色・文字色の transition が設定されていないこと、カードホバー背景色と中央揃えが定義されていること
+ * - 仕様2: テーマ切替時の点滅を防ぐため :host に背景色・文字色の transition が設定されていないこと、カードホバー背景色とヘッダー上端揃えが定義されていること
  * - 仕様3: 検索入力に with-clear が設定され、「すべての所属」ドロップダウンが除去されていること、タブにアイコンがあること
  * - 仕様4: 職員カードは先頭に5桁職員番号が表示され、メール欄は初期非表示・展開操作時のみ表示されること
  * - 仕様5: 組織カードは「場所」が連絡先の下に配置されていること
@@ -38,6 +38,7 @@ import {
  * - 仕様24: sidepanel.ts が ResizeObserver loop エラーガードを起動時に登録・pagehide で解除し、.directory-card-list に scrollbar-gutter: stable が設定されていること
  * - 仕様25: 職員カードの組織名・メール展開ボタン行が折り返さず、幅不足時は組織名が1行省略表示されリサイズ・2カラム切替へ追従し、title 属性で完全な組織名を確認できること
  * - 仕様26: 組織一覧の追加ボタン左隣に size="xs" のソート順切替ドロップダウン（登録順・組織名・場所）とホバーツールチップが配置されていること
+ * - 仕様27: 職員・組織カードの編集・削除操作がハンバーガーメニュー（wa-dropdown / bars-solid-full）へ統合され、wa-select で onEdit / onDelete が発火し、両カードのメニューボタンがヘッダー右上に統一配置されること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -60,7 +61,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     }
   });
 
-  it("点滅防止・ホバー背景色・カードヘッダー中央揃え・文字サイズ拡大・並列レイアウトが定義されていること", () => {
+  it("点滅防止・ホバー背景色・カードヘッダー上端揃え・文字サイズ拡大・並列レイアウトが定義されていること", () => {
     const shellScss = readFileSync(
       resolve(srcRoot, "hubaddress-app.scss"),
       "utf-8",
@@ -75,7 +76,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     );
     expect(cardScss).toContain(".directory-card:hover");
     expect(cardScss).toMatch(
-      /\.directory-card__header\s*\{[^}]*align-items:\s*center/s,
+      /\.directory-card__header\s*\{[^}]*align-items:\s*flex-start/s,
     );
     expect(cardScss).toContain("--wa-font-size-m");
     expect(cardScss).toMatch(
@@ -649,8 +650,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(staffHtml).toMatch(/title="?職員番号をコピー"?/);
     expect(staffHtml).toMatch(/title="?氏名をコピー"?/);
     expect(staffHtml).toMatch(/title="?総務部 総務課（組織を検索）"?/);
-    expect(staffHtml).toMatch(/title="?編集"?/);
-    expect(staffHtml).toMatch(/title="?削除"?/);
+    expect(staffHtml).toMatch(/title="?メニュー"?/);
     expect(staffHtml).toMatch(/title="?メールをコピー"?/);
   });
 
@@ -817,5 +817,96 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     );
     expect(orgSortIdx).toBeGreaterThan(orgColumnIdx);
     expect(orgAddIdx).toBeGreaterThan(orgSortIdx);
+  });
+
+  it("職員・組織カードの編集・削除操作がハンバーガーメニューへ統合され選択時に各コールバックが呼ばれること", () => {
+    const collectHandlers = (
+      val: unknown,
+      out: ((e?: unknown) => void)[],
+    ): void => {
+      if (typeof val === "function") out.push(val as (e?: unknown) => void);
+      else if (Array.isArray(val)) val.forEach((v) => collectHandlers(v, out));
+      else if (val && typeof val === "object" && "values" in val) {
+        (val as TemplateResult).values.forEach((v) => collectHandlers(v, out));
+      }
+    };
+    const staff = {
+      id: 1,
+      staffId: "0010001",
+      name: "田中 太郎",
+      furigana: "たなか たろう",
+      department: "総務部 総務課",
+      title: "課長",
+      emails: ["tanaka@example.com"],
+    };
+    const onStaffEdit = vi.fn();
+    const onStaffDelete = vi.fn();
+    const staffTpl = renderStaffCard(staff, 0, {
+      isEmailsExpanded: false,
+      onToggleEmails: () => {},
+      onJumpToDepartment: () => {},
+      onCopy: () => {},
+      onEdit: onStaffEdit,
+      onDelete: onStaffDelete,
+    });
+    const staffHtml = flattenTemplate(staffTpl);
+    expect(staffHtml).toContain("<wa-dropdown");
+    expect(staffHtml).toContain('placement="bottom-end"');
+    expect(staffHtml).toContain('slot="trigger"');
+    expect(staffHtml).toContain('name="bars-solid-full"');
+    expect(staffHtml).toContain('value="edit"');
+    expect(staffHtml).toContain('value="delete"');
+    expect(staffHtml).toContain('variant="danger"');
+
+    const handlers: ((e?: unknown) => void)[] = [];
+    collectHandlers(staffTpl, handlers);
+    handlers.forEach((fn) => {
+      fn({ detail: { item: { value: "edit" } } });
+      fn({ detail: { item: { value: "delete" } } });
+    });
+    expect(onStaffEdit).toHaveBeenCalledWith(staff);
+    expect(onStaffDelete).toHaveBeenCalledWith(staff);
+  });
+
+  it("組織カードも同一のハンバーガーメニュー構造を持ち、両カードのボタン位置がヘッダー右上に統一されていること", () => {
+    const org = {
+      id: 1,
+      department: "総務部 総務課",
+      extra: "3階",
+      location: "本庁舎",
+      title: "課長席",
+      extensionNumber: "2101",
+      phoneNumber: "03-1234-2101",
+      faxNumber: "",
+      notes: "",
+    };
+    const orgHtml = flattenTemplate(
+      renderOrganizationCard(org, 0, {
+        onCopy: () => {},
+        onEdit: () => {},
+        onDelete: () => {},
+      }),
+    );
+    expect(orgHtml).toContain("<wa-dropdown");
+    expect(orgHtml).toContain('name="bars-solid-full"');
+    expect(orgHtml).toContain('value="edit"');
+    expect(orgHtml).toContain('value="delete"');
+
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__header\s*\{[^}]*align-items:\s*flex-start/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__header\s*\{[^}]*justify-content:\s*space-between/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__title-group\s*\{[^}]*flex:\s*1/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__actions\s*\{[^}]*flex-shrink:\s*0/s,
+    );
   });
 });
