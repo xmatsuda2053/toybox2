@@ -109,6 +109,7 @@ npm install
 - **ブランチ運用（GitHub Flow）**:
   - 本線は `main` のみとし、機能開発・修正・ドキュメント更新は短命なトピックブランチから PR を経てマージします。
   - ブランチ命名規則: `<prefix>/<scope>-<issue_id>-<slug>`（例: `feat/stepnote-120-task-filter`, `fix/ext-45-popup-ui`, `docs/repo-569-readme-update-workflow`）
-  - 独立リリースタグ: `<scope>@v<version>`（例: `stepnote@v1.2.0`）
+  - 独立リリースタグ: `<scope>@v<version>`（例: `stepnote@v1.2.0`, `ext-hubaddress@v0.2.0`）
+  - リリース・配布運用: `/release-app` ワークフロー（`release-manager` スキル）により、バージョン更新 PR → GitHub Releases 公開（成果物添付）→ GitHub Wiki ダウンロードポータル自動同期を実行します。
 - **開発ルール・ワークフロー・スキル一覧**:
-  - モノレポ共通規約、Step-Note 固有設計ルール、Issue / Commit / PR 作成やリファクタリング、本 `README.md` の定期更新ワークフロー（`/update-readme`）の詳細は [**AI エージェント開発基盤ガイド（`.agents/README.md`）**](.agents/README.md) を参照してください。
+  - モノレポ共通規約、Step-Note 固有設計ルール、Issue / Commit / PR 作成、アプリリリース（`/release-app`）、リファクタリング、本 `README.md` の定期更新ワークフロー（`/update-readme`）の詳細は [**AI エージェント開発基盤ガイド（`.agents/README.md`）**](.agents/README.md) を参照してください。

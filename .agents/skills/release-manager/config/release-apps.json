@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "wiki": {
+    "homeTitle": "toybox2 アプリケーション ダウンロードポータル",
+    "homeIntro": "本リポジトリで開発している各アプリケーションの最新版および過去バージョンをダウンロードできます。配布ファイルは GitHub Releases にホストされています。"
+  },
+  "apps": [
+    {
+      "id": "stepnote",
+      "displayName": "Step-Note",
+      "workspaceDir": "apps/stepnote",
+      "appType": "standalone-singlefile-web-app",
+      "tagPrefix": "stepnote",
+      "versionFiles": [
+        {
+          "path": "apps/stepnote/package.json",
+          "type": "json"
+        }
+      ],
+      "buildCommand": "npm run build:stepnote",
+      "testCommand": "npx vitest run apps/stepnote",
+      "artifactSource": "apps/stepnote/dist/index.html",
+      "artifactNameTemplate": "stepnote-v{{version}}.html",
+      "changelogPath": "apps/stepnote/CHANGELOG.md",
+      "wikiPage": "Step-Note",
+      "watchPaths": [
+        "apps/stepnote",
+        "packages/components",
+        "packages/icons",
+        "packages/utils"
+      ],
+      "summary": "スタンドアロン動作するタスク管理・作業記録アプリ（単一 HTML ファイル）",
+      "installSteps": [
+        "下記のダウンロードリンクから `stepnote-v<version>.html` を任意のローカルフォルダへ保存します。",
+        "保存した HTML ファイルを Chrome / Edge 等のブラウザで直接開きます（外部サーバーやネットワーク接続は不要です）。",
+        "データはブラウザのローカル IndexedDB に自動保存されます。バージョンアップ前にアプリ内のバックアップ機能で JSON を保存しておくと安心です。"
+      ]
+    },
+    {
+      "id": "stepnote-migrator",
+      "displayName": "Step-Note Migrator",
+      "workspaceDir": "apps/stepnote-migrator",
+      "appType": "standalone-singlefile-web-app",
+      "tagPrefix": "stepnote-migrator",
+      "versionFiles": [
+        {
+          "path": "apps/stepnote-migrator/package.json",
+          "type": "json"
+        }
+      ],
+      "buildCommand": "npm run build:migrator",
+      "testCommand": "npx vitest run apps/stepnote-migrator",
+      "artifactSource": "apps/stepnote-migrator/dist/index.html",
+      "artifactNameTemplate": "stepnote-migrator-v{{version}}.html",
+      "changelogPath": "apps/stepnote-migrator/CHANGELOG.md",
+      "wikiPage": "Step-Note-Migrator",
+      "watchPaths": [
+        "apps/stepnote-migrator",
+        "packages/components",
+        "packages/utils"
+      ],
+      "summary": "旧 Step-Note（SnDB）のバックアップ JSON を新 Step-Note 形式へ変換するデータ移行ツール（単一 HTML ファイル）",
+      "installSteps": [
+        "下記のダウンロードリンクから `stepnote-migrator-v<version>.html` を任意のローカルフォルダへ保存します。",
+        "保存した HTML ファイルをブラウザで開き、旧バックアップ JSON ファイルをドラッグ＆ドロップして変換します。",
+        "変換後に自動ダウンロードされる新形式バックアップ JSON を、Step-Note 本体の復元機能から取り込みます。"
+      ]
+    },
+    {
+      "id": "ext-hubaddress",
+      "displayName": "HubAddress",
+      "workspaceDir": "apps/extension-hubaddress",
+      "appType": "browser-extension",
+      "tagPrefix": "ext-hubaddress",
+      "versionFiles": [
+        {
+          "path": "apps/extension-hubaddress/package.json",
+          "type": "json"
+        },
+        {
+          "path": "apps/extension-hubaddress/public/manifest.json",
+          "type": "json"
+        }
+      ],
+      "buildCommand": "npm run package:ext-hubaddress",
+      "testCommand": "npm run test:ext-hubaddress",
+      "artifactSource": "apps/extension-hubaddress/dist-zip/hubaddress-extension.zip",
+      "artifactNameTemplate": "hubaddress-extension-v{{version}}.zip",
+      "changelogPath": "apps/extension-hubaddress/CHANGELOG.md",
+      "wikiPage": "HubAddress",
+      "watchPaths": [
+        "apps/extension-hubaddress",
+        "packages/components",
+        "packages/icons",
+        "packages/utils"
+      ],
+      "summary": "職員情報・組織情報をサイドパネルで素早く検索・参照できる Chrome / Edge 向けブラウザ拡張機能（Manifest V3）",
+      "installSteps": [
+        "下記のダウンロードリンクから `hubaddress-extension-v<version>.zip` をダウンロードし、任意のフォルダへ展開します（展開直下に `manifest.json` が配置されます）。",
+        "Chrome（`chrome://extensions`）または Edge（`edge://extensions`）を開き、「デベロッパー モード（開発者モード）」を有効にします。",
+        "「パッケージ化されていない拡張機能を読み込む（展開して読み込み）」をクリックし、展開したフォルダを選択します。",
+        "既存バージョンからの更新時は、新しい展開フォルダで上書きしたうえで拡張機能一覧の更新ボタン（再読み込み）を押してください。"
+      ]
+    }
+  ]
+}

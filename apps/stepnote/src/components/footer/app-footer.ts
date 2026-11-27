@@ -30,6 +30,9 @@ import type { IssuesController } from "../../controllers/issues.controller.js";
 import type { ScratchController } from "../../controllers/scratch.controller.js";
 import type { LabelsController } from "../../controllers/labels.controller.js";
 
+const DEFAULT_APP_VERSION =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
+
 /**
  * StepNote フッターコンポーネント (AppFooter)
  *
@@ -47,9 +50,7 @@ export class AppFooter extends WithLabelsController(
     WithIssuesController(
       WithNotesController(
         WithLogsController(
-          WithTaskController(
-            WithTaskListController(SubscriberElement),
-          ),
+          WithTaskController(WithTaskListController(SubscriberElement)),
         ),
       ),
     ),
@@ -100,6 +101,12 @@ export class AppFooter extends WithLabelsController(
   public completedIssueCount?: number;
 
   /**
+   * 表示するアプリバージョン（未指定時はビルド時埋め込み値を使用）
+   */
+  @property({ type: String })
+  public appVersion: string = DEFAULT_APP_VERSION;
+
+  /**
    * デバウンスされたストレージ使用量更新リクエスト
    */
   public requestStorageUpdate = debounce(() => {
@@ -134,10 +141,16 @@ export class AppFooter extends WithLabelsController(
     return super.taskListController;
   }
 
-  public override set taskListController(controller: TaskListController | undefined) {
+  public override set taskListController(
+    controller: TaskListController | undefined,
+  ) {
     super.taskListController = controller;
     if (controller) {
-      this.subscriber.subscribe("taskList-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "taskList-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -148,7 +161,11 @@ export class AppFooter extends WithLabelsController(
   public override set taskController(controller: TaskController | undefined) {
     super.taskController = controller;
     if (controller) {
-      this.subscriber.subscribe("task-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "task-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -159,7 +176,11 @@ export class AppFooter extends WithLabelsController(
   public override set logsController(controller: LogsController | undefined) {
     super.logsController = controller;
     if (controller) {
-      this.subscriber.subscribe("logs-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "logs-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -170,7 +191,11 @@ export class AppFooter extends WithLabelsController(
   public override set notesController(controller: NotesController | undefined) {
     super.notesController = controller;
     if (controller) {
-      this.subscriber.subscribe("notes-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "notes-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -178,10 +203,16 @@ export class AppFooter extends WithLabelsController(
     return super.issuesController;
   }
 
-  public override set issuesController(controller: IssuesController | undefined) {
+  public override set issuesController(
+    controller: IssuesController | undefined,
+  ) {
     super.issuesController = controller;
     if (controller) {
-      this.subscriber.subscribe("issues-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "issues-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -189,10 +220,16 @@ export class AppFooter extends WithLabelsController(
     return super.scratchController;
   }
 
-  public override set scratchController(controller: ScratchController | undefined) {
+  public override set scratchController(
+    controller: ScratchController | undefined,
+  ) {
     super.scratchController = controller;
     if (controller) {
-      this.subscriber.subscribe("scratch-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "scratch-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -200,10 +237,16 @@ export class AppFooter extends WithLabelsController(
     return super.labelsController;
   }
 
-  public override set labelsController(controller: LabelsController | undefined) {
+  public override set labelsController(
+    controller: LabelsController | undefined,
+  ) {
     super.labelsController = controller;
     if (controller) {
-      this.subscriber.subscribe("labels-storage", controller, this.handleControllerDataChange);
+      this.subscriber.subscribe(
+        "labels-storage",
+        controller,
+        this.handleControllerDataChange,
+      );
     }
   }
 
@@ -237,8 +280,7 @@ export class AppFooter extends WithLabelsController(
    * タスク進捗の集計メトリクスを取得する。
    */
   protected get effectiveTaskMetrics():
-    | ({ filtered: number } & TaskProgressMetrics)
-    | undefined {
+    ({ filtered: number } & TaskProgressMetrics) | undefined {
     if (this.totalTaskCount !== undefined) {
       const total = this.totalTaskCount;
       const filtered = this.filteredTaskCount ?? total;
@@ -448,12 +490,31 @@ export class AppFooter extends WithLabelsController(
   }
 
   /**
+   * アプリバージョン表示のレンダリング。
+   */
+  private renderVersionStatus() {
+    return html`
+      <span
+        id="footer-status-version"
+        class="app-footer__status-item app-footer__status-item--version"
+      >
+        <span class="app-footer__text">v${this.appVersion}</span>
+      </span>
+      <wa-tooltip for="footer-status-version" placement="top" trigger="hover">
+        Step-Note v${this.appVersion}
+      </wa-tooltip>
+    `;
+  }
+
+  /**
    * 右ゾーン（システム状態・ショートカットヘルプ）のレンダリング。
    */
   protected renderSystemZone() {
     return html`
       <div class="app-footer__system">
         <slot name="system"></slot>
+        ${this.renderVersionStatus()}
+        <span class="app-footer__divider">|</span>
         ${this.renderShortcutHelpButton()}
       </div>
     `;
@@ -462,8 +523,7 @@ export class AppFooter extends WithLabelsController(
   public override render() {
     return html`
       <footer class="app-footer">
-        ${this.renderContextZone()}
-        ${this.renderCenterZone()}
+        ${this.renderContextZone()} ${this.renderCenterZone()}
         ${this.renderSystemZone()}
       </footer>
     `;

@@ -11,7 +11,8 @@
   --error-color: #cf222e;
   --error-bg: #ffebe9;
   --info-bg: #ddf4ff;
-  --font-family: 'Segoe UI', 'BIZ UD Gothic', 'Yu Gothic UI', Meiryo, sans-serif;
+  --font-family:
+    "Segoe UI", "BIZ UD Gothic", "Yu Gothic UI", Meiryo, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -81,7 +82,9 @@ body {
   padding: 40px 20px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
   background-color: rgba(128, 128, 128, 0.02);
 }
 
@@ -204,3 +207,7 @@ body {
   color: var(--text-muted);
 }
 
+.footer__version {
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}

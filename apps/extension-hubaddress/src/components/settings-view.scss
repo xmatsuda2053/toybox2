@@ -75,3 +75,21 @@
   font-size: var(--wa-font-size-xs);
   white-space: nowrap;
 }
+
+.settings-view__info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wa-space-s);
+  font-size: var(--wa-font-size-s);
+}
+
+.settings-view__info-name {
+  color: var(--wa-color-text-normal);
+  font-weight: var(--wa-font-weight-medium);
+}
+
+.settings-view__version {
+  color: var(--wa-color-text-quiet);
+  font-variant-numeric: tabular-nums;
+}

@@ -3,10 +3,27 @@ import { convertSnDbToStepNote } from "./utils/migration.utils";
 import type { MigrationResult } from "./types/migration.types";
 import "./styles.css";
 
+const DEFAULT_APP_VERSION =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
+
+/**
+ * フッター HTML を構築する。
+ */
+export function buildFooterHtml(version: string = DEFAULT_APP_VERSION): string {
+  return `
+    <footer class="footer">
+      <div>ブラウザ内で完全に処理されます。外部サーバーへの通信は一切行われません。</div>
+      <div class="footer__version">Step-Note Migrator v${version}</div>
+    </footer>
+  `;
+}
+
 /**
  * 新形式のバックアップファイル名を生成する。
  */
-export function generateStepNoteBackupFileName(date: Date = new Date()): string {
+export function generateStepNoteBackupFileName(
+  date: Date = new Date(),
+): string {
   return `stepnote_backup_${format(date, "yyyyMMdd_HHmmss")}.json`;
 }
 
@@ -73,7 +90,10 @@ function buildErrorHtml(error: unknown): string {
 /**
  * ファイル読み込みと変換を実行する。
  */
-async function processFile(file: File, resultContainer: HTMLElement): Promise<void> {
+async function processFile(
+  file: File,
+  resultContainer: HTMLElement,
+): Promise<void> {
   resultContainer.className = "result result--visible";
   resultContainer.innerHTML = '<div class="alert">変換処理を実行中...</div>';
 
@@ -160,9 +180,7 @@ function init(): void {
 
       <div id="result" class="result"></div>
 
-      <footer class="footer">
-        ブラウザ内で完全に処理されます。外部サーバーへの通信は一切行われません。
-      </footer>
+      ${buildFooterHtml()}
     </div>
   `;
 
