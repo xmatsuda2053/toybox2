@@ -1,9 +1,4 @@
-import {
-  LitElement,
-  html,
-  unsafeCSS,
-  type HTMLTemplateResult,
-} from "lit";
+import { LitElement, html, unsafeCSS, type HTMLTemplateResult } from "lit";
 import { customElement, property, state, query } from "lit/decorators.js";
 
 // Third-party UI (WebAwesome)
@@ -15,11 +10,7 @@ import "@awesome.me/webawesome/dist/components/divider/divider.js";
 import type WaPopover from "@awesome.me/webawesome/dist/components/popover/popover.js";
 
 // Shared Utilities
-import {
-  dispatchCustomEvent,
-  format,
-  getJapaneseEraYear,
-} from "@shared/utils";
+import { dispatchCustomEvent, format, getJapaneseEraYear } from "@shared/utils";
 
 import styles from "./datepicker-input.scss?inline";
 
@@ -33,12 +24,36 @@ export interface DatePickerChangeEventDetail {
   date: Date | null;
 }
 
+import { normalizeWaSize, type ComponentSize } from "../utils/size.utils";
 import {
-  normalizeWaSize,
-  type ComponentSize,
-} from "../utils/size.utils";
+  JAPANESE_ERA_PRESETS,
+  MAX_PICKER_YEAR,
+  MIN_PICKER_YEAR,
+  YEAR_GRID_SIZE,
+  clampYearRangeStart,
+  getMonthCells,
+  getYearCells,
+  getYearEraLabel,
+  getYearRangeStart,
+  parseYearInput,
+  shiftYearRange,
+  type CalendarViewMode,
+  type MonthCellData,
+  type YearCellData,
+} from "./datepicker-input.utils";
 
 export type DatePickerInputSize = ComponentSize;
+
+/**
+ * カレンダーヘッダーのナビゲーションボタン設定
+ */
+interface NavButtonConfig {
+  id: string;
+  label: string;
+  icon: string;
+  onClick: () => void;
+  extraClass: string;
+}
 
 /**
  * カレンダーグリッドの日付セル情報
@@ -129,6 +144,7 @@ export class DatePickerInput extends LitElement {
       if (match) {
         this._currentYear = parseInt(match[1], 10);
         this._currentMonth = parseInt(match[2], 10);
+        this._yearRangeStart = getYearRangeStart(this._currentYear);
       }
     }
     this.requestUpdate("value", oldVal);
@@ -201,16 +217,50 @@ export class DatePickerInput extends LitElement {
   private _currentMonth: number = new Date().getMonth() + 1;
 
   /**
+   * カレンダーポップオーバーの現在ビュー（日 / 月 / 年）
+   */
+  @state()
+  private _viewMode: CalendarViewMode = "days";
+
+  /**
+   * 年選択ビューの開始年
+   */
+  @state()
+  private _yearRangeStart: number = getYearRangeStart(new Date().getFullYear());
+
+  /**
+   * 西暦年直接入力のバッファ値
+   */
+  @state()
+  private _yearJumpInput: string = "";
+
+  /**
+   * 西暦年直接入力のバリデーションエラーメッセージ
+   */
+  @state()
+  private _yearJumpError: string = "";
+
+  /**
    * ポップオーバー要素の参照
    */
   @query("#calendar-popover")
   private _calendarPopover?: WaPopover;
 
   /**
+   * ビュー状態および年入力バッファを初期の日ビューへリセットする
+   */
+  private resetViewToDays(): void {
+    this._viewMode = "days";
+    this._yearJumpInput = "";
+    this._yearJumpError = "";
+  }
+
+  /**
    * 前月へ移動
    */
   public handlePrevMonth = (): void => {
     if (this._currentMonth === 1) {
+      if (this._currentYear <= MIN_PICKER_YEAR) return;
       this._currentMonth = 12;
       this._currentYear--;
     } else {
@@ -223,6 +273,7 @@ export class DatePickerInput extends LitElement {
    */
   public handleNextMonth = (): void => {
     if (this._currentMonth === 12) {
+      if (this._currentYear >= MAX_PICKER_YEAR) return;
       this._currentMonth = 1;
       this._currentYear++;
     } else {
@@ -234,14 +285,114 @@ export class DatePickerInput extends LitElement {
    * 前年へ移動
    */
   public handlePrevYear = (): void => {
-    this._currentYear--;
+    if (this._currentYear > MIN_PICKER_YEAR) {
+      this._currentYear--;
+    }
   };
 
   /**
    * 翌年へ移動
    */
   public handleNextYear = (): void => {
-    this._currentYear++;
+    if (this._currentYear < MAX_PICKER_YEAR) {
+      this._currentYear++;
+    }
+  };
+
+  /**
+   * ヘッダーの年月タイトルクリック時のビュー切替（日 → 月 → 年 ⇄ 月）
+   */
+  public handleTitleClick = (): void => {
+    if (this._viewMode === "days") {
+      this._viewMode = "months";
+      return;
+    }
+
+    if (this._viewMode === "months") {
+      this._yearRangeStart = getYearRangeStart(this._currentYear);
+      this._yearJumpInput = "";
+      this._yearJumpError = "";
+      this._viewMode = "years";
+      return;
+    }
+
+    this._viewMode = "months";
+  };
+
+  /**
+   * 月選択ビューで月セルを選択
+   */
+  public handleMonthSelect = (month: number): void => {
+    this._currentMonth = month;
+    this.resetViewToDays();
+  };
+
+  /**
+   * 年選択ビューで年セルを選択
+   */
+  public handleYearSelect = (year: number): void => {
+    this._currentYear = year;
+    this._yearRangeStart = getYearRangeStart(year);
+    this._yearJumpError = "";
+    this._viewMode = "months";
+  };
+
+  /**
+   * 年選択ビューで前の12年へ移動
+   */
+  public handlePrevYearRange = (): void => {
+    this._yearRangeStart = shiftYearRange(this._yearRangeStart, -1);
+  };
+
+  /**
+   * 年選択ビューで次の12年へ移動
+   */
+  public handleNextYearRange = (): void => {
+    this._yearRangeStart = shiftYearRange(this._yearRangeStart, 1);
+  };
+
+  /**
+   * 元号クイックジャンプにより該当元号の開始年ページへ移動
+   */
+  public handleEraJump = (startYear: number): void => {
+    this._yearRangeStart = clampYearRangeStart(startYear);
+    this._yearJumpError = "";
+  };
+
+  /**
+   * 西暦年直接入力の変更ハンドラ
+   */
+  public handleYearJumpInput = (value: string): void => {
+    this._yearJumpInput = value;
+    this._yearJumpError = "";
+  };
+
+  /**
+   * 西暦年直接入力の確定ハンドラ
+   */
+  public handleYearJumpSubmit = (): void => {
+    const parsed = parseYearInput(this._yearJumpInput);
+    if (parsed === null) {
+      this._yearJumpError = "1〜9999の西暦年を入力してください";
+      return;
+    }
+
+    this._currentYear = parsed;
+    this._yearRangeStart = getYearRangeStart(parsed);
+    this._yearJumpInput = "";
+    this._yearJumpError = "";
+    this._viewMode = "months";
+  };
+
+  /**
+   * ポップオーバーが完全に閉じた際のリセット処理
+   * 子要素（wa-tooltip 等）からバブリングした wa-after-hide は無視する
+   */
+  public handlePopoverAfterHide = (event?: Event): void => {
+    if (event && event.target !== event.currentTarget) {
+      return;
+    }
+    this.resetViewToDays();
   };
 
   /**
@@ -251,6 +402,7 @@ export class DatePickerInput extends LitElement {
     const today = new Date();
     this._currentYear = today.getFullYear();
     this._currentMonth = today.getMonth() + 1;
+    this._yearRangeStart = getYearRangeStart(this._currentYear);
   }
 
   /**
@@ -258,6 +410,7 @@ export class DatePickerInput extends LitElement {
    */
   public handleToday = (): void => {
     this.resetToCurrentYearMonth();
+    this.resetViewToDays();
   };
 
   /**
@@ -267,6 +420,7 @@ export class DatePickerInput extends LitElement {
     if (this.disabled || this.required || !this.clearable) return;
 
     this.value = "";
+    this.resetViewToDays();
     if (this._internals?.setFormValue) {
       this._internals.setFormValue("");
     }
@@ -275,15 +429,19 @@ export class DatePickerInput extends LitElement {
       this._calendarPopover.open = false;
     }
 
-    dispatchCustomEvent<DatePickerChangeEventDetail>(this, "datepicker-change", {
-      detail: {
-        value: "",
-        date: null,
+    dispatchCustomEvent<DatePickerChangeEventDetail>(
+      this,
+      "datepicker-change",
+      {
+        detail: {
+          value: "",
+          date: null,
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true,
       },
-      bubbles: true,
-      composed: true,
-      cancelable: true,
-    });
+    );
   };
 
   /**
@@ -298,6 +456,7 @@ export class DatePickerInput extends LitElement {
     }
 
     this.value = dateStr;
+    this.resetViewToDays();
     if (this._internals?.setFormValue) {
       this._internals.setFormValue(dateStr);
     }
@@ -309,15 +468,19 @@ export class DatePickerInput extends LitElement {
     const [y, m, d] = dateStr.split("-").map(Number);
     const dateObj = new Date(y, m - 1, d);
 
-    dispatchCustomEvent<DatePickerChangeEventDetail>(this, "datepicker-change", {
-      detail: {
-        value: dateStr,
-        date: dateObj,
+    dispatchCustomEvent<DatePickerChangeEventDetail>(
+      this,
+      "datepicker-change",
+      {
+        detail: {
+          value: dateStr,
+          date: dateObj,
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true,
       },
-      bubbles: true,
-      composed: true,
-      cancelable: true,
-    });
+    );
   };
 
   /**
@@ -464,53 +627,178 @@ export class DatePickerInput extends LitElement {
   }
 
   /**
+   * 現在のビューに応じたヘッダータイトル情報を構築する
+   */
+  private getHeaderTitleMeta(): {
+    text: string;
+    era: string;
+    tooltip: string;
+    caretIcon: string;
+  } {
+    if (this._viewMode === "months") {
+      return {
+        text: `${this._currentYear}年`,
+        era: getYearEraLabel(this._currentYear),
+        tooltip: "年を選択",
+        caretIcon: "angle-down-solid-full",
+      };
+    }
+
+    if (this._viewMode === "years") {
+      const rangeEnd = this._yearRangeStart + YEAR_GRID_SIZE - 1;
+      return {
+        text: `${this._yearRangeStart}年 - ${rangeEnd}年`,
+        era: "",
+        tooltip: "月選択に戻る",
+        caretIcon: "angle-up-solid-full",
+      };
+    }
+
+    const { western, japanese } = this.getYearMonthTitle();
+    return {
+      text: western,
+      era: japanese,
+      tooltip: "月・年を選択",
+      caretIcon: "angle-down-solid-full",
+    };
+  }
+
+  /**
+   * ヘッダーのタイトル表示とツールチップ文言を描画する
+   */
+  private renderHeaderTitle(): HTMLTemplateResult {
+    const { text, era, tooltip, caretIcon } = this.getHeaderTitleMeta();
+
+    return html`
+      <button
+        type="button"
+        id="btn-view-title"
+        class="datepicker-calendar__title"
+        aria-label=${tooltip}
+        @click=${this.handleTitleClick}
+      >
+        <wa-tooltip for="btn-view-title" trigger="hover">${tooltip}</wa-tooltip>
+        <span>${text}</span>
+        ${era ? html`<span class="datepicker-calendar__era">(${era})</span>` : ""}
+        <wa-icon
+          class="datepicker-calendar__title-caret"
+          library="my-icons"
+          name=${caretIcon}
+        ></wa-icon>
+      </button>
+    `;
+  }
+
+  /**
+   * 共通の年移動・当日ナビゲーションボタン定義を返す
+   */
+  private getBaseNavButtons(): {
+    prevYear: NavButtonConfig;
+    today: NavButtonConfig;
+    nextYear: NavButtonConfig;
+  } {
+    return {
+      prevYear: {
+        id: "btn-prev-year",
+        label: "前年",
+        icon: "angles-left-solid-full",
+        onClick: this.handlePrevYear,
+        extraClass: "datepicker-calendar__btn-prev-year",
+      },
+      today: {
+        id: "btn-today",
+        label: "当日",
+        icon: "location-dot-solid-full",
+        onClick: this.handleToday,
+        extraClass: "datepicker-calendar__btn-today",
+      },
+      nextYear: {
+        id: "btn-next-year",
+        label: "翌年",
+        icon: "angles-right-solid-full",
+        onClick: this.handleNextYear,
+        extraClass: "datepicker-calendar__btn-next-year",
+      },
+    };
+  }
+
+  /**
+   * 現在のビューに応じたナビゲーションボタン定義一覧を返す
+   */
+  private getNavButtonConfigs(): NavButtonConfig[] {
+    const { prevYear, today, nextYear } = this.getBaseNavButtons();
+
+    if (this._viewMode === "months") {
+      return [prevYear, today, nextYear];
+    }
+
+    if (this._viewMode === "years") {
+      return [
+        {
+          id: "btn-prev-year-range",
+          label: "前の12年",
+          icon: "angles-left-solid-full",
+          onClick: this.handlePrevYearRange,
+          extraClass: "datepicker-calendar__btn-prev-year-range",
+        },
+        today,
+        {
+          id: "btn-next-year-range",
+          label: "次の12年",
+          icon: "angles-right-solid-full",
+          onClick: this.handleNextYearRange,
+          extraClass: "datepicker-calendar__btn-next-year-range",
+        },
+      ];
+    }
+
+    return [
+      prevYear,
+      {
+        id: "btn-prev-month",
+        label: "前月",
+        icon: "angle-left-solid-full",
+        onClick: this.handlePrevMonth,
+        extraClass: "datepicker-calendar__btn-prev-month",
+      },
+      today,
+      {
+        id: "btn-next-month",
+        label: "翌月",
+        icon: "angle-right-solid-full",
+        onClick: this.handleNextMonth,
+        extraClass: "datepicker-calendar__btn-next-month",
+      },
+      nextYear,
+    ];
+  }
+
+  /**
+   * 現在のビューに応じたヘッダー操作ボタン群を描画する
+   */
+  private renderCalendarActions(): HTMLTemplateResult {
+    return html`
+      <div class="datepicker-calendar__actions">
+        ${this.getNavButtonConfigs().map((btn) =>
+          this.renderNavButton(
+            btn.id,
+            btn.label,
+            btn.icon,
+            btn.onClick,
+            btn.extraClass,
+          ),
+        )}
+      </div>
+    `;
+  }
+
+  /**
    * カレンダーヘッダー部（年月・和暦および操作ボタン）を描画する
    */
   private renderCalendarHeader(): HTMLTemplateResult {
-    const { western, japanese } = this.getYearMonthTitle();
-
     return html`
       <div class="datepicker-calendar__header">
-        <div class="datepicker-calendar__title">
-          ${western}<span class="datepicker-calendar__era">(${japanese})</span>
-        </div>
-        <div class="datepicker-calendar__actions">
-          ${this.renderNavButton(
-            "btn-prev-year",
-            "前年",
-            "angles-left-solid-full",
-            this.handlePrevYear,
-            "datepicker-calendar__btn-prev-year",
-          )}
-          ${this.renderNavButton(
-            "btn-prev-month",
-            "前月",
-            "angle-left-solid-full",
-            this.handlePrevMonth,
-            "datepicker-calendar__btn-prev-month",
-          )}
-          ${this.renderNavButton(
-            "btn-today",
-            "当日",
-            "location-dot-solid-full",
-            this.handleToday,
-            "datepicker-calendar__btn-today",
-          )}
-          ${this.renderNavButton(
-            "btn-next-month",
-            "翌月",
-            "angle-right-solid-full",
-            this.handleNextMonth,
-            "datepicker-calendar__btn-next-month",
-          )}
-          ${this.renderNavButton(
-            "btn-next-year",
-            "翌年",
-            "angles-right-solid-full",
-            this.handleNextYear,
-            "datepicker-calendar__btn-next-year",
-          )}
-        </div>
+        ${this.renderHeaderTitle()} ${this.renderCalendarActions()}
       </div>
     `;
   }
@@ -524,9 +812,11 @@ export class DatePickerInput extends LitElement {
         ${WEEKDAY_NAMES.map(
           (w, i) => html`
             <div
-              class="datepicker-calendar__weekday ${i === 0 || i === 6
-                ? "datepicker-calendar__weekday--weekend"
-                : ""}"
+              class="datepicker-calendar__weekday ${
+                i === 0 || i === 6
+                  ? "datepicker-calendar__weekday--weekend"
+                  : ""
+              }"
             >
               ${w}
             </div>
@@ -549,25 +839,29 @@ export class DatePickerInput extends LitElement {
             <button
               type="button"
               id=${isClearableCurrent ? "datepicker-cell-current" : undefined}
-              class="datepicker-calendar__cell ${c.isCurrent
-                ? "datepicker-calendar__cell--current"
-                : ""} ${c.isToday
-                ? "datepicker-calendar__cell--today"
-                : ""} ${c.isOtherMonth
-                ? "datepicker-calendar__cell--other-month"
-                : ""} ${c.isWeekend
-                ? "datepicker-calendar__cell--weekend"
-                : ""}"
+              class="datepicker-calendar__cell ${
+                c.isCurrent ? "datepicker-calendar__cell--current" : ""
+              } ${c.isToday ? "datepicker-calendar__cell--today" : ""} ${
+                c.isOtherMonth ? "datepicker-calendar__cell--other-month" : ""
+              } ${c.isWeekend ? "datepicker-calendar__cell--weekend" : ""}"
               data-date=${c.dateStr}
-              aria-label=${isClearableCurrent
-                ? `${c.dateStr} (クリックして日付をクリア)`
-                : c.dateStr}
+              aria-label=${
+                isClearableCurrent
+                  ? `${c.dateStr} (クリックして日付をクリア)`
+                  : c.dateStr
+              }
               aria-selected=${c.isCurrent ? "true" : "false"}
               @click=${() => this.handleDateClick(c.dateStr)}
             >
-              ${isClearableCurrent
-                ? html`<wa-tooltip for="datepicker-cell-current" trigger="hover">クリックして日付をクリア</wa-tooltip>`
-                : ""}
+              ${
+                isClearableCurrent
+                  ? html`<wa-tooltip
+                      for="datepicker-cell-current"
+                      trigger="hover"
+                      >クリックして日付をクリア</wa-tooltip
+                    >`
+                  : ""
+              }
               ${c.day}
             </button>
           `;
@@ -577,22 +871,196 @@ export class DatePickerInput extends LitElement {
   }
 
   /**
+   * 月選択グリッド（1月〜12月）を描画する
+   */
+  private renderMonthGrid(): HTMLTemplateResult {
+    const today = new Date();
+    const cells: MonthCellData[] = getMonthCells(
+      this._currentYear,
+      this._currentMonth,
+      today.getFullYear(),
+      today.getMonth() + 1,
+    );
+
+    return html`
+      <div class="datepicker-calendar__months">
+        ${cells.map(
+          (cell) => html`
+            <button
+              type="button"
+              class="datepicker-calendar__month-cell ${
+                cell.isCurrent ? "datepicker-calendar__month-cell--current" : ""
+              } ${cell.isToday ? "datepicker-calendar__month-cell--today" : ""}"
+              data-month=${cell.month}
+              aria-selected=${cell.isCurrent ? "true" : "false"}
+              @click=${() => this.handleMonthSelect(cell.month)}
+            >
+              ${cell.label}
+            </button>
+          `,
+        )}
+      </div>
+    `;
+  }
+
+  /**
+   * 元号クイックジャンプボタン群を描画する
+   */
+  private renderEraQuickJump(): HTMLTemplateResult {
+    const rangeEnd = this._yearRangeStart + YEAR_GRID_SIZE - 1;
+
+    return html`
+      <div class="datepicker-calendar__eras" aria-label="元号クイックジャンプ">
+        ${JAPANESE_ERA_PRESETS.map((era) => {
+          const btnId = `btn-era-${era.id}`;
+          const isActive =
+            era.startYear >= this._yearRangeStart && era.startYear <= rangeEnd;
+          return html`
+            <button
+              type="button"
+              id=${btnId}
+              class="datepicker-calendar__era-btn ${
+                isActive ? "datepicker-calendar__era-btn--active" : ""
+              }"
+              aria-label="${era.label}（${era.startYear}年〜）へ移動"
+              @click=${() => this.handleEraJump(era.startYear)}
+            >
+              <wa-tooltip for=${btnId} trigger="hover"
+                >${era.label}（${era.startYear}年〜）</wa-tooltip
+              >
+              ${era.label}
+            </button>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  /**
+   * 西暦年の直接入力フォームを描画する
+   */
+  private renderYearJumpForm(): HTMLTemplateResult {
+    return html`
+      <div class="datepicker-calendar__year-jump">
+        <input
+          type="text"
+          inputmode="numeric"
+          maxlength="4"
+          class="datepicker-calendar__year-input"
+          placeholder="西暦年 (例: 1985)"
+          aria-label="西暦年を直接入力"
+          .value=${this._yearJumpInput}
+          @input=${(e: Event) => {
+            const target = e.target as HTMLInputElement;
+            this.handleYearJumpInput(target.value);
+          }}
+          @keydown=${(e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              this.handleYearJumpSubmit();
+            }
+          }}
+        />
+        <button
+          type="button"
+          class="datepicker-calendar__year-submit"
+          @click=${this.handleYearJumpSubmit}
+        >
+          移動
+        </button>
+      </div>
+      ${
+        this._yearJumpError
+          ? html`<div class="datepicker-calendar__year-error" role="alert">
+              ${this._yearJumpError}
+            </div>`
+          : ""
+      }
+    `;
+  }
+
+  /**
+   * 年選択ビュー（元号クイックジャンプ・西暦直接入力・12年グリッド）を描画する
+   */
+  private renderYearGrid(): HTMLTemplateResult {
+    const todayYear = new Date().getFullYear();
+    const cells: YearCellData[] = getYearCells(
+      this._yearRangeStart,
+      this._currentYear,
+      todayYear,
+    );
+
+    return html`
+      <div class="datepicker-calendar__years-panel">
+        ${this.renderEraQuickJump()} ${this.renderYearJumpForm()}
+        <div class="datepicker-calendar__years">
+          ${cells.map(
+            (cell) => html`
+              <button
+                type="button"
+                class="datepicker-calendar__year-cell ${
+                  cell.isCurrent
+                    ? "datepicker-calendar__year-cell--current"
+                    : ""
+                } ${
+                  cell.isToday ? "datepicker-calendar__year-cell--today" : ""
+                }"
+                data-year=${cell.year}
+                aria-selected=${cell.isCurrent ? "true" : "false"}
+                @click=${() => this.handleYearSelect(cell.year)}
+              >
+                <span class="datepicker-calendar__year-number"
+                  >${cell.year}</span
+                >
+                ${
+                  cell.eraLabel
+                    ? html`<span class="datepicker-calendar__year-era"
+                        >${cell.eraLabel}</span
+                      >`
+                    : ""
+                }
+              </button>
+            `,
+          )}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * 現在のビューモードに応じたカレンダー本文を描画する
+   */
+  private renderCalendarBody(): HTMLTemplateResult {
+    if (this._viewMode === "months") {
+      return this.renderMonthGrid();
+    }
+
+    if (this._viewMode === "years") {
+      return this.renderYearGrid();
+    }
+
+    const cells = this.getCalendarCells();
+    return html`
+      ${this.renderCalendarWeekdays()} ${this.renderCalendarGrid(cells)}
+    `;
+  }
+
+  /**
    * カレンダーポップオーバーを描画する
    */
   private renderCalendar(): HTMLTemplateResult {
-    const cells = this.getCalendarCells();
-
     return html`
       <wa-popover
         id="calendar-popover"
+        class="datepicker-popover"
         for="input-date"
         placement="bottom-start"
+        @wa-after-hide=${this.handlePopoverAfterHide}
       >
         <div class="datepicker-calendar">
           ${this.renderCalendarHeader()}
           <wa-divider class="datepicker-calendar__divider"></wa-divider>
-          ${this.renderCalendarWeekdays()}
-          ${this.renderCalendarGrid(cells)}
+          ${this.renderCalendarBody()}
         </div>
       </wa-popover>
     `;
