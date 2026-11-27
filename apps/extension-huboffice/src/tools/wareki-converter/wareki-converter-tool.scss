@@ -1,21 +1,15 @@
+@use "../../styles/mixins.scss" as *;
+
 :host {
   display: block;
 }
 
 .wareki-tool {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-m);
+  @include tool-container;
 }
 
 .wareki-tool__inputs {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-s);
-  padding: var(--wa-space-m);
-  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
-  border-radius: var(--wa-border-radius-m);
-  background-color: var(--wa-color-surface-default);
+  @include surface-card(var(--wa-space-s));
 }
 
 .wareki-tool__field {
@@ -25,9 +19,7 @@
 }
 
 .wareki-tool__label {
-  font-size: var(--wa-font-size-xs);
-  font-weight: var(--wa-font-weight-semibold);
-  color: var(--wa-color-text-quiet);
+  @include tool-section-heading;
 }
 
 .wareki-tool__direction {
@@ -68,10 +60,7 @@
 }
 
 .wareki-tool__section-heading {
-  margin: 0;
-  font-size: var(--wa-font-size-xs);
-  font-weight: var(--wa-font-weight-semibold);
-  color: var(--wa-color-text-quiet);
+  @include tool-section-heading;
 }
 
 .wareki-tool__copy-list {
@@ -81,15 +70,12 @@
 }
 
 .wareki-tool__copy-row {
+  @include surface-row-card;
   display: grid;
   grid-template-columns: 7.5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--wa-space-xs);
   width: 100%;
-  padding: var(--wa-space-xs) var(--wa-space-s);
-  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
-  border-radius: var(--wa-border-radius-m);
-  background-color: var(--wa-color-surface-default);
   color: var(--wa-color-text-normal);
   font: inherit;
   text-align: left;
@@ -128,11 +114,5 @@
 }
 
 .wareki-tool__hint {
-  margin: 0;
-  padding: var(--wa-space-s);
-  border-radius: var(--wa-border-radius-m);
-  background-color: var(--wa-color-surface-lowered);
-  font-size: var(--wa-font-size-xs);
-  color: var(--wa-color-text-quiet);
-  line-height: 1.5;
+  @include tool-hint-box;
 }
