@@ -1,26 +1,56 @@
 :host {
+  --me-bg: var(--stepnote-bg-primary, #ffffff);
+  --me-text: var(--stepnote-text-primary, inherit);
+  --me-gutter-bg: var(--stepnote-bg-secondary, #f8fafc);
+  --me-gutter-text: var(--stepnote-text-secondary, #94a3b8);
+  --me-gutter-border: var(--stepnote-border-subtle, #e2e8f0);
+  --me-accent: var(--stepnote-accent, #3b82f6);
+  --me-selection-bg: rgba(59, 130, 246, 0.25);
+
   display: block;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  font-family: 'BIZ UDGothic', 'BIZ UDゴシック', 'MS Gothic', 'ＭＳ ゴシック', Consolas, monospace;
-  color: var(--stepnote-text-primary, inherit);
-  background-color: var(--stepnote-bg-primary, #ffffff);
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :host {
-    transition: none !important;
-  }
+  font-family:
+    "BIZ UDGothic", "BIZ UDゴシック", "MS Gothic", "ＭＳ ゴシック", Consolas,
+    monospace;
+  color: var(--me-text);
+  background-color: var(--me-bg);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 :host([data-theme="dark"]),
 :host(.wa-dark) {
   --stepnote-bg-primary: #0d1117;
   --stepnote-text-primary: #c9d1d9;
-  background-color: #0d1117 !important;
-  color: #c9d1d9 !important;
+  --me-bg: #0d1117;
+  --me-text: #c9d1d9;
+  --me-gutter-bg: #0d1117;
+  --me-gutter-text: #6e7681;
+  --me-gutter-border: #30363d;
+  --me-accent: var(--stepnote-accent, #38bdf8);
+  --me-selection-bg: rgba(56, 189, 248, 0.3);
+}
+
+/* soft ダークスタイル (StepNote 調 - 案A: ペイン背景適合) */
+:host([data-theme="dark"][dark-theme="soft"]),
+:host(.wa-dark[dark-theme="soft"]) {
+  --stepnote-bg-primary: var(--wa-color-surface-default, #2f323f);
+  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
+  --me-bg: var(--wa-color-surface-default, #2f323f);
+  --me-text: var(--wa-color-text-normal, #e6edf3);
+  --me-gutter-bg: var(--wa-color-neutral-fill-quiet, #252833);
+  --me-gutter-text: var(--wa-color-text-quiet, #9da7b3);
+  --me-gutter-border: var(--wa-color-surface-border, #434857);
+  --me-accent: var(--wa-color-brand-70, #218bff);
+  --me-selection-bg: rgba(33, 139, 255, 0.35);
+  --me-active-line-bg: rgba(255, 255, 255, 0.04);
+  --me-active-gutter-bg: rgba(255, 255, 255, 0.07);
+  --me-active-gutter-text: var(--wa-color-text-normal, #e6edf3);
+  --me-cursor-color: var(--wa-color-text-normal, #e6edf3);
 }
 
 .markdown-editor {
@@ -34,8 +64,6 @@
   background-color: inherit;
 }
 
-
-
 .markdown-editor__container {
   width: 100%;
   height: 100%;
@@ -45,15 +73,15 @@
   background-color: inherit;
 }
 
-/* CodeMirror 6 スタイル調整 */
+/* CodeMirror 6 スタイル調整（内部テーマ上書きのため最小限の !important のみ使用） */
 .markdown-editor__container .cm-editor {
   height: 100%;
   font-family: inherit;
   font-size: 14px;
   line-height: 1.6;
   outline: none;
-  background-color: inherit;
-  color: inherit;
+  background-color: var(--me-bg) !important;
+  color: var(--me-text) !important;
 }
 
 .markdown-editor__container .cm-scroller {
@@ -65,7 +93,7 @@
 .markdown-editor__container .cm-content {
   padding: 12px 16px;
   font-family: inherit;
-  caret-color: var(--stepnote-accent, #3b82f6);
+  caret-color: var(--me-accent);
   background-color: transparent !important;
   word-break: break-all;
   overflow-wrap: anywhere;
@@ -80,93 +108,49 @@
 /* 選択範囲・ドラッグ操作時の視覚スタイル */
 .markdown-editor__container .cm-selectionBackground,
 .markdown-editor__container .cm-selectionLayer .cm-selectionBackground {
-  background-color: rgba(59, 130, 246, 0.25) !important;
+  background-color: var(--me-selection-bg) !important;
 }
 
 .markdown-editor__container .cm-content ::selection {
-  background-color: rgba(59, 130, 246, 0.25) !important;
+  background-color: var(--me-selection-bg) !important;
 }
 
 .markdown-editor__container .cm-dropCursor {
-  border-left: 2px solid var(--stepnote-accent, #3b82f6) !important;
+  border-left: 2px solid var(--me-accent) !important;
 }
 
 .markdown-editor__container .cm-gutters {
-  background-color: var(--stepnote-bg-secondary, #f8fafc);
-  color: var(--stepnote-text-secondary, #94a3b8);
-  border-right: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  background-color: var(--me-gutter-bg) !important;
+  color: var(--me-gutter-text) !important;
+  border-right: 1px solid var(--me-gutter-border) !important;
 }
 
-/* ダークモード対応 */
-:host([data-theme="dark"]) .markdown-editor__container .cm-gutters,
-:host(.wa-dark) .markdown-editor__container .cm-gutters {
-  background-color: #0d1117 !important;
-  color: #6e7681 !important;
-  border-right-color: #30363d !important;
+:host([data-theme="dark"][dark-theme="soft"])
+  .markdown-editor__container
+  .cm-activeLine,
+:host(.wa-dark[dark-theme="soft"]) .markdown-editor__container .cm-activeLine {
+  background-color: var(--me-active-line-bg);
 }
 
-:host([data-theme="dark"]) .markdown-editor__container .cm-editor,
-:host(.wa-dark) .markdown-editor__container .cm-editor {
-  background-color: #0d1117 !important;
-  color: #c9d1d9 !important;
+:host([data-theme="dark"][dark-theme="soft"])
+  .markdown-editor__container
+  .cm-activeLineGutter,
+:host(.wa-dark[dark-theme="soft"])
+  .markdown-editor__container
+  .cm-activeLineGutter {
+  background-color: var(--me-active-gutter-bg);
+  color: var(--me-active-gutter-text);
 }
 
-:host([data-theme="dark"]) .markdown-editor__container .cm-selectionBackground,
-:host(.wa-dark) .markdown-editor__container .cm-selectionBackground,
-:host([data-theme="dark"]) .markdown-editor__container .cm-selectionLayer .cm-selectionBackground,
-:host(.wa-dark) .markdown-editor__container .cm-selectionLayer .cm-selectionBackground {
-  background-color: rgba(56, 189, 248, 0.3) !important;
+:host([data-theme="dark"][dark-theme="soft"])
+  .markdown-editor__container
+  .cm-cursor,
+:host(.wa-dark[dark-theme="soft"]) .markdown-editor__container .cm-cursor {
+  border-left-color: var(--me-cursor-color);
 }
 
-:host([data-theme="dark"]) .markdown-editor__container .cm-content ::selection,
-:host(.wa-dark) .markdown-editor__container .cm-content ::selection {
-  background-color: rgba(56, 189, 248, 0.3) !important;
-}
-
-:host([data-theme="dark"]) .markdown-editor__container .cm-dropCursor,
-:host(.wa-dark) .markdown-editor__container .cm-dropCursor {
-  border-left: 2px solid var(--stepnote-accent, #38bdf8) !important;
-}
-
-/* soft ダークスタイル (StepNote 調 - 案A: ペイン背景適合) */
-:host([data-theme="dark"][dark-theme="soft"]),
-:host(.wa-dark[dark-theme="soft"]) {
-  --stepnote-bg-primary: var(--wa-color-surface-default, #2f323f);
-  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
-  background-color: var(--wa-color-surface-default, #2f323f) !important;
-  color: var(--wa-color-text-normal, #e6edf3) !important;
-
-  .markdown-editor__container .cm-gutters {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    color: var(--wa-color-text-quiet, #9da7b3) !important;
-    border-right-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor__container .cm-editor {
-    background-color: var(--wa-color-surface-default, #2f323f) !important;
-    color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor__container .cm-activeLine {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-  }
-
-  .markdown-editor__container .cm-activeLineGutter {
-    background-color: rgba(255, 255, 255, 0.07) !important;
-    color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor__container .cm-cursor {
-    border-left-color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor__container .cm-selectionBackground,
-  .markdown-editor__container .cm-selectionLayer .cm-selectionBackground,
-  .markdown-editor__container .cm-content ::selection {
-    background-color: rgba(33, 139, 255, 0.35) !important;
-  }
-
-  .markdown-editor__container .cm-dropCursor {
-    border-left: 2px solid var(--wa-color-brand-70, #218bff) !important;
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none;
   }
 }

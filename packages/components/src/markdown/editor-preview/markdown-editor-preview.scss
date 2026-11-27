@@ -1,4 +1,57 @@
+/* コンポーネント共通ボタン Mixin */
+@mixin mep-icon-button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--mep-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+  line-height: 1;
+}
+
+@mixin mep-icon-glyph-box {
+  width: 1.1em;
+  height: 1.1em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 :host {
+  /* コンポーネントローカルテーマトークン（ライト既定） */
+  --mep-bg-surface: var(--stepnote-bg-surface, #ffffff);
+  --mep-bg-secondary: var(--stepnote-bg-secondary, #f8fafc);
+  --mep-bg-tertiary: var(--stepnote-bg-tertiary, #e2e8f0);
+  --mep-border-subtle: var(--stepnote-border-subtle, #e2e8f0);
+  --mep-text-primary: var(--stepnote-text-primary, #0f172a);
+  --mep-text-secondary: var(--stepnote-text-secondary, #64748b);
+  --mep-accent: var(--stepnote-accent, #3b82f6);
+  --mep-accent-on: #ffffff;
+  --mep-btn-hover-bg: var(--mep-bg-tertiary);
+  --mep-btn-hover-color: var(--mep-text-primary);
+  --mep-mode-group-bg: var(--mep-bg-tertiary);
+  --mep-mode-active-bg: var(--mep-bg-surface);
+  --mep-mode-active-color: var(--mep-accent);
+  --mep-mode-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --mep-menu-title-color: var(--wa-color-text-quiet, var(--mep-text-secondary));
+  --mep-backdrop-bg: rgba(0, 0, 0, 0.45);
+  --mep-dialog-bg: var(--mep-bg-surface);
+  --mep-dialog-header-bg: var(--mep-bg-secondary);
+  --mep-dialog-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --mep-table-header-bg: var(--mep-bg-secondary);
+  --mep-code-bg: var(--stepnote-bg-secondary, #f1f5f9);
+  --mep-code-color: inherit;
+  --mep-insert-border: var(--stepnote-border-subtle, #cbd5e1);
+  --mep-insert-bg: var(--mep-bg-surface);
+  --mep-insert-color: var(--mep-accent);
+  --mep-insert-hover-bg: var(--mep-accent);
+
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -13,19 +66,68 @@
     border-color 0.2s ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :host,
-  .markdown-editor-preview {
-    transition: none !important;
-  }
-}
-
 :host([data-theme="dark"]),
 :host(.wa-dark) {
   --stepnote-bg-surface: #0d1117;
   --stepnote-text-primary: #f0f6fc;
+  --mep-bg-surface: #0d1117;
+  --mep-bg-secondary: #161b22;
+  --mep-bg-tertiary: #30363d;
+  --mep-border-subtle: #30363d;
+  --mep-text-primary: #f0f6fc;
+  --mep-text-secondary: #8b949e;
+  --mep-accent: #58a6ff;
+  --mep-btn-hover-bg: #30363d;
+  --mep-btn-hover-color: #f0f6fc;
+  --mep-mode-group-bg: #21262d;
+  --mep-mode-active-bg: #30363d;
+  --mep-mode-active-color: #58a6ff;
+  --mep-menu-title-color: var(--wa-color-text-quiet, #8b949e);
+  --mep-dialog-bg: #161b22;
+  --mep-dialog-header-bg: #21262d;
+  --mep-table-header-bg: #21262d;
+  --mep-code-bg: #21262d;
+  --mep-code-color: #e6edf3;
+  --mep-insert-border: #30363d;
+  --mep-insert-bg: #21262d;
+  --mep-insert-color: #58a6ff;
+  --mep-insert-hover-bg: #1f6feb;
 }
 
+/* ==========================================================================
+   soft ダークスタイル (StepNote 調)
+   ========================================================================== */
+:host([data-theme="dark"][dark-theme="soft"]),
+:host(.wa-dark[dark-theme="soft"]) {
+  --stepnote-bg-surface: var(--wa-color-surface-default, #2f323f);
+  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
+  --stepnote-border-subtle: var(--wa-color-surface-border, #434857);
+  --mep-bg-surface: var(--wa-color-surface-default, #2f323f);
+  --mep-bg-secondary: var(--wa-color-neutral-fill-quiet, #252833);
+  --mep-bg-tertiary: var(--wa-color-neutral-fill-normal, #484d5e);
+  --mep-border-subtle: var(--wa-color-surface-border, #434857);
+  --mep-text-primary: var(--wa-color-text-normal, #e6edf3);
+  --mep-text-secondary: var(--wa-color-text-quiet, #9da7b3);
+  --mep-accent: var(--wa-color-brand-70, #218bff);
+  --mep-btn-hover-bg: var(--wa-color-neutral-fill-normal, #484d5e);
+  --mep-btn-hover-color: #ffffff;
+  --mep-mode-group-bg: var(--wa-color-neutral-fill-normal-hover, #1f212b);
+  --mep-mode-active-bg: var(--wa-color-neutral-fill-normal, #484d5e);
+  --mep-mode-active-color: var(--wa-color-brand-70, #218bff);
+  --mep-dialog-bg: var(--wa-color-surface-default, #2f323f);
+  --mep-dialog-header-bg: var(--wa-color-neutral-fill-quiet, #252833);
+  --mep-table-header-bg: var(--wa-color-neutral-fill-quiet, #252833);
+  --mep-code-bg: var(--wa-color-neutral-fill-quiet, #252833);
+  --mep-code-color: var(--wa-color-text-normal, #e6edf3);
+  --mep-insert-border: var(--wa-color-surface-border, #434857);
+  --mep-insert-bg: var(--wa-color-neutral-fill-quiet, #252833);
+  --mep-insert-color: var(--wa-color-brand-70, #218bff);
+  --mep-insert-hover-bg: var(--wa-color-brand-70, #218bff);
+}
+
+/* ==========================================================================
+   コンポーネントレイアウトおよび要素スタイル
+   ========================================================================== */
 .markdown-editor-preview {
   position: relative;
   display: flex;
@@ -35,18 +137,12 @@
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
-  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  border: 1px solid var(--mep-border-subtle);
   border-radius: 6px;
   overflow: visible;
-  background-color: var(--stepnote-bg-surface, #ffffff);
+  background-color: var(--mep-bg-surface);
   container-type: inline-size;
   container-name: editor-preview;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview,
-:host(.wa-dark) .markdown-editor-preview {
-  background-color: #0d1117 !important;
-  border-color: #30363d !important;
 }
 
 /* ツールバーヘッダー */
@@ -58,18 +154,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 4px 8px;
-  background-color: var(--stepnote-bg-secondary, #f8fafc);
-  border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  background-color: var(--mep-bg-secondary);
+  border-bottom: 1px solid var(--mep-border-subtle);
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   user-select: none;
   gap: 6px;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__header,
-:host(.wa-dark) .markdown-editor-preview__header {
-  background-color: #161b22 !important;
-  border-bottom-color: #30363d !important;
 }
 
 .markdown-editor-preview__header-left {
@@ -87,7 +177,7 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 24px;
-  color: var(--stepnote-text-primary, var(--wa-color-text-normal, inherit));
+  color: var(--mep-text-primary);
   padding: 0 4px;
 }
 
@@ -100,57 +190,28 @@
 }
 
 .markdown-editor-preview__toolbar-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
+  @include mep-icon-button-base;
   padding: 2px;
   min-width: 24px;
   min-height: 24px;
-  border-radius: 4px;
-  color: var(--stepnote-text-secondary, #64748b);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1;
 
   wa-icon {
+    @include mep-icon-glyph-box;
     font-size: 15px;
-    width: 1.1em;
-    height: 1.1em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
-}
 
-.markdown-editor-preview__toolbar-btn:hover {
-  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
-  color: var(--stepnote-text-primary, #0f172a);
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn,
-:host(.wa-dark) .markdown-editor-preview__toolbar-btn {
-  color: #8b949e;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__toolbar-btn:hover,
-:host(.wa-dark) .markdown-editor-preview__toolbar-btn:hover {
-  background-color: #30363d !important;
-  color: #f0f6fc !important;
+  &:hover {
+    background-color: var(--mep-btn-hover-bg);
+    color: var(--mep-btn-hover-color);
+  }
 }
 
 .markdown-editor-preview__toolbar-separator {
   display: inline-block;
   width: 1px;
   height: 16px;
-  background-color: var(--stepnote-border-subtle, #e2e8f0);
+  background-color: var(--mep-border-subtle);
   margin: 0 2px;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__toolbar-separator,
-:host(.wa-dark) .markdown-editor-preview__toolbar-separator {
-  background-color: #30363d !important;
 }
 
 /* 拡張機能ドロップダウンメニュー */
@@ -173,17 +234,12 @@ h3.markdown-editor-preview__extension-menu-title {
   font-size: var(--wa-font-size-smaller);
   font-weight: var(--wa-font-weight-semibold);
   line-height: 1.2;
-  color: var(--wa-color-text-quiet, var(--stepnote-text-secondary, #64748b));
-}
-
-:host([data-theme="dark"]) h3.markdown-editor-preview__extension-menu-title,
-:host(.wa-dark) h3.markdown-editor-preview__extension-menu-title {
-  color: var(--wa-color-text-quiet, #8b949e);
+  color: var(--mep-menu-title-color);
 }
 
 .markdown-editor-preview__extension-menu-item-icon {
   font-size: 16px;
-  color: var(--extension-item-icon-color, var(--stepnote-accent, #3b82f6));
+  color: var(--extension-item-icon-color, var(--mep-accent));
   flex-shrink: 0;
 
   &--info {
@@ -212,11 +268,6 @@ h3.markdown-editor-preview__extension-menu-title {
   }
 }
 
-:host([data-theme="dark"]) .markdown-editor-preview__extension-menu-item-icon,
-:host(.wa-dark) .markdown-editor-preview__extension-menu-item-icon {
-  color: var(--extension-item-icon-color, var(--stepnote-accent, #58a6ff));
-}
-
 /* レスポンシブ用ミートボールメニュー（通常時は非表示、幅狭時に出現） */
 .markdown-editor-preview__toolbar-menu-separator--responsive {
   display: none;
@@ -234,15 +285,15 @@ h3.markdown-editor-preview__extension-menu-title {
 /* コンテナクエリによる段階的ボタン集約（幅 430px 以下で二次的アクションをメニューへ退避） */
 @container editor-preview (max-width: 430px) {
   .markdown-editor-preview__toolbar-item--secondary {
-    display: none !important;
+    display: none;
   }
 
   .markdown-editor-preview__toolbar-menu-separator--responsive {
-    display: inline-block !important;
+    display: inline-block;
   }
 
   .markdown-editor-preview__extension-menu-container--responsive {
-    display: inline-flex !important;
+    display: inline-flex;
   }
 
   .markdown-editor-preview__menu-section--secondary {
@@ -253,62 +304,33 @@ h3.markdown-editor-preview__extension-menu-title {
 .markdown-editor-preview__mode-group {
   display: flex;
   gap: 2px;
-  background-color: var(--stepnote-bg-tertiary, #e2e8f0);
+  background-color: var(--mep-mode-group-bg);
   padding: 1px;
   border-radius: 4px;
 }
 
-:host([data-theme="dark"]) .markdown-editor-preview__mode-group,
-:host(.wa-dark) .markdown-editor-preview__mode-group {
-  background-color: #21262d !important;
-}
-
 .markdown-editor-preview__mode-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
+  @include mep-icon-button-base;
   padding: 2px 6px;
   min-width: 26px;
   min-height: 24px;
   font-family: inherit;
-  border-radius: 4px;
-  color: var(--stepnote-text-secondary, #64748b);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1;
 
   wa-icon {
+    @include mep-icon-glyph-box;
     font-size: 15px;
-    width: 1.1em;
-    height: 1.1em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  }
+
+  &:hover {
+    color: var(--mep-text-primary);
   }
 }
 
-:host([data-theme="dark"]) .markdown-editor-preview__mode-btn,
-:host(.wa-dark) .markdown-editor-preview__mode-btn {
-  color: #8b949e;
-}
-
-.markdown-editor-preview__mode-btn:hover {
-  color: var(--stepnote-text-primary, #0f172a);
-}
-
 .markdown-editor-preview__mode-btn--active {
-  background-color: var(--stepnote-bg-surface, #ffffff);
-  color: var(--stepnote-accent, #3b82f6) !important;
+  background-color: var(--mep-mode-active-bg);
+  color: var(--mep-mode-active-color);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__mode-btn--active,
-:host(.wa-dark) .markdown-editor-preview__mode-btn--active {
-  background-color: #30363d !important;
-  color: #58a6ff !important;
+  box-shadow: var(--mep-mode-active-shadow);
 }
 
 /* メインコンテンツ領域 */
@@ -336,16 +358,7 @@ h3.markdown-editor-preview__extension-menu-title {
 .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
   flex: 1;
   width: 50%;
-  border-right: 1px solid var(--stepnote-border-subtle, #e2e8f0);
-}
-
-:host([data-theme="dark"])
-  .markdown-editor-preview--mode-split
-  .markdown-editor-preview__pane--editor,
-:host(.wa-dark)
-  .markdown-editor-preview--mode-split
-  .markdown-editor-preview__pane--editor {
-  border-right-color: #30363d !important;
+  border-right: 1px solid var(--mep-border-subtle);
 }
 
 .markdown-editor-preview--mode-split .markdown-editor-preview__pane--preview {
@@ -361,12 +374,12 @@ h3.markdown-editor-preview__extension-menu-title {
 }
 
 .markdown-editor-preview--mode-edit .markdown-editor-preview__pane--preview {
-  display: none !important;
+  display: none;
 }
 
 /* プレビューのみ表示 */
 .markdown-editor-preview--mode-preview .markdown-editor-preview__pane--editor {
-  display: none !important;
+  display: none;
 }
 
 .markdown-editor-preview--mode-preview .markdown-editor-preview__pane--preview {
@@ -390,52 +403,24 @@ h3.markdown-editor-preview__extension-menu-title {
 }
 
 .markdown-editor-preview__action-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
+  @include mep-icon-button-base;
   padding: 2px;
   min-width: 24px;
   min-height: 24px;
-  border-radius: 4px;
-  color: var(--stepnote-text-secondary, #64748b);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1;
 
   wa-icon {
+    @include mep-icon-glyph-box;
     font-size: 15px;
-    width: 1.1em;
-    height: 1.1em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   &:hover {
-    background-color: var(--stepnote-bg-tertiary, #e2e8f0);
-    color: var(--stepnote-text-primary, #0f172a);
+    background-color: var(--mep-btn-hover-bg);
+    color: var(--mep-btn-hover-color);
   }
 
   &--active {
-    background-color: var(--stepnote-bg-tertiary, #e2e8f0);
-    color: var(--stepnote-accent, #3b82f6);
-  }
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__action-menu-btn,
-:host(.wa-dark) .markdown-editor-preview__action-menu-btn {
-  color: var(--stepnote-text-secondary, #8b949e);
-
-  &:hover {
-    background-color: var(--stepnote-bg-tertiary, #30363d);
-    color: var(--stepnote-text-primary, #f0f6fc);
-  }
-
-  &--active {
-    background-color: var(--stepnote-bg-tertiary, #30363d);
-    color: var(--stepnote-accent, #58a6ff);
+    background-color: var(--mep-btn-hover-bg);
+    color: var(--mep-accent);
   }
 }
 
@@ -445,13 +430,8 @@ h3.markdown-editor-preview__extension-menu-title {
 
 .markdown-editor-preview__action-menu-item-icon {
   font-size: 14px;
-  color: var(--stepnote-text-secondary);
+  color: var(--mep-text-secondary);
   flex-shrink: 0;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__action-menu-item-icon,
-:host(.wa-dark) .markdown-editor-preview__action-menu-item-icon {
-  color: var(--stepnote-text-secondary);
 }
 
 /* 構文ヘルプダイアログモーダル */
@@ -473,7 +453,7 @@ h3.markdown-editor-preview__extension-menu-title {
 .markdown-editor-preview__help-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: var(--mep-backdrop-bg);
   backdrop-filter: blur(2px);
   z-index: 1;
 }
@@ -486,21 +466,12 @@ h3.markdown-editor-preview__extension-menu-title {
   width: min(92vw, 1120px);
   max-width: 100%;
   max-height: 85vh;
-  background-color: var(--stepnote-bg-surface, #ffffff);
-  border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+  background-color: var(--mep-dialog-bg);
+  border: 1px solid var(--mep-border-subtle);
   border-radius: 8px;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.2),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--mep-dialog-shadow);
   overflow: hidden;
-  color: var(--stepnote-text-primary, #0f172a);
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__help-dialog,
-:host(.wa-dark) .markdown-editor-preview__help-dialog {
-  background-color: #161b22 !important;
-  border-color: #30363d !important;
-  color: #f0f6fc !important;
+  color: var(--mep-text-primary);
 }
 
 .markdown-editor-preview__help-header {
@@ -508,14 +479,8 @@ h3.markdown-editor-preview__extension-menu-title {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background-color: var(--stepnote-bg-secondary, #f8fafc);
-  border-bottom: 1px solid var(--stepnote-border-subtle, #e2e8f0);
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__help-header,
-:host(.wa-dark) .markdown-editor-preview__help-header {
-  background-color: #21262d !important;
-  border-bottom-color: #30363d !important;
+  background-color: var(--mep-dialog-header-bg);
+  border-bottom: 1px solid var(--mep-border-subtle);
 }
 
 .markdown-editor-preview__help-title {
@@ -525,36 +490,18 @@ h3.markdown-editor-preview__extension-menu-title {
 }
 
 .markdown-editor-preview__help-close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
+  @include mep-icon-button-base;
   padding: 4px;
   min-width: 24px;
   min-height: 24px;
-  border-radius: 4px;
-  color: var(--stepnote-text-secondary, #64748b);
-  cursor: pointer;
-  transition: all 0.15s ease;
 
   wa-icon {
     font-size: 16px;
   }
 
   &:hover {
-    background-color: var(--stepnote-bg-tertiary, #e2e8f0);
-    color: var(--stepnote-text-primary, #0f172a);
-  }
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__help-close-btn,
-:host(.wa-dark) .markdown-editor-preview__help-close-btn {
-  color: #8b949e;
-
-  &:hover {
-    background-color: #30363d !important;
-    color: #f0f6fc !important;
+    background-color: var(--mep-btn-hover-bg);
+    color: var(--mep-btn-hover-color);
   }
 }
 
@@ -577,14 +524,9 @@ h3.markdown-editor-preview__extension-menu-title {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: var(--stepnote-text-secondary, #64748b);
+  color: var(--mep-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-:host([data-theme="dark"]) .markdown-editor-preview__help-subtitle,
-:host(.wa-dark) .markdown-editor-preview__help-subtitle {
-  color: #8b949e !important;
 }
 
 .markdown-editor-preview__help-table {
@@ -596,21 +538,22 @@ h3.markdown-editor-preview__extension-menu-title {
   th,
   td {
     padding: 6px 10px;
-    border: 1px solid var(--stepnote-border-subtle, #e2e8f0);
+    border: 1px solid var(--mep-border-subtle);
     text-align: left;
     vertical-align: middle;
   }
 
   th {
-    background-color: var(--stepnote-bg-secondary, #f8fafc);
+    background-color: var(--mep-table-header-bg);
     font-weight: 600;
-    color: var(--stepnote-text-secondary, #64748b);
+    color: var(--mep-text-secondary);
     white-space: nowrap;
   }
 
   code {
     font-family: monospace;
-    background-color: var(--stepnote-bg-secondary, #f1f5f9);
+    background-color: var(--mep-code-bg);
+    color: var(--mep-code-color);
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 11px;
@@ -632,194 +575,33 @@ h3.markdown-editor-preview__extension-menu-title {
   white-space: pre-line;
 }
 
-:host([data-theme="dark"]) .markdown-editor-preview__help-table,
-:host(.wa-dark) .markdown-editor-preview__help-table {
-  th,
-  td {
-    border-color: #30363d !important;
-  }
-
-  th {
-    background-color: #21262d !important;
-    color: #8b949e !important;
-  }
-
-  code {
-    background-color: #21262d !important;
-    color: #e6edf3 !important;
-  }
-}
-
 .markdown-editor-preview__help-insert-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--stepnote-border-subtle, #cbd5e1);
-  background-color: var(--stepnote-bg-surface, #ffffff);
-  color: var(--stepnote-accent, #3b82f6);
+  border: 1px solid var(--mep-insert-border);
+  background-color: var(--mep-insert-bg);
+  color: var(--mep-insert-color);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
-    background-color: var(--stepnote-accent, #3b82f6);
-    color: #ffffff;
-    border-color: var(--stepnote-accent, #3b82f6);
+    background-color: var(--mep-insert-hover-bg);
+    color: var(--mep-accent-on);
+    border-color: var(--mep-insert-hover-bg);
   }
 }
 
-:host([data-theme="dark"]) .markdown-editor-preview__help-insert-btn,
-:host(.wa-dark) .markdown-editor-preview__help-insert-btn {
-  border-color: #30363d;
-  background-color: #21262d;
-  color: #58a6ff;
-
-  &:hover {
-    background-color: #1f6feb;
-    color: #ffffff;
-    border-color: #1f6feb;
-  }
-}
-
-/* ==========================================================================
-   soft ダークスタイル (StepNote 調)
-   ========================================================================== */
-:host([data-theme="dark"][dark-theme="soft"]),
-:host(.wa-dark[dark-theme="soft"]) {
-  --stepnote-bg-surface: var(--wa-color-surface-default, #2f323f);
-  --stepnote-text-primary: var(--wa-color-text-normal, #e6edf3);
-  --stepnote-border-subtle: var(--wa-color-surface-border, #434857);
-
+@media (prefers-reduced-motion: reduce) {
+  :host,
   .markdown-editor-preview {
-    background-color: var(--wa-color-surface-default, #2f323f) !important;
-    border-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__header {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__toolbar-btn {
-    color: var(--wa-color-text-quiet, #9da7b3);
-
-    &:hover {
-      color: #ffffff !important;
-      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
-    }
-  }
-
-  .markdown-editor-preview__toolbar-separator {
-    background-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__mode-group {
-    background-color: var(
-      --wa-color-neutral-fill-normal-hover,
-      #1f212b
-    ) !important;
-  }
-
-  .markdown-editor-preview__mode-btn {
-    color: var(--wa-color-text-quiet, #9da7b3);
-
-    &--active {
-      color: var(--wa-color-brand-70, #218bff) !important;
-      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
-    }
-  }
-
-  .markdown-editor-preview--mode-split .markdown-editor-preview__pane--editor {
-    border-right-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__action-menu-btn {
-    color: var(--wa-color-text-quiet, #9da7b3);
-
-    &:hover {
-      background-color: var(--wa-color-neutral-fill-normal, #484d5e);
-      color: #ffffff;
-    }
-
-    &--active {
-      background-color: var(--wa-color-neutral-fill-normal, #484d5e);
-      color: var(--wa-color-brand-70, #218bff);
-    }
-  }
-
-  .markdown-editor-preview__action-menu {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833);
-    border-color: var(--wa-color-surface-border, #434857);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  }
-
-  .markdown-editor-preview__action-menu-item:hover {
-    background-color: var(--wa-color-neutral-fill-normal, #484d5e);
-  }
-
-  .markdown-editor-preview__action-menu-item-icon {
-    color: var(--wa-color-text-quiet, #9da7b3);
-  }
-
-  .markdown-editor-preview__action-menu-item-label {
-    color: var(--wa-color-text-normal, #e6edf3);
-  }
-
-  .markdown-editor-preview__help-dialog {
-    background-color: var(--wa-color-surface-default, #2f323f) !important;
-    border-color: var(--wa-color-surface-border, #434857) !important;
-    color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor-preview__help-header {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    border-bottom-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__help-close-btn {
-    color: var(--wa-color-text-quiet, #9da7b3);
-
-    &:hover {
-      background-color: var(--wa-color-neutral-fill-normal, #484d5e) !important;
-      color: #ffffff !important;
-    }
-  }
-
-  .markdown-editor-preview__help-subtitle {
-    color: var(--wa-color-text-quiet, #9da7b3) !important;
-  }
-
-  .markdown-editor-preview__help-table th,
-  .markdown-editor-preview__help-table td {
-    border-color: var(--wa-color-surface-border, #434857) !important;
-  }
-
-  .markdown-editor-preview__help-table th {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    color: var(--wa-color-text-quiet, #9da7b3) !important;
-  }
-
-  .markdown-editor-preview__help-table code {
-    background-color: var(--wa-color-neutral-fill-quiet, #252833) !important;
-    color: var(--wa-color-text-normal, #e6edf3) !important;
-  }
-
-  .markdown-editor-preview__help-insert-btn {
-    border-color: var(--wa-color-surface-border, #434857);
-    background-color: var(--wa-color-neutral-fill-quiet, #252833);
-    color: var(--wa-color-brand-70, #218bff);
-
-    &:hover {
-      background-color: var(--wa-color-brand-70, #218bff);
-      color: #ffffff;
-      border-color: var(--wa-color-brand-70, #218bff);
-    }
-  }
-
-  .markdown-editor-preview__title {
-    color: var(--wa-color-text-normal, #e6edf3);
+    transition: none;
   }
 }
