@@ -1,5 +1,5 @@
-﻿# bump-version.ps1
-# 指定アプリのバージョン定義ファイル・package-lock.json・CHANGELOG.md を同期更新し、品質検証を実行するスクリプト
+# bump-version.ps1
+# 指定アプリのバージョン定義ファイル・package-lock.json・CHANGELOG.md・README.md を同期更新し、品質検証を実行するスクリプト
 
 param (
     [Parameter(Mandatory = $true)]
@@ -195,6 +195,41 @@ process.stdout.write(changed ? 'UPDATED' : 'UNCHANGED');
         [System.IO.File]::WriteAllText($changelogFullPath, $newChangelog, $utf8NoBom)
     }
     $updatedFiles += $app.changelogPath
+
+    # 3.5. ルート README.md 内の該当アプリバージョン表記を同期更新（差異がある場合のみ）
+    $readmePath = Join-Path $resolvedRoot "README.md"
+    if (Test-Path $readmePath) {
+        $wsDir = $app.workspaceDir.Replace('\', '/')
+        $escapedWsDir = [regex]::Escape($wsDir)
+        $bt = [char]96
+        $readmePattern = '(?m)^(\|[^\r\n]*' + $bt + $escapedWsDir + $bt + '\s*\|\s*' + $bt + ')(\d+\.\d+\.\d+)(' + $bt + '\s*\|)'
+        $readmeRegex = [regex]$readmePattern
+        $readmeRaw = [System.IO.File]::ReadAllText($readmePath, [System.Text.Encoding]::UTF8)
+
+        if ($readmeRegex.IsMatch($readmeRaw)) {
+            $readmeMatch = $readmeRegex.Match($readmeRaw)
+            $currentReadmeVersion = $readmeMatch.Groups[2].Value
+            if ($currentReadmeVersion -ne $Version) {
+                $newReadme = $readmeRegex.Replace($readmeRaw, "`${1}$Version`${3}", 1)
+                if (-not $DryRun) {
+                    [System.IO.File]::WriteAllText($readmePath, $newReadme, $utf8NoBom)
+                    $prettierPkg = Join-Path $resolvedRoot "node_modules/prettier/package.json"
+                    if (Test-Path $prettierPkg) {
+                        $prettierOut = npx --no-install prettier --write $readmePath 2>&1
+                        if ($LASTEXITCODE -ne 0) {
+                            Emit-Result ([PSCustomObject]@{
+                                success      = $false
+                                appId        = $AppId
+                                version      = $Version
+                                errorMessage = "README.md の Prettier 整形に失敗しました: $($prettierOut -join ' ')"
+                            })
+                        }
+                    }
+                }
+                $updatedFiles += "README.md"
+            }
+        }
+    }
 
     # 4. 品質検証（テスト・型チェック・ビルド）
     $verification = [PSCustomObject]@{

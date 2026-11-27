@@ -8,7 +8,7 @@ description: モノレポ内の各アプリごとに、状態調査・バージ�
 
 モノレポ配下の各アプリケーション（`apps/stepnote`, `apps/stepnote-migrator`, `apps/extension-hubaddress` 等）を独立したバージョンライフサイクルで管理し、以下を一貫して安全に実行するための標準ワークフローです。
 
-1. **Phase A（リリース準備 PR）**: 変更履歴の収集、セマンティックバージョン決定、`package.json`（拡張機能は `public/manifest.json` も）・`package-lock.json`・`CHANGELOG.md` の同期更新、品質検証、および `main` 向け PR の作成。
+1. **Phase A（リリース準備 PR）**: 変更履歴の収集、セマンティックバージョン決定、`package.json`（拡張機能は `public/manifest.json` も）・`package-lock.json`・`CHANGELOG.md`・ルート `README.md`（該当アプリバージョン表記がある場合）の同期更新、品質検証、および `main` 向け PR の作成。
 2. **Phase B（リリース公開 ＆ Wiki 反映）**: バージョン更新 PR が `main` へマージされた後、独立タグ（`<scope>@v<version>`）作成、配布成果物（単一 HTML / 拡張機能 ZIP）を添付した GitHub Release 公開、および GitHub Wiki ダウンロードポータルの自動更新。
 
 ---
@@ -73,7 +73,7 @@ pwsh -File .agents/skills/release-manager/scripts/inspect-release-state.ps1 -Pre
    - 現在バージョン・最新タグ・推奨バージョン（`major` / `minor` / `patch` の候補も併記）
    - 作成する予定タグ（例: `stepnote@v0.2.0`）および配布アセット名（例: `stepnote-v0.2.0.html`）
 2. **同期更新対象ファイル**:
-   - `package.json`（拡張機能は `public/manifest.json`、`dist/`、`dist-zip/` も含む）、`package-lock.json`、`CHANGELOG.md`
+   - `package.json`（拡張機能は `public/manifest.json`、`dist/`、`dist-zip/` も含む）、`package-lock.json`、`CHANGELOG.md`、`README.md`（該当アプリのバージョン表記に更新が必要な場合）
 3. **リリースノート案（`CHANGELOG.md` ＆ GitHub Release 本文用）**:
    - `commitsSinceLastTag` をもとに、利用者視点で分かりやすくカテゴリ整理（新機能 / 改善 / 不具合修正 等）した日本語 Markdown ドラフト
 4. **承認確認**:
