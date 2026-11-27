@@ -1750,4 +1750,21 @@ describe("MarkdownEditorPreview (<markdown-editor-preview>)", () => {
       expect(bodyBlock).toMatch(/border-bottom-right-radius:\s*5px;/);
     });
   });
+
+  describe("25. SCSS トークン集約および !important 排除仕様（Issue #596）", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor-preview.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("markdown-editor-preview.scss 内に !important 宣言が 1 箇所も存在しないこと", () => {
+      const matches = scssContent.match(/!important/g) || [];
+      expect(matches.length).toBe(0);
+    });
+
+    it("markdown-editor-preview.scss がコンポーネントローカルの --mep-* テーマトークンで配色を集約していること", () => {
+      expect(scssContent).toContain("--mep-bg-surface:");
+      expect(scssContent).toContain("--mep-bg-secondary:");
+      expect(scssContent).toContain("--mep-border-subtle:");
+      expect(scssContent).toContain("--mep-text-primary:");
+    });
+  });
 });

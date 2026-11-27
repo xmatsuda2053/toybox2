@@ -725,4 +725,21 @@ describe("MarkdownEditor (<markdown-editor>)", () => {
       expect(payload.scrollRatio).toBeCloseTo(0.15, 5);
     });
   });
+
+  describe("18. SCSS トークン集約および !important 最小化仕様（Issue #596）", () => {
+    const scssPath = path.resolve(__dirname, "markdown-editor.scss");
+    const scssContent = fs.readFileSync(scssPath, "utf-8");
+
+    it("18-1. markdown-editor.scss が --me-* テーマトークンで配色を集約していること", () => {
+      expect(scssContent).toContain("--me-bg:");
+      expect(scssContent).toContain("--me-text:");
+      expect(scssContent).toContain("--me-gutter-bg:");
+      expect(scssContent).toContain("--me-selection-bg:");
+    });
+
+    it("18-2. CodeMirror 制約上やむを得ない最小箇所を除き !important が 10 件以下に抑制されていること", () => {
+      const matches = scssContent.match(/!important/g) || [];
+      expect(matches.length).toBeLessThanOrEqual(10);
+    });
+  });
 });
