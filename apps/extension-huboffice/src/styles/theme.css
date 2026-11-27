@@ -1,0 +1,7 @@
+/* HubOffice ブランドカラー（インディゴ系）テーマ上書き */
+:where(:root),
+.wa-light,
+.wa-dark .wa-invert {
+  --wa-color-brand-fill-loud: var(--wa-color-indigo-50);
+  --wa-color-brand-border-loud: var(--wa-color-indigo-50);
+}

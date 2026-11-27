@@ -1,0 +1,17 @@
+{
+  "name": "extension-huboffice",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "package": "pwsh -NoProfile -Command \"New-Item -ItemType Directory -Force -Path 'dist-zip' | Out-Null; Compress-Archive -Path 'dist/*' -DestinationPath 'dist-zip/huboffice-extension.zip' -Force\"",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@shared/components": "*",
+    "@shared/icons": "*",
+    "@shared/utils": "*"
+  }
+}
