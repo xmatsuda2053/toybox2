@@ -61,3 +61,27 @@ export function normalizeAllowedNumber<T extends number>(
   }
   return fallback;
 }
+
+/**
+ * 未知の値を正の整数 ID（1 以上の安全な整数）へ正規化する。
+ * 正の整数または正の整数を表す文字列（前後空白可）の場合は数値型を返し、
+ * それ以外の不正値の場合は undefined を返す。
+ *
+ * @export
+ * @param {unknown} value - 変換対象の値
+ * @return {number | undefined} 正規化された正の整数 ID（不正値時は undefined）
+ */
+export function normalizeNumericId(value: unknown): number | undefined {
+  if (typeof value === "number") {
+    return Number.isSafeInteger(value) && value > 0 ? value : undefined;
+  }
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}

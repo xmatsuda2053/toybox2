@@ -27,6 +27,7 @@ import { exportDB, importInto } from "dexie-export-import";
  * 3. データベースインポート仕様 (importDatabase):
  *    - 3-1. dexie-export-import の importInto が適切なオプション（overwriteValues, clearTablesBeforeImport）で呼び出されること
  *    - 3-2. インポート完了後に tasks / issues テーブル内の文字列型 statusCode（"0" 等）が数値型へ正規化されること
+ *    - 3-3. インポート完了後に各テーブル内の文字列型主キー id（"1" 等）が数値型へ自動修復されること
  */
 describe("DatabaseBackupService", () => {
   let db: Dexie;
@@ -128,6 +129,51 @@ describe("DatabaseBackupService", () => {
 
       importDb.close();
       await Dexie.delete("BackupImportStatusNormalizeTestDB");
+    });
+
+    it('3-3. インポート完了後に各テーブルの文字列型主キー id（"1" 等）が数値型へ自動修復されること', async () => {
+      const importDb = new Dexie("BackupImportIdNormalizeTestDB");
+      importDb.version(1).stores({
+        tasks: "++id, statusCode",
+        logs: "++id, taskId",
+        quickAccess: "++id",
+      });
+      await importDb.open();
+
+      const mockFile = new File(['{"test": 1}'], "backup.json", {
+        type: "application/json",
+      });
+      vi.mocked(importInto).mockImplementation(async (targetDb) => {
+        await targetDb
+          .table("tasks")
+          .put({ id: "10", statusCode: 0, name: "文字列IDタスク" });
+        await targetDb
+          .table("logs")
+          .put({ id: "101", taskId: 10, value: "ログ" });
+        await targetDb
+          .table("quickAccess")
+          .put({ id: "1", isBookmarkSelected: true });
+      });
+
+      await service.importDatabase(importDb, mockFile);
+
+      const task = await importDb.table("tasks").get(10);
+      const oldTask = await importDb.table("tasks").get("10");
+      const log = await importDb.table("logs").get(101);
+      const qa = await importDb.table("quickAccess").get(1);
+      const oldQa = await importDb.table("quickAccess").get("1");
+
+      expect(task?.id).toBe(10);
+      expect(typeof task?.id).toBe("number");
+      expect(oldTask).toBeUndefined();
+      expect(log?.id).toBe(101);
+      expect(typeof log?.id).toBe("number");
+      expect(qa?.id).toBe(1);
+      expect(typeof qa?.id).toBe("number");
+      expect(oldQa).toBeUndefined();
+
+      importDb.close();
+      await Dexie.delete("BackupImportIdNormalizeTestDB");
     });
   });
 });

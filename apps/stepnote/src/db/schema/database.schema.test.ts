@@ -402,4 +402,192 @@ describe("StepNote Database Schema Tests", () => {
     upgradedDb.close();
     await Dexie.delete(testDbName);
   });
+
+  it('version(7)からversion(8)へのアップグレード時に全テーブルの文字列型主キーid（"1"等）が数値型へ自動修復されること', async () => {
+    const testDbName = "StepNote_V8_StringId_Migration_Test";
+    await Dexie.delete(testDbName);
+
+    const legacyDb = new Dexie(testDbName);
+    legacyDb.version(7).stores({
+      tasks: "++id, statusCode, name, dueDate, fiscalYear, selected, *tagIds",
+      issues: "++id, taskId, [taskId+id]",
+      logs: "++id, taskId, [taskId+id], title",
+      notes: "++id, taskId, [taskId+id], title",
+      quickAccess: "++id",
+      labels: "++id, name, isSelected",
+      scratches: "++id, createdAt, title",
+      taskTemplates: "++id, name, createdAt",
+      tags: "++id, &name",
+      tagSets: "++id, &name, *tagIds",
+    });
+    await legacyDb.open();
+
+    await legacyDb.table("tasks").put({
+      id: "10",
+      statusCode: 0,
+      name: "文字列IDタスク",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 1,
+      bookmark: false,
+      selected: false,
+      tagIds: [],
+    });
+    await legacyDb.table("logs").put({
+      id: "101",
+      taskId: 10,
+      title: "ログ",
+      value: "本文",
+    });
+    await legacyDb.table("notes").put({
+      id: "201",
+      taskId: 10,
+      title: "ノート",
+      value: "本文",
+    });
+    await legacyDb.table("labels").put({
+      id: "1",
+      name: "開発",
+      description: "",
+      isSelected: false,
+    });
+    await legacyDb.table("quickAccess").put({
+      id: "1",
+      isBookmarkSelected: true,
+      isUncategorizedSelected: false,
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: false,
+      isDoneSelected: true,
+      isProgressSelected: true,
+      isPendingSelected: true,
+    });
+    await legacyDb.table("scratches").put({
+      id: "301",
+      title: "スクラッチ",
+      value: "内容",
+    });
+    legacyDb.close();
+
+    const upgradedDb = new Database(testDbName);
+    await upgradedDb.open();
+
+    const task = await upgradedDb.tasks.get(10);
+    const oldTask = await upgradedDb.tasks.get("10" as unknown as number);
+    const log = await upgradedDb.logs.get(101);
+    const note = await upgradedDb.notes.get(201);
+    const label = await upgradedDb.labels.get(1);
+    const quickAccess = await upgradedDb.quickAccess.get(1);
+    const oldQuickAccess = await upgradedDb.quickAccess.get(
+      "1" as unknown as number,
+    );
+    const scratch = await upgradedDb.scratches.get(301);
+
+    expect(task?.id).toBe(10);
+    expect(typeof task?.id).toBe("number");
+    expect(oldTask).toBeUndefined();
+    expect(log?.id).toBe(101);
+    expect(note?.id).toBe(201);
+    expect(label?.id).toBe(1);
+    expect(quickAccess?.id).toBe(1);
+    expect(quickAccess?.isBookmarkSelected).toBe(true);
+    expect(oldQuickAccess).toBeUndefined();
+    expect(scratch?.id).toBe(301);
+
+    upgradedDb.close();
+    await Dexie.delete(testDbName);
+  });
+
+  it("version(8)マイグレーションで同一数値キーと文字列キーが共存する場合、既存数値レコードを保持しつつ安全に修復されること", async () => {
+    const testDbName = "StepNote_V8_StringId_Collision_Test";
+    await Dexie.delete(testDbName);
+
+    const legacyDb = new Dexie(testDbName);
+    legacyDb.version(7).stores({
+      tasks: "++id, statusCode, name, dueDate, fiscalYear, selected, *tagIds",
+      issues: "++id, taskId, [taskId+id]",
+      logs: "++id, taskId, [taskId+id], title",
+      notes: "++id, taskId, [taskId+id], title",
+      quickAccess: "++id",
+      labels: "++id, name, isSelected",
+      scratches: "++id, createdAt, title",
+      taskTemplates: "++id, name, createdAt",
+      tags: "++id, &name",
+      tagSets: "++id, &name, *tagIds",
+    });
+    await legacyDb.open();
+
+    await legacyDb.table("quickAccess").put({
+      id: 1,
+      isBookmarkSelected: false,
+      isUncategorizedSelected: false,
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: false,
+      isDoneSelected: true,
+      isProgressSelected: true,
+      isPendingSelected: true,
+    });
+    await legacyDb.table("quickAccess").put({
+      id: "1",
+      isBookmarkSelected: true,
+      isUncategorizedSelected: false,
+      isOverdueSelected: false,
+      isAsapSelected: false,
+      isUpcomingSelected: false,
+      isDoneSelected: false,
+      isProgressSelected: false,
+      isPendingSelected: false,
+    });
+    await legacyDb.table("tasks").put({
+      id: 1,
+      statusCode: 0,
+      name: "既存の数値IDタスク",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 0,
+      bookmark: false,
+      selected: false,
+      tagIds: [],
+    });
+    await legacyDb.table("tasks").put({
+      id: "1",
+      statusCode: 5,
+      name: "衝突する文字列IDタスク",
+      dueDate: new Date(),
+      contacts: [],
+      description: "",
+      fiscalYear: 2026,
+      labelId: 0,
+      bookmark: false,
+      selected: false,
+      tagIds: [],
+    });
+    legacyDb.close();
+
+    const upgradedDb = new Database(testDbName);
+    await upgradedDb.open();
+
+    const quickAccessRows = await upgradedDb.quickAccess.toArray();
+    expect(quickAccessRows).toHaveLength(1);
+    expect(quickAccessRows[0]?.id).toBe(1);
+    expect(quickAccessRows[0]?.isBookmarkSelected).toBe(false);
+
+    const taskRows = await upgradedDb.tasks.toArray();
+    expect(taskRows).toHaveLength(2);
+    expect(taskRows.every((t) => typeof t.id === "number")).toBe(true);
+    const originalTask = await upgradedDb.tasks.get(1);
+    expect(originalTask?.name).toBe("既存の数値IDタスク");
+    const relocatedTask = taskRows.find(
+      (t) => t.name === "衝突する文字列IDタスク",
+    );
+    expect(relocatedTask?.id).toBeGreaterThan(1);
+
+    upgradedDb.close();
+    await Dexie.delete(testDbName);
+  });
 });

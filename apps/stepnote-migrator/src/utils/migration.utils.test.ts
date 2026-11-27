@@ -76,6 +76,10 @@ import type { DexieExportJsonStructure } from "../types/migration.types";
  *     - 13-2. div, name, tel のすべてが空文字または空白のみの場合、空（true）と判定されること
  *     - 13-3. いずれか1項目でも空でない文字列が存在する場合、空でない（false）と判定されること
  *
+ * 14. 主キー id の数値正規化仕様:
+ *     - 14-1. 全移行対象テーブル（tasks, logs, notes, labels, quickAccess, scratches）で文字列型連番 id（"1" 等）が数値型へ変換されること
+ *     - 14-2. 既存の数値型 id および前後空白付き数値文字列（" 42 "）が正しく数値型として出力されること
+ *
  * 10. エラーハンドリング仕様:
  *     - 10-1. 不正な入力（null, undefined, 異なる databaseName）に対して適切なエラーをスローすること
  */
@@ -845,6 +849,72 @@ describe("convertSnDbToStepNote", () => {
       expect(isContactEmpty({ div: "", name: "", tel: "090-1234-5678" })).toBe(
         false,
       );
+    });
+  });
+
+  describe("14. 主キー id の数値正規化仕様", () => {
+    it('14-1. 全移行対象テーブルで文字列型連番 id（"1" 等）が数値型へ変換されること', () => {
+      const input = createMockLegacySnDbJson();
+      const setStringIds = (tableName: string, ids: string[]) => {
+        const table = input.data.data.find((t) => t.tableName === tableName)!;
+        table.rows.forEach((row, index) => {
+          if (ids[index] !== undefined) {
+            row.id = ids[index];
+          }
+        });
+      };
+
+      setStringIds("tasks", ["10", "11"]);
+      setStringIds("logs", ["101", "102"]);
+      setStringIds("notes", ["201", "202", "203"]);
+      setStringIds("labels", ["1", "2"]);
+      setStringIds("quickAccesses", ["1"]);
+      setStringIds("notebooks", ["301", "302"]);
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const getIds = (tableName: string) =>
+        migratedData.data.data
+          .find((t) => t.tableName === tableName)
+          ?.rows.map((r) => r.id);
+
+      expect(getIds("tasks")).toEqual([10, 11]);
+      expect(getIds("logs")).toEqual([101, 102]);
+      expect(getIds("notes")).toEqual([201]);
+      expect(getIds("labels")).toEqual([1, 2]);
+      expect(getIds("quickAccess")).toEqual([1]);
+      expect(getIds("scratches")).toEqual([301, 302]);
+
+      for (const name of [
+        "tasks",
+        "logs",
+        "notes",
+        "labels",
+        "quickAccess",
+        "scratches",
+      ]) {
+        const rows =
+          migratedData.data.data.find((t) => t.tableName === name)?.rows ?? [];
+        for (const row of rows) {
+          expect(typeof row.id).toBe("number");
+        }
+      }
+    });
+
+    it('14-2. 既存の数値型 id および前後空白付き数値文字列（" 42 "）が正しく数値型として出力されること', () => {
+      const input = createMockLegacySnDbJson();
+      const tasksTable = input.data.data.find((t) => t.tableName === "tasks")!;
+      tasksTable.rows[0].id = 10;
+      tasksTable.rows[1].id = " 42 ";
+
+      const { migratedData } = convertSnDbToStepNote(input);
+      const migratedTasks = migratedData.data.data.find(
+        (t) => t.tableName === "tasks",
+      );
+
+      expect(migratedTasks?.rows[0]?.id).toBe(10);
+      expect(typeof migratedTasks?.rows[0]?.id).toBe("number");
+      expect(migratedTasks?.rows[1]?.id).toBe(42);
+      expect(typeof migratedTasks?.rows[1]?.id).toBe("number");
     });
   });
 });
