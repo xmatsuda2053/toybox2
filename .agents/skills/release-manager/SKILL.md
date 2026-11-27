@@ -60,7 +60,7 @@ pwsh -File .agents/skills/release-manager/scripts/inspect-release-state.ps1 -App
 
 ### 2. バージョン更新・CHANGELOG 追記・品質検証: `scripts/bump-version.ps1`
 
-指定アプリの `versionFiles`（`package.json` / `public/manifest.json`）、ルート `package-lock.json` の該当ワークスペースバージョン、および `apps/<dir>/CHANGELOG.md` を同期更新し、テスト・型チェック・ビルド（拡張機能は ZIP パッケージ含む）を実行します。
+指定アプリの `versionFiles`（`package.json` / `public/manifest.json`）、ルート `package-lock.json` の該当ワークスペースバージョン、`apps/<dir>/CHANGELOG.md`、およびルート `README.md` の該当アプリバージョン表記（記載があり値が異なる場合）を同期更新し、テスト・型チェック・ビルド（拡張機能は ZIP パッケージ含む）を実行します。
 
 ```powershell
 # DryRun で変更対象を事前確認
