@@ -1,3 +1,5 @@
+@use "../styles/mixins.scss" as *;
+
 .settings-view {
   display: flex;
   flex-direction: column;
@@ -5,13 +7,7 @@
 }
 
 .settings-view__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wa-space-xs);
-  padding: var(--wa-space-m);
-  border: var(--wa-border-width-s) solid var(--wa-color-surface-border);
-  border-radius: var(--wa-border-radius-m);
-  background-color: var(--wa-color-surface-default);
+  @include surface-card;
 }
 
 .settings-view__theme-row {

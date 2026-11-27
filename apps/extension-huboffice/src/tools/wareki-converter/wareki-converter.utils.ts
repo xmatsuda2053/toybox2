@@ -420,6 +420,33 @@ function evaluateYearBoundaryInfo(
   return { note: TRANSITION_YEAR_NOTES[year] };
 }
 
+function createDayConversionValue(
+  era: EraDefinition,
+  eraYear: number,
+  year: number,
+  month: number,
+  day: number,
+  warning?: string,
+): WarekiConversionValue {
+  const labels = formatWarekiLabel(era, eraYear, month, day);
+  const dateObj = new Date(year, month - 1, day);
+  return {
+    precision: "day",
+    year,
+    month,
+    day,
+    isoDate: `${year}-${pad2(month)}-${pad2(day)}`,
+    eraCode: era.code,
+    eraKanji: era.kanji,
+    eraYear,
+    warekiFull: labels.full,
+    warekiShort: labels.short,
+    weekdayShort: getJapaneseWeekday(dateObj, "short"),
+    fiscalYearLabel: buildFiscalYearLabel(year, month),
+    ...(warning !== undefined ? { warning } : {}),
+  };
+}
+
 function buildParsedDayResult(
   era: EraDefinition,
   eraYear: number,
@@ -430,25 +457,16 @@ function buildParsedDayResult(
   if (!isValidCalendarDate(year, month, day)) {
     return { ok: false, error: "存在しない日付です。" };
   }
-  const labels = formatWarekiLabel(era, eraYear, month, day);
-  const dateObj = new Date(year, month - 1, day);
   return {
     ok: true,
-    value: {
-      precision: "day",
+    value: createDayConversionValue(
+      era,
+      eraYear,
       year,
       month,
       day,
-      isoDate: `${year}-${pad2(month)}-${pad2(day)}`,
-      eraCode: era.code,
-      eraKanji: era.kanji,
-      eraYear,
-      warekiFull: labels.full,
-      warekiShort: labels.short,
-      weekdayShort: getJapaneseWeekday(dateObj, "short"),
-      fiscalYearLabel: buildFiscalYearLabel(year, month),
-      warning: evaluateDayBoundaryWarning(era, year, month, day),
-    },
+      evaluateDayBoundaryWarning(era, year, month, day),
+    ),
   };
 }
 
@@ -579,25 +597,10 @@ export function convertSeirekiToWareki(
   }
 
   const eraYear = year - era.startYear + 1;
-  const labels = formatWarekiLabel(era, eraYear, month, day);
-  const dateObj = new Date(year, month - 1, day);
 
   return {
     ok: true,
-    value: {
-      precision: "day",
-      year,
-      month,
-      day,
-      isoDate: `${year}-${pad2(month)}-${pad2(day)}`,
-      eraCode: era.code,
-      eraKanji: era.kanji,
-      eraYear,
-      warekiFull: labels.full,
-      warekiShort: labels.short,
-      weekdayShort: getJapaneseWeekday(dateObj, "short"),
-      fiscalYearLabel: buildFiscalYearLabel(year, month),
-    },
+    value: createDayConversionValue(era, eraYear, year, month, day),
   };
 }
 
