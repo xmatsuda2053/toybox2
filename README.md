@@ -32,7 +32,7 @@ toybox2/
 | :--------------------- | :-------------------------- | :--------- | :---------------------- | :----------------------------------------------------------------------------- | :----------------------------------------------------- | :---------------------------------------------------------------------- |
 | `stepnote`             | `apps/stepnote`             | `1.0.0`    | 単一 HTML Web アプリ    | スタンドアロン動作するタスク管理・作業記録アプリ（StepNote）                   | `@shared/components`, `@shared/icons`, `@shared/utils` | `vite-plugin-singlefile` 出力                                           |
 | `stepnote-migrator`    | `apps/stepnote-migrator`    | `1.0.0`    | 単一 HTML Web アプリ    | Step-Note データ移行ツール（SnDB to StepNote）                                 | `@shared/components`, `@shared/utils`                  | `vite-plugin-singlefile` 出力                                           |
-| `extension-hubaddress` | `apps/extension-hubaddress` | `0.1.0`    | ブラウザ拡張機能（MV3） | 職員情報・組織情報をサイドパネルで素早く検索・参照できる拡張機能「HubAddress」 | `@shared/components`, `@shared/icons`, `@shared/utils` | 配布 ZIP: `apps/extension-hubaddress/dist-zip/hubaddress-extension.zip` |
+| `extension-hubaddress` | `apps/extension-hubaddress` | `1.0.0`    | ブラウザ拡張機能（MV3） | 職員情報・組織情報をサイドパネルで素早く検索・参照できる拡張機能「HubAddress」 | `@shared/components`, `@shared/icons`, `@shared/utils` | 配布 ZIP: `apps/extension-hubaddress/dist-zip/hubaddress-extension.zip` |
 
 ### 共有パッケージ（`packages/*`）
 
