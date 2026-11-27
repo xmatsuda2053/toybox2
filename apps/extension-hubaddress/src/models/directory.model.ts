@@ -70,3 +70,8 @@ export type ActiveTab = "staff" | "organizations" | "settings";
  * 職員一覧ソート順モード型（昇順）
  */
 export type StaffSortMode = "department" | "name" | "staffId";
+
+/**
+ * 組織一覧ソート順モード型（昇順）
+ */
+export type OrganizationSortMode = "registered" | "department" | "location";

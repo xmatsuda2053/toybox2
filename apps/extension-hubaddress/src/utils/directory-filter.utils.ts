@@ -1,5 +1,6 @@
 import type {
   OrganizationRecord,
+  OrganizationSortMode,
   StaffRecord,
   StaffSortMode,
 } from "../models/directory.model";
@@ -294,21 +295,76 @@ export function sortStaff(
   return entries.map((entry) => entry.record);
 }
 
+interface OrganizationSortEntry {
+  readonly record: OrganizationRecord;
+  readonly department: string;
+  readonly location: string;
+  readonly extra: string;
+  readonly id: number | undefined;
+}
+
+function buildOrganizationSortEntry(
+  record: OrganizationRecord,
+): OrganizationSortEntry {
+  return {
+    record,
+    department: record.department.trim(),
+    location: record.location.trim(),
+    extra: record.extra.trim(),
+    id: record.id,
+  };
+}
+
+function compareOrganizationEntryByRegistered(
+  a: OrganizationSortEntry,
+  b: OrganizationSortEntry,
+): number {
+  return (
+    compareIdAsc(a.id, b.id) ||
+    compareNormalizedTextEmptyLast(a.department, b.department)
+  );
+}
+
+function compareOrganizationEntryByDepartment(
+  a: OrganizationSortEntry,
+  b: OrganizationSortEntry,
+): number {
+  return (
+    compareNormalizedTextEmptyLast(a.department, b.department) ||
+    compareIdAsc(a.id, b.id)
+  );
+}
+
+function compareOrganizationEntryByLocation(
+  a: OrganizationSortEntry,
+  b: OrganizationSortEntry,
+): number {
+  return (
+    compareNormalizedTextEmptyLast(a.location, b.location) ||
+    compareNormalizedTextEmptyLast(a.extra, b.extra) ||
+    compareNormalizedTextEmptyLast(a.department, b.department) ||
+    compareIdAsc(a.id, b.id)
+  );
+}
+
+const ORGANIZATION_SORT_COMPARATORS: Record<
+  OrganizationSortMode,
+  (a: OrganizationSortEntry, b: OrganizationSortEntry) => number
+> = {
+  registered: compareOrganizationEntryByRegistered,
+  department: compareOrganizationEntryByDepartment,
+  location: compareOrganizationEntryByLocation,
+};
+
 /**
- * 組織レコードを「組織名 → id昇順」でソートする
+ * 組織レコードを指定されたソート順（昇順、デフォルトは登録順）でソートする
  */
 export function sortOrganizations(
   records: OrganizationRecord[],
+  sortMode: OrganizationSortMode = "registered",
 ): OrganizationRecord[] {
-  const entries = records.map((record) => ({
-    record,
-    department: record.department.trim(),
-    id: record.id,
-  }));
-  entries.sort(
-    (a, b) =>
-      compareNormalizedTextEmptyLast(a.department, b.department) ||
-      compareIdAsc(a.id, b.id),
-  );
+  const comparator = ORGANIZATION_SORT_COMPARATORS[sortMode];
+  const entries = records.map(buildOrganizationSortEntry);
+  entries.sort(comparator);
   return entries.map((entry) => entry.record);
 }

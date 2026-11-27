@@ -36,11 +36,12 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様5: setThemeMode でストレージ保存完了を待たず同期的に requestUpdate が呼ばれること（点滅防止）
  * - 仕様6: copyField でクリップボードコピー成功時にトースト通知メッセージを設定すること
  * - 仕様7: toggleSettingsTab で設定画面を開き、再クリックで直前の一覧画面（staff / organizations）へ戻ること
- * - 仕様8: 読み込みおよび登録後に職員（所属組織・フリガナ順）と組織（組織名・id順）がソートされて保持されること
+ * - 仕様8: 読み込みおよび登録後に職員（所属組織・フリガナ順）と組織（デフォルト登録順・id昇順）がソートされて保持されること
  * - 仕様9: staffSortMode をストレージから復元でき、setStaffSortMode での即時並替・永続化および再読み込み後のソート維持ができること
  * - 仕様10: filteredStaff / filteredOrganizations がメモ化され、同一条件下では同一配列参照を返すこと
  * - 仕様11: scheduleStaffSearchQuery / scheduleOrganizationSearchQuery で検索フィルタ適用がデバウンスされ、連続入力時に最後の入力のみ反映されること
  * - 仕様12: saveStaff / removeStaff では組織テーブルを再取得せず、saveOrganization / removeOrganization では職員テーブルを再取得しないこと
+ * - 仕様13: organizationSortMode のデフォルトが registered であり、setOrganizationSortMode で即時並替・永続化・復元および追加後の並び順維持ができること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -207,7 +208,7 @@ describe("DirectoryController Tests", () => {
     expect(controller.activeTab).toBe("organizations");
   });
 
-  it("loadInitialData と save 後に職員は所属・フリガナ五十音昇順、組織は組織名・id昇順で保持されること", async () => {
+  it("loadInitialData と save 後に職員は所属・フリガナ五十音昇順、組織は登録順（id昇順）で保持されること", async () => {
     const controller = new DirectoryController(createMockHost(), {
       storage: createMemoryStorage(),
     });
@@ -219,8 +220,8 @@ describe("DirectoryController Tests", () => {
       "0010001",
     ]);
     expect(controller.organizations.map((o) => o.department)).toEqual([
-      "営業推進部 第一営業課",
       "総務部 総務課",
+      "営業推進部 第一営業課",
     ]);
 
     await controller.saveStaff({
@@ -397,5 +398,53 @@ describe("DirectoryController Tests", () => {
 
     staffSpy.mockRestore();
     orgSpy.mockRestore();
+  });
+
+  it("setOrganizationSortMode で即時ソート・永続化され、再起動後やレコード追加後も選択中の並び順が維持されること", async () => {
+    const storage = createMemoryStorage();
+    const controller = new DirectoryController(createMockHost(), { storage });
+    await controller.loadInitialData();
+
+    expect(controller.organizationSortMode).toBe("registered");
+    expect(controller.organizations.map((o) => o.department)).toEqual([
+      "総務部 総務課",
+      "営業推進部 第一営業課",
+    ]);
+
+    await controller.setOrganizationSortMode("department");
+    expect(controller.organizationSortMode).toBe("department");
+    expect(controller.organizations.map((o) => o.department)).toEqual([
+      "営業推進部 第一営業課",
+      "総務部 総務課",
+    ]);
+
+    // 別インスタンスでストレージからソート順を復元できること
+    const restoredController = new DirectoryController(createMockHost(), {
+      storage,
+    });
+    await restoredController.loadInitialData();
+    expect(restoredController.organizationSortMode).toBe("department");
+    expect(restoredController.organizations.map((o) => o.department)).toEqual([
+      "営業推進部 第一営業課",
+      "総務部 総務課",
+    ]);
+
+    // 場所順へ切り替え後、新規組織追加しても場所順が維持されること（1F-A < 2F-E1 < 3F-A）
+    await restoredController.setOrganizationSortMode("location");
+    await restoredController.saveOrganization({
+      department: "人事部 採用課",
+      extra: "別館 1階",
+      location: "1F-A",
+      title: "",
+      extensionNumber: "1001",
+      phoneNumber: "",
+      faxNumber: "",
+      notes: "",
+    });
+    expect(restoredController.organizations.map((o) => o.location)).toEqual([
+      "1F-A",
+      "2F-E1",
+      "3F-A",
+    ]);
   });
 });

@@ -37,6 +37,7 @@ import {
  * - 仕様23: .hubaddress-shell__column に overflow: hidden が設定されず、検索フィルタ欄のフォーカスアウトラインが左右でクリップされないこと
  * - 仕様24: sidepanel.ts が ResizeObserver loop エラーガードを起動時に登録・pagehide で解除し、.directory-card-list に scrollbar-gutter: stable が設定されていること
  * - 仕様25: 職員カードの組織名・メール展開ボタン行が折り返さず、幅不足時は組織名が1行省略表示されリサイズ・2カラム切替へ追従し、title 属性で完全な組織名を確認できること
+ * - 仕様26: 組織一覧の追加ボタン左隣に size="xs" のソート順切替ドロップダウン（登録順・組織名・場所）とホバーツールチップが配置されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -786,5 +787,35 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(shellScss).toMatch(
       /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*1fr\)/,
     );
+  });
+
+  it("組織一覧の追加ボタン左隣に size='xs' のソートドロップダウン（登録順・組織名・場所）とホバーツールチップが配置されていること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+
+    expect(appSource).toContain('id="sort-organization-btn"');
+    expect(appSource).toContain("renderOrganizationSortDropdown");
+    expect(appSource).toContain("ORGANIZATION_SORT_OPTIONS");
+    expect(appSource).toContain('value: "registered"');
+    expect(appSource).toContain("登録順");
+    expect(appSource).toContain("組織名");
+    expect(appSource).toContain('value: "location"');
+    expect(appSource).toContain("場所");
+    expect(appSource).toContain("setOrganizationSortMode");
+    expect(appSource).toContain("組織一覧の並び順を切り替え");
+
+    const orgColumnIdx = appSource.indexOf("private renderOrganizationColumn");
+    const orgSortIdx = appSource.indexOf(
+      "renderOrganizationSortDropdown()",
+      orgColumnIdx,
+    );
+    const orgAddIdx = appSource.indexOf(
+      'id="add-organization-btn"',
+      orgColumnIdx,
+    );
+    expect(orgSortIdx).toBeGreaterThan(orgColumnIdx);
+    expect(orgAddIdx).toBeGreaterThan(orgSortIdx);
   });
 });

@@ -29,21 +29,28 @@ import type { ImportKind } from "./utils/import-preview.utils";
 import type {
   ActiveTab,
   OrganizationRecord,
+  OrganizationSortMode,
   StaffRecord,
   StaffSortMode,
 } from "./models/directory.model";
 
-interface StaffSortOption {
-  readonly value: StaffSortMode;
+interface SortOption<T extends string> {
+  readonly value: T;
   readonly label: string;
 }
 
 const WIDE_LAYOUT_MEDIA_QUERY = "(min-width: 680px)";
 
-const STAFF_SORT_OPTIONS: readonly StaffSortOption[] = [
+const STAFF_SORT_OPTIONS: readonly SortOption<StaffSortMode>[] = [
   { value: "department", label: "所属部署・氏名" },
   { value: "name", label: "氏名" },
   { value: "staffId", label: "職員番号" },
+] as const;
+
+const ORGANIZATION_SORT_OPTIONS: readonly SortOption<OrganizationSortMode>[] = [
+  { value: "registered", label: "登録順" },
+  { value: "department", label: "組織名" },
+  { value: "location", label: "場所" },
 ] as const;
 
 /**
@@ -266,6 +273,13 @@ export class HubAddressApp extends LitElement {
     );
   }
 
+  private getOrganizationSortLabel(mode: OrganizationSortMode): string {
+    return (
+      ORGANIZATION_SORT_OPTIONS.find((option) => option.value === mode)
+        ?.label ?? "登録順"
+    );
+  }
+
   private handleStaffSortSelect(
     event: CustomEvent<{ item?: { value?: string } }>,
   ): void {
@@ -273,6 +287,36 @@ export class HubAddressApp extends LitElement {
     if (value === "department" || value === "name" || value === "staffId") {
       void this.controller.setStaffSortMode(value);
     }
+  }
+
+  private handleOrganizationSortSelect(
+    event: CustomEvent<{ item?: { value?: string } }>,
+  ): void {
+    const value = event.detail?.item?.value;
+    if (
+      value === "registered" ||
+      value === "department" ||
+      value === "location"
+    ) {
+      void this.controller.setOrganizationSortMode(value);
+    }
+  }
+
+  private renderSortDropdownItems<T extends string>(
+    options: readonly SortOption<T>[],
+    currentMode: T,
+  ): TemplateResult[] {
+    return options.map(
+      (option) => html`
+        <wa-dropdown-item
+          type="checkbox"
+          value=${option.value}
+          ?checked=${currentMode === option.value}
+        >
+          ${option.label}
+        </wa-dropdown-item>
+      `,
+    );
   }
 
   private renderStaffSortDropdown(): TemplateResult {
@@ -295,19 +339,37 @@ export class HubAddressApp extends LitElement {
         >
           <wa-icon name="arrow-down-wide-short-solid-full"></wa-icon>
         </wa-button>
-        ${STAFF_SORT_OPTIONS.map(
-          (option) => html`
-            <wa-dropdown-item
-              type="checkbox"
-              value=${option.value}
-              ?checked=${currentMode === option.value}
-            >
-              ${option.label}
-            </wa-dropdown-item>
-          `,
-        )}
+        ${this.renderSortDropdownItems(STAFF_SORT_OPTIONS, currentMode)}
       </wa-dropdown>
       <wa-tooltip for="sort-staff-btn" trigger="hover"
+        >並び順: ${currentLabel}</wa-tooltip
+      >
+    `;
+  }
+
+  private renderOrganizationSortDropdown(): TemplateResult {
+    const currentMode = this.controller.organizationSortMode;
+    const currentLabel = this.getOrganizationSortLabel(currentMode);
+
+    return html`
+      <wa-dropdown
+        placement="bottom-end"
+        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
+          this.handleOrganizationSortSelect(e)}
+      >
+        <wa-button
+          id="sort-organization-btn"
+          slot="trigger"
+          size="xs"
+          variant="neutral"
+          appearance="outlined"
+          aria-label="組織一覧の並び順を切り替え"
+        >
+          <wa-icon name="arrow-down-wide-short-solid-full"></wa-icon>
+        </wa-button>
+        ${this.renderSortDropdownItems(ORGANIZATION_SORT_OPTIONS, currentMode)}
+      </wa-dropdown>
+      <wa-tooltip for="sort-organization-btn" trigger="hover"
         >並び順: ${currentLabel}</wa-tooltip
       >
     `;
@@ -390,6 +452,7 @@ export class HubAddressApp extends LitElement {
               組織一覧 (${items.length})
             </h2>
             <div class="hubaddress-shell__column-actions">
+              ${this.renderOrganizationSortDropdown()}
               <wa-button
                 id="add-organization-btn"
                 size="xs"
