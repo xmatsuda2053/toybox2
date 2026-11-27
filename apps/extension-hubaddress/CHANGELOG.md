@@ -2,6 +2,13 @@
 
 本ファイルは HubAddress のリリース履歴を記録します。
 
+## [v1.0.1] - 2026-11-27
+
+### 改善・リファクタリング
+
+- **Chrome Side Panel 共通基盤の `@shared/utils` 集約** ([#594](https://github.com/xmatsuda2053/toybox2/issues/594))
+  - Service Worker の Side Panel 開閉トグル制御、持続ポート接続・ResizeObserver ループ通知ガード、およびテーマ設定永続化ロジックを共有パッケージ `@shared/utils` へ共通化し、保守性を向上しました。
+
 ## [v1.0.0] - 2026-11-27
 
 ### 初回正式リリース（v1.0.0）
