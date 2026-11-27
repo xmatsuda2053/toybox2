@@ -5043,7 +5043,7 @@ var e=Object.create,t=Object.defineProperty,n=Object.getOwnPropertyDescriptor,r=
             `:j}
       ${e.notes?A`<p class="directory-card__notes">${e.notes}</p>`:j}
     </article>
-  `}var tu=`0.1.0`,nu=[{value:`light`,id:`theme-btn-light`,label:`ライト`,icon:`sun-solid-full`},{value:`dark`,id:`theme-btn-dark`,label:`ダーク`,icon:`moon-solid-full`},{value:`system`,id:`theme-btn-system`,label:`システム`,icon:`display-solid-full`}];function ru(e,t,n){let r=t===e.value;return A`
+  `}var tu=`1.0.0`,nu=[{value:`light`,id:`theme-btn-light`,label:`ライト`,icon:`sun-solid-full`},{value:`dark`,id:`theme-btn-dark`,label:`ダーク`,icon:`moon-solid-full`},{value:`system`,id:`theme-btn-system`,label:`システム`,icon:`display-solid-full`}];function ru(e,t,n){let r=t===e.value;return A`
     <wa-button
       id=${e.id}
       size="s"
