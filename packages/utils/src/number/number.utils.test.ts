@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { padZero, clamp, normalizeAllowedNumber } from "./number.utils";
+import {
+  padZero,
+  clamp,
+  normalizeAllowedNumber,
+  normalizeNumericId,
+} from "./number.utils";
 
 /** *
  * - [x] 仕様 1: 指定した桁数のゼロパディングが正しく行われること。
@@ -10,6 +15,7 @@ import { padZero, clamp, normalizeAllowedNumber } from "./number.utils";
  * - [x] 仕様 6: 最大値を超える値は最大値に丸められること。
  * - [x] 仕様 7: 最小値が最大値より大きく指定された場合は RangeError をスローすること。
  * - [x] 仕様 8: normalizeAllowedNumber で文字列・数値が許可候補の数値へ正規化され、不正値はフォールバックされること。
+ * - [x] 仕様 9: normalizeNumericId で正の整数またはその文字列表現が数値型へ正規化され、不正値は undefined を返すこと。
  */
 describe("number.utils.padZero", () => {
   it("指定した桁数のゼロパディングが正しく行われること", () => {
@@ -70,5 +76,32 @@ describe("number.utils.normalizeAllowedNumber", () => {
     expect(normalizeAllowedNumber(null, STATUS_CODES, 0)).toBe(0);
     expect(normalizeAllowedNumber(undefined, STATUS_CODES, 0)).toBe(0);
     expect(normalizeAllowedNumber("abc", STATUS_CODES, 5)).toBe(5);
+  });
+});
+
+describe("number.utils.normalizeNumericId", () => {
+  it("正の整数および正の整数を表す文字列が数値型へ正規化されること", () => {
+    expect(normalizeNumericId(1)).toBe(1);
+    expect(normalizeNumericId(42)).toBe(42);
+    expect(normalizeNumericId("1")).toBe(1);
+    expect(normalizeNumericId("10")).toBe(10);
+    expect(normalizeNumericId(" 42 ")).toBe(42);
+  });
+
+  it("0・負数・小数・空文字・非数値文字列・null・undefined は undefined を返すこと", () => {
+    expect(normalizeNumericId(0)).toBeUndefined();
+    expect(normalizeNumericId("0")).toBeUndefined();
+    expect(normalizeNumericId(-1)).toBeUndefined();
+    expect(normalizeNumericId("-5")).toBeUndefined();
+    expect(normalizeNumericId(1.5)).toBeUndefined();
+    expect(normalizeNumericId("1.5")).toBeUndefined();
+    expect(normalizeNumericId("")).toBeUndefined();
+    expect(normalizeNumericId("   ")).toBeUndefined();
+    expect(normalizeNumericId("abc")).toBeUndefined();
+    expect(normalizeNumericId("1a")).toBeUndefined();
+    expect(normalizeNumericId(null)).toBeUndefined();
+    expect(normalizeNumericId(undefined)).toBeUndefined();
+    expect(normalizeNumericId(Number.NaN)).toBeUndefined();
+    expect(normalizeNumericId(Number.POSITIVE_INFINITY)).toBeUndefined();
   });
 });

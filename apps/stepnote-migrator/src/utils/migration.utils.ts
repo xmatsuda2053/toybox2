@@ -2,6 +2,7 @@ import {
   extractMarkdownTitle,
   isBlank,
   normalizeAllowedNumber,
+  normalizeNumericId,
 } from "@shared/utils";
 import type {
   DexieExportJsonStructure,
@@ -81,6 +82,20 @@ export function isContactEmpty(contact: unknown): boolean {
 }
 
 /**
+ * レコードの主キー id が数値文字列（"1" 等）の場合、数値型へ正規化したシャローコピーを返す。
+ */
+function copyWithNormalizedId(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  const copy = { ...row };
+  const normalizedId = normalizeNumericId(row.id);
+  if (normalizedId !== undefined) {
+    copy.id = normalizedId;
+  }
+  return copy;
+}
+
+/**
  * tasks テーブルレコードを新仕様へ変換する（空の Contact を除外）。
  */
 function migrateTasks(rows: Record<string, unknown>[]): {
@@ -90,7 +105,7 @@ function migrateTasks(rows: Record<string, unknown>[]): {
   let filteredContactsCount = 0;
 
   const migratedRows = rows.map((row) => {
-    const copy = { ...row };
+    const copy = copyWithNormalizedId(row);
     copy.statusCode = normalizeAllowedNumber(row.statusCode, [0, 5, 9], 0);
     copy.bookmark = Boolean(row.bookmark);
     copy.selected = Boolean(row.selected);
@@ -123,10 +138,11 @@ function migrateLogs(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.map((row) => {
+    const copy = copyWithNormalizedId(row);
     const rawVal = typeof row.value === "string" ? row.value : "";
     const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     return {
-      ...row,
+      ...copy,
       value: convertedVal,
       title: extractMarkdownTitle(convertedVal, "(無題のログ)"),
     };
@@ -149,9 +165,10 @@ function migrateNotes(rows: Record<string, unknown>[]): {
       filteredCount++;
       continue;
     }
+    const copy = copyWithNormalizedId(row);
     const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     validRows.push({
-      ...row,
+      ...copy,
       value: convertedVal,
       title: extractMarkdownTitle(convertedVal, "(無題のメモ)"),
     });
@@ -167,7 +184,7 @@ function migrateLabels(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.map((row) => {
-    const copy = { ...row };
+    const copy = copyWithNormalizedId(row);
     copy.isSelected = Boolean(row.isSelected);
     copy.description =
       typeof row.description === "string" ? row.description : "";
@@ -196,7 +213,7 @@ function migrateQuickAccess(
   ];
 
   return rows.map((row) => {
-    const copy = { ...row };
+    const copy = copyWithNormalizedId(row);
     for (const key of flagKeys) {
       copy[key] = Boolean(row[key]);
     }
@@ -211,7 +228,7 @@ function migrateScratches(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.map((row) => {
-    const copy = { ...row };
+    const copy = copyWithNormalizedId(row);
     const rawVal = typeof row.value === "string" ? row.value : "";
     const convertedVal = convertCopySyntaxToMarkdownLink(rawVal);
     copy.value = convertedVal;

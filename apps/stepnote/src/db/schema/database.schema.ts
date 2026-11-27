@@ -11,14 +11,111 @@ import {
   TagSetRecord,
 } from "../models/index";
 import Dexie, { Table } from "dexie";
-import { extractMarkdownTitle, normalizeAllowedNumber } from "@shared/utils";
+import {
+  extractMarkdownTitle,
+  normalizeAllowedNumber,
+  normalizeNumericId,
+} from "@shared/utils";
 
 const VALID_STATUS_CODES = [0, 5, 9] as const;
+
+const ALL_RECORD_ID_TABLES = [
+  "tasks",
+  "issues",
+  "logs",
+  "notes",
+  "quickAccess",
+  "labels",
+  "scratches",
+  "taskTemplates",
+  "tags",
+  "tagSets",
+] as const;
 
 type StatusCodeTableSource = {
   table: <T>(name: string) => Table<T, number>;
   tables?: ReadonlyArray<{ name: string }>;
 };
+
+type RecordIdTableSource = {
+  table: <T, TKey = number | string>(name: string) => Table<T, TKey>;
+  tables?: ReadonlyArray<{ name: string }>;
+};
+
+type RecordWithUnknownId = Record<string, unknown> & { id?: unknown };
+
+interface StringIdMigrationEntry {
+  rawId: string;
+  targetId: number;
+  record: RecordWithUnknownId;
+}
+
+function collectStringIdState(records: readonly RecordWithUnknownId[]): {
+  existingNumericIds: Set<number>;
+  maxNumericId: number;
+  entries: StringIdMigrationEntry[];
+} {
+  const existingNumericIds = new Set<number>();
+  let maxNumericId = 0;
+  const entries: StringIdMigrationEntry[] = [];
+
+  for (const record of records) {
+    if (typeof record.id === "number" && Number.isSafeInteger(record.id)) {
+      existingNumericIds.add(record.id);
+      if (record.id > maxNumericId) maxNumericId = record.id;
+      continue;
+    }
+    if (typeof record.id !== "string") continue;
+    const targetId = normalizeNumericId(record.id);
+    if (targetId === undefined) continue;
+    if (targetId > maxNumericId) maxNumericId = targetId;
+    entries.push({ rawId: record.id, targetId, record });
+  }
+
+  return { existingNumericIds, maxNumericId, entries };
+}
+
+async function normalizeRecordIdsInTable(
+  table: Table<RecordWithUnknownId, number | string>,
+  tableName: string,
+): Promise<void> {
+  const records = await table.toArray();
+  const state = collectStringIdState(records);
+  if (state.entries.length === 0) return;
+
+  let nextId = state.maxNumericId;
+  for (const entry of state.entries) {
+    await table.delete(entry.rawId);
+    if (!state.existingNumericIds.has(entry.targetId)) {
+      state.existingNumericIds.add(entry.targetId);
+      await table.put({ ...entry.record, id: entry.targetId });
+      continue;
+    }
+    if (tableName === "quickAccess") continue;
+    nextId += 1;
+    state.existingNumericIds.add(nextId);
+    await table.put({ ...entry.record, id: nextId });
+  }
+}
+
+/**
+ * 指定された Dexie インスタンスまたはトランザクション配下の全テーブルについて、
+ * 文字列型の連番主キー id（"1" 等）を数値型へ自動修復する。
+ */
+export async function normalizeDatabaseRecordIds(
+  source: RecordIdTableSource,
+): Promise<void> {
+  const existingNames = source.tables
+    ? new Set(source.tables.map((t) => t.name))
+    : null;
+  for (const tableName of ALL_RECORD_ID_TABLES) {
+    if (existingNames && !existingNames.has(tableName)) continue;
+    await normalizeRecordIdsInTable(
+      source.table<RecordWithUnknownId, number | string>(tableName),
+      tableName,
+    );
+  }
+}
 
 async function normalizeStatusCodeInTable(
   table: Table<{ statusCode?: unknown }, number>,
@@ -148,7 +245,7 @@ export class Database extends Dexie {
   constructor(dbName: string = "StepNote") {
     super(dbName);
     this.defineV1ToV3();
-    this.defineV4ToV7();
+    this.defineV4ToV8();
   }
 
   /** バージョン 1〜3 のスキーマ定義 */
@@ -197,8 +294,8 @@ export class Database extends Dexie {
     }
   }
 
-  /** バージョン 4〜7 のスキーマ定義 */
-  private defineV4ToV7(): void {
+  /** バージョン 4〜8 のスキーマ定義 */
+  private defineV4ToV8(): void {
     this.version(4).stores({
       taskTemplates: "++id, name, createdAt",
     });
@@ -224,6 +321,11 @@ export class Database extends Dexie {
       .stores({})
       .upgrade(async (tx) => {
         await normalizeDatabaseStatusCodes(tx);
+      });
+    this.version(8)
+      .stores({})
+      .upgrade(async (tx) => {
+        await normalizeDatabaseRecordIds(tx);
       });
   }
 }

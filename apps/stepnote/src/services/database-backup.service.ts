@@ -1,6 +1,9 @@
 import type { Dexie } from "dexie";
 import { format } from "@shared/utils";
-import { normalizeDatabaseStatusCodes } from "@/db/schema/database.schema.js";
+import {
+  normalizeDatabaseRecordIds,
+  normalizeDatabaseStatusCodes,
+} from "@/db/schema/database.schema.js";
 
 // Node.js（Vitest）環境における dexie-export-import の self 参照エラーを防止
 if (typeof globalThis.self === "undefined") {
@@ -52,6 +55,7 @@ export class DatabaseBackupService {
       clearTablesBeforeImport: true,
       progressCallback: () => true,
     });
+    await normalizeDatabaseRecordIds(db);
     await normalizeDatabaseStatusCodes(db);
   }
 
