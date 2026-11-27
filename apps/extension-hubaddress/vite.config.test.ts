@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import type { Rollup, UserConfig } from "vite";
 import viteConfig from "./vite.config";
@@ -8,6 +10,7 @@ import viteConfig from "./vite.config";
  * - entryFileNames が sidepanel 等の他エントリーに対してハッシュを含まない "assets/[name].js" を返すこと
  * - chunkFileNames がハッシュを含まない固定名 "assets/[name].js" に設定されていること
  * - assetFileNames がハッシュを含まない固定名 "assets/[name][extname]" に設定されていること
+ * - define.__APP_VERSION__ に package.json の version が設定されていること
  */
 
 function getOutputOptions(config: UserConfig): Rollup.OutputOptions {
@@ -62,5 +65,13 @@ describe("extension-hubaddress vite.config.ts ビルド出力ファイル名設�
 
   it("assetFileNames がハッシュなしの assets/[name][extname] であること", () => {
     expect(output.assetFileNames).toBe("assets/[name][extname]");
+  });
+
+  it("define.__APP_VERSION__ に package.json の version が設定されていること", () => {
+    const pkgRaw = readFileSync(resolve(__dirname, "package.json"), "utf-8");
+    const pkg = JSON.parse(pkgRaw) as { version: string };
+    expect(viteConfig.define?.__APP_VERSION__).toBe(
+      JSON.stringify(pkg.version),
+    );
   });
 });

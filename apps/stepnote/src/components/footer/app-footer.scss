@@ -15,7 +15,8 @@
   height: 100%;
   padding: 0 var(--wa-space-s, 12px);
   background-color: var(--wa-color-surface-default);
-  border-top: var(--wa-border-width-s, 1px) var(--wa-border-style, solid) var(--wa-color-surface-border);
+  border-top: var(--wa-border-width-s, 1px) var(--wa-border-style, solid)
+    var(--wa-color-surface-border);
   color: var(--wa-color-text-quiet);
   font-family: inherit;
   font-size: var(--wa-font-size-s, 13px);
@@ -60,8 +61,13 @@
 
 .app-footer__status-item--saved,
 .app-footer__status-item--year,
-.app-footer__status-item--tasks {
+.app-footer__status-item--tasks,
+.app-footer__status-item--version {
   color: var(--wa-color-text-quiet);
+}
+
+.app-footer__status-item--version {
+  font-variant-numeric: tabular-nums;
 }
 
 .app-footer__icon {

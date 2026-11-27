@@ -21,6 +21,8 @@ import {
  * - 仕様7: 設定画面のショートカット説明で英単語・設定 URL に折り返し防止が設定されていること
  * - 仕様8: データ管理セクションに冗長な文字コード自動判別・インポート説明文が含まれないこと
  * - 仕様9: 組織追加・編集ダイアログで「場所（建物・施設など）」が「その他（階・部屋など）」より先に配置されていること
+ * - 仕様10: 設定画面に「アプリ情報」セクションがあり、HubAddress のバージョン表記が表示されること
+ * - 仕様11: package.json と public/manifest.json の version が一致していること
  */
 describe("Settings View & Editor Dialogs Compliance Tests", () => {
   const srcRoot = resolve(__dirname, "..");
@@ -241,5 +243,36 @@ describe("Settings View & Editor Dialogs Compliance Tests", () => {
     const extraIdx = rendered.indexOf('label="その他（階・部屋など）"');
     expect(locationIdx).toBeGreaterThan(-1);
     expect(extraIdx).toBeGreaterThan(locationIdx);
+  });
+
+  it("設定画面にアプリ情報セクションがあり、HubAddress のバージョン表記が表示されること", () => {
+    const rendered = flattenTemplate(
+      renderSettingsView({
+        staffCount: 0,
+        organizationCount: 0,
+        themeMode: "system",
+        appVersion: "1.2.3",
+        onChangeTheme: () => {},
+        onRequestImport: () => {},
+        onExportStaffCsv: () => {},
+        onExportOrgCsv: () => {},
+        onExportJson: () => {},
+        onRequestClearAll: () => {},
+      }),
+    );
+    expect(rendered).toContain("アプリ情報");
+    expect(rendered).toContain("HubAddress");
+    expect(rendered).toContain("v1.2.3");
+  });
+
+  it("package.json と public/manifest.json の version が一致していること", () => {
+    const pkgRaw = readFileSync(resolve(srcRoot, "../package.json"), "utf-8");
+    const manifestRaw = readFileSync(
+      resolve(srcRoot, "../public/manifest.json"),
+      "utf-8",
+    );
+    const pkg = JSON.parse(pkgRaw) as { version: string };
+    const manifest = JSON.parse(manifestRaw) as { version: string };
+    expect(manifest.version).toBe(pkg.version);
   });
 });

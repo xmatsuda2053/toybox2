@@ -6,6 +6,7 @@ export interface SettingsViewProps {
   staffCount: number;
   organizationCount: number;
   themeMode: ThemeMode;
+  appVersion?: string;
   onChangeTheme: (mode: ThemeMode) => void;
   onRequestImport: (kind: ImportKind) => void;
   onExportStaffCsv: () => void;
@@ -13,6 +14,9 @@ export interface SettingsViewProps {
   onExportJson: () => void;
   onRequestClearAll: () => void;
 }
+
+const DEFAULT_APP_VERSION =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
 
 interface ThemeOption {
   readonly value: ThemeMode;
@@ -215,14 +219,28 @@ function renderShortcutSection(): TemplateResult {
   `;
 }
 
+function renderAppInfoSection(appVersion: string): TemplateResult {
+  return html`
+    <section class="settings-view__section">
+      <h2 class="settings-view__heading">アプリ情報</h2>
+      <div class="settings-view__info-row">
+        <span class="settings-view__info-name">HubAddress</span>
+        <span class="settings-view__version">v${appVersion}</span>
+      </div>
+    </section>
+  `;
+}
+
 /**
  * 設定タブビューをレンダリングする
  */
 export function renderSettingsView(props: SettingsViewProps): TemplateResult {
+  const version = props.appVersion ?? DEFAULT_APP_VERSION;
   return html`
     <div class="settings-view">
       ${renderThemeSection(props.themeMode, props.onChangeTheme)}
       ${renderImportExportSection(props)} ${renderShortcutSection()}
+      ${renderAppInfoSection(version)}
     </div>
   `;
 }

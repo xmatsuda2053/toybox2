@@ -7,6 +7,7 @@ import { AppFooter } from "./app-footer.js";
 import { TASK_STATUS_CODE } from "../../constants/task-status.constants.js";
 import type { TaskListController } from "../../controllers/task-list.controller.js";
 import type { TaskController } from "../../controllers/task.controller.js";
+import stepnoteViteConfig from "../../../vite.config.js";
 
 /**
  * 【AppFooter コンポーネント仕様 (app-footer.test.ts)】
@@ -22,6 +23,10 @@ import type { TaskController } from "../../controllers/task.controller.js";
  *    - 1-8. 年度およびタスク進捗に wa-tooltip（trigger="hover", placement="top"）が設定されること
  *    - 1-9. 右ゾーン (.app-footer__system) にショートカットヘルプボタン (wa-button#footer-btn-shortcuts) および wa-tooltip がレンダリングされること
  *    - 1-10. ショートカットヘルプボタンが size="s" でレンダリングされること
+ *    - 1-11. 右ゾーン (.app-footer__system) にアプリバージョン (#footer-status-version) および wa-tooltip（trigger="hover", placement="top"）がレンダリングされること
+ *
+ * 8. バージョンビルド埋め込み設定
+ *    - 8-1. apps/stepnote/vite.config.ts の define.__APP_VERSION__ に package.json の version が設定されていること
  *
  * 2. ストレージ推定使用量の表示
  *    - 2-1. storageUsage が設定されている場合、フォーマットされた文字列 (例: "2.40 MB") が表示されること
@@ -92,7 +97,9 @@ describe("AppFooter Component", () => {
       expect(htmlStr).toMatch(
         /<wa-tooltip[^>]*for="footer-status-saved"[^>]*placement="top"[^>]*trigger="hover"/,
       );
-      expect(htmlStr).toContain("データはローカルのIndexedDBに自動保存されています");
+      expect(htmlStr).toContain(
+        "データはローカルのIndexedDBに自動保存されています",
+      );
 
       expect(htmlStr).toMatch(
         /<wa-tooltip[^>]*for="footer-status-storage"[^>]*placement="top"[^>]*trigger="hover"/,
@@ -156,6 +163,17 @@ describe("AppFooter Component", () => {
         /<wa-button[^>]*id="footer-btn-shortcuts"[^>]*size="s"/,
       );
     });
+
+    it("1-11. 右ゾーン (.app-footer__system) にアプリバージョンおよび wa-tooltip がレンダリングされること", () => {
+      footer.appVersion = "1.2.3";
+      const htmlStr = flattenTemplate(footer.render());
+      expect(htmlStr).toContain('id="footer-status-version"');
+      expect(htmlStr).toContain("v1.2.3");
+      expect(htmlStr).toMatch(
+        /<wa-tooltip[^>]*for="footer-status-version"[^>]*placement="top"[^>]*trigger="hover"/,
+      );
+      expect(htmlStr).toContain("Step-Note v1.2.3");
+    });
   });
 
   describe("2. ストレージ推定使用量の表示", () => {
@@ -202,7 +220,8 @@ describe("AppFooter Component", () => {
         ],
         fiscalYearIssueCounts: { done: 2, total: 4 },
       };
-      footer.taskListController = mockController as unknown as TaskListController;
+      footer.taskListController =
+        mockController as unknown as TaskListController;
       const htmlStr = flattenTemplate(footer.render());
       // タスク: 1/3, Issue: 2/4 -> (1 + 2) / (3 + 4) = 3 / 7 = 42.85% -> 43%
       expect(htmlStr).toContain("2/3 Tasks (43%)");
@@ -218,7 +237,8 @@ describe("AppFooter Component", () => {
         tasks: [{ id: 1, statusCode: TASK_STATUS_CODE.PROGRESS }],
         fiscalYearIssueCounts: { done: 200, total: 200 },
       };
-      footer.taskListController = mockController as unknown as TaskListController;
+      footer.taskListController =
+        mockController as unknown as TaskListController;
       const htmlStr = flattenTemplate(footer.render());
       expect(htmlStr).toContain("1 Task (99%)");
     });
@@ -282,15 +302,26 @@ describe("AppFooter Component", () => {
     });
 
     it("7-3. app-footer.scss にてアイコン (.app-footer__icon) のサイズに 13px が指定されていること", () => {
-      expect(scss).toMatch(
-        /\.app-footer__icon\s*\{[\s\S]*?font-size:\s*13px;/,
-      );
+      expect(scss).toMatch(/\.app-footer__icon\s*\{[\s\S]*?font-size:\s*13px;/);
     });
 
     it("7-4. app-footer.scss にカラー直値（Hex / RGB / RGBA）や !important、@extend が含まれていないこと", () => {
       expect(scss).not.toContain("!important");
       expect(scss).not.toContain("@extend");
       expect(scss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    });
+  });
+
+  describe("8. バージョンビルド埋め込み設定", () => {
+    it("8-1. apps/stepnote/vite.config.ts の define.__APP_VERSION__ に package.json の version が設定されていること", () => {
+      const pkgRaw = fs.readFileSync(
+        path.resolve(__dirname, "../../../package.json"),
+        "utf-8",
+      );
+      const pkg = JSON.parse(pkgRaw) as { version: string };
+      expect(stepnoteViteConfig.define?.__APP_VERSION__).toBe(
+        JSON.stringify(pkg.version),
+      );
     });
   });
 });

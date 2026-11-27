@@ -1,9 +1,17 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import { resolve } from "path";
+
+const pkg = JSON.parse(
+  readFileSync(resolve(import.meta.dirname, "package.json"), "utf-8"),
+) as { version: string };
 
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
     target: "es2022",
