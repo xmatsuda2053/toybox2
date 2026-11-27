@@ -2,6 +2,13 @@
 
 本ファイルは Step-Note Migrator のリリース履歴を記録します。
 
+## [v1.0.1] - 2026-11-27
+
+### 不具合修正
+
+- **移行データ出力時の主キー `id` を数値型へ正規化** ([#584](https://github.com/xmatsuda2053/toybox2/issues/584))
+  - 旧 Step-Note（SnDB）のバックアップ JSON で文字列型の連番（`"1"`, `"10"` 等）として保持されていた各テーブル（`tasks`, `logs`, `notes`, `labels`, `quickAccess`, `scratches`）の主キー `id` を、新 Step-Note のスキーマ仕様に合わせて数値型へ変換して出力するよう修正しました。
+
 ## [v1.0.0] - 2026-11-27
 
 ### 初回正式リリース（v1.0.0）
