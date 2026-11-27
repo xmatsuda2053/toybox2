@@ -42,6 +42,7 @@ function createMemoryStorage(): StorageAreaLike {
  * - 仕様11: scheduleStaffSearchQuery / scheduleOrganizationSearchQuery で検索フィルタ適用がデバウンスされ、連続入力時に最後の入力のみ反映されること
  * - 仕様12: saveStaff / removeStaff では組織テーブルを再取得せず、saveOrganization / removeOrganization では職員テーブルを再取得しないこと
  * - 仕様13: organizationSortMode のデフォルトが registered であり、setOrganizationSortMode で即時並替・永続化・復元および追加後の並び順維持ができること
+ * - 仕様14: copyStaffRecord / copyOrganizationRecord で1件を labeled / tsv 形式でコピーでき、copyFilteredStaff / copyFilteredOrganizations で表示中（フィルタ・ソート適用後）の全データを見出し付きTSVでコピーできること
  */
 describe("DirectoryController Tests", () => {
   beforeEach(async () => {
@@ -446,5 +447,71 @@ describe("DirectoryController Tests", () => {
       "2F-E1",
       "3F-A",
     ]);
+  });
+
+  it("copyStaffRecord / copyOrganizationRecord で1件をラベル付き・見出し付きTSVでコピーしトースト通知すること", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+      clipboard: { writeText },
+    });
+    await controller.loadInitialData();
+
+    const staff = controller.staff.find((s) => s.staffId === "0010001")!;
+    expect(await controller.copyStaffRecord(staff, "labeled")).toBe(true);
+    expect(writeText).toHaveBeenLastCalledWith(
+      expect.stringContaining("職員番号: 0010001\n氏名: 田中 太郎"),
+    );
+    expect(controller.toastMessage).toContain("コピー");
+
+    expect(await controller.copyStaffRecord(staff, "tsv")).toBe(true);
+    expect(writeText).toHaveBeenLastCalledWith(
+      "職員番号\t氏名\tフリガナ\t所属\t役職\tメールアドレス\n0010001\t田中 太郎\t\t総務部 総務課\t課長\ttanaka@example.com",
+    );
+
+    const org = controller.organizations[0];
+    expect(await controller.copyOrganizationRecord(org, "labeled")).toBe(true);
+    expect(writeText).toHaveBeenLastCalledWith(
+      expect.stringContaining("所属: 総務部 総務課\n場所: 3F-A"),
+    );
+
+    expect(await controller.copyOrganizationRecord(org, "tsv")).toBe(true);
+    expect(writeText).toHaveBeenLastCalledWith(
+      "所属\t場所\tその他\t役職\t内線番号\t外線番号\tFAX番号\t備考\n総務部 総務課\t3F-A\t本庁舎 3階\t課長席\t2101\t03-1234-2101\t03-1234-2109\t代表窓口",
+    );
+  });
+
+  it("copyFilteredStaff / copyFilteredOrganizations でフィルタ・ソート適用後の表示中データのみを見出し付きTSVでコピーすること", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const controller = new DirectoryController(createMockHost(), {
+      storage: createMemoryStorage(),
+      clipboard: { writeText },
+    });
+    await controller.loadInitialData();
+
+    // 職員: フィルタなし（デフォルト順: 営業推進部 -> 総務部）
+    expect(await controller.copyFilteredStaff()).toBe(true);
+    expect(writeText.mock.calls[0][0].split("\n")).toHaveLength(3);
+    expect(controller.toastMessage).toContain("2 件");
+
+    // 職員: 検索フィルタ適用後は絞り込み結果のみコピー
+    controller.setStaffSearchQuery("田中");
+    expect(await controller.copyFilteredStaff()).toBe(true);
+    expect(writeText.mock.calls[1][0]).toBe(
+      "職員番号\t氏名\tフリガナ\t所属\t役職\tメールアドレス\n0010001\t田中 太郎\t\t総務部 総務課\t課長\ttanaka@example.com",
+    );
+    expect(controller.toastMessage).toContain("1 件");
+
+    // 組織: 検索フィルタ適用後は絞り込み結果のみコピー（末尾空列タブ保持）
+    controller.setOrganizationSearchQuery("営業推進部");
+    expect(await controller.copyFilteredOrganizations()).toBe(true);
+    expect(writeText.mock.calls[2][0]).toBe(
+      "所属\t場所\tその他\t役職\t内線番号\t外線番号\tFAX番号\t備考\n営業推進部 第一営業課\t2F-E1\t新館 2階\t\t3201\t03-1234-3201\t\t",
+    );
+
+    // 0件時はコピーせず false を返すこと
+    controller.setStaffSearchQuery("存在しない職員名");
+    expect(await controller.copyFilteredStaff()).toBe(false);
+    expect(writeText).toHaveBeenCalledTimes(3);
   });
 });

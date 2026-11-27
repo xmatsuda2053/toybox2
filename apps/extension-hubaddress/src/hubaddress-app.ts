@@ -100,6 +100,8 @@ export class HubAddressApp extends LitElement {
     <div class="directory-card-list__item">
       ${renderOrganizationCard(org, idx, {
         onCopy: (label, value) => void this.controller.copyField(label, value),
+        onCopyRecord: (target, format) =>
+          void this.controller.copyOrganizationRecord(target, format),
         onEdit: (target) => {
           this.orgForm = createOrganizationFormState(target);
         },
@@ -158,6 +160,8 @@ export class HubAddressApp extends LitElement {
             this.controller.jumpToOrganization(dept),
           onCopy: (label, value) =>
             void this.controller.copyField(label, value),
+          onCopyRecord: (target, format) =>
+            void this.controller.copyStaffRecord(target, format),
           onEdit: (target) => {
             this.staffForm = createStaffFormState(target);
           },
@@ -388,22 +392,21 @@ export class HubAddressApp extends LitElement {
               職員一覧 (${items.length})
             </h2>
             <div class="hubaddress-shell__column-actions">
-              ${this.renderStaffSortDropdown()}
               <wa-button
-                id="add-staff-btn"
+                id="copy-all-staff-btn"
                 size="xs"
-                variant="brand"
+                variant="neutral"
                 appearance="outlined"
-                aria-label="職員を追加"
-                @click=${() => {
-                  this.staffForm = createStaffFormState();
-                }}
+                ?disabled=${items.length === 0}
+                aria-label="表示中の職員をTSV形式でコピー"
+                @click=${() => void this.controller.copyFilteredStaff()}
               >
-                <wa-icon name="plus-solid-full"></wa-icon>
+                <wa-icon name="copy-solid-full"></wa-icon>
               </wa-button>
-              <wa-tooltip for="add-staff-btn" trigger="hover"
-                >職員を追加</wa-tooltip
+              <wa-tooltip for="copy-all-staff-btn" trigger="hover"
+                >表示中の職員をコピー (${items.length}件)</wa-tooltip
               >
+              ${this.renderStaffSortDropdown()} ${this.renderAddStaffButton()}
             </div>
           </div>
           ${this.renderSearchInput(
@@ -415,6 +418,24 @@ export class HubAddressApp extends LitElement {
         </div>
         ${shouldRenderList ? this.renderStaffList(items) : nothing}
       </section>
+    `;
+  }
+
+  private renderAddStaffButton(): TemplateResult {
+    return html`
+      <wa-button
+        id="add-staff-btn"
+        size="xs"
+        variant="brand"
+        appearance="outlined"
+        aria-label="職員を追加"
+        @click=${() => {
+          this.staffForm = createStaffFormState();
+        }}
+      >
+        <wa-icon name="plus-solid-full"></wa-icon>
+      </wa-button>
+      <wa-tooltip for="add-staff-btn" trigger="hover">職員を追加</wa-tooltip>
     `;
   }
 
@@ -452,22 +473,22 @@ export class HubAddressApp extends LitElement {
               組織一覧 (${items.length})
             </h2>
             <div class="hubaddress-shell__column-actions">
-              ${this.renderOrganizationSortDropdown()}
               <wa-button
-                id="add-organization-btn"
+                id="copy-all-organizations-btn"
                 size="xs"
-                variant="brand"
+                variant="neutral"
                 appearance="outlined"
-                aria-label="組織を追加"
-                @click=${() => {
-                  this.orgForm = createOrganizationFormState();
-                }}
+                ?disabled=${items.length === 0}
+                aria-label="表示中の組織をTSV形式でコピー"
+                @click=${() => void this.controller.copyFilteredOrganizations()}
               >
-                <wa-icon name="plus-solid-full"></wa-icon>
+                <wa-icon name="copy-solid-full"></wa-icon>
               </wa-button>
-              <wa-tooltip for="add-organization-btn" trigger="hover"
-                >組織を追加</wa-tooltip
+              <wa-tooltip for="copy-all-organizations-btn" trigger="hover"
+                >表示中の組織をコピー (${items.length}件)</wa-tooltip
               >
+              ${this.renderOrganizationSortDropdown()}
+              ${this.renderAddOrganizationButton()}
             </div>
           </div>
           ${this.renderSearchInput(
@@ -479,6 +500,26 @@ export class HubAddressApp extends LitElement {
         </div>
         ${shouldRenderList ? this.renderOrganizationList(items) : nothing}
       </section>
+    `;
+  }
+
+  private renderAddOrganizationButton(): TemplateResult {
+    return html`
+      <wa-button
+        id="add-organization-btn"
+        size="xs"
+        variant="brand"
+        appearance="outlined"
+        aria-label="組織を追加"
+        @click=${() => {
+          this.orgForm = createOrganizationFormState();
+        }}
+      >
+        <wa-icon name="plus-solid-full"></wa-icon>
+      </wa-button>
+      <wa-tooltip for="add-organization-btn" trigger="hover"
+        >組織を追加</wa-tooltip
+      >
     `;
   }
 

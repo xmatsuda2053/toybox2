@@ -21,9 +21,17 @@ import {
   type StorageAreaLike,
 } from "../storage/theme-storage";
 import {
+  copyRawTextToClipboard,
   copyTextToClipboard,
   type ClipboardLike,
 } from "../utils/clipboard.utils";
+import {
+  formatOrganizationForClipboard,
+  formatOrganizationListAsTsv,
+  formatStaffForClipboard,
+  formatStaffListAsTsv,
+  type RecordCopyFormat,
+} from "../utils/directory-clipboard.utils";
 import {
   serializeOrganizationCsv,
   serializeStaffCsv,
@@ -550,6 +558,82 @@ export class DirectoryController implements ReactiveController {
       this.showToast(`${label}のコピーに失敗しました`);
     }
     return copied;
+  }
+
+  private async copyFormattedText(
+    text: string,
+    successMessage: string,
+    failureMessage: string,
+  ): Promise<boolean> {
+    const copied = await copyRawTextToClipboard(text, this.deps.clipboard);
+    this.showToast(copied ? successMessage : failureMessage);
+    return copied;
+  }
+
+  /**
+   * 職員レコード1件を指定形式（ラベル付き / 見出し付きTSV）でコピーする
+   */
+  async copyStaffRecord(
+    staff: StaffRecord,
+    format: RecordCopyFormat,
+  ): Promise<boolean> {
+    const text = formatStaffForClipboard(staff, format);
+    const label = staff.name.trim() || staff.staffId.trim() || "職員";
+    const formatName = format === "tsv" ? "TSV形式" : "ラベル付きテキスト";
+    return this.copyFormattedText(
+      text,
+      `職員「${label}」を${formatName}でコピーしました`,
+      `職員「${label}」のコピーに失敗しました`,
+    );
+  }
+
+  /**
+   * 組織レコード1件を指定形式（ラベル付き / 見出し付きTSV）でコピーする
+   */
+  async copyOrganizationRecord(
+    org: OrganizationRecord,
+    format: RecordCopyFormat,
+  ): Promise<boolean> {
+    const text = formatOrganizationForClipboard(org, format);
+    const label = org.department.trim() || "組織";
+    const formatName = format === "tsv" ? "TSV形式" : "ラベル付きテキスト";
+    return this.copyFormattedText(
+      text,
+      `組織「${label}」を${formatName}でコピーしました`,
+      `組織「${label}」のコピーに失敗しました`,
+    );
+  }
+
+  /**
+   * 現在表示中（フィルタ・ソート適用後）の職員全件を見出し付きTSV形式でコピーする
+   */
+  async copyFilteredStaff(): Promise<boolean> {
+    const records = this.filteredStaff;
+    if (records.length === 0) {
+      return false;
+    }
+    const text = formatStaffListAsTsv(records);
+    return this.copyFormattedText(
+      text,
+      `表示中の職員 ${records.length} 件をTSV形式でコピーしました`,
+      "職員データのコピーに失敗しました",
+    );
+  }
+
+  /**
+   * 現在表示中（フィルタ・ソート適用後）の組織全件を見出し付きTSV形式でコピーする
+   */
+  async copyFilteredOrganizations(): Promise<boolean> {
+    const records = this.filteredOrganizations;
+    if (records.length === 0) {
+      return false;
+    }
+    const text = formatOrganizationListAsTsv(records);
+    return this.copyFormattedText(
+      text,
+      `表示中の組織 ${records.length} 件をTSV形式でコピーしました`,
+      "組織データのコピーに失敗しました",
+    );
   }
 
   showToast(message: string): void {
