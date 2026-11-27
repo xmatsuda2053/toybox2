@@ -36,6 +36,7 @@ import {
  * - 仕様22: 職員カードの役職（.directory-card__sub）が氏名の下の行に配置され、幅不足時は 1行で省略表示（text-overflow: ellipsis）されること
  * - 仕様23: .hubaddress-shell__column に overflow: hidden が設定されず、検索フィルタ欄のフォーカスアウトラインが左右でクリップされないこと
  * - 仕様24: sidepanel.ts が ResizeObserver loop エラーガードを起動時に登録・pagehide で解除し、.directory-card-list に scrollbar-gutter: stable が設定されていること
+ * - 仕様25: 職員カードの組織名・メール展開ボタン行が折り返さず、幅不足時は組織名が1行省略表示されリサイズ・2カラム切替へ追従し、title 属性で完全な組織名を確認できること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -646,7 +647,7 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(staffHtml).not.toContain("<wa-tooltip");
     expect(staffHtml).toMatch(/title="?職員番号をコピー"?/);
     expect(staffHtml).toMatch(/title="?氏名をコピー"?/);
-    expect(staffHtml).toMatch(/title="?組織を検索"?/);
+    expect(staffHtml).toMatch(/title="?総務部 総務課（組織を検索）"?/);
     expect(staffHtml).toMatch(/title="?編集"?/);
     expect(staffHtml).toMatch(/title="?削除"?/);
     expect(staffHtml).toMatch(/title="?メールをコピー"?/);
@@ -707,5 +708,83 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(listBlockMatch?.[1]).toMatch(/\bscrollbar-gutter:\s*stable\b/);
     expect(listBlockMatch?.[1]).toMatch(/\boverflow-x:\s*hidden\b/);
     expect(listBlockMatch?.[1]).toMatch(/\boverflow-y:\s*auto\b/);
+  });
+
+  it("職員カードの組織名ボタンにアイコン・ラベル用クラスと完全な組織名を含む title 属性が付与されていること", () => {
+    const longDept =
+      "総務企画局 デジタル推進統括部 情報システム基盤整備課 クラウド運用管理係";
+    const staffHtml = flattenTemplate(
+      renderStaffCard(
+        {
+          id: 1,
+          staffId: "0010001",
+          name: "田中 太郎",
+          furigana: "たなか たろう",
+          department: longDept,
+          title: "係長",
+          emails: ["tanaka@example.com"],
+        },
+        0,
+        {
+          isEmailsExpanded: false,
+          onToggleEmails: () => {},
+          onJumpToDepartment: () => {},
+          onCopy: () => {},
+        },
+      ),
+    );
+    expect(staffHtml).toContain('class="directory-card__dept-icon"');
+    expect(staffHtml).toContain('class="directory-card__dept-label"');
+    expect(staffHtml).toMatch(
+      new RegExp(`title="?${longDept}（組織を検索）"?`),
+    );
+  });
+
+  it("職員カードの組織名とメール展開ボタンが同一行に収まり、幅不足時は1行省略表示されリサイズへ追従するスタイルを持つこと", () => {
+    const cardScss = readFileSync(
+      resolve(srcRoot, "components/directory-cards.scss"),
+      "utf-8",
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__meta-row\s*\{[^}]*flex-wrap:\s*nowrap/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__meta-row\s*\{[^}]*min-width:\s*0/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-btn\s*\{[^}]*flex:\s*0\s+1\s+auto/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-btn\s*\{[^}]*min-width:\s*0/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-btn\s*\{[^}]*max-width:\s*100%/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-icon\s*\{[^}]*flex-shrink:\s*0/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-label\s*\{[^}]*min-width:\s*0/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-label\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-label\s*\{[^}]*text-overflow:\s*ellipsis/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__dept-label\s*\{[^}]*white-space:\s*nowrap/s,
+    );
+    expect(cardScss).toMatch(
+      /\.directory-card__toggle-btn\s*\{[^}]*flex-shrink:\s*0/s,
+    );
+
+    const shellScss = readFileSync(
+      resolve(srcRoot, "hubaddress-app.scss"),
+      "utf-8",
+    );
+    expect(shellScss).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*1fr\)/,
+    );
   });
 });
