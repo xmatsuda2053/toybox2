@@ -47,21 +47,30 @@ function renderCopyChip(
   `;
 }
 
-function renderActionIconButton(
+function handleCardActionSelect(
+  event: CustomEvent<{ item?: { value?: string } }>,
+  onEdit?: () => void,
+  onDelete?: () => void,
+): void {
+  const action = event?.detail?.item?.value;
+  if (action === "edit") {
+    onEdit?.();
+  } else if (action === "delete") {
+    onDelete?.();
+  }
+}
+
+function renderCardMenuItem(
+  value: "edit" | "delete",
   iconName: string,
   label: string,
-  onClick: () => void,
+  variant: "default" | "danger" = "default",
 ): TemplateResult {
   return html`
-    <button
-      type="button"
-      class="directory-card__action-btn"
-      title=${label}
-      aria-label=${label}
-      @click=${onClick}
-    >
-      <wa-icon name=${iconName}></wa-icon>
-    </button>
+    <wa-dropdown-item value="${value}" variant="${variant}">
+      <wa-icon slot="icon" name="${iconName}"></wa-icon>
+      ${label}
+    </wa-dropdown-item>
   `;
 }
 
@@ -75,16 +84,37 @@ function renderCardActions(
 
   return html`
     <div class="directory-card__actions">
-      ${
-        onEdit
-          ? renderActionIconButton("pen-to-square-solid-full", "編集", onEdit)
-          : nothing
-      }
-      ${
-        onDelete
-          ? renderActionIconButton("trash-solid-full", "削除", onDelete)
-          : nothing
-      }
+      <wa-dropdown
+        class="directory-card__menu"
+        placement="bottom-end"
+        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
+          handleCardActionSelect(e, onEdit, onDelete)}
+      >
+        <button
+          slot="trigger"
+          type="button"
+          class="directory-card__action-btn"
+          title="メニュー"
+          aria-label="メニュー"
+        >
+          <wa-icon name="bars-solid-full"></wa-icon>
+        </button>
+        ${
+          onEdit
+            ? renderCardMenuItem("edit", "pen-to-square-solid-full", "編集")
+            : nothing
+        }
+        ${
+          onDelete
+            ? renderCardMenuItem(
+                "delete",
+                "trash-solid-full",
+                "削除",
+                "danger",
+              )
+            : nothing
+        }
+      </wa-dropdown>
     </div>
   `;
 }
