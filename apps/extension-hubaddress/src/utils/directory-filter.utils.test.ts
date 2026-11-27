@@ -91,7 +91,7 @@ const SAMPLE_ORGS: OrganizationRecord[] = [
  * - 仕様3: filterOrganizations で所属・内線・場所・備考などを含めたフリーワード AND 検索ができること
  * - 仕様4: getStaffKey / getOrganizationKey が一意かつ安定したキー文字列を生成すること
  * - 仕様5: sortStaff で所属組織→フリガナ五十音昇順にソートできること（空文字は末尾）
- * - 仕様6: sortOrganizations で組織名→id昇順にソートできること（空文字は末尾）
+ * - 仕様6: sortOrganizations でデフォルトは登録順（id昇順）、sortMode（"registered" / "department" / "location"）指定で昇順ソートできること（空文字は末尾）
  * - 仕様7: sortStaff に sortMode（"department" / "name" / "staffId"）を指定して昇順ソートできること
  * - 仕様8: 事前正規化インデックス（buildStaffSearchIndex / buildOrganizationSearchIndex）を用いた検索が通常検索と同一結果を返すこと
  * - 仕様9: 1,500件規模の大量データに対しても事前正規化検索およびソートが正しく動作すること
@@ -224,13 +224,13 @@ describe("Directory Filter Utils Tests", () => {
     ]);
   });
 
-  it("sortOrganizations で組織名・id の昇順に並び替えできること（未設定は末尾）", () => {
+  it("sortOrganizations でデフォルトは登録順（id昇順）、department / location 指定で昇順ソートできること", () => {
     const orgs: OrganizationRecord[] = [
       {
         id: 10,
         department: "総務部 総務課",
-        extra: "",
-        location: "",
+        extra: "3階 3F-B",
+        location: "本庁舎",
         title: "代表",
         extensionNumber: "2100",
         phoneNumber: "",
@@ -240,8 +240,8 @@ describe("Directory Filter Utils Tests", () => {
       {
         id: 2,
         department: "営業推進部 第10課",
-        extra: "",
-        location: "",
+        extra: "2階 2F-A",
+        location: "新館",
         title: "",
         extensionNumber: "",
         phoneNumber: "",
@@ -251,8 +251,8 @@ describe("Directory Filter Utils Tests", () => {
       {
         id: 3,
         department: "総務部 総務課",
-        extra: "",
-        location: "",
+        extra: "3階 3F-A",
+        location: "本庁舎",
         title: "窓口",
         extensionNumber: "2101",
         phoneNumber: "",
@@ -273,8 +273,8 @@ describe("Directory Filter Utils Tests", () => {
       {
         id: 1,
         department: "",
-        extra: "",
-        location: "",
+        extra: "1階 1F-A",
+        location: "ITセンター",
         title: "",
         extensionNumber: "",
         phoneNumber: "",
@@ -283,8 +283,20 @@ describe("Directory Filter Utils Tests", () => {
       },
     ];
 
-    const sorted = sortOrganizations(orgs);
-    expect(sorted.map((o) => o.id)).toEqual([4, 2, 3, 10, 1]);
+    // デフォルトおよび registered 指定: 登録順（id 昇順）
+    expect(sortOrganizations(orgs).map((o) => o.id)).toEqual([1, 2, 3, 4, 10]);
+    expect(sortOrganizations(orgs, "registered").map((o) => o.id)).toEqual([
+      1, 2, 3, 4, 10,
+    ]);
+    // department 指定: 組織名（自然順・空値末尾）→ id 昇順
+    expect(sortOrganizations(orgs, "department").map((o) => o.id)).toEqual([
+      4, 2, 3, 10, 1,
+    ]);
+    // location 指定: 場所（ITセンター < 新館 < 本庁舎 < 空値）→ その他（3F-A < 3F-B）→ 組織名 → id
+    expect(sortOrganizations(orgs, "location").map((o) => o.id)).toEqual([
+      1, 2, 3, 10, 4,
+    ]);
+    // 元の配列は変更されないこと
     expect(orgs.map((o) => o.id)).toEqual([10, 2, 3, 4, 1]);
   });
 

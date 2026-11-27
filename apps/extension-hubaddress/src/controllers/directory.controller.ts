@@ -3,11 +3,17 @@ import { directoryDb } from "../db/directory-db";
 import type {
   ActiveTab,
   OrganizationRecord,
+  OrganizationSortMode,
   StaffRecord,
   StaffSortMode,
   ThemeMode,
 } from "../models/directory.model";
-import { loadStaffSortMode, saveStaffSortMode } from "../storage/sort-storage";
+import {
+  loadOrganizationSortMode,
+  loadStaffSortMode,
+  saveOrganizationSortMode,
+  saveStaffSortMode,
+} from "../storage/sort-storage";
 import {
   applyThemeToRoot,
   loadTheme,
@@ -94,6 +100,7 @@ export class DirectoryController implements ReactiveController {
   toastMessage: string | null = null;
   themeMode: ThemeMode = "system";
   staffSortMode: StaffSortMode = "department";
+  organizationSortMode: OrganizationSortMode = "registered";
   pendingImport: ImportPreview | null = null;
   isLoading = false;
 
@@ -158,7 +165,7 @@ export class DirectoryController implements ReactiveController {
   }
 
   private updateOrganizationStore(records: OrganizationRecord[]): void {
-    const sorted = sortOrganizations(records);
+    const sorted = sortOrganizations(records, this.organizationSortMode);
     this.organizations = sorted;
     this.indexedOrganizations = buildOrganizationSearchIndex(sorted);
     this.organizationFilterCache = null;
@@ -172,14 +179,21 @@ export class DirectoryController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      const [staff, organizations, themeMode, staffSortMode] =
-        await Promise.all([
-          directoryDb.getAllStaff(),
-          directoryDb.getAllOrganizations(),
-          loadTheme(this.deps.storage),
-          loadStaffSortMode(this.deps.storage),
-        ]);
+      const [
+        staff,
+        organizations,
+        themeMode,
+        staffSortMode,
+        organizationSortMode,
+      ] = await Promise.all([
+        directoryDb.getAllStaff(),
+        directoryDb.getAllOrganizations(),
+        loadTheme(this.deps.storage),
+        loadStaffSortMode(this.deps.storage),
+        loadOrganizationSortMode(this.deps.storage),
+      ]);
       this.staffSortMode = staffSortMode;
+      this.organizationSortMode = organizationSortMode;
       this.updateStaffStore(staff);
       this.updateOrganizationStore(organizations);
       this.themeMode = themeMode;
@@ -495,6 +509,16 @@ export class DirectoryController implements ReactiveController {
     this.updateStaffStore(this.staff);
     this.host.requestUpdate();
     await saveStaffSortMode(mode, this.deps.storage);
+  }
+
+  /**
+   * 組織一覧のソート順を切り替え、即時再並替とストレージ保存を行う
+   */
+  async setOrganizationSortMode(mode: OrganizationSortMode): Promise<void> {
+    this.organizationSortMode = mode;
+    this.updateOrganizationStore(this.organizations);
+    this.host.requestUpdate();
+    await saveOrganizationSortMode(mode, this.deps.storage);
   }
 
   /**
