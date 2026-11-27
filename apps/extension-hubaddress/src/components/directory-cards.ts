@@ -126,7 +126,8 @@ function renderStaffMetaRow(
   staff: StaffRecord,
   callbacks: StaffCardCallbacks,
 ): TemplateResult | typeof nothing {
-  const hasDepartment = staff.department.trim().length > 0;
+  const trimmedDepartment = staff.department.trim();
+  const hasDepartment = trimmedDepartment.length > 0;
   if (!hasDepartment && staff.emails.length === 0) {
     return nothing;
   }
@@ -139,11 +140,16 @@ function renderStaffMetaRow(
               <button
                 type="button"
                 class="directory-card__dept-btn"
-                title="組織を検索"
+                title=${`${trimmedDepartment}（組織を検索）`}
                 @click=${() => callbacks.onJumpToDepartment(staff.department)}
               >
-                <wa-icon name="building-solid-full"></wa-icon>
-                <span>${staff.department}</span>
+                <wa-icon
+                  class="directory-card__dept-icon"
+                  name="building-solid-full"
+                ></wa-icon>
+                <span class="directory-card__dept-label"
+                  >${trimmedDepartment}</span
+                >
               </button>
             `
           : html`<span></span>`
