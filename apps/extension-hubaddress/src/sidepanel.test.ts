@@ -39,6 +39,7 @@ import {
  * - 仕様25: 職員カードの組織名・メール展開ボタン行が折り返さず、幅不足時は組織名が1行省略表示されリサイズ・2カラム切替へ追従し、title 属性で完全な組織名を確認できること
  * - 仕様26: 組織一覧の追加ボタン左隣に size="xs" のソート順切替ドロップダウン（登録順・組織名・場所）とホバーツールチップが配置されていること
  * - 仕様27: 職員・組織カードの編集・削除操作がハンバーガーメニュー（wa-dropdown / bars-solid-full）へ統合され、wa-select で onEdit / onDelete が発火し、両カードのメニューボタンがヘッダー右上に統一配置されること
+ * - 仕様28: 各カード右上のハンバーガーメニュー左隣に1件コピー（ラベル付き／見出し付きTSV選択）ボタン、各一覧ヘッダーのソートボタン左隣に表示中全件TSVコピーボタンが配置されていること
  */
 describe("Side Panel Shell & SCSS Compliance Tests", () => {
   const srcRoot = resolve(__dirname);
@@ -908,5 +909,104 @@ describe("Side Panel Shell & SCSS Compliance Tests", () => {
     expect(cardScss).toMatch(
       /\.directory-card__actions\s*\{[^}]*flex-shrink:\s*0/s,
     );
+  });
+
+  it("職員・組織カード右上のハンバーガーメニュー左隣に1件コピードロップダウン（ラベル付き・TSV）が配置され選択時に発火すること", () => {
+    const collectHandlers = (
+      val: unknown,
+      out: ((e?: unknown) => void)[],
+    ): void => {
+      if (typeof val === "function") out.push(val as (e?: unknown) => void);
+      else if (Array.isArray(val)) val.forEach((v) => collectHandlers(v, out));
+      else if (val && typeof val === "object" && "values" in val) {
+        (val as TemplateResult).values.forEach((v) => collectHandlers(v, out));
+      }
+    };
+    const staff = {
+      id: 1,
+      staffId: "0010001",
+      name: "田中 太郎",
+      department: "総務課",
+      title: "課長",
+      emails: [],
+    };
+    const onCopyRecord = vi.fn();
+    const staffTpl = renderStaffCard(staff, 0, {
+      isEmailsExpanded: false,
+      onToggleEmails: () => {},
+      onJumpToDepartment: () => {},
+      onCopy: () => {},
+      onCopyRecord,
+      onEdit: () => {},
+    });
+    const staffHtml = flattenTemplate(staffTpl);
+    const copyIconIdx = staffHtml.indexOf('name="copy-solid-full"');
+    const menuIconIdx = staffHtml.indexOf('name="bars-solid-full"');
+    expect(copyIconIdx).toBeGreaterThan(-1);
+    expect(menuIconIdx).toBeGreaterThan(copyIconIdx);
+    expect(staffHtml).toContain('value="labeled"');
+    expect(staffHtml).toContain('value="tsv"');
+
+    const handlers: ((e?: unknown) => void)[] = [];
+    collectHandlers(staffTpl, handlers);
+    handlers.forEach((fn) => {
+      fn({ detail: { item: { value: "labeled" } } });
+      fn({ detail: { item: { value: "tsv" } } });
+    });
+    expect(onCopyRecord).toHaveBeenCalledWith(staff, "labeled");
+    expect(onCopyRecord).toHaveBeenCalledWith(staff, "tsv");
+  });
+
+  it("職員一覧・組織一覧ヘッダーのソートボタン左隣に表示中全件コピーボタン（size='xs'・ホバーツールチップ・0件時disabled）が配置されていること", () => {
+    const appSource = readFileSync(
+      resolve(srcRoot, "hubaddress-app.ts"),
+      "utf-8",
+    );
+
+    const staffCopyMatch = appSource.match(
+      /<wa-button[^>]*id="copy-all-staff-btn"[^>]*>/,
+    );
+    const orgCopyMatch = appSource.match(
+      /<wa-button[^>]*id="copy-all-organizations-btn"[^>]*>/,
+    );
+    expect(staffCopyMatch).not.toBeNull();
+    expect(staffCopyMatch?.[0]).toContain('size="xs"');
+    expect(staffCopyMatch?.[0]).toContain("?disabled=${items.length === 0}");
+    expect(orgCopyMatch).not.toBeNull();
+    expect(orgCopyMatch?.[0]).toContain('size="xs"');
+    expect(orgCopyMatch?.[0]).toContain("?disabled=${items.length === 0}");
+
+    expect(appSource).toMatch(
+      /<wa-tooltip[^>]*for="copy-all-staff-btn"[^>]*trigger="hover"/,
+    );
+    expect(appSource).toMatch(
+      /<wa-tooltip[^>]*for="copy-all-organizations-btn"[^>]*trigger="hover"/,
+    );
+    expect(appSource).toContain("copyFilteredStaff()");
+    expect(appSource).toContain("copyFilteredOrganizations()");
+
+    const staffColIdx = appSource.indexOf("private renderStaffColumn");
+    const staffCopyIdx = appSource.indexOf(
+      'id="copy-all-staff-btn"',
+      staffColIdx,
+    );
+    const staffSortIdx = appSource.indexOf(
+      "renderStaffSortDropdown()",
+      staffColIdx,
+    );
+    expect(staffCopyIdx).toBeGreaterThan(staffColIdx);
+    expect(staffSortIdx).toBeGreaterThan(staffCopyIdx);
+
+    const orgColIdx = appSource.indexOf("private renderOrganizationColumn");
+    const orgCopyIdx = appSource.indexOf(
+      'id="copy-all-organizations-btn"',
+      orgColIdx,
+    );
+    const orgSortIdx = appSource.indexOf(
+      "renderOrganizationSortDropdown()",
+      orgColIdx,
+    );
+    expect(orgCopyIdx).toBeGreaterThan(orgColIdx);
+    expect(orgSortIdx).toBeGreaterThan(orgCopyIdx);
   });
 });

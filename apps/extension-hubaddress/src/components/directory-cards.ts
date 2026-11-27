@@ -7,18 +7,21 @@ import {
   formatStaffIdFiveDigits,
   getOrganizationKey,
 } from "../utils/directory-filter.utils";
+import type { RecordCopyFormat } from "../utils/directory-clipboard.utils";
 
 export interface StaffCardCallbacks {
   isEmailsExpanded: boolean;
   onToggleEmails: (staff: StaffRecord) => void;
   onJumpToDepartment: (department: string) => void;
   onCopy: (label: string, value: string) => void;
+  onCopyRecord?: (staff: StaffRecord, format: RecordCopyFormat) => void;
   onEdit?: (staff: StaffRecord) => void;
   onDelete?: (staff: StaffRecord) => void;
 }
 
 export interface OrganizationCardCallbacks {
   onCopy: (label: string, value: string) => void;
+  onCopyRecord?: (org: OrganizationRecord, format: RecordCopyFormat) => void;
   onEdit?: (org: OrganizationRecord) => void;
   onDelete?: (org: OrganizationRecord) => void;
 }
@@ -60,8 +63,18 @@ function handleCardActionSelect(
   }
 }
 
+function handleRecordCopySelect(
+  event: CustomEvent<{ item?: { value?: string } }>,
+  onCopyRecord?: (format: RecordCopyFormat) => void,
+): void {
+  const format = event?.detail?.item?.value;
+  if (format === "labeled" || format === "tsv") {
+    onCopyRecord?.(format);
+  }
+}
+
 function renderCardMenuItem(
-  value: "edit" | "delete",
+  value: string,
   iconName: string,
   label: string,
   variant: "default" | "danger" = "default",
@@ -74,7 +87,40 @@ function renderCardMenuItem(
   `;
 }
 
-function renderCardActions(
+function renderRecordCopyDropdown(
+  onCopyRecord?: (format: RecordCopyFormat) => void,
+): TemplateResult | typeof nothing {
+  if (!onCopyRecord) {
+    return nothing;
+  }
+
+  return html`
+    <wa-dropdown
+      class="directory-card__menu"
+      placement="bottom-end"
+      @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
+        handleRecordCopySelect(e, onCopyRecord)}
+    >
+      <button
+        slot="trigger"
+        type="button"
+        class="directory-card__action-btn"
+        title="コピー"
+        aria-label="コピー"
+      >
+        <wa-icon name="copy-solid-full"></wa-icon>
+      </button>
+      ${renderCardMenuItem(
+        "labeled",
+        "list-ul-solid-full",
+        "ラベル付きテキスト",
+      )}
+      ${renderCardMenuItem("tsv", "table-solid-full", "TSV（見出し付き）")}
+    </wa-dropdown>
+  `;
+}
+
+function renderHamburgerDropdown(
   onEdit?: () => void,
   onDelete?: () => void,
 ): TemplateResult | typeof nothing {
@@ -83,38 +129,48 @@ function renderCardActions(
   }
 
   return html`
-    <div class="directory-card__actions">
-      <wa-dropdown
-        class="directory-card__menu"
-        placement="bottom-end"
-        @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
-          handleCardActionSelect(e, onEdit, onDelete)}
+    <wa-dropdown
+      class="directory-card__menu"
+      placement="bottom-end"
+      @wa-select=${(e: CustomEvent<{ item?: { value?: string } }>) =>
+        handleCardActionSelect(e, onEdit, onDelete)}
+    >
+      <button
+        slot="trigger"
+        type="button"
+        class="directory-card__action-btn"
+        title="メニュー"
+        aria-label="メニュー"
       >
-        <button
-          slot="trigger"
-          type="button"
-          class="directory-card__action-btn"
-          title="メニュー"
-          aria-label="メニュー"
-        >
-          <wa-icon name="bars-solid-full"></wa-icon>
-        </button>
-        ${
-          onEdit
-            ? renderCardMenuItem("edit", "pen-to-square-solid-full", "編集")
-            : nothing
-        }
-        ${
-          onDelete
-            ? renderCardMenuItem(
-                "delete",
-                "trash-solid-full",
-                "削除",
-                "danger",
-              )
-            : nothing
-        }
-      </wa-dropdown>
+        <wa-icon name="bars-solid-full"></wa-icon>
+      </button>
+      ${
+        onEdit
+          ? renderCardMenuItem("edit", "pen-to-square-solid-full", "編集")
+          : nothing
+      }
+      ${
+        onDelete
+          ? renderCardMenuItem("delete", "trash-solid-full", "削除", "danger")
+          : nothing
+      }
+    </wa-dropdown>
+  `;
+}
+
+function renderCardActions(
+  onEdit?: () => void,
+  onDelete?: () => void,
+  onCopyRecord?: (format: RecordCopyFormat) => void,
+): TemplateResult | typeof nothing {
+  if (!onEdit && !onDelete && !onCopyRecord) {
+    return nothing;
+  }
+
+  return html`
+    <div class="directory-card__actions">
+      ${renderRecordCopyDropdown(onCopyRecord)}
+      ${renderHamburgerDropdown(onEdit, onDelete)}
     </div>
   `;
 }
@@ -305,6 +361,9 @@ export function renderStaffCard(
   callbacks: StaffCardCallbacks,
 ): TemplateResult {
   const formattedId = formatStaffIdFiveDigits(staff.staffId);
+  const onCopyRecord = callbacks.onCopyRecord
+    ? (format: RecordCopyFormat) => callbacks.onCopyRecord?.(staff, format)
+    : undefined;
   const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(staff) : undefined;
   const onDelete = callbacks.onDelete
     ? () => callbacks.onDelete?.(staff)
@@ -319,7 +378,7 @@ export function renderStaffCard(
           ${renderStaffIdBadge(formattedId, callbacks.onCopy)}
           ${renderStaffName(staff, callbacks.onCopy)}
         </div>
-        ${renderCardActions(onEdit, onDelete)}
+        ${renderCardActions(onEdit, onDelete, onCopyRecord)}
       </div>
       ${renderStaffMetaRow(staff, callbacks)}
       ${renderStaffEmails(
@@ -358,6 +417,9 @@ function renderOrganizationHeader(
   org: OrganizationRecord,
   callbacks: OrganizationCardCallbacks,
 ): TemplateResult {
+  const onCopyRecord = callbacks.onCopyRecord
+    ? (format: RecordCopyFormat) => callbacks.onCopyRecord?.(org, format)
+    : undefined;
   const onEdit = callbacks.onEdit ? () => callbacks.onEdit?.(org) : undefined;
   const onDelete = callbacks.onDelete
     ? () => callbacks.onDelete?.(org)
@@ -369,7 +431,7 @@ function renderOrganizationHeader(
         ${renderOrganizationName(org.department, callbacks.onCopy)}
         ${org.title ? html`<wa-tag size="s">${org.title}</wa-tag>` : nothing}
       </div>
-      ${renderCardActions(onEdit, onDelete)}
+      ${renderCardActions(onEdit, onDelete, onCopyRecord)}
     </div>
   `;
 }
